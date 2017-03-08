@@ -1,0 +1,21 @@
+dist: trusty
+sudo: required
+
+language: cpp
+compiler: gcc
+
+env:
+  global:
+    - NUM_THREADS=4
+  matrix:
+    - BUILD_NAME="default-cmake"
+    
+cache:
+  apt: true
+
+before_script:
+  - sudo -E ./scripts/travis/install-deps.sh
+
+script:
+  - mkdir -p build && cd build && cmake .. -DCUDA_CUDA_LIBRARY=/usr/local/nvidia/lib64/libcuda.so -DRCC_VERBOSE_CONFIG=ON
+  - make all

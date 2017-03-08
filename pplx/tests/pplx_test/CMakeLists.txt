@@ -1,0 +1,11 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
+PROJECT(PPLX_test)
+
+SET(PPLX_ROOT "" CACHE PATH "")
+INCLUDE_DIRECTORIES("${PPLX_ROOT}/include")
+SET(PPLX_LIBS "debug;${PPLX_ROOT}/lib/cpprest_2_7d.lib;optimized;${PPLX_ROOT}/lib/cpprest_2_7.lib")
+
+
+ADD_EXECUTABLE(PPLX_test main.cpp)
+TARGET_LINK_LIBRARIES(PPLX_test ${PPLX_LIBS})
