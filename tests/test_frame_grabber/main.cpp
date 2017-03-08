@@ -1,12 +1,12 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
-#include "EagleLib/Nodes/Node.h"
-#include "EagleLib/Nodes/ThreadedNode.h"
-#include "EagleLib/Nodes/IFrameGrabber.hpp"
-#include "EagleLib/Logging.h"
-#include "EagleLib/Nodes/FrameGrabberInfo.hpp"
-#include "EagleLib/ICoordinateManager.h"
+#include "Aquila/Nodes/Node.h"
+#include "Aquila/Nodes/ThreadedNode.h"
+#include "Aquila/Nodes/IFrameGrabber.hpp"
+#include "Aquila/Logging.h"
+#include "Aquila/Nodes/FrameGrabberInfo.hpp"
+#include "Aquila/ICoordinateManager.h"
 
 
 #include "MetaObject/Parameters/ParameterMacros.hpp"
@@ -17,14 +17,14 @@
 
 
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE "EagleLibFrameGrabbers"
+#define BOOST_TEST_MODULE "AquilaFrameGrabbers"
 #include <boost/thread.hpp>
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
 
-using namespace EagleLib;
-using namespace EagleLib::Nodes;
+using namespace aq;
+using namespace aq::Nodes;
 
 struct test_framegrabber: public IFrameGrabber
 {
@@ -72,9 +72,9 @@ struct test_framegrabber: public IFrameGrabber
         output.setTo(ts + offset);
         return output;
     }
-    rcc::shared_ptr<EagleLib::ICoordinateManager> GetCoordinateManager()
+    rcc::shared_ptr<aq::ICoordinateManager> GetCoordinateManager()
     {
-        return rcc::shared_ptr<EagleLib::ICoordinateManager>();
+        return rcc::shared_ptr<aq::ICoordinateManager>();
     }
 
     MO_DERIVE(test_framegrabber, IFrameGrabber);
@@ -112,12 +112,12 @@ MO_REGISTER_CLASS(img_node);
 
 BOOST_AUTO_TEST_CASE(test_dummy_output)
 {
-    EagleLib::SetupLogging();
+    aq::SetupLogging();
     mo::MetaObjectFactory::Instance()->RegisterTranslationUnit();
     mo::MetaObjectFactory::Instance()->LoadPlugins("");
     auto info = mo::MetaObjectFactory::Instance()->GetObjectInfo("test_framegrabber");
     BOOST_REQUIRE(info);
-    auto fg_info = dynamic_cast<EagleLib::Nodes::FrameGrabberInfo*>(info);
+    auto fg_info = dynamic_cast<aq::Nodes::FrameGrabberInfo*>(info);
     BOOST_REQUIRE(fg_info);
     std::cout << fg_info->Print();
     
@@ -131,6 +131,6 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
 }
 BOOST_AUTO_TEST_CASE(test_enumeration)
 {
-    //auto all_docs = EagleLib::Nodes::IFrameGrabber::ListAllLoadableDocuments();
+    //auto all_docs = aq::Nodes::IFrameGrabber::ListAllLoadableDocuments();
     std::cout << mo::MetaObjectFactory::Instance()->PrintAllObjectInfo();
 }

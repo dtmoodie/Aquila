@@ -1,0 +1,47 @@
+# ===================================================================================
+#  The Aquila CMake configuration file
+#
+#             ** File generated automatically, do not modify **
+#
+#  Usage from an external project:
+#    In your CMakeLists.txt, add these lines:
+#
+#    FIND_PACKAGE(Aquila REQUIRED)
+#    TARGET_LINK_LIBRARIES(MY_TARGET_NAME ${Aquila_LIBS})
+#
+#    Or you can search for specific OpenCV modules:
+#
+#    FIND_PACKAGE(Aquila REQUIRED)
+#
+
+#
+#    This file will define the following variables:
+#      - Aquila_LIBS                     : The list of libraries to link against.
+#      - Aquila_LIB_DIR_<CONFIG>         : The directory(es) where lib files are. Calling LINK_DIRECTORIES
+#                                          with this path is NOT needed.
+#      - Aquila_INCLUDE_DIRS             : The Aquila include directories.
+#      - Aquila_COMPUTE_CAPABILITIES     : The version of compute capability
+#      - Aquila_VERSION                  : The version of this Aquila build. Example: "2.4.0"
+#      - Aquila_VERSION_MAJOR            : Major version part of Aquila_VERSION. Example: "2"
+#      - Aquila_VERSION_MINOR            : Minor version part of Aquila_VERSION. Example: "4"
+#      - Aquila_VERSION_PATCH            : Patch version part of Aquila_VERSION. Example: "0"
+#
+# ===================================================================================
+
+
+find_package(OpenCV 3.0 REQUIRED core)
+  include_directories(${OpenCV_INCLUDE_DIRS})
+
+find_package(Boost REQUIRED)
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_directories(${Boost_LIBRARY_DIR})
+  link_directories(${Boost_LIBRARY_DIR_RELEASE})
+  link_directories(${Boost_LIBRARY_DIR_DEBUG})
+
+SET(Aquila_INCLUDE_DIRS     "${CMAKE_CURRENT_LIST_DIR}/include" CACHE PATH "")
+SET(Aquila_LIBS @Aquila_LIBS@ CACHE STRING "")
+SET(Aquila_LIB_DIRS_DEBUG   "${CMAKE_CURRENT_LIST_DIR}/lib"  CACHE PATH "")
+SET(Aquila_LIB_DIRS_RELEASE "${CMAKE_CURRENT_LIST_DIR}/lib"  CACHE PATH "")
+SET(Aquila_BIN_DIRS_Debug   "${CMAKE_CURRENT_LIST_DIR}/bin"  CACHE PATH "")
+SET(Aquila_BIN_DIRS_RELEASE "${CMAKE_CURRENT_LIST_DIR}/bin" CACHE PATH "")
+SET(Aquila_DEFS @Aquila_DEFS@ CACHE STRING "")

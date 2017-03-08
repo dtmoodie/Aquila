@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
-project(EagleLib)
+project(Aquila)
 CMAKE_POLICY(SET CMP0020 NEW)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_DEBUG_POSTFIX d)
 include(cmake/utilities.cmake)
+
 IF(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_WIN32)
@@ -19,6 +20,14 @@ ELSE(WIN32)
   SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin/Plugins" CACHE PATH "Library output path" FORCE)
   SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Executable output path" FORCE)
 ENDIF(WIN32)
+
+ADD_SUBDIRECTORY("dependencies/MetaObject")
+set(RCC_PERMODULE_INTERFACE_SOURCE
+    ${RCC_PERMODULE_INTERFACE_SOURCE}
+    CACHE PATH "" FORCE
+)
+include_directories(${RCC_INCLUDE_DIRS})
+ADD_SUBDIRECTORY("dependencies/pplx")
 
 find_package(OpenCV 3.0 QUIET COMPONENTS  core imgproc highgui cudaimgproc cudawarping cudafeatures2d cudaoptflow cudacodec cudabgsegm)
 set_target_properties(${OpenCV_LIBS} PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
@@ -54,12 +63,12 @@ ENDIF(WIN32)
 SET(LINK_LIBS "")
 ADD_DEFINITIONS(-DCVAPI_EXPORTS)
 ADD_DEFINITIONS(-DOPENCV_FOUND)
-ADD_DEFINITIONS(-DEagleLIB_EXPORTS)
+ADD_DEFINITIONS(-DAquila_EXPORTS)
 ADD_DEFINITIONS(-DRMT_DLL)
 ADD_DEFINITIONS(-DBUILD_DIR=${CMAKE_BINARY_DIR})
 ADD_DEFINITIONS(-DCVAPI_EXPORTS)
 ADD_DEFINITIONS(-DOPENCV_FOUND)
-ADD_DEFINITIONS(-DEagleLIB_EXPORTS)
+ADD_DEFINITIONS(-DAquila_EXPORTS)
 IF(${NV_TOOLS_EXT_FOUND})
   ADD_DEFINITIONS(-DUSE_NVTX)
   list(APPEND LINK_LIBS ${NV_TOOLS_EXT_LIB})
@@ -70,9 +79,9 @@ IF(${NV_TOOLS_EXT_FOUND})
 endif()
 LIST(APPEND defs_ -DRMT_USE_CUDA)
 LIST(APPEND defs_ -DRMT_USE_OPENGL)
-IF(${EagleLib_JETSON})
+IF(${Aquila_JETSON})
     LIST(APPEND defs_ "-DJETSON")
-ENDIF(${EagleLib_JETSON})
+ENDIF(${Aquila_JETSON})
 
 set(BOOST_REQUIRED_MODULES 
 	system 
@@ -85,19 +94,19 @@ set(BOOST_REQUIRED_MODULES
 	log 
 	log_setup 
 	atomic 
-        unit_test_framework
+    unit_test_framework
 )
-
+set(Boost_USE_STATIC_LIBS        OFF)
+set(Boost_USE_MULTITHREADED      ON)
+set(Boost_USE_STATIC_RUNTIME     OFF)
+ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 find_package(Boost 1.47.0 QUIET COMPONENTS ${BOOST_REQUIRED_MODULES}) 
 
 FILE(GLOB_RECURSE src "src/*.cpp" "remotery/lib/*.c")
 FILE(GLOB_RECURSE hdr "remotery/lib/*.h" "include/*.hpp" "include/*.h" "src/*.hpp")
-FILE(GLOB_RECURSE ext_inc "include/EagleLib/rcc/external_includes")
+FILE(GLOB_RECURSE ext_inc "include/Aquila/rcc/external_includes")
 FILE(GLOB_RECURSE knl "src/*.cu")
-ADD_SUBDIRECTORY("MetaObject")
-set(RCC_PERMODULE_INTERFACE_SOURCE ${RCC_PERMODULE_INTERFACE_SOURCE} PARENT_SCOPE)
-include_directories(${RCC_INCLUDE_DIRS})
-ADD_SUBDIRECTORY("pplx")
+
 
 find_package(mxnet QUIET)
 if(${MXNET_FOUND})
@@ -108,13 +117,9 @@ if(${MXNET_FOUND})
   add_definitions(-DMSHADOW_USE_MKL=0)
   add_definitions(-DMSHADOW_USE_CUDNN=1)
 endif()
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-find_package(cereal QUIET)
-if(cereal_FOUND)
-    include_directories(${cereal_INCLUDE_DIRS})
-    add_definitions(-DEAGLELIB_HAVE_CEREAL)
-endif()
 
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/dependencies/MetaObject/dependencies/cereal/include")
 
 INCLUDE_DIRECTORIES(
     ${OpenCV_INCLUDE_DIRS}
@@ -153,15 +158,55 @@ ELSE(WIN32)
     SET(LIB_BUILD_DIR_DEBUG "${LIBRARY_OUTPUT_PATH};${CMAKE_BINARY_DIR}")
 ENDIF(WIN32)
 
-set(EagleLib_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/dependencies/cereal/include;${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/instantiations;${CMAKE_CURRENT_SOURCE_DIR}/include;${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib;${Boost_INCLUDE_DIRS};${OpenCV_INCLUDE_DIRS};${RCC_INCLUDE_DIRS};${Qt5Gui_INCLUDE_DIRS};${Qt5Widgets_INCLUDE_DIRS};${Qt5Network_INCLUDE_DIRS};${PPLX_INCLUDE_DIRS}" PARENT_SCOPE)
-set(EagleLib_LIBRARIES "EagleLib;${Boost_LIBRARIES};${Parameters_LIBRARIES};pplx" PARENT_SCOPE)
+set(Aquila_INCLUDE_DIRECTORIES
+    "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/dependencies/cereal/include;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/instantiations;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib;"
+    "${Boost_INCLUDE_DIRS};${OpenCV_INCLUDE_DIRS};"
+    "${RCC_INCLUDE_DIRS};"
+    "${Qt5Gui_INCLUDE_DIRS};"
+    "${Qt5Widgets_INCLUDE_DIRS};"
+    "${Qt5Network_INCLUDE_DIRS};"
+    "${PPLX_INCLUDE_DIRS}" CACHE PATH "" FORCE
+)
 
-set(EagleLib_LIBS "EagleLib;${Parameters_LIBRARIES};pplx")
-SET(EagleLib_LIB_DIRS_DEBUG "${LIB_BUILD_DIR_DEBUG};${Boost_LIBRARY_DIR};${Boost_LIBRARY_DIR_DEBUG};${CUDA_LIB_DIR}" PARENT_SCOPE)
-SET(EagleLib_LIB_DIRS_RELEASE "${LIB_BUILD_DIR_RELEASE};${Boost_LIBRARY_DIR};${Boost_LIBRARY_DIR_RELEASE};${CUDA_LIB_DIR}" PARENT_SCOPE)
-SET(EagleLib_DEFS "${defs_}" PARENT_SCOPE)
+set(Aquila_LIBRARIES
+    "Aquila;"
+    "${Boost_LIBRARIES};"
+    "${Parameters_LIBRARIES};"
+    "pplx" CACHE PATH "" FORCE
+)
 
-CONFIGURE_FILE(EagleLibConfig.cmake.in ${CMAKE_BINARY_DIR}/EagleLibConfig.cmake @ONLY)
+set(Aquila_LIBS
+    "Aquila;"
+    "${Parameters_LIBRARIES};"
+    "pplx"
+)
+
+SET(Aquila_LIB_DIRS_DEBUG
+    "${LIB_BUILD_DIR_DEBUG};"
+    "${Boost_LIBRARY_DIR};"
+    "${Boost_LIBRARY_DIR_DEBUG};"
+    "${CUDA_LIB_DIR}"
+    CACHE PATH "" FORCE
+)
+
+SET(Aquila_LIB_DIRS_RELEASE
+    "${LIB_BUILD_DIR_RELEASE};"
+    "${Boost_LIBRARY_DIR};"
+    "${Boost_LIBRARY_DIR_RELEASE};"
+    "${CUDA_LIB_DIR}"
+    CACHE PATH "" FORCE
+)
+
+SET(Aquila_DEFS "${defs_}"
+    CACHE PATH "" FORCE
+)
+
+CONFIGURE_FILE(AquilaConfig.cmake.in
+    ${CMAKE_BINARY_DIR}/AquilaConfig.cmake @ONLY
+)
 
 # Link directories
 LINK_DIRECTORIES(${Parameters_LIB_DIRS_DEBUG})
@@ -172,21 +217,21 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIR_RELEASE})
 
 if(RCC_VERBOSE_CONFIG)
 message(STATUS
-"================ EagleLib ===============
+"================ Aquila ===============
     Current source dir: ${CMAKE_CURRENT_SOURCE_DIR}
     OpenCV found at: ${OpenCV_CONFIG_PATH}
     NVCC Flags: ${CUDA_NVCC_FLAGS}
-    Jetson: ${EAGLE_LIB_JETSON}
+    Jetson: ${Aquila_JETSON}
     Bulid Type: ${CMAKE_BUILD_TYPE}
 
-    Includes: ${EagleLib_INCLUDE_DIRECTORIES}
+    Includes: ${Aquila_INCLUDE_DIRECTORIES}
 
-    Libs: ${EagleLib_LIBRARIES}
+    Libs: ${Aquila_LIBRARIES}
 
     Lib dirs:
-    ${EagleLib_LIB_DIRS_DEBUG}
+    ${Aquila_LIB_DIRS_DEBUG}
 
-    ${EagleLib_LIB_DIRS_RELEASE}
+    ${Aquila_LIB_DIRS_RELEASE}
 
     Definitions: ${defs_}
 
@@ -230,60 +275,67 @@ endmacro()
 GroupSources(include)
 GroupSources(src)
 
-cuda_add_library(EagleLib SHARED
+cuda_add_library(Aquila SHARED
     ${src}  
     ${hdr}
     ${knl}
     ${RuntimeObjectSystem_SRCS}
     src/precompiled.hpp
 )
-ocv_add_precompiled_header_to_target(EagleLib src/precompiled.hpp)
+ocv_add_precompiled_header_to_target(Aquila src/precompiled.hpp)
 SOURCE_GROUP("Header Files\\External" FILES ${ext_inc})
 
 
-TARGET_LINK_LIBRARIES(EagleLib
-        ${OpenCV_LIBS}
-        pplx
-        ${Parameters_LIBRARIES}
-        ${CUDA_CUDART_LIBRARY}
-        Qt5::OpenGL
-        RuntimeObjectSystem
-        RuntimeCompiler
-        ${LINK_LIBS}
-    	MetaObject
+TARGET_LINK_LIBRARIES(Aquila
+    ${OpenCV_LIBS}
+    pplx
+    ${Parameters_LIBRARIES}
+    ${CUDA_CUDART_LIBRARY}
+    Qt5::OpenGL
+    RuntimeObjectSystem
+    RuntimeCompiler
+    ${LINK_LIBS}
+    MetaObject
+    ${Boost_LIBRARIES}
 )
 
-if(${MXNET_FOUND})
-  TARGET_LINK_LIBRARIES(EagleLib ${MXNET_LIBRARY})
+if(MXNET_FOUND)
+  TARGET_LINK_LIBRARIES(Aquila ${MXNET_LIBRARY})
 endif()
 
 if(WIN32)
-    target_link_libraries(EagleLib OpenGL32)
+    target_link_libraries(Aquila OpenGL32)
 else(WIN32)
   if(UNIX)
-    target_link_libraries(EagleLib GL GLU)
+    target_link_libraries(Aquila GL GLU)
   endif(UNIX)
 endif(WIN32)
 
-ADD_DEPENDENCIES(EagleLib
+ADD_DEPENDENCIES(Aquila
     pplx
     RuntimeObjectSystem
     RuntimeCompiler
-    )
+)
 
-install(TARGETS EagleLib
+install(TARGETS Aquila
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+        ARCHIVE DESTINATION lib
+)
 
-install(DIRECTORY src/ 
+install(DIRECTORY include/
         DESTINATION include
-        FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY src/
+        FILES_MATCHING PATTERN "*.h"
+)
+
+install(DIRECTORY include/
         DESTINATION include
-        FILES_MATCHING PATTERN "*.hpp")
-install(FILES ${CMAKE_BINARY_DIR}/EagleLibConfig.cmake
-        DESTINATION ./)
+        FILES_MATCHING PATTERN "*.hpp"
+)
+
+install(FILES ${CMAKE_BINARY_DIR}/AquilaConfig.cmake
+        DESTINATION ./
+)
 
 if(WIN32)
     install(DIRECTORY ${CMAKE_BINARY_DIR}/Debug/
@@ -296,33 +348,38 @@ endif(WIN32)
 
 
 if(UNIX)
-    TARGET_LINK_LIBRARIES(EagleLib dl)
+    TARGET_LINK_LIBRARIES(Aquila dl)
 endif()
 if(WITH_PYTHON)
   add_subdirectory("python")
 endif()
 
 if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-  message(STATUS "Creating tests for EagleLib")
-  include(CTest)
-  enable_testing()
-  SUBDIRLIST(tests "${CMAKE_CURRENT_LIST_DIR}/tests")
-  foreach(test ${tests})
-    file(GLOB_RECURSE test_srcs "tests/${test}/*.cpp")
-	file(GLOB_RECURSE test_knl "tests/${test}/*.cu")
-	LIST(LENGTH test_knl num_knl)
-	IF(${num_knl} GREATER 0)
-      cuda_add_executable(${test} ${test_srcs} ${test_knl})
-	else()
-      add_executable(${test} ${test_srcs})
-    endif()
-    TARGET_LINK_LIBRARIES(${test} MetaObject EagleLib instantiations ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
-    ADD_DEPENDENCIES(${test} MetaObject EagleLib)
-    set_target_properties(${test} PROPERTIES FOLDER Tests/EagleLib)
-      
-    add_test(${test} ${test})
-    if(MSVC)
-      CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)
-    endif()
-  endforeach()
+    include(CTest)
+    enable_testing()
+    SUBDIRLIST(tests "${CMAKE_CURRENT_LIST_DIR}/tests")
+    foreach(test ${tests})
+        file(GLOB_RECURSE test_srcs "tests/${test}/*.cpp")
+        file(GLOB_RECURSE test_knl "tests/${test}/*.cu")
+        LIST(LENGTH test_knl num_knl)
+        IF(${num_knl} GREATER 0)
+            cuda_add_executable(${test} ${test_srcs} ${test_knl})
+        else()
+            add_executable(${test} ${test_srcs})
+        endif()
+        TARGET_LINK_LIBRARIES(${test} MetaObject Aquila MetaParameters ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+        ADD_DEPENDENCIES(${test} MetaObject Aquila)
+        set_target_properties(${test} PROPERTIES FOLDER Tests/Aquila)
+        add_test(${test} ${test})
+        if(MSVC)
+          CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)
+        endif()
+    endforeach()
 endif()
+message(STATUS
+    "-- Aquila config\n"
+    "  MetaObject\t\t${MetaObject_VERSION}\n"
+    "  MxNet\t\t${MXNET_FOUND}\n"
+    "  Eigen3\t\t${EIGEN_VERSION}\n"
+    "  Tests\t\t${Boost_UNIT_TEST_FRAMEWORK_FOUND}"
+)

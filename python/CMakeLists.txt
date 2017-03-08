@@ -1,4 +1,4 @@
-project(EaglePython)
+project(AquilaPython)
 
 set(src "")
 set(hdr "")
@@ -33,29 +33,31 @@ endif()
 unset(PYTHON_LIBRARY)
 find_package(PythonLibs 2.7 REQUIRED )
 include_directories( ${PYTHON_INCLUDE_DIRS} )
-find_package(Boost REQUIRED COMPONENTS Python)
-include_directories( ${Boost_INCLUDE_DIR} )
-file(GLOB_RECURSE _src "src/*.cpp")
-file(GLOB_RECURSE _hdr "include/*.h" "include/*.hpp")
-list(APPEND src "${_src}")
-list(APPEND hdr "${_hdr}")
+find_package(Boost QUIET COMPONENTS Python)
+if(Boost_FOUND)
+    include_directories( ${Boost_INCLUDE_DIR} )
+    file(GLOB_RECURSE _src "src/*.cpp")
+    file(GLOB_RECURSE _hdr "include/*.h" "include/*.hpp")
+    list(APPEND src "${_src}")
+    list(APPEND hdr "${_hdr}")
 
-# ----------------------- Build library ---------------------
-include_directories(${EagleLib_INCLUDE_DIRS} ${INCLUDE_DIRS})
-add_library(EaglePython SHARED ${hdr} ${src} ${MOC})
-link_directories("${CMAKE_BINARY_DIR}")
-target_link_libraries(EaglePython 
-    ${libs} 
-    ${Boost_LIBRARIES} 
-    EagleLib
-    RuntimeObjectSystem
-    RuntimeCompiler
-    ${CUDA_cublas_LIBRARY}
-    ${CUDA_cupti_LIBRARY}
-    ${CUDA_nppi_LIBRARY}
-    ${CUDA_cufft_LIBRARY}
-    ${CUDA_npps_LIBRARY}
-    ${CUDA_CUDART_LIBRARY}
-    ${PYTHON_LIBRARY})
-message(${includes_})
-set(EaglePython_INCLUDE "${includes_}" CACHE PATH "" FORCE)
+    # ----------------------- Build library ---------------------
+    include_directories(${Aquila_INCLUDE_DIRS} ${INCLUDE_DIRS})
+    add_library(AquilaPython SHARED ${hdr} ${src} ${MOC})
+    link_directories("${CMAKE_BINARY_DIR}")
+    target_link_libraries(AquilaPython
+        ${libs}
+        ${Boost_LIBRARIES}
+        Aquila
+        RuntimeObjectSystem
+        RuntimeCompiler
+        ${CUDA_cublas_LIBRARY}
+        ${CUDA_cupti_LIBRARY}
+        ${CUDA_nppi_LIBRARY}
+        ${CUDA_cufft_LIBRARY}
+        ${CUDA_npps_LIBRARY}
+        ${CUDA_CUDART_LIBRARY}
+        ${PYTHON_LIBRARY}
+    )
+    set(EaglePython_INCLUDE "${includes_}" CACHE PATH "" FORCE)
+endif()

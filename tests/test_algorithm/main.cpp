@@ -1,6 +1,6 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
-#include <EagleLib/Algorithm.h>
+#include <Aquila/Algorithm.h>
 
 #include "MetaObject/Detail/MetaObjectMacros.hpp"
 #include "MetaObject/Parameters/ParameterMacros.hpp"
@@ -10,12 +10,12 @@
 #include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
 #include "MetaObject/Parameters/Buffers/BufferPolicy.hpp"
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE "EagleLibAlgorithm"
+#define BOOST_TEST_MODULE "AquilaAlgorithm"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/thread.hpp>
 #include <iostream>
-using namespace EagleLib;
+using namespace aq;
 
 
 class int_output: public Algorithm

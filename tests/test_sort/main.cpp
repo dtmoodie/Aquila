@@ -10,7 +10,7 @@
 #endif
 
 
-#include <EagleLib/utilities/GPUSorting.hpp>
+#include <Aquila/utilities/GPUSorting.hpp>
 
 BOOST_AUTO_TEST_CASE(gpu_sort_accuracy)
 {

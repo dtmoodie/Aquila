@@ -1,4 +1,4 @@
-#include <EagleLib/Thrust_interop.hpp>
+#include <Aquila/Thrust_interop.hpp>
 #include <opencv2/core.hpp>
 #include <thrust/sequence.h>
 #include <thrust/sort.h>

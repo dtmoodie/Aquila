@@ -1,11 +1,11 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
-#include "EagleLib/Nodes/Node.h"
+#include "Aquila/Nodes/Node.h"
 
 
-#include "EagleLib/Logging.h"
-#include "EagleLib/Nodes/NodeInfo.hpp"
+#include "Aquila/Logging.h"
+#include "Aquila/Nodes/NodeInfo.hpp"
 
 #include "MetaObject/Parameters/ParameterMacros.hpp"
 #include "MetaObject/Parameters/TypedInputParameter.hpp"
@@ -15,13 +15,13 @@
 
 
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE "EagleLibFrameGrabbers"
+#define BOOST_TEST_MODULE "AquilaFrameGrabbers"
 #include <boost/thread.hpp>
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
-using namespace EagleLib;
-using namespace EagleLib::Nodes;
+using namespace aq;
+using namespace aq::Nodes;
 
 struct test_node: public Node
 {
