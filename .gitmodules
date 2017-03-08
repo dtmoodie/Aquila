@@ -1,3 +1,6 @@
 [submodule "dependencies/MetaObject"]
 	path = dependencies/MetaObject
 	url = http://github.com/dtmoodie/MetaObject
+[submodule "dependencies/pplx"]
+	path = dependencies/pplx
+	url = http://github.com/dtmoodie/pplx
