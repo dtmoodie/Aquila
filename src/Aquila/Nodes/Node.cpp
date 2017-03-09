@@ -248,8 +248,6 @@ bool Node::Process()
             return false;
 
         _modified = false;
-        // check if more data exists
-
         {
             mo::scoped_profile profiler(this->GetTreeName().c_str(), &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
             try
@@ -257,9 +255,7 @@ bool Node::Process()
                 if (!ProcessImpl())
                     return false;
             }CATCH_MACRO
-            
         }
-        
 
         _pimpl->last_ts = _pimpl->ts;
         if (_pimpl->sync_input == nullptr && _pimpl->ts != -1)

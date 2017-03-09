@@ -1,16 +1,18 @@
 #include "Aquila/DataStream.hpp"
 #include "Aquila/Nodes/Node.h"
 #include "Aquila/ICoordinateManager.h"
-#include <cereal/types/vector.hpp>
-#include <cereal/types/tuple.hpp>
-#include <cereal/types/utility.hpp>
-#include <cereal/archives/json.hpp>
 #include "Aquila/IO/JsonArchive.hpp"
+#include <Aquila/IO/memory.hpp>
 #include "MetaObject/IO/Serializer.hpp"
 #include "MetaObject/IO/Policy.hpp"
 #include "MetaObject/Parameters/IO/SerializationFunctionRegistry.hpp"
 
-#include <Aquila/IO/memory.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/tuple.hpp>
+#include <cereal/types/utility.hpp>
+#include <cereal/archives/json.hpp>
+
 #include <boost/filesystem.hpp>
 #include <fstream>
 
@@ -38,21 +40,27 @@ void DataStream::save(AR& ar) const
     this->_save_parent<AR>(ar);
 }
 
-IDataStream::Ptr IDataStream::Load(const std::string& config_file, const VariableMap& vm, const VariableMap& sm)
+std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file)
 {
-    rcc::shared_ptr<DataStream> stream_ = rcc::shared_ptr<DataStream>::Create();
+    VariableMap vm, sm;
+    return Load(config_file, vm, sm);
+}
+
+std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, VariableMap& vm, VariableMap& sm)
+{
+    /*rcc::shared_ptr<DataStream> stream_ = rcc::shared_ptr<DataStream>::Create();
     if(!stream_)
     {
     	LOG(error) << "Unable to create data stream";
     	return Ptr();
     }
     stream_->StopThread();
-    stream_->top_level_nodes.clear();
-    rcc::shared_ptr<IDataStream> stream(stream_);
+    stream_->top_level_nodes.clear();*/
+    std::vector<rcc::shared_ptr<IDataStream>> streams; //(stream_);
     if (!boost::filesystem::exists(config_file))
     {
         LOG(warning) << "Stream config file doesn't exist: " << config_file;
-        return Ptr();
+        return {};
     }
     std::string ext = boost::filesystem::extension(config_file);
     if (ext == ".bin")
@@ -60,7 +68,7 @@ IDataStream::Ptr IDataStream::Load(const std::string& config_file, const Variabl
         std::ifstream ifs(config_file, std::ios::binary);
         cereal::BinaryInputArchive ar(ifs);
         //ar(stream);   
-        return stream;
+        return streams;
     }
     else if (ext == ".json")
     {
@@ -68,28 +76,65 @@ IDataStream::Ptr IDataStream::Load(const std::string& config_file, const Variabl
         {
             std::ifstream ifs(config_file, std::ios::binary);
             aq::JSONInputArchive ar(ifs, vm, sm);
-            ar(stream);
+            VariableMap defaultVM, defaultSM;
+            ar(cereal::make_optional_nvp("DefaultVariables", defaultVM, defaultVM));
+            ar(cereal::make_optional_nvp("DefaultStrings", defaultSM, defaultSM));
+            for(const auto& pair : defaultVM)
+            {
+                if(vm.count(pair.first) == 0)
+                    vm[pair.first] = pair.second;
+            }
+            for(const auto& pair : defaultSM)
+            {
+                if(sm.count(pair.first) == 0)
+                    sm[pair.first] = pair.second;
+            }
+            auto dsnvp = cereal::make_optional_nvp("DataStreams", streams);
+            ar(dsnvp);
+            if(!dsnvp.success)
+            {
+                LOG(warning) << "Attempting to load old config file format";
+                rcc::shared_ptr<IDataStream> stream;
+                ar(cereal::make_optional_nvp("value0",stream));
+                if(stream)
+                {
+                    streams.push_back(stream);
+                }
+            }
         }
         catch (cereal::RapidJSONException&e)
         {
             LOG(warning) << "Unable to parse " << config_file << " due to " << e.what();
-            return Ptr();
+            return {};
         }
-        return stream;
+        return streams;
     }
     else if (ext == ".xml")
     {
         std::ifstream ifs(config_file, std::ios::binary);
         cereal::XMLInputArchive ar(ifs);
         //ar(stream);
-        return stream;
+        return streams;
     }
-    return Ptr();
+    return streams;
 }
 
 void IDataStream::Save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream)
 {
-    stream->StopThread();
+    std::vector<rcc::shared_ptr<IDataStream>> streams;
+    streams.push_back(stream);
+    Save(config_file, streams);
+}
+void IDataStream::Save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams)
+{
+    Save(config_file, streams, VariableMap(), VariableMap());
+}
+
+void IDataStream::Save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams,
+                       const VariableMap& vm, const VariableMap& sm)
+{
+    for(auto& stream : streams)
+        stream->StopThread();
     if (boost::filesystem::exists(config_file))
     {
         LOG(info) << "Stream config file exists, overwiting: " << config_file;
@@ -101,7 +146,11 @@ void IDataStream::Save(const std::string& config_file, rcc::shared_ptr<IDataStre
         {
             std::ofstream ofs(config_file, std::ios::binary);
             aq::JSONOutputArchive ar(ofs);
-            ar(stream);
+            if(vm.size())
+                ar(cereal::make_nvp("DefaultVariables", vm));
+            if(sm.size())
+                ar(cereal::make_nvp("DefaultStrings", sm));
+            ar(cereal::make_nvp("DataStreams",streams));
         }
         catch (cereal::RapidJSONException&e)
         {
@@ -109,6 +158,8 @@ void IDataStream::Save(const std::string& config_file, rcc::shared_ptr<IDataStre
         }
     }
 }
+
+
 
 void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<Nodes::Node>& node,
                 std::vector<std::pair<std::string, std::string>>& inputs)

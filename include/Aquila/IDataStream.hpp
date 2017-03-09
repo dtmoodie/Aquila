@@ -30,8 +30,19 @@ namespace aq
         typedef rcc::shared_ptr<IDataStream> Ptr;
         typedef std::map<std::string, std::string> VariableMap;
         static Ptr Create(const std::string& document = "", const std::string& preferred_frame_grabber = "");
-        static Ptr Load(const std::string& config_file, const VariableMap& vm = VariableMap(), const VariableMap& sm = VariableMap());
+        /*!
+         * \brief Loads a data stream configuration file from disk
+         * \param config_file is the configuration file from disk, currently supports json
+         * \param vm variable replacement map, all variables with name==key will be replace with vm[key]
+         * \param sm string replacement map, all strings found in sm with the format ${key} will be replaced with sm[key]
+         * \return vector of data streams loaded from file
+         */
+        static std::vector<Ptr> Load(const std::string& config_file, VariableMap& vm, VariableMap& sm);
+        static std::vector<Ptr> Load(const std::string& config_file);
         static void Save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream);
+        static void Save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams);
+        static void Save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams,
+                         const VariableMap& vm, const VariableMap& sm);
         static bool CanLoadDocument(const std::string& document);
 
 

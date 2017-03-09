@@ -94,7 +94,6 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::Create(const std::string& uri,
     {
         auto fg = rcc::shared_ptr<IFrameGrabber>(valid_constructors[idx[i]]->Construct());
         auto fg_info = dynamic_cast<FrameGrabberInfo*>(valid_constructors[idx[i]]->GetObjectInfo());
-        //fg->InitializeFrameGrabber(this);
         fg->Init(true);
         
         struct thread_load_object

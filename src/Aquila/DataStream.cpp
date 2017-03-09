@@ -592,13 +592,16 @@ IDataStream::Ptr IDataStream::Create(const std::string& document, const std::str
 {
     //auto stream = mo::MetaObjectFactory::Instance()->Create<IDataStream>("DataStream");
     auto stream = DataStream::Create();
-    auto fg = IFrameGrabber::Create(document, preferred_frame_grabber);
-    if(fg)
+    if(document.size() || preferred_frame_grabber.size())
     {
-        stream->AddNode(fg);
-        return stream;
+        auto fg = IFrameGrabber::Create(document, preferred_frame_grabber);
+        if(fg)
+        {
+            stream->AddNode(fg);
+            return stream;
+        }
     }
-    return IDataStream::Ptr();
+    return stream;
 }
 std::unique_ptr<ISingleton>& DataStream::GetSingleton(mo::TypeInfo type)
 {

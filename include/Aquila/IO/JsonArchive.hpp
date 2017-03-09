@@ -1,13 +1,16 @@
 #pragma once
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
+
 #include <Aquila/Nodes/Node.h>
 #include <Aquila/IDataStream.hpp>
+
 #include <MetaObject/Parameters/IO/SerializationFunctionRegistry.hpp>
 #include <MetaObject/Parameters/Buffers/IBuffer.hpp>
 #include <MetaObject/Parameters/Buffers/BufferFactory.hpp>
 
 #include <boost/lexical_cast.hpp>
+
 namespace aq
 {
     struct InputInfo
@@ -16,11 +19,20 @@ namespace aq
         std::string type;
         bool sync = false;
         int buffer_size = -1;
-        template<class AR> void serialize(AR& ar)
+        template<class AR> void load(AR& ar)
         {
             ar(CEREAL_NVP(name));
             ar(CEREAL_OPTIONAL_NVP(sync, false));
             ar(CEREAL_OPTIONAL_NVP(buffer_size, -1));
+            ar(CEREAL_NVP(type));
+        }
+        template<class AR> void save(AR& ar) const
+        {
+            ar(CEREAL_NVP(name));
+            if(sync)
+                ar(CEREAL_NVP(sync));
+            if(buffer_size != -1)
+                ar(CEREAL_NVP(buffer_size));
             ar(CEREAL_NVP(type));
         }
     };
@@ -450,11 +462,11 @@ namespace aq
                     return;
                 }
             }
-            if(search())
-            {
-                val = itsIteratorStack.back().value().GetBool();
-                ++itsIteratorStack.back();
-            }
+            search();
+            if (itsLoadOptional) return;
+            val = itsIteratorStack.back().value().GetBool();
+            ++itsIteratorStack.back();
+
         }
         //! Loads a value from the current node - int64 overload
         void loadValue(int64_t & val) 
@@ -470,7 +482,8 @@ namespace aq
                     return;
                 }
             }
-            search(); 
+            search();
+            if (itsLoadOptional) return;
             val = itsIteratorStack.back().value().GetInt64(); 
             ++itsIteratorStack.back(); 
         }
@@ -488,7 +501,8 @@ namespace aq
                     return;
                 }
             }
-            search(); 
+            search();
+            if (itsLoadOptional) return;
             val = itsIteratorStack.back().value().GetUint64(); 
             ++itsIteratorStack.back(); 
         }
@@ -506,7 +520,8 @@ namespace aq
                     return;
                 }
             }
-            search(); 
+            search();
+            if (itsLoadOptional) return;
             val = static_cast<float>(itsIteratorStack.back().value().GetDouble()); 
             ++itsIteratorStack.back(); 
         }
@@ -524,7 +539,8 @@ namespace aq
                     return;
                 }
             }
-            search(); 
+            search();
+            if (itsLoadOptional) return;
             val = itsIteratorStack.back().value().GetDouble(); 
             ++itsIteratorStack.back(); 
         }
@@ -543,6 +559,7 @@ namespace aq
                 }
             }
             search();
+            if (itsLoadOptional) return;
             val = itsIteratorStack.back().value().GetString();
             
             auto itr1 = string_replace_mapping.find(val);
@@ -553,7 +570,7 @@ namespace aq
             ++itsIteratorStack.back();
         }
         //! Loads a nullptr from the current node
-        void loadValue(std::nullptr_t&) { search(); CEREAL_RAPIDJSON_ASSERT(itsIteratorStack.back().value().IsNull()); ++itsIteratorStack.back(); }
+        void loadValue(std::nullptr_t&) { search(); if (itsLoadOptional) return; CEREAL_RAPIDJSON_ASSERT(itsIteratorStack.back().value().IsNull()); ++itsIteratorStack.back(); }
 
         // Special cases to handle various flavors of long, which tend to conflict with
         // the int32_t or int64_t on various compiler/OS combinations.  MSVC doesn't need any of this.
@@ -860,7 +877,7 @@ namespace cereal
     {
         for (auto& param : parameters)
         {
-            if (param->CheckFlags(mo::Output_e) || param->CheckFlags(mo::Input_e))
+            if (!param->CheckFlags(mo::Control_e))
                 continue;
             auto func1 = mo::SerializationFunctionRegistry::Instance()->GetJsonSerializationFunction(param->GetTypeInfo());
             if (func1)
@@ -897,7 +914,6 @@ namespace cereal
                     if(pos != std::string::npos)
                     {
                         input_name = input_name.substr(0, input_name.find_first_of(' '));
-                        //input_name = input_name.substr(0, pos);
                     }
 
                     if(_input_param->CheckFlags(mo::Buffer_e))
@@ -906,6 +922,7 @@ namespace cereal
                         if(buffer)
                         {
                             info.type = mo::ParameterTypeFlagsToString(buffer->GetBufferType());
+                            info.buffer_size = buffer->GetSize();
                         }
                     }
                     info.name = input_name;
@@ -925,8 +942,10 @@ namespace cereal
         std::string type = obj->GetTypeName();
         const auto& components = obj->GetComponents();
         ar(CEREAL_NVP(type));
-        ar(CEREAL_NVP(parameters));
-        ar(CEREAL_NVP(components));
+        if(parameters.size())
+            ar(CEREAL_NVP(parameters));
+        if(components.size())
+            ar(CEREAL_NVP(components));
     }
 
     inline void save(JSONOutputArchive& ar, rcc::shared_ptr<aq::Nodes::Node> const& node)
@@ -937,17 +956,25 @@ namespace cereal
         const auto& components = node->GetComponents();
         ar(CEREAL_NVP(type));
         ar(CEREAL_NVP(name));
-        ar(CEREAL_NVP(parameters));
-        ar(CEREAL_NVP(components));
+        int control_count = 0;
+        for(auto param : parameters)
+            if(param->CheckFlags(mo::Control_e))
+                ++control_count;
+        if(control_count)
+            ar(CEREAL_NVP(parameters));
+        if(components.size())
+            ar(CEREAL_NVP(components));
         auto inputs = node->GetInputs();
-        ar(CEREAL_NVP(inputs));
+        if(inputs.size())
+            ar(CEREAL_NVP(inputs));
         auto parent_nodes = node->GetParents();
         std::vector<std::string> parents;
         for(auto& node : parent_nodes)
         {
             parents.emplace_back(node->GetTreeName());
         }
-        ar(CEREAL_NVP(parents));
+        if(parents.size())
+            ar(CEREAL_NVP(parents));
     }
 
 
@@ -955,6 +982,7 @@ namespace cereal
     {
         if(stream == nullptr)
         {
+            stream = aq::IDataStream::Create();
         }
         std::vector<rcc::shared_ptr<aq::Nodes::Node>> nodes;
         ar(CEREAL_NVP(nodes));
