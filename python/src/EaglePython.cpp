@@ -1,14 +1,14 @@
-#include <EagleLib/nodes/NodeManager.h>
-#include <EagleLib/nodes/Node.h>
-#include <EagleLib/frame_grabber_base.h>
-#include <EagleLib/DataStreamManager.h>
+#include <Aquila/Nodes/NodeManager.h>
+#include <Aquila/Nodes/Node.h>
+#include <Aquila/Nodes/IFrameGrabber.h>
+#include <Aquila/DataStreamManager.h>
 
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 using namespace std;
-using namespace EagleLib;
+using namespace aq;
 
 
 // --------------------------------------------------------------
@@ -17,7 +17,7 @@ using namespace EagleLib;
 std::vector<std::string> ListConstructableNodes(std::string filter)
 {
     std::vector<std::string> output;
-    auto nodes = EagleLib::NodeManager::getInstance().getConstructableNodes();
+    auto nodes = aq::NodeManager::getInstance().getConstructableNodes();
     for(auto& node : nodes)
     {
         if(filter.size())

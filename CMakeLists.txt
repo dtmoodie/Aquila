@@ -13,6 +13,7 @@ IF(WIN32)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
   ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
   ADD_DEFINITIONS(-D_WIN32_WINNT=0x0601)
+  ADD_DEFINITIONS(-D_ENABLE_ATOMIC_ALIGNMENT_FIX)
 ELSE(WIN32)
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-reorder -Wno-sign-compare -Wl,--no-as-needed -O0")
   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
@@ -47,11 +48,9 @@ find_path(EIGEN_INCLUDE_PATH "Eigen/Core"
 		DOC "The path to Eigen3/Eigen2 headers"
 		CMAKE_FIND_ROOT_PATH_BOTH)
 
-
-if(EIGEN_INCLUDE_PATH)
 include_directories(${EIGEN_INCLUDE_PATH})
 ocv_parse_header("${EIGEN_INCLUDE_PATH}/Eigen/src/Core/util/Macros.h" EIGEN_VERSION_LINES EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
-endif()
+
 
 IF(WIN32)
     SET(CUDA_DEVRT ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cudadevrt.lib)
@@ -380,6 +379,6 @@ message(STATUS
     "-- Aquila config\n"
     "  MetaObject\t\t${MetaObject_VERSION}\n"
     "  MxNet\t\t${MXNET_FOUND}\n"
-    "  Eigen3\t\t${EIGEN_VERSION}\n"
+    "  Eigen3\t\t${EIGEN_MAJOR_VERSION}.${EIGEN_MINOR_VERSION}\n"
     "  Tests\t\t${Boost_UNIT_TEST_FRAMEWORK_FOUND}"
 )

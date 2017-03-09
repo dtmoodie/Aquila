@@ -59,5 +59,5 @@ if(Boost_FOUND)
         ${CUDA_CUDART_LIBRARY}
         ${PYTHON_LIBRARY}
     )
-    set(EaglePython_INCLUDE "${includes_}" CACHE PATH "" FORCE)
+    set(AquilaPython_INCLUDE "${includes_}" CACHE PATH "" FORCE)
 endif()
