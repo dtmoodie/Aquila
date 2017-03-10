@@ -4,7 +4,7 @@ CMAKE_POLICY(SET CMP0020 NEW)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_DEBUG_POSTFIX d)
 include(cmake/utilities.cmake)
-
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 IF(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_WIN32)
@@ -42,14 +42,14 @@ link_directories(${_cuda_lib_dir})
 find_package(Qt5 COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
-find_path(EIGEN_INCLUDE_PATH "Eigen/Core"
-		PATHS /usr/local /opt /usr $ENV{EIGEN_ROOT}/include ENV ProgramFiles ENV ProgramW6432
-		PATH_SUFFIXES include/eigen3 include/eigen2 Eigen/include/eigen3 Eigen/include/eigen2
-		DOC "The path to Eigen3/Eigen2 headers"
-		CMAKE_FIND_ROOT_PATH_BOTH)
+#find_path(EIGEN_INCLUDE_PATH "Eigen/Core"
+#		PATHS /usr/local /opt /usr $ENV{EIGEN_ROOT}/include ENV ProgramFiles ENV ProgramW6432
+#		PATH_SUFFIXES include/eigen3 include/eigen2 Eigen/include/eigen3 Eigen/include/eigen2
+#		DOC "The path to Eigen3/Eigen2 headers"
+#		CMAKE_FIND_ROOT_PATH_BOTH)
 
-include_directories(${EIGEN_INCLUDE_PATH})
-ocv_parse_header("${EIGEN_INCLUDE_PATH}/Eigen/src/Core/util/Macros.h" EIGEN_VERSION_LINES EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
+#include_directories(${EIGEN_INCLUDE_PATH})
+#ocv_parse_header("${EIGEN_INCLUDE_PATH}/Eigen/src/Core/util/Macros.h" EIGEN_VERSION_LINES EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
 
 
 IF(WIN32)
