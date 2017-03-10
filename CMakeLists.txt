@@ -42,15 +42,8 @@ link_directories(${_cuda_lib_dir})
 find_package(Qt5 COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
-#find_path(EIGEN_INCLUDE_PATH "Eigen/Core"
-#		PATHS /usr/local /opt /usr $ENV{EIGEN_ROOT}/include ENV ProgramFiles ENV ProgramW6432
-#		PATH_SUFFIXES include/eigen3 include/eigen2 Eigen/include/eigen3 Eigen/include/eigen2
-#		DOC "The path to Eigen3/Eigen2 headers"
-#		CMAKE_FIND_ROOT_PATH_BOTH)
-
-#include_directories(${EIGEN_INCLUDE_PATH})
-#ocv_parse_header("${EIGEN_INCLUDE_PATH}/Eigen/src/Core/util/Macros.h" EIGEN_VERSION_LINES EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
-
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
 
 IF(WIN32)
     SET(CUDA_DEVRT ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cudadevrt.lib)
@@ -167,6 +160,7 @@ set(Aquila_INCLUDE_DIRECTORIES
     "${Qt5Gui_INCLUDE_DIRS};"
     "${Qt5Widgets_INCLUDE_DIRS};"
     "${Qt5Network_INCLUDE_DIRS};"
+	"${EIGEN3_INCLUDE_DIR};"
     "${PPLX_INCLUDE_DIRS}" CACHE PATH "" FORCE
 )
 
