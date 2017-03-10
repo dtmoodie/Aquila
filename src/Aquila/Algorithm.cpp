@@ -151,7 +151,37 @@ Algorithm::InputState Algorithm::CheckInputs()
         }else
         {
             LOG(trace) << "No new data to be processed";
-            // TODO TEST
+            for(auto input : inputs)
+            {
+                if(!input->GetInput(ts))
+                {
+                    if(input->CheckFlags(Optional_e))
+                    {
+                        // If the input isn't set and it's optional then this is ok
+                        if(input->GetInputParam())
+                        {
+                            // Input is optional and set, but couldn't get the right timestamp, error
+                            LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at timestamp " << ts;
+                            //return false;
+                        }else
+                        {
+                            LOG(trace) << "Optional input not set \"" << input->GetTreeName() << "\"";
+                        }
+                    }else
+                    {
+                        // Input is not optional
+                        if (input->GetInputParam())
+                        {
+                            LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at timestamp " << ts;
+                            return NoneValid;
+                        }else
+                        {
+                            LOG(debug) << "Input not set \"" << input->GetTreeName() << "\"";
+                            return NoneValid;
+                        }
+                    }
+                }
+            }
             return NotUpdated;
         }
     }else if(_pimpl->_sync_method == SyncNewest && _pimpl->sync_input)

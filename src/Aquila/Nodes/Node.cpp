@@ -241,10 +241,10 @@ bool Node::Process()
     if(_enabled == true && _modified == true && _pimpl_node->disable_due_to_errors == false)
     { // scope of the lock
         boost::recursive_mutex::scoped_lock lock(*_mtx);
-        auto state = CheckInputs();
-        if(state == Algorithm::NoneValid)
+        auto input_state = CheckInputs();
+        if(input_state == Algorithm::NoneValid)
             return false;
-        if(state == Algorithm::NotUpdated && _modified == false)
+        if(input_state == Algorithm::NotUpdated && _modified == false)
             return false;
 
         _modified = false;
@@ -604,7 +604,7 @@ void Node::PostSerializeInit()
 
 void Node::Serialize(ISimpleSerializer *pSerializer)
 {
-    LOG(trace) << " Serializing " << GetTreeName();
+    LOG(info) << "RCC serializing " << GetTreeName();
     Algorithm::Serialize(pSerializer);
     SERIALIZE(_children);
     SERIALIZE(_parents);
