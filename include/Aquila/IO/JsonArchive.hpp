@@ -353,6 +353,7 @@ namespace aq
             }
 
             itsNextName = nullptr;
+            return true;
         }
 
     public:
@@ -561,11 +562,13 @@ namespace aq
             search();
             if (itsLoadOptional) return;
             val = itsIteratorStack.back().value().GetString();
-            
-            auto itr1 = string_replace_mapping.find(val);
-            if(itr1 != string_replace_mapping.end())
+            for(auto& itr : string_replace_mapping)
             {
-                val = itr1->second;
+                auto pos = val.find(itr.first);
+                if(pos != std::string::npos)
+                {
+                    val = val.substr(0,pos) + itr.second + val.substr(pos + itr.first.size());
+                }
             }
             ++itsIteratorStack.back();
         }
