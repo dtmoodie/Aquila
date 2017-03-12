@@ -155,7 +155,7 @@ MO_REGISTER_OBJECT(WindowCallbackHandler);
 void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int flags)
 {
     cv::Point pt(x, y);
-    double aspect_ratio = cv::getWindowProperty(this->win_name, cv::WND_PROP_ASPECT_RATIO);
+    //double aspect_ratio = cv::getWindowProperty(this->win_name, cv::WND_PROP_ASPECT_RATIO);
 
     //pt.y *= aspect_ratio;
     switch (event)
