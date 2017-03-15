@@ -87,7 +87,7 @@ bool Algorithm::Process()
             ++_pimpl->ts;
         if(_pimpl->_sync_method == SyncEvery && _pimpl->sync_input)
         {
-            if(_pimpl->ts == _pimpl->_ts_processing_queue.front())
+            if(_pimpl->_ts_processing_queue.size() && _pimpl->ts == _pimpl->_ts_processing_queue.front())
             {
                 _pimpl->_ts_processing_queue.pop();
             }
