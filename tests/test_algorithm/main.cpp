@@ -233,5 +233,5 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
 
 BOOST_AUTO_TEST_CASE(cleanup)
 {
-    
+    mo::Allocator::CleanupThreadSpecificAllocator();
 }
