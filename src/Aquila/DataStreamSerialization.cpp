@@ -17,7 +17,7 @@
 #include <fstream>
 
 using namespace aq;
-template<typename AR> 
+template<typename AR>
 void DataStream::load(AR& ar)
 {
     this->_load_parameters<AR>(ar, mo::_counter_<_DS_N_ - 1>());
@@ -51,8 +51,8 @@ std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, 
     /*rcc::shared_ptr<DataStream> stream_ = rcc::shared_ptr<DataStream>::Create();
     if(!stream_)
     {
-    	LOG(error) << "Unable to create data stream";
-    	return Ptr();
+        LOG(error) << "Unable to create data stream";
+        return Ptr();
     }
     stream_->StopThread();
     stream_->top_level_nodes.clear();*/
@@ -67,7 +67,7 @@ std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, 
     {
         std::ifstream ifs(config_file, std::ios::binary);
         cereal::BinaryInputArchive ar(ifs);
-        //ar(stream);   
+        //ar(stream);
         return streams;
     }
     else if (ext == ".json")
@@ -86,8 +86,8 @@ std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, 
             }
             for(const auto& pair : defaultSM)
             {
-                if(sm.count(pair.first) == 0)
-                    sm[pair.first] = pair.second;
+                if(sm.count("${" + pair.first + "}") == 0)
+                    sm["${" + pair.first + "}"] = pair.second;
             }
             auto dsnvp = cereal::make_optional_nvp("DataStreams", streams);
             ar(dsnvp);
@@ -147,14 +147,23 @@ void IDataStream::Save(const std::string& config_file, std::vector<rcc::shared_p
             std::ofstream ofs(config_file, std::ios::binary);
             aq::JSONOutputArchive ar(ofs);
             if(vm.size())
+            {
                 ar(cereal::make_nvp("DefaultVariables", vm));
+            }
             if(sm.size())
+            {
+                std::map<std::string, std::string> write_sm;
+                for(const auto& pair : sm)
+                {
+                    write_sm[pair.first.substr(2, pair.first.size() - 3)] = pair.second;
+                }
                 ar(cereal::make_nvp("DefaultStrings", sm));
+            }
             ar(cereal::make_nvp("DataStreams",streams));
         }
         catch (cereal::RapidJSONException&e)
         {
-            LOG(warning) << "Unable to save " << config_file << " due to " << e.what();   
+            LOG(warning) << "Unable to save " << config_file << " due to " << e.what();
         }
     }
 }
@@ -198,15 +207,15 @@ void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<Nodes::Node>& node
         ar(CEREAL_NVP(inputs));
     }catch(...)
     {
-    
+
     }
-    
+
     ar.finishNode();
 }
 
 bool DataStream::LoadStream(const std::string& filename)
 {
-    
+
 
     return false;
 }
@@ -297,7 +306,7 @@ bool DataStream::SaveStream(const std::string& filename)
     {
         LOG(warning) << "Overwriting existing stream config file: " << filename;
     }
-    
+
     std::string ext = boost::filesystem::extension(filename);
     if (ext == ".bin")
     {
