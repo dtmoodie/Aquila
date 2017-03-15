@@ -1,7 +1,7 @@
+#include <Aquila/Nodes/NodeManager.h>
 #include <Aquila/Nodes/Node.h>
-#include <Aquila/Nodes/IFrameGrabber.hpp>
-#include <Aquila/Nodes/NodeFactory.h>
-#include <Aquila/DataStream.hpp>
+#include <Aquila/Nodes/IFrameGrabber.h>
+#include <Aquila/DataStreamManager.h>
 
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
