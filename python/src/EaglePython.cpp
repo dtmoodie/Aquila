@@ -1,7 +1,7 @@
-#include <Aquila/Nodes/NodeManager.h>
+#include <Aquila/Nodes/NodeFactory.h>
 #include <Aquila/Nodes/Node.h>
-#include <Aquila/Nodes/IFrameGrabber.h>
-#include <Aquila/DataStreamManager.h>
+#include <Aquila/Nodes/IFrameGrabber.hpp>
+#include <Aquila/IDataStream.hpp>
 
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
@@ -107,8 +107,8 @@ BOOST_PYTHON_MODULE(EaglePython)
 
     //boost::python::class_<Parameters::Parameter, boost::noncopyable>("Parameter", boost::python::no_init)
       //  .def("GetName", &Parameters::Parameter::GetName);
-        
-    
+
+
     //boost::python::register_ptr_to_python<rcc::shared_ptr<EagleLib::DataStream>>();
 
     boost::python::register_ptr_to_python<rcc::shared_ptr<aq::Nodes::Node>>();

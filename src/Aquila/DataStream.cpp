@@ -71,7 +71,7 @@ catch (...)                                                                 \
 
 
 
- 
+
 
 
 // **********************************************************************
@@ -124,7 +124,7 @@ void DataStream::parameter_added(mo::IMetaObject* obj, mo::IParameter* param)
 
 void DataStream::run_continuously(bool value)
 {
-    
+
 }
 
 void DataStream::InitCustom(bool firstInit)
@@ -271,7 +271,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
         return false;
     }
     // Pick the frame grabber with highest priority
-    
+
     auto idx = sort_index_descending(frame_grabber_priorities);
     if(prefered_loader.size())
     {
@@ -284,7 +284,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
             }
         }
     }
-    
+
     for(int i = 0; i < idx.size(); ++i)
     {
         auto fg = rcc::shared_ptr<IFrameGrabber>(valid_frame_grabbers[idx[i]]->Construct());
@@ -314,7 +314,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
             {
                 LOG(debug) << e.what();
             }
-            
+
             delete obj;
         });
         if(connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->LoadTimeout())))
@@ -330,7 +330,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
                 LOG(warning) << "Unable to load " << file_to_load << " with " << fg_info->GetObjectName();
             }
         }
-        else // timeout        
+        else // timeout
         {
             LOG(warning) << "Timeout while loading " << file_to_load << " with " << fg_info->GetObjectName() << " after waiting " << fg_info->LoadTimeout() << " ms";
             connection_threads.push_back(connection_thread);
@@ -502,7 +502,7 @@ void DataStream::RemoveNode(Nodes::Node* node)
         std::lock_guard<std::mutex> lock(nodes_mtx);
         std::remove(top_level_nodes.begin(), top_level_nodes.end(), node);
     }
-    
+
     RemoveChildNode(node);
 }
 
@@ -517,7 +517,7 @@ void DataStream::RemoveNode(rcc::shared_ptr<Nodes::Node> node)
 
 Nodes::Node* DataStream::GetNode(const std::string& nodeName)
 {
-    
+
     std::lock_guard<std::mutex> lock(nodes_mtx);
     for(auto& node : top_level_nodes)
     {
@@ -528,9 +528,9 @@ Nodes::Node* DataStream::GetNode(const std::string& nodeName)
             {
                 return found_node;
             }
-        }       
+        }
     }
-    
+
     return nullptr;
 }
 
@@ -574,7 +574,6 @@ int DataStream::process()
     if (dirty_flag/* || run_continuously == true*/)
     {
         dirty_flag = false;
-        //mo::scoped_profile profile("Processing nodes", &rmt_hash, &rmt_cuda_hash, &_context.GetStream());
         mo::scoped_profile profile_nodes("Processing nodes", &_rmt_hash, &_rmt_cuda_hash, &GetContext()->GetStream());
         for (auto& node : top_level_nodes)
         {
@@ -582,7 +581,7 @@ int DataStream::process()
         }
         if (dirty_flag)
         {
-            return 10;
+            return 1;
         }
     }
     return 10;

@@ -347,7 +347,7 @@ if(WITH_PYTHON)
   add_subdirectory("python")
 endif()
 
-if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
+if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
     include(CTest)
     enable_testing()
     SUBDIRLIST(tests "${CMAKE_CURRENT_LIST_DIR}/tests")

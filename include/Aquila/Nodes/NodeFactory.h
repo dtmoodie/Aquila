@@ -2,7 +2,7 @@
 #include "Aquila/Detail/Export.hpp"
 #include <shared_ptr.hpp>
 #include <IObject.h>
-
+#include "MetaObject/Detail/TypeInfo.h"
 
 #include <opencv2/core/persistence.hpp>
 
@@ -31,14 +31,14 @@ namespace aq
 
         rcc::shared_ptr<Nodes::Node> AddNode(const std::string& nodeName);
 
-        // Adds a node by name to the data stream or the parent node.  
+        // Adds a node by name to the data stream or the parent node.
         std::vector<rcc::shared_ptr<Nodes::Node>> AddNode(const std::string& nodeName, IDataStream* parentStream);
         std::vector<rcc::shared_ptr<Nodes::Node>> AddNode(const std::string& nodeName, Nodes::Node* parentNode);
 
 
-        
 
-        
+
+
 
         void PrintNodeTree(std::string* ret = nullptr);
         void SaveTree(const std::string& fileName);
@@ -50,8 +50,8 @@ namespace aq
         bool RemoveNode(ObjectId oid);
 
         void UpdateTreeName(Nodes::Node* node, const std::string& prevTreeName);
-        
-        
+
+
         void GetSiblingNodes(const std::string& sourceNode, std::vector<Nodes::Node*>& output);
 
         void GetParentNodes(const std::string& sourceNode, std::vector<Nodes::Node*>& output);
@@ -63,7 +63,7 @@ namespace aq
         std::vector<std::string> GetConstructableNodes();
         std::vector<std::string> GetParametersOfType(std::function<bool(mo::TypeInfo)> selector);
 
-        
+
     private:
         void printTreeHelper(std::stringstream& tree, int level, Nodes::Node* node);
         void onNodeRecompile(Nodes::Node* node);

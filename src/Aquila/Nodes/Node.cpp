@@ -142,8 +142,29 @@ namespace aq
         std::vector<long long> timestamps;
 #endif
         };
-    }    
+    }
 }
+
+std::vector<std::string> Node::ListConstructableNodes(const std::string& filter)
+{
+    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(s_interfaceID);
+    std::vector<std::string> output;
+    for(IObjectConstructor* constructor : constructors)
+    {
+        if(filter.size())
+        {
+            if(std::string(constructor->GetName()).find(filter) != std::string::npos)
+            {
+                output.emplace_back(constructor->GetName());
+            }
+        }else
+        {
+            output.emplace_back(constructor->GetName());
+        }
+    }
+    return output;
+}
+
 
 Node::Node()
 {
@@ -218,7 +239,7 @@ Algorithm::InputState Node::CheckInputs()
         LOG_EVERY_N(trace, 10) << "_modified == false for " << GetTreeName();
         return Algorithm::NoneValid;
     }
-    
+
     return Algorithm::CheckInputs();
 }
 
@@ -240,16 +261,33 @@ bool Node::Process()
 {
     if(_enabled == true && _modified == true && _pimpl_node->disable_due_to_errors == false)
     { // scope of the lock
-        boost::recursive_mutex::scoped_lock lock(*_mtx);
-        auto input_state = CheckInputs();
-        if(input_state == Algorithm::NoneValid)
-            return false;
-        if(input_state == Algorithm::NotUpdated && _modified == false)
-            return false;
+        mo::scoped_profile profiler(this->GetTreeName().c_str(), &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
+        boost::recursive_mutex::scoped_try_lock lock(*_mtx);
+        boost::posix_time::ptime start = boost::posix_time::microsec_clock::universal_time();
+        if(!lock)
+        {
+            while((boost::posix_time::microsec_clock::universal_time() - start).total_milliseconds() < 2 && !lock)
+            {
+                lock.lock();
+            }
+            if(!lock)
+            {
+                return false;
+            }
+        }
 
+        //boost::recursive_mutex::scoped_lock lock(*_mtx);
+        {
+            mo::scoped_profile profiler("CheckInputs", &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
+            auto input_state = CheckInputs();
+            if(input_state == Algorithm::NoneValid)
+                return false;
+            if(input_state == Algorithm::NotUpdated && _modified == false)
+                return false;
+        }
         _modified = false;
         {
-            mo::scoped_profile profiler(this->GetTreeName().c_str(), &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
+            mo::scoped_profile profiler("ProcessImpl", &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
             try
             {
                 if (!ProcessImpl())
@@ -269,7 +307,7 @@ bool Node::Process()
             }
         }
     } // end lock
-    
+
     for(rcc::shared_ptr<Node>& child : _children)
     {
         if(child->_ctx && this->_ctx)
@@ -363,13 +401,13 @@ std::vector<Node::Ptr>   Node::GetChildren()
 
 void Node::SwapChildren(int idx1, int idx2)
 {
-    
+
     std::iter_swap(_children.begin() + idx1, _children.begin() + idx2);
 }
 
 void Node::SwapChildren(const std::string& name1, const std::string& name2)
 {
-    
+
     auto itr1 = _children.begin();
     auto itr2 = _children.begin();
     for(; itr1 != _children.begin(); ++itr1)
@@ -388,7 +426,7 @@ void Node::SwapChildren(const std::string& name1, const std::string& name2)
 
 void Node::SwapChildren(Node::Ptr child1, Node::Ptr child2)
 {
-    
+
     auto itr1 = std::find(_children.begin(),_children.end(), child1);
     if(itr1 == _children.end())
         return;
@@ -426,7 +464,7 @@ Node* Node::GetNodeInScope(const std::string& name)
 void Node::GetNodesInScope(std::vector<Node*> &nodes)
 {
     // Perhaps not thread safe?
-    
+
     // First travel to the root node
     boost::recursive_mutex::scoped_lock lock(*_mtx);
     if(nodes.size() == 0)
@@ -528,7 +566,7 @@ IDataStream* Node::GetDataStream()
     {
         _data_stream = IDataStream::Create();
         _data_stream->AddNode(this);
-    }    
+    }
     return _data_stream.Get();
 }
 std::shared_ptr<mo::IVariableManager>     Node::GetVariableManager()

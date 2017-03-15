@@ -148,8 +148,9 @@ Algorithm::InputState Algorithm::CheckInputs()
         {
             ts = _pimpl->_ts_processing_queue.front();
             _pimpl->ts = ts;
-        }else
+        }else if(!_pimpl->sync_input->CheckFlags(mo::Buffer_e))
         {
+            ts = _pimpl->sync_input->GetTimestamp();
             LOG(trace) << "No new data to be processed";
             for(auto input : inputs)
             {
@@ -230,10 +231,10 @@ Algorithm::InputState Algorithm::CheckInputs()
 
 void Algorithm::Clock(int line_number)
 {
-    
+
 }
 
-long long Algorithm::GetTimestamp() 
+long long Algorithm::GetTimestamp()
 {
     return _pimpl->ts;
 }
@@ -258,7 +259,7 @@ void Algorithm::SetSyncMethod(SyncMethod _method)
         _pimpl->_ts_processing_queue = std::queue<long long>();
     }
     _pimpl->_sync_method = _method;
-    
+
 }
 void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
 {
@@ -281,7 +282,8 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
             }
 #endif
 #endif
-            _pimpl->_ts_processing_queue.push(ts);
+            if(param->CheckFlags(mo::Buffer_e))
+                _pimpl->_ts_processing_queue.push(ts);
         }
     }else if (_pimpl->_sync_method == SyncNewest)
     {

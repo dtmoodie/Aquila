@@ -87,7 +87,7 @@ namespace Nodes
         typedef rcc::shared_ptr<Node> Ptr;
         typedef rcc::weak_ptr<Node>   WeakPtr;
         typedef std::vector<Ptr> VecPtr;
-
+        static std::vector<std::string> ListConstructableNodes(const std::string& filter = "");
         Node();
         virtual bool                    Process();
 

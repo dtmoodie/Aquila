@@ -2,6 +2,7 @@
 
 #include <MetaObject/Logging/Log.hpp>
 #include <MetaObject/Thread/InterThread.hpp>
+#include <MetaObject/Thread/Cuda.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/microsec_time_clock.hpp>
@@ -11,6 +12,7 @@ using namespace aq::cuda;
 
 void aq::cuda::ICallback::cb_func_async_event_loop(int status, void* user_data)
 {
+    mo::SetCudaThread();
     auto cb = static_cast<ICallbackEventLoop*>(user_data);
     mo::ThreadSpecificQueue::Push([cb]()
     {
@@ -40,6 +42,7 @@ void aq::cuda::ICallback::cb_func_async(int status, void* user_data)
 }
 void aq::cuda::ICallback::cb_func(int status, void* user_data)
 {
+    mo::SetCudaThread();
     auto cb = static_cast<ICallback*>(user_data);
     cb->run();
     delete cb;
@@ -52,10 +55,10 @@ ICallback::~ICallback()
 scoped_stream_timer::scoped_stream_timer(cv::cuda::Stream& stream, const std::string& scope_name) : _stream(stream), _scope_name(scope_name)
 {
     start_time = new boost::posix_time::ptime();
-    aq::cuda::enqueue_callback<boost::posix_time::ptime*, void>(start_time, 
+    aq::cuda::enqueue_callback<boost::posix_time::ptime*, void>(start_time,
         [](boost::posix_time::ptime* start)
     {
-        *start = boost::posix_time::microsec_clock::universal_time(); 
+        *start = boost::posix_time::microsec_clock::universal_time();
     }, stream);
 }
 struct scoped_event_timer_data
@@ -99,15 +102,15 @@ scoped_event_stream_timer::~scoped_event_stream_timer()
     data.startEvent = startEvent;
     data.endEvent = endEvent;
     data._scope_name = _scope_name;
-    aq::cuda::enqueue_callback_async<scoped_event_data, void>(data, 
+    aq::cuda::enqueue_callback_async<scoped_event_data, void>(data,
         [](scoped_event_data data)->void
     {
         LOG(trace) << "[" << data._scope_name << "] executed in " << cv::cuda::Event::elapsedTime((*data.startEvent.get()), (*data.endEvent.get())) << " ms";
     }, _stream);
 }
 
-LambdaCallback<void>::LambdaCallback(const std::function<void()>& f): 
-    func(f) 
+LambdaCallback<void>::LambdaCallback(const std::function<void()>& f):
+    func(f)
 {
 
 }
