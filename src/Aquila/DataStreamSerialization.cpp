@@ -89,6 +89,22 @@ std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, 
                 if(sm.count("${" + pair.first + "}") == 0)
                     sm["${" + pair.first + "}"] = pair.second;
             }
+            if(sm.size())
+            {
+                std::stringstream ss;
+                for(const auto& pair : sm)
+                    ss << "\n" << pair.first << " = " << pair.second;
+                LOG(debug) << "Used string replacements: " << ss.str();
+            }
+
+            if(vm.size())
+            {
+                std::stringstream ss;
+                for(const auto& pair : vm)
+                    ss << "\n" <<  pair.first << " = " << pair.second;
+                LOG(debug) << "Used variable replacements: " << ss.str();
+            }
+
             auto dsnvp = cereal::make_optional_nvp("DataStreams", streams);
             ar(dsnvp);
             if(!dsnvp.success)
@@ -157,7 +173,7 @@ void IDataStream::Save(const std::string& config_file, std::vector<rcc::shared_p
                 {
                     write_sm[pair.first.substr(2, pair.first.size() - 3)] = pair.second;
                 }
-                ar(cereal::make_nvp("DefaultStrings", sm));
+                ar(cereal::make_nvp("DefaultStrings", write_sm));
             }
             ar(cereal::make_nvp("DataStreams",streams));
         }
