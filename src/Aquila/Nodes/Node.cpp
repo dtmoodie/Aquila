@@ -287,7 +287,6 @@ bool Node::Process()
         }
         _modified = false;
         {
-            mo::scoped_profile profiler("ProcessImpl", &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
             try
             {
                 if (!ProcessImpl())
