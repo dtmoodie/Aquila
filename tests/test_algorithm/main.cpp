@@ -9,6 +9,7 @@
 #include "MetaObject/Detail/IMetaObjectImpl.hpp"
 #include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
 #include "MetaObject/Parameters/Buffers/BufferPolicy.hpp"
+#include "MetaObject/Detail/Allocator.hpp"
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaAlgorithm"
 
