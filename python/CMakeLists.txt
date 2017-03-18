@@ -60,5 +60,4 @@ if(Boost_PYTHON_FOUND AND PythonLibs_FOUND)
         ${PYTHON_LIBRARY}
     )
     set(AquilaPython_INCLUDE "${includes_}" CACHE PATH "" FORCE)
-  endif()
 endif()
