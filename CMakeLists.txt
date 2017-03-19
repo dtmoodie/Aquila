@@ -5,6 +5,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_DEBUG_POSTFIX d)
 include(cmake/utilities.cmake)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 IF(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_WIN32)
@@ -30,8 +31,19 @@ set(RCC_PERMODULE_INTERFACE_SOURCE
 include_directories(${RCC_INCLUDE_DIRS})
 ADD_SUBDIRECTORY("dependencies/pplx")
 
-find_package(OpenCV 3.0 QUIET COMPONENTS  core imgproc highgui cudaimgproc cudawarping cudafeatures2d cudaoptflow cudacodec cudabgsegm)
-set_target_properties(${OpenCV_LIBS} PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
+find_package(OpenCV 3.0 QUIET COMPONENTS  
+	core 
+	imgproc 
+	highgui 
+	cudaimgproc 
+	cudawarping 
+	cudafeatures2d 
+	cudaoptflow 
+	cudacodec 
+	cudabgsegm
+)
+
+find_package(Gstreamer QUIET)
 
 find_package(CUDA REQUIRED)
   set(CUDA_ARCH_NAME "Manual")
@@ -52,15 +64,12 @@ ELSE(WIN32)
     SET(CUDA_DEVRT ${CUDA_TOOLKIT_ROOT_DIR}/lib64/cudadevrt)
     SET(CUDA_LIB_DIR ${CUDA_TOOLKIT_ROOT_DIR}/lib64/)
 ENDIF(WIN32)
+
 SET(LINK_LIBS "")
-ADD_DEFINITIONS(-DCVAPI_EXPORTS)
 ADD_DEFINITIONS(-DOPENCV_FOUND)
 ADD_DEFINITIONS(-DAquila_EXPORTS)
 ADD_DEFINITIONS(-DRMT_DLL)
 ADD_DEFINITIONS(-DBUILD_DIR=${CMAKE_BINARY_DIR})
-ADD_DEFINITIONS(-DCVAPI_EXPORTS)
-ADD_DEFINITIONS(-DOPENCV_FOUND)
-ADD_DEFINITIONS(-DAquila_EXPORTS)
 IF(${NV_TOOLS_EXT_FOUND})
   ADD_DEFINITIONS(-DUSE_NVTX)
   list(APPEND LINK_LIBS ${NV_TOOLS_EXT_LIB})
@@ -385,6 +394,7 @@ if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
         add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
         if(MSVC)
           CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/Aquila/${test}.vcxproj.user @ONLY)
+		  CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)
         endif()
     endforeach()
 endif()

@@ -18,15 +18,55 @@
 #include "Aquila/Logging.h"
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaNodes"
-
+#include <boost/test/unit_test_suite.hpp>
+#include <boost/test/parameterized_test.hpp>
+#include <type_traits>
 #include <boost/thread.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
+//#include "../unit_test.hpp"
 
 using namespace aq;
 using namespace aq::Nodes;
 
+#if BOOST_VERSION > 105800
+#define MY_BOOST_TEST_ADD_ARGS __FILE__, __LINE__,
+#define MY_BOOST_TEST_DEFAULT_DEC_COLLECTOR ,boost::unit_test::decorator::collector::instance()
+#else
+#define MY_BOOST_TEST_ADD_ARGS
+#define MY_BOOST_TEST_DEFAULT_DEC_COLLECTOR
+#endif
+
+#define BOOST_FIXTURE_PARAM_TEST_CASE( test_name, F, mbegin, mend )     \
+struct test_name : public F {                                           \
+   typedef ::std::remove_const< ::std::remove_reference< decltype(*(mbegin)) >::type>::type param_t; \
+   void test_method(const param_t &);                                   \
+};                                                                      \
+                                                                        \
+void BOOST_AUTO_TC_INVOKER( test_name )(const test_name::param_t &param) \
+{                                                                       \
+    test_name t;                                                        \
+    t.test_method(param);                                               \
+}                                                                       \
+                                                                        \
+BOOST_AUTO_TU_REGISTRAR( test_name )(                                   \
+    boost::unit_test::make_test_case(                                   \
+       &BOOST_AUTO_TC_INVOKER( test_name ), #test_name,                 \
+       MY_BOOST_TEST_ADD_ARGS                                           \
+       (mbegin), (mend))                                                \
+       MY_BOOST_TEST_DEFAULT_DEC_COLLECTOR);                            \
+                                                                        \
+void test_name::test_method(const param_t &param)                       \
+
+
+
+
+#define BOOST_AUTO_PARAM_TEST_CASE( test_name, mbegin, mend )           \
+   BOOST_FIXTURE_PARAM_TEST_CASE( test_name,                            \
+                                  BOOST_AUTO_TEST_CASE_FIXTURE,         \
+                                  mbegin, mend)
+								  
 struct node_a: public Nodes::Node
 {
     MO_BEGIN(node_a)
@@ -36,7 +76,7 @@ struct node_a: public Nodes::Node
     bool ProcessImpl()
     {
         ++ts;
-        out_a_param.UpdateData(ts, ts);
+        out_a_param.UpdateData(ts, mo::time_t(mo::ms * ts));
         _modified = true;
         ++iterations;
         return true;
@@ -54,7 +94,7 @@ struct node_b: public Nodes::Node
     bool ProcessImpl()
     {
         ++ts;
-        out_b_param.UpdateData(ts, ts);
+        out_b_param.UpdateData(ts, mo::time_t(mo::ms * ts));
         _modified = true;
         ++iterations;
         return true;
@@ -62,6 +102,7 @@ struct node_b: public Nodes::Node
     int ts = 0;
     int iterations = 0;
 };
+
 
 struct node_c: public Nodes::Node
 {
@@ -86,9 +127,25 @@ struct node_c: public Nodes::Node
     int iterations = 0;
 };
 
+struct node_d : public Nodes::Node 
+{
+	MO_BEGIN(node_d)
+		INPUT(int, in_d, nullptr)
+		OUTPUT(int, out_d, 0)
+	MO_END;
+	bool ProcessImpl()
+	{
+		out_d_param.UpdateData(*in_d, *in_d_param.GetTimestamp());
+		++iterations;
+		return true;
+	}
+	int iterations = 0;
+};
+
 MO_REGISTER_CLASS(node_a)
 MO_REGISTER_CLASS(node_b)
 MO_REGISTER_CLASS(node_c)
+MO_REGISTER_CLASS(node_d)
 
 struct GlobalFixture
 {
@@ -141,13 +198,7 @@ struct GlobalFixture
 BOOST_GLOBAL_FIXTURE(GlobalFixture);
 
 
-/*     a
- *     | \
- *     |  \
- *     |  b
- *     | /
- *     c
-*/
+
 struct BranchingFixture
 {
     BranchingFixture()
@@ -167,7 +218,13 @@ struct BranchingFixture
 };
 
 BOOST_FIXTURE_TEST_SUITE(suite, BranchingFixture)
-
+/*     a
+*     | \
+*     |  \
+*     |  b
+*     | /
+*     c
+*/
 BOOST_AUTO_TEST_CASE(branching_direct)
 {
     a->AddChild(b);
@@ -185,31 +242,126 @@ BOOST_AUTO_TEST_CASE(branching_direct)
     }
 }
 
+
+using namespace mo;
+static const mo::ParameterTypeFlags buffer_types[] = { CircularBuffer_e , Map_e, StreamBuffer_e, BlockingStreamBuffer_e, NNStreamBuffer_e };
+
+
+BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, buffer_types, buffer_types + 5)
+{
+	a->AddChild(b);
+	std::cout << "====== Buffer type " << mo::ParameterTypeFlagsToString(param) << " ==========\n";
+	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+	for (int i = 0; i < 100; ++i)
+	{
+		a->Process();
+		BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(b->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(a->out_a, i + 1);
+		BOOST_REQUIRE_EQUAL(b->out_b, i + 1);
+		BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
+	}
+}
+
+/*    a     b
+*     |    /
+*     |   /
+*     |  /
+*     | /
+*     c
+*/
 BOOST_AUTO_TEST_CASE(merging_direct)
 {
-    BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a"));
-    BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
-    for(int i = 0; i < 100; ++i)
-    {
-        a->Process();
-        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(b->iterations, i);
-        BOOST_REQUIRE_EQUAL(c->iterations, i);
-        b->Process();
-        BOOST_REQUIRE_EQUAL(b->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
-    }
+	b->SetDataStream(ds.Get());
+	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a"));
+	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
+	for (int i = 0; i < 100; ++i)
+	{
+		a->Process();
+		BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(b->iterations, i);
+		BOOST_REQUIRE_EQUAL(c->iterations, i);
+		b->Process();
+		BOOST_REQUIRE_EQUAL(b->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
+	}
+}
 
+BOOST_AUTO_TEST_CASE(merging_direct_desynced)
+{
+	b->SetDataStream(ds.Get());
+	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | mo::CircularBuffer_e)));
+	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
+	int b_iters = 0;
+	for (int i = 0; i < 100; ++i)
+	{
+		a->Process();
+		BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(b->iterations, b_iters);
+		BOOST_REQUIRE_EQUAL(c->iterations, b_iters);
+		if (i % 2 == 0)
+		{
+			b->Process();
+			++b_iters;
+			BOOST_REQUIRE_EQUAL(b->iterations, b_iters);
+			BOOST_REQUIRE_EQUAL(c->iterations, b_iters);
+			BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
+		}
+	}
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+struct DiamondFixture
+{
+	DiamondFixture()
+	{
+		ds = ds.Create();
+		ds->StopThread();
+		a = a.Create();
+		d1 = d1.Create();
+		d2 = d1.Create();
+		c = c.Create();
+		a->SetDataStream(ds.Get());
+		BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
+		BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
+		BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));
+		BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
+	}
+
+	rcc::shared_ptr<node_a> a;
+	rcc::shared_ptr<node_d> d1;
+	rcc::shared_ptr<node_d> d2;
+	rcc::shared_ptr<node_c> c;
+	rcc::shared_ptr<aq::IDataStream> ds;
+};
+
+BOOST_FIXTURE_TEST_SUITE(DiamondSuite, DiamondFixture)
+
+BOOST_AUTO_TEST_CASE(diamond_direct)
+{
+	for (int i = 0; i < 100; ++i)
+	{
+		BOOST_REQUIRE_EQUAL(a->iterations, i);
+		BOOST_REQUIRE_EQUAL(d1->iterations, i);
+		BOOST_REQUIRE_EQUAL(d2->iterations, i);
+		BOOST_REQUIRE_EQUAL(c->iterations, i);
+		a->Process();
+		BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+		BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
 
-
-
-
-
+/*
 BOOST_AUTO_TEST_CASE(diamond)
 {
     auto a = rcc::shared_ptr<node_a>::Create();
@@ -317,4 +469,4 @@ BOOST_AUTO_TEST_CASE(threaded_parent)
     auto b = rcc::shared_ptr<node_b>::Create();
     auto c = rcc::shared_ptr<node_c>::Create();
 }
-
+*/
