@@ -9,7 +9,7 @@
 #include "MetaObject/Parameters/UI/Qt/TParameterProxy.hpp"
 #include "MetaObject/Parameters/Buffers/CircularBuffer.hpp"
 #include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
-#include "MetaObject/Parameters/Buffers/map.hpp"
+#include "MetaObject/Parameters/Buffers/Map.hpp"
 #include "MetaObject/Parameters/Buffers/NNStreamBuffer.hpp"
 #include "MetaObject/Parameters/IO/CerealPolicy.hpp"
 //#include "MetaObject/Parameters/IO/TextPolicy.hpp"

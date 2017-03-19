@@ -53,7 +53,7 @@ class synced_input: public Algorithm
 public:
     bool ProcessImpl()
     {
-        BOOST_REQUIRE_EQUAL(timestamp, input_param.GetTimestamp());
+        BOOST_REQUIRE_EQUAL(timestamp, (*input_param.GetTimestamp()).value());
         return true;
     }
     MO_BEGIN(synced_input);

@@ -294,7 +294,7 @@ bool Node::Process()
             }CATCH_MACRO
         }
 
-        _pimpl->last_ts = _pimpl->ts;
+        /*_pimpl->last_ts = _pimpl->ts;
         if (_pimpl->sync_input == nullptr && _pimpl->ts != -1)
             ++_pimpl->ts;
         if (_pimpl->_sync_method == SyncEvery && _pimpl->sync_input)
@@ -304,7 +304,7 @@ bool Node::Process()
             {
                 _pimpl->_ts_processing_queue.pop();
             }
-        }
+        }*/
     } // end lock
 
     for(rcc::shared_ptr<Node>& child : _children)

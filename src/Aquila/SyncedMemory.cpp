@@ -11,7 +11,7 @@
 #include "MetaObject/Parameters/UI/Qt/TParameterProxy.hpp"
 #include "MetaObject/Parameters/Buffers/CircularBuffer.hpp"
 #include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
-#include "MetaObject/Parameters/Buffers/map.hpp"
+#include "MetaObject/Parameters/Buffers/Map.hpp"
 #include "MetaObject/Parameters/Buffers/NNStreamBuffer.hpp"
 #include "MetaObject/Parameters/IO/CerealPolicy.hpp"
 
@@ -431,8 +431,8 @@ TypedInputParameterPtr<SyncedMemory>::TypedInputParameterPtr(const std::string& 
                                                              const SyncedMemory** userVar_, Context* ctx) :
         userVar(userVar_),
         ITypedInputParameter<SyncedMemory>(name, ctx),
-        IParameter(name, Input_e, -1, ctx),
-        ITypedParameter<SyncedMemory>(name, Input_e, -1, ctx)
+        IParameter(name, Input_e, {}, ctx),
+        ITypedParameter<SyncedMemory>(name, Input_e, {}, ctx)
 {
 }
 
@@ -497,14 +497,15 @@ void TypedInputParameterPtr<SyncedMemory>::onInputUpdate(Context* ctx, IParamete
     }
 }
 
-bool TypedInputParameterPtr<SyncedMemory>::GetInput(long long ts)
+
+bool TypedInputParameterPtr<SyncedMemory>::GetInput(boost::optional<mo::time_t> ts, size_t* fn)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
     if(userVar)
     {
         if(this->shared_input)
         {
-            *userVar = this->shared_input->GetDataPtr(ts, this->_ctx);
+            *userVar = this->shared_input->GetDataPtr(ts, this->_ctx, fn);
             if(*userVar != nullptr)
             {
                 return !(*userVar)->empty();
@@ -512,7 +513,32 @@ bool TypedInputParameterPtr<SyncedMemory>::GetInput(long long ts)
         }
         if(this->input)
         {
-            *userVar = this->input->GetDataPtr(ts, this->_ctx);
+            *userVar = this->input->GetDataPtr(ts, this->_ctx, fn);
+            if(*userVar != nullptr)
+            {
+                return !(*userVar)->empty();
+            }
+        }
+    }
+    return false;
+}
+
+bool TypedInputParameterPtr<SyncedMemory>::GetInput(size_t fn, boost::optional<mo::time_t>* ts)
+{
+    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    if(userVar)
+    {
+        if(this->shared_input)
+        {
+            *userVar = this->shared_input->GetDataPtr(fn, this->_ctx, ts);
+            if(*userVar != nullptr)
+            {
+                return !(*userVar)->empty();
+            }
+        }
+        if(this->input)
+        {
+            *userVar = this->input->GetDataPtr(fn, this->_ctx, ts);
             if(*userVar != nullptr)
             {
                 return !(*userVar)->empty();
@@ -532,4 +558,4 @@ void TypedInputParameterPtr<SyncedMemory>::onInputDelete(IParameter const* param
     }
 }
 
-TEMPLATE_EXTERN template class AQUILA_EXPORTS TypedInputParameterPtr<SyncedMemory>;
+TEMPLATE_EXTERN template class TypedInputParameterPtr<SyncedMemory>;

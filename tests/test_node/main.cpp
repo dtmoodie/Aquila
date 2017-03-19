@@ -54,7 +54,7 @@ struct test_output_node : public Node
 	bool ProcessImpl()
 	{
 		++timestamp;
-		value_param.UpdateData(timestamp * 10, timestamp, _ctx);
+        value_param.UpdateData(timestamp * 10, mo::ms * timestamp, _ctx);
 		++process_count;
 		_modified = true;
 		return true;
@@ -71,7 +71,8 @@ struct test_input_node : public Node
 	MO_END;
 	bool ProcessImpl()
 	{
-		BOOST_REQUIRE_EQUAL((*value), value_param.GetTimestamp() * 10);
+        auto ts = (*value_param.GetTimestamp()).value();
+        BOOST_REQUIRE_EQUAL((*value), ts * 10);
 		++process_count;
 		return true;
 	}
@@ -87,16 +88,16 @@ struct test_multi_input_node : public Node
 	bool ProcessImpl()
 	{
 		BOOST_REQUIRE_EQUAL((*value1), (*value2));
-		BOOST_REQUIRE_EQUAL((*value1) * 10, value1_param.GetTimestamp());
-		BOOST_REQUIRE_EQUAL(value1_param.GetTimestamp(), value2_param.GetTimestamp());
+        BOOST_REQUIRE_EQUAL((*value1) * 10, (*value1_param.GetTimestamp()).value());
+        BOOST_REQUIRE_EQUAL(value1_param.GetTimestamp(), value2_param.GetTimestamp());
 		return true;
 	}
 };
 
-MO_REGISTER_CLASS(test_node);
-MO_REGISTER_CLASS(test_output_node);
-MO_REGISTER_CLASS(test_input_node);
-MO_REGISTER_CLASS(test_multi_input_node);
+MO_REGISTER_CLASS(test_node)
+MO_REGISTER_CLASS(test_output_node)
+MO_REGISTER_CLASS(test_input_node)
+MO_REGISTER_CLASS(test_multi_input_node)
 
 BOOST_AUTO_TEST_CASE(test_node_reflection)
 {
@@ -112,11 +113,9 @@ BOOST_AUTO_TEST_CASE(test_node_reflection)
 
 BOOST_AUTO_TEST_CASE(test_node_single_input_output_direct)
 {
-
 	auto ds = aq::IDataStream::Create();
 	auto output_node = test_output_node::Create();
-	auto input_node = test_input_node::Create();
-	
+	auto input_node = test_input_node::Create();	
 
 	BOOST_REQUIRE(input_node->ConnectInput(output_node, "value", "value"));
 	output_node->SetDataStream(ds.Get());
@@ -135,7 +134,7 @@ BOOST_AUTO_TEST_CASE(test_node_single_input_output_buffered)
 	auto input_node = test_input_node::Create();
 	output_node->SetDataStream(ds.Get());
 	input_node->SetDataStream(ds.Get());
-	static const mo::ParameterTypeFlags test_cases[] = { mo::cbuffer_e, mo::cmap_e, mo::map_e, mo::StreamBuffer_e, mo::BlockingStreamBuffer_e, mo::NNStreamBuffer_e };
+    static const mo::ParameterTypeFlags test_cases[] = { mo::CircularBuffer_e, mo::ConstMap_e, mo::Map_e, mo::StreamBuffer_e, mo::BlockingStreamBuffer_e, mo::NNStreamBuffer_e };
 	for (int i = 0; i < sizeof(test_cases); ++i)
 	{
 		std::cout << "Buffer type: " << mo::ParameterTypeFlagsToString(test_cases[i]) << std::endl;
@@ -151,5 +150,4 @@ BOOST_AUTO_TEST_CASE(test_node_single_input_output_buffered)
 		BOOST_REQUIRE_EQUAL(output_node->process_count, 10);
 		BOOST_REQUIRE_EQUAL(input_node->process_count, 10);
 	}
-	
 }

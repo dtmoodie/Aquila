@@ -35,7 +35,7 @@ namespace aq
         virtual void       SetEnabled(bool value);
         bool               IsEnabled() const;
 
-        virtual long long  GetTimestamp();
+        virtual boost::optional<mo::time_t> GetTimestamp();
 
         void               SetSyncInput(const std::string& name);
         void               SetSyncMethod(SyncMethod method);

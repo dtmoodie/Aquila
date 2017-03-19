@@ -6,14 +6,12 @@ namespace aq
 {
     struct Algorithm::impl
     {
-        long long ts = -1;    
-        long long last_ts = -1;
+        boost::optional<mo::time_t> ts;
+        boost::optional<mo::time_t> last_ts;
         mo::InputParameter* sync_input = nullptr;
         Algorithm::SyncMethod _sync_method;
-        std::queue<long long> _ts_processing_queue;
+        std::queue<mo::time_t> _ts_processing_queue;
+        std::queue<size_t> _fn_processing_queue;
         boost::recursive_mutex _mtx;
-#ifdef _DEBUG
-        std::vector<long long> timestamps;
-#endif
     };
 }

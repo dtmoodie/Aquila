@@ -19,11 +19,18 @@ namespace aq
         std::string type;
         bool sync = false;
         int buffer_size = -1;
+        boost::optional<mo::time_t> buffer_time;
+
         template<class AR> void load(AR& ar)
         {
             ar(CEREAL_NVP(name));
             ar(CEREAL_OPTIONAL_NVP(sync, false));
             ar(CEREAL_OPTIONAL_NVP(buffer_size, -1));
+            mo::time_t buf_time;
+            auto bt = cereal::make_optional_nvp("buffer_time", buf_time, buf_time);
+            ar(bt);
+            if(bt.success)
+                buffer_time = bt.value;
             ar(CEREAL_NVP(type));
         }
         template<class AR> void save(AR& ar) const
@@ -1049,7 +1056,9 @@ namespace cereal
                                                   mo::IParameter* p = input->GetInputParam();
                                                   if(mo::Buffer::IBuffer* b = dynamic_cast<mo::Buffer::IBuffer*>(p))
                                                   {
-                                                      b->SetSize(itr->second.buffer_size);
+                                                      b->SetFrameBufferSize(itr->second.buffer_size);
+                                                      if(itr->second.buffer_time)
+                                                        b->SetTimestampSize(*itr->second.buffer_time);
                                                   }
                                               }
                                               if(itr->second.sync)

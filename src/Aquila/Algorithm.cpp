@@ -82,7 +82,7 @@ bool Algorithm::Process()
     }
     if(ProcessImpl())
     {
-        _pimpl->last_ts = _pimpl->ts;
+        /*_pimpl->last_ts = _pimpl->ts;
         if(_pimpl->sync_input == nullptr && _pimpl->ts != -1)
             ++_pimpl->ts;
         if(_pimpl->_sync_method == SyncEvery && _pimpl->sync_input)
@@ -91,7 +91,7 @@ bool Algorithm::Process()
             {
                 _pimpl->_ts_processing_queue.pop();
             }
-        }
+        }*/
         return true;
     }
     return false;
@@ -124,109 +124,94 @@ Algorithm::InputState Algorithm::CheckInputs()
     if(inputs.size() == 0)
         return AllValid;
 
-    long long ts = -1;
-    if(_pimpl->sync_input == nullptr)
+    boost::optional<mo::time_t> ts;
+    boost::optional<size_t> fn;
+    // First check to see if we have a sync input, if we do then use its synchronizatio method
+    // TODO: Handle processing queue
+    if(_pimpl->sync_input)
     {
+        ts = _pimpl->sync_input->GetTimestamp();
+        if(!ts)
+            fn = _pimpl->sync_input->GetFrameNumber();
+        if(_pimpl->_sync_method == SyncEvery)
+        {
+
+        }
+    }else
+    {
+        // Check all inputs to see if any are timestamped.
         for(auto input : inputs)
         {
-            long long ts_in = input->GetTimestamp();
-            if(ts_in != -1)
+            auto in_ts = input->GetTimestamp();
+            if(!in_ts)
+                continue;
+            if(in_ts)
             {
-                if(ts == -1)
-                    ts = ts_in;
-                else
-                    ts = std::min(ts, ts_in);
+                if(!ts)
+                {
+                    ts = in_ts;
+                    continue;
+                }else
+                {
+                    ts = std::min<mo::time_t>(*ts, *in_ts);
+                }
             }
         }
-        if(ts != -1)
-            LOG(trace) << "Timestamp updated to " << _pimpl->ts;
-    }
-    //ts = _pimpl->ts;
-    if(_pimpl->_sync_method == SyncEvery && _pimpl->sync_input)
-    {
-        if(_pimpl->_ts_processing_queue.size() != 0)
+        if(!ts)
         {
-            ts = _pimpl->_ts_processing_queue.front();
-            _pimpl->ts = ts;
-        }else if(!_pimpl->sync_input->CheckFlags(mo::Buffer_e))
-        {
-            ts = _pimpl->sync_input->GetTimestamp();
-            LOG(trace) << "No new data to be processed";
-            for(auto input : inputs)
+            fn = inputs[0]->GetFrameNumber();
+            for(int i = 1; i < inputs.size(); ++i)
             {
-                if(!input->GetInput(ts))
+                fn = std::min<size_t>(*fn, inputs[i]->GetFrameNumber());
+            }
+        }
+    }
+
+    // Synchronizing on timestamp
+
+    if(ts)
+    {
+        size_t fn;
+        for(auto input : inputs)
+        {
+            if(!input->GetInput(ts, &fn))
+            {
+                if(input->CheckFlags(Optional_e))
                 {
-                    if(input->CheckFlags(Optional_e))
+                    // If the input isn't set and it's optional then this is ok
+                    if(input->GetInputParam())
                     {
-                        // If the input isn't set and it's optional then this is ok
-                        if(input->GetInputParam())
-                        {
-                            // Input is optional and set, but couldn't get the right timestamp, error
-                            LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at timestamp " << ts;
-                            //return false;
-                        }else
-                        {
-                            LOG(trace) << "Optional input not set \"" << input->GetTreeName() << "\"";
-                        }
+                        // Input is optional and set, but couldn't get the right timestamp, error
+                        LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at timestamp " << ts;
                     }else
                     {
-                        // Input is not optional
-                        if (input->GetInputParam())
-                        {
-                            LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at timestamp " << ts;
-                            return NoneValid;
-                        }else
-                        {
-                            LOG(debug) << "Input not set \"" << input->GetTreeName() << "\"";
-                            return NoneValid;
-                        }
+                        LOG(trace) << "Optional input not set \"" << input->GetTreeName() << "\"";
+                    }
+                }else
+                {
+                    // Input is not optional
+                    if (auto param = input->GetInputParam())
+                    {
+                        LOG(trace) << "Failed to get input for \"" << input->GetTreeName() << "\" (" << param->GetTreeName() << ") at timestamp " << ts;
+                        return NoneValid;
+                    }else
+                    {
+                        LOG(trace) << "Input not set \"" << input->GetTreeName() << "\"";
+                        return NoneValid;
                     }
                 }
             }
+        }
+        if(_pimpl->ts == ts)
             return NotUpdated;
-        }
-    }else if(_pimpl->_sync_method == SyncNewest && _pimpl->sync_input)
-    {
-        ts = _pimpl->ts;
-        if(ts == _pimpl->last_ts)
-            return NoneValid;
+        _pimpl->ts = ts;
+        return AllValid;
     }
+    if(fn)
+    {
 
-    for(auto input : inputs)
-    {
-        if(!input->GetInput(ts))
-        {
-            if(input->CheckFlags(Optional_e))
-            {
-                // If the input isn't set and it's optional then this is ok
-                if(input->GetInputParam())
-                {
-                    // Input is optional and set, but couldn't get the right timestamp, error
-                    LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at timestamp " << ts;
-                    //return false;
-                }else
-                {
-                    LOG(trace) << "Optional input not set \"" << input->GetTreeName() << "\"";
-                }
-            }else
-            {
-                // Input is not optional
-                if (input->GetInputParam())
-                {
-                    LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at timestamp " << ts;
-                    return NoneValid;
-                }else
-                {
-                    LOG(debug) << "Input not set \"" << input->GetTreeName() << "\"";
-                    return NoneValid;
-                }
-            }
-        }
     }
-    _pimpl->ts = ts;
-    if(ts == _pimpl->last_ts)
-        return NotUpdated;
-    return AllValid;
+    return NoneValid;
 }
 
 void Algorithm::Clock(int line_number)
@@ -234,7 +219,7 @@ void Algorithm::Clock(int line_number)
 
 }
 
-long long Algorithm::GetTimestamp()
+boost::optional<mo::time_t> Algorithm::GetTimestamp()
 {
     return _pimpl->ts;
 }
@@ -256,7 +241,7 @@ void Algorithm::SetSyncMethod(SyncMethod _method)
     if(_pimpl->_sync_method == SyncEvery && _method != SyncEvery)
     {
         //std::swap(_pimpl->_ts_processing_queue, std::queue<long long>());
-        _pimpl->_ts_processing_queue = std::queue<long long>();
+        _pimpl->_ts_processing_queue = std::queue<mo::time_t>();
     }
     _pimpl->_sync_method = _method;
 
@@ -268,7 +253,7 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
     {
         if(param == _pimpl->sync_input)
         {
-            long long ts = param->GetTimestamp();
+            auto ts = param->GetTimestamp();
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -282,8 +267,8 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
             }
 #endif
 #endif
-            if(param->CheckFlags(mo::Buffer_e))
-                _pimpl->_ts_processing_queue.push(ts);
+            if(ts && param->CheckFlags(mo::Buffer_e))
+                _pimpl->_ts_processing_queue.push(*ts);
         }
     }else if (_pimpl->_sync_method == SyncNewest)
     {
