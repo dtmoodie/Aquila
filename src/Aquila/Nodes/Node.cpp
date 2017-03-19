@@ -234,11 +234,11 @@ Algorithm::InputState Node::CheckInputs()
 {
     if(_pimpl->_sync_method == Algorithm::SyncEvery && _pimpl->_ts_processing_queue.size() != 0)
         _modified = true;
-    if(_modified == false)
+    /*if(_modified == false)
     {
         LOG_EVERY_N(trace, 10) << "_modified == false for " << GetTreeName();
         return Algorithm::NoneValid;
-    }
+    }*/
 
     return Algorithm::CheckInputs();
 }
@@ -246,7 +246,7 @@ Algorithm::InputState Node::CheckInputs()
 void Node::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
 {
     Algorithm::onParameterUpdate(ctx, param);
-    if(param->CheckFlags(mo::Control_e) || param->CheckFlags(mo::Input_e))
+    if(param->CheckFlags(mo::Control_e))
     {
         _modified = true;
     }
@@ -259,8 +259,8 @@ void Node::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
 
 bool Node::Process()
 {
-    if(_enabled == true && _modified == true && _pimpl_node->disable_due_to_errors == false)
-    { // scope of the lock
+    if(_enabled == true && _pimpl_node->disable_due_to_errors == false)
+    { 
         mo::scoped_profile profiler(this->GetTreeName().c_str(), &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
         boost::recursive_mutex::scoped_try_lock lock(*_mtx);
         boost::posix_time::ptime start = boost::posix_time::microsec_clock::universal_time();
@@ -276,7 +276,6 @@ bool Node::Process()
             }
         }
 
-        //boost::recursive_mutex::scoped_lock lock(*_mtx);
         {
             mo::scoped_profile profiler("CheckInputs", &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
             auto input_state = CheckInputs();
@@ -286,26 +285,14 @@ bool Node::Process()
                 return false;
         }
         _modified = false;
+        
+        try
         {
-            try
-            {
-                if (!ProcessImpl())
-                    return false;
-            }CATCH_MACRO
-        }
-
-        /*_pimpl->last_ts = _pimpl->ts;
-        if (_pimpl->sync_input == nullptr && _pimpl->ts != -1)
-            ++_pimpl->ts;
-        if (_pimpl->_sync_method == SyncEvery && _pimpl->sync_input)
-        {
-            boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
-            if (_pimpl->ts == _pimpl->_ts_processing_queue.front())
-            {
-                _pimpl->_ts_processing_queue.pop();
-            }
-        }*/
-    } // end lock
+            if (!ProcessImpl())
+                return false;
+        }CATCH_MACRO
+        
+    } 
 
     for(rcc::shared_ptr<Node>& child : _children)
     {

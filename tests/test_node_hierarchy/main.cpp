@@ -75,13 +75,11 @@ struct node_a: public Nodes::Node
 
     bool ProcessImpl()
     {
-        ++ts;
-        out_a_param.UpdateData(ts, mo::time_t(mo::ms * ts));
+        out_a_param.UpdateData(iterations, mo::time_t(mo::ms * iterations));
         _modified = true;
         ++iterations;
         return true;
     }
-    int ts = 0;
     int iterations = 0;
 };
 
@@ -93,13 +91,11 @@ struct node_b: public Nodes::Node
 
     bool ProcessImpl()
     {
-        ++ts;
-        out_b_param.UpdateData(ts, mo::time_t(mo::ms * ts));
+        out_b_param.UpdateData(iterations, mo::time_t(mo::ms * iterations));
         _modified = true;
         ++iterations;
         return true;
     }
-    int ts = 0;
     int iterations = 0;
 };
 
@@ -216,6 +212,8 @@ struct BranchingFixture
     rcc::shared_ptr<node_c> c;
     rcc::shared_ptr<aq::IDataStream> ds;
 };
+using namespace mo;
+static const mo::ParameterTypeFlags buffer_types[] = { CircularBuffer_e , Map_e, StreamBuffer_e, BlockingStreamBuffer_e, NNStreamBuffer_e };
 
 BOOST_FIXTURE_TEST_SUITE(suite, BranchingFixture)
 /*     a
@@ -236,16 +234,11 @@ BOOST_AUTO_TEST_CASE(branching_direct)
         BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
         BOOST_REQUIRE_EQUAL(b->iterations, i + 1);
         BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(a->out_a, i + 1);
-        BOOST_REQUIRE_EQUAL(b->out_b, i + 1);
+        BOOST_REQUIRE_EQUAL(a->out_a, i);
+        BOOST_REQUIRE_EQUAL(b->out_b, i);
         BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
     }
 }
-
-
-using namespace mo;
-static const mo::ParameterTypeFlags buffer_types[] = { CircularBuffer_e , Map_e, StreamBuffer_e, BlockingStreamBuffer_e, NNStreamBuffer_e };
-
 
 BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, buffer_types, buffer_types + 5)
 {
@@ -253,14 +246,14 @@ BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, buffer_types, buffer_types + 5)
 	std::cout << "====== Buffer type " << mo::ParameterTypeFlagsToString(param) << " ==========\n";
 	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
 	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
-	for (int i = 0; i < 100; ++i)
+	for (int i = 0; i < 1000; ++i)
 	{
 		a->Process();
 		BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
 		BOOST_REQUIRE_EQUAL(b->iterations, i + 1);
 		BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
-		BOOST_REQUIRE_EQUAL(a->out_a, i + 1);
-		BOOST_REQUIRE_EQUAL(b->out_b, i + 1);
+		BOOST_REQUIRE_EQUAL(a->out_a, i);
+		BOOST_REQUIRE_EQUAL(b->out_b, i);
 		BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
 	}
 }
@@ -290,30 +283,58 @@ BOOST_AUTO_TEST_CASE(merging_direct)
 	}
 }
 
-BOOST_AUTO_TEST_CASE(merging_direct_desynced)
-{
-	b->SetDataStream(ds.Get());
-	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | mo::CircularBuffer_e)));
-	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
-	int b_iters = 0;
-	for (int i = 0; i < 100; ++i)
-	{
-		a->Process();
-		BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
-		BOOST_REQUIRE_EQUAL(b->iterations, b_iters);
-		BOOST_REQUIRE_EQUAL(c->iterations, b_iters);
-		if (i % 2 == 0)
-		{
-			b->Process();
-			++b_iters;
-			BOOST_REQUIRE_EQUAL(b->iterations, b_iters);
-			BOOST_REQUIRE_EQUAL(c->iterations, b_iters);
-			BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
-		}
-	}
-}
+
 
 BOOST_AUTO_TEST_SUITE_END()
+
+struct node_e: public Nodes::Node
+{
+    MO_DERIVE(node_e, Nodes::Node)
+        OUTPUT(int, out, 0)
+    MO_END;
+    bool ProcessImpl()
+    {
+        out_param.UpdateData(iterations*2, mo::time_t(mo::ms * iterations*2));
+        _modified = true;
+        ++iterations;
+        return true;
+    }
+    int iterations = 0;
+};
+MO_REGISTER_CLASS(node_e)
+
+BOOST_AUTO_TEST_CASE(merging_direct_desynced)
+{
+    rcc::shared_ptr<node_a> a;
+    rcc::shared_ptr<node_e> e;
+    rcc::shared_ptr<node_c> c;
+    rcc::shared_ptr<aq::IDataStream> ds;
+    ds = ds.Create();
+    ds->StopThread();
+    a = a.Create();
+    e = e.Create();
+    c = c.Create();
+    a->SetDataStream(ds.Get());
+
+    e->SetDataStream(ds.Get());
+    BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | mo::CircularBuffer_e)));
+    BOOST_REQUIRE(c->ConnectInput(e, "out", "in_b"));
+    int e_iters = 0;
+    for (int i = 0; i < 100; ++i)
+    {
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(e->iterations, e_iters);
+        BOOST_REQUIRE_EQUAL(c->iterations, e_iters);
+        if (i % 2 == 0)
+        {
+            e->Process();
+            ++e_iters;
+            BOOST_REQUIRE_EQUAL(e->iterations, e_iters);
+            BOOST_REQUIRE_EQUAL(c->iterations, e_iters);
+        }
+    }
+}
 
 struct DiamondFixture
 {
@@ -326,10 +347,6 @@ struct DiamondFixture
 		d2 = d1.Create();
 		c = c.Create();
 		a->SetDataStream(ds.Get());
-		BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
-		BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
-		BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));
-		BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
 	}
 
 	rcc::shared_ptr<node_a> a;
@@ -343,6 +360,10 @@ BOOST_FIXTURE_TEST_SUITE(DiamondSuite, DiamondFixture)
 
 BOOST_AUTO_TEST_CASE(diamond_direct)
 {
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
 	for (int i = 0; i < 100; ++i)
 	{
 		BOOST_REQUIRE_EQUAL(a->iterations, i);
@@ -358,115 +379,88 @@ BOOST_AUTO_TEST_CASE(diamond_direct)
 	}
 }
 
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_top, buffer_types, buffer_types + 5)
+{
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
+    for (int i = 0; i < 100; ++i)
+    {
+        BOOST_REQUIRE_EQUAL(a->iterations, i);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i);
+        BOOST_REQUIRE_EQUAL(c->iterations, i);
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
+    }
+}
+
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, buffer_types, buffer_types + 5)
+{
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    for (int i = 0; i < 100; ++i)
+    {
+        BOOST_REQUIRE_EQUAL(a->iterations, i);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i);
+        BOOST_REQUIRE_EQUAL(c->iterations, i);
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
+    }
+}
+
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_left, buffer_types, buffer_types + 5)
+{
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
+    for (int i = 0; i < 100; ++i)
+    {
+        BOOST_REQUIRE_EQUAL(a->iterations, i);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i);
+        BOOST_REQUIRE_EQUAL(c->iterations, i);
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
+    }
+}
+
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_right, buffer_types, buffer_types + 5)
+{
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));    
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    for (int i = 0; i < 100; ++i)
+    {
+        BOOST_REQUIRE_EQUAL(a->iterations, i);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i);
+        BOOST_REQUIRE_EQUAL(c->iterations, i);
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
+    }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
-
-
-/*
-BOOST_AUTO_TEST_CASE(diamond)
-{
-    auto a = rcc::shared_ptr<node_a>::Create();
-    auto b1 = rcc::shared_ptr<node_b>::Create();
-    auto b2 = rcc::shared_ptr<node_b>::Create();
-    auto c = rcc::shared_ptr<node_c>::Create();
-    // B1 and B2 don't have inputs, thus for them to be a child of A, we need to manually add them
-    a->AddChild(b1);
-    a->AddChild(b2);
-    // C is added as a child of B1 and B2 here
-    BOOST_REQUIRE(c->ConnectInput(b1, "in_a", "out_b"));
-    BOOST_REQUIRE(c->ConnectInput(b2, "in_b", "out_b"));
-    // Calling A, calls B1, then B2.  When B1 Process() is called, it tries to call C->Process()
-    // Since C's inputs aren't ready yet, it is not called, but when B2 Process is called, C->Process() does get
-    // called since B2 finished prepping the inputs for C.
-
-    a->Process();
-    BOOST_REQUIRE_EQUAL(c->sum, 2);
-}
-
-BOOST_AUTO_TEST_CASE(threaded_child_sync_every)
-{
-    auto a = rcc::shared_ptr<node_a>::Create();
-    auto b = rcc::shared_ptr<node_b>::Create();
-    auto c = rcc::shared_ptr<node_c>::Create();
-
-    auto thread = aq::Nodes::ThreadedNode::Create();
-    mo::Context ctx;
-    a->SetContext(&ctx);
-    b->SetContext(&ctx);
-    thread->AddChild(c);
-    BOOST_REQUIRE(c->ConnectInput(b, "in_b", "out_b"));
-    BOOST_REQUIRE(c->ConnectInput(a, "in_a", "out_a"));
-
-    c->SetSyncInput("in_b");
-    int sum = 0;
-
-    a->Process();
-    b->Process();
-    sum += a->out_a;
-    sum += b->out_b;
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
-    BOOST_REQUIRE_EQUAL(c->sum, 2);
-    
-    for(int i = 0; i < 100; ++i)
-    {
-        a->Process();
-        b->Process();
-        sum += a->out_a;
-        sum += b->out_b;
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
-    }
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
-    thread->StopThread();
-    if(c->sum != sum)
-    {
-        c->check_timestamps();
-    }
-    std::cout << "Dropped " << 1.0 -  double(c->sum) / (double)sum << " % of data\n";
-    BOOST_REQUIRE_EQUAL(c->sum, sum);
-}
-
-BOOST_AUTO_TEST_CASE(threaded_child_sync_newest)
-{
-    auto a = rcc::shared_ptr<node_a>::Create();
-    auto b = rcc::shared_ptr<node_b>::Create();
-    auto c = rcc::shared_ptr<node_c>::Create();
-    auto thread = rcc::shared_ptr<aq::Nodes::ThreadedNode>::Create();
-    mo::Context ctx;
-    a->SetContext(&ctx);
-    b->SetContext(&ctx);
-    thread->AddChild(c);
-    BOOST_REQUIRE(c->ConnectInput(b, "in_b", "out_b"));
-    BOOST_REQUIRE(c->ConnectInput(a, "in_a", "out_a"));
-
-    c->SetSyncInput("in_b");
-    c->SetSyncMethod(Algorithm::SyncNewest);
-    int sum = 0;
-
-    a->Process();
-    b->Process();
-    sum += a->out_a;
-    sum += b->out_b;
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
-    BOOST_REQUIRE_EQUAL(c->sum, 2);
-
-    for(int i = 0; i < 100; ++i)
-    {
-        a->Process();
-        b->Process();
-        sum += a->out_a;
-        sum += b->out_b;
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
-    }
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
-    thread->StopThread();
-    BOOST_REQUIRE_LE(c->sum, sum);
-    std::cout << "Dropped " << 1.0 -  double(c->sum) / (double)sum << " % of data\n";
-}
-
-
-BOOST_AUTO_TEST_CASE(threaded_parent)
-{
-    auto a = rcc::shared_ptr<node_a>::Create();
-    auto b = rcc::shared_ptr<node_b>::Create();
-    auto c = rcc::shared_ptr<node_c>::Create();
-}
-*/
