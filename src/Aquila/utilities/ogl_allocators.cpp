@@ -2,20 +2,15 @@
 #include "ObjectInterfacePerModule.h"
 #include "Aquila/rcc/SystemTable.hpp"
 #include <Aquila/rcc/external_includes/cv_core.hpp>
+#ifdef HAVE_QT
 #include <QOpenGLContext>
-#include <ISimpleSerializer.h>
 #include <qwindow.h>
+#endif
+#include <ISimpleSerializer.h>
+
 
 using namespace aq;
-/*ogl_allocator* ogl_allocator::instance(size_t initial_pool_size, size_t threshold_level)
-{
-    static ogl_allocator* inst = nullptr;
-    if(inst == nullptr)
-    {
-        inst = new ogl_allocator(initial_pool_size, threshold_level);
-    }
-    return inst;
-}*/
+
 void ogl_allocator::NodeInit(bool firstInit)
 {
     if(!firstInit)

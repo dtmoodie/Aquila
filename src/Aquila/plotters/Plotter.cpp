@@ -141,12 +141,14 @@ QWidget* QtPlotter::GetControlWidget(QWidget* parent)
 {
     return nullptr;
 }
-Parameters::Parameter* QtPlotter::addParameter(std::shared_ptr<Parameters::Parameter> param)
+mo::IParameter* QtPlotter::addParameter(std::shared_ptr<mo::IParameter> param)
 {
-    return Plotter::addParameter(param);
+    //return Plotter::addParameter(param);
+    return param.get();
 }
-Parameters::Parameter* QtPlotter::addParameter(Parameters::Parameter* param)
+mo::IParameter* QtPlotter::addParameter(mo::IParameter* param)
 {
-    return Plotter::addParameter(param);
+    //return Plotter::addParameter(param);
+    return param;
 }
 #endif

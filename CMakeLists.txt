@@ -39,7 +39,7 @@ find_package(CUDA REQUIRED)
   set(CUDA_ARCH_PTX "30 35 50 60")
 get_filename_component(_cuda_lib_dir "${CUDA_CUDART_LIBRARY}" DIRECTORY)
 link_directories(${_cuda_lib_dir})
-find_package(Qt5 COMPONENTS Core Gui Widgets Network OpenGL)
+find_package(Qt5 QUIET COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
 find_package(Eigen3 REQUIRED)
@@ -117,15 +117,21 @@ INCLUDE_DIRECTORIES(
     ${OpenCV_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS}
-    ${Qt5Core_INCLUDE_DIRS}
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     ${Parameters_INCLUDE}
-    ${Qt5Gui_INCLUDE_DIRS} 
-    ${Qt5Widgets_INCLUDE_DIRS}
-    ${Qt5Network_INCLUDE_DIRS}
     ${PPLX_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib
     )
+	
+if(Qt5_FOUND)
+	include_directories(
+		${Qt5Core_INCLUDE_DIRS}
+		${Qt5Gui_INCLUDE_DIRS} 
+		${Qt5Widgets_INCLUDE_DIRS}
+		${Qt5Network_INCLUDE_DIRS}
+		)
+	add_definitions(-DHAVE_QT)
+endif()
 
 
 set_target_properties(pplx PROPERTIES FOLDER Dependencies)
@@ -149,19 +155,27 @@ ELSE(WIN32)
     SET(LIB_BUILD_DIR_RELEASE "${LIBRARY_OUTPUT_PATH};${CMAKE_BINARY_DIR}")
     SET(LIB_BUILD_DIR_DEBUG "${LIBRARY_OUTPUT_PATH};${CMAKE_BINARY_DIR}")
 ENDIF(WIN32)
-
-set(Aquila_INCLUDE_DIRECTORIES
-    "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/dependencies/cereal/include;"
+set(aquila_include_dirs_ 
+	"${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/dependencies/cereal/include;"
     "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/instantiations;"
     "${CMAKE_CURRENT_SOURCE_DIR}/include;"
     "${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib;"
     "${Boost_INCLUDE_DIRS};${OpenCV_INCLUDE_DIRS};"
     "${RCC_INCLUDE_DIRS};"
-    "${Qt5Gui_INCLUDE_DIRS};"
-    "${Qt5Widgets_INCLUDE_DIRS};"
-    "${Qt5Network_INCLUDE_DIRS};"
 	"${EIGEN3_INCLUDE_DIR};"
-    "${PPLX_INCLUDE_DIRS}" CACHE PATH "" FORCE
+    "${PPLX_INCLUDE_DIRS}"
+	)
+if(Qt5_FOUND)
+	list(APPEND aquila_include_dirs_ 
+		"${Qt5Gui_INCLUDE_DIRS};"
+		"${Qt5Widgets_INCLUDE_DIRS};"
+		"${Qt5Network_INCLUDE_DIRS};"
+	)
+endif()
+	
+set(Aquila_INCLUDE_DIRECTORIES
+    ${aquila_include_dirs_}
+	 CACHE PATH "" FORCE
 )
 
 set(Aquila_LIBRARIES
@@ -284,13 +298,18 @@ TARGET_LINK_LIBRARIES(Aquila
     pplx
     ${Parameters_LIBRARIES}
     ${CUDA_CUDART_LIBRARY}
-    Qt5::OpenGL
+    
     RuntimeObjectSystem
     RuntimeCompiler
     ${LINK_LIBS}
     MetaObject
     ${Boost_LIBRARIES}
 )
+if(Qt5_FOUND)
+	target_link_libraries(Aquila
+		Qt5::OpenGL
+	)
+endif()
 
 if(MXNET_FOUND)
   TARGET_LINK_LIBRARIES(Aquila ${MXNET_LIBRARY})

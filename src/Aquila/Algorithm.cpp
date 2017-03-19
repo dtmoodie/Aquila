@@ -257,14 +257,13 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
 #ifdef _MSC_VER
 #ifdef _DEBUG
-            _pimpl->timestamps.push_back(ts);
-            if(_pimpl->_ts_processing_queue.size() && ts != (_pimpl->_ts_processing_queue.back() + 1))
+            /*if(_pimpl->_ts_processing_queue.size() && ts != (_pimpl->_ts_processing_queue.back() + 1))
                 LOG(debug) << "Timestamp not monotonically incrementing.  Current: " << ts << " previous: " << _pimpl->_ts_processing_queue.back();
             auto itr = std::find(_pimpl->_ts_processing_queue._Get_container().begin(), _pimpl->_ts_processing_queue._Get_container().end(), ts);
             if(itr != _pimpl->_ts_processing_queue._Get_container().end())
             {
                 LOG(debug) << "Timestamp (" << ts << ") exists in processing queue.";
-            }
+            }*/
 #endif
 #endif
             if(ts && param->CheckFlags(mo::Buffer_e))
