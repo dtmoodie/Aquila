@@ -5,6 +5,8 @@
 #include <Aquila/Detail/Export.hpp>
 #include <cereal/cereal.hpp>
 #include <Eigen/Geometry>
+#include "MetaObject/Parameters/IParameter.hpp"
+#include <cereal/types/boost/optional.hpp>
 
 namespace cereal
 {
@@ -80,7 +82,7 @@ namespace aq
     {
         std::vector<Classification> detections;
         cv::Rect2f boundingBox;
-        long long timestamp;
+        boost::optional<mo::time_t> timestamp;
         template<class AR>
         void serialize(AR& ar)
         {
