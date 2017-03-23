@@ -159,10 +159,10 @@ Algorithm::InputState Algorithm::CheckInputs()
         }
         if(!ts)
         {
-            fn = inputs[0]->GetFrameNumber();
+            fn = inputs[0]->GetInputFrameNumber();
             for(int i = 1; i < inputs.size(); ++i)
             {
-                fn = std::min<size_t>(*fn, inputs[i]->GetFrameNumber());
+                fn = std::min<size_t>(*fn, inputs[i]->GetInputFrameNumber());
             }
         }
     }
@@ -205,11 +205,49 @@ Algorithm::InputState Algorithm::CheckInputs()
         if(_pimpl->ts == ts)
             return NotUpdated;
         _pimpl->ts = ts;
+        _pimpl->fn = fn;
         return AllValid;
     }
     if(fn)
     {
-
+        boost::optional<mo::time_t> ts;
+        for(auto input : inputs)
+        {
+            if(!input->GetInput(*fn, &ts))
+            {
+                if (input->CheckFlags(Optional_e))
+                {
+                    // If the input isn't set and it's optional then this is ok
+                    if (input->GetInputParam())
+                    {
+                        // Input is optional and set, but couldn't get the right timestamp, error
+                        LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at framenumber " << *fn;
+                    }
+                    else
+                    {
+                        LOG(trace) << "Optional input not set \"" << input->GetTreeName() << "\"";
+                    }
+                }
+                else
+                {
+                    // Input is not optional
+                    if (auto param = input->GetInputParam())
+                    {
+                        LOG(trace) << "Failed to get input for \"" << input->GetTreeName() << "\" (" << param->GetTreeName() << ") at framenumber " << *fn << " actual frame number " << input->GetFrameNumber();
+                        return NoneValid;
+                    }
+                    else
+                    {
+                        LOG(trace) << "Input not set \"" << input->GetTreeName() << "\"";
+                        return NoneValid;
+                    }
+                }
+            }
+        }
+        if(_pimpl->fn == fn)
+        if(ts)
+            _pimpl->ts = ts;
+        return AllValid;
     }
     return NoneValid;
 }
