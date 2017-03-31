@@ -245,8 +245,10 @@ Algorithm::InputState Algorithm::CheckInputs()
             }
         }
         if(_pimpl->fn == fn)
+            return NotUpdated;
         if(ts)
             _pimpl->ts = ts;
+        _pimpl->fn = *fn;
         return AllValid;
     }
     return NoneValid;
