@@ -29,7 +29,7 @@
 
 using namespace aq;
 using namespace aq::Nodes;
-
+bool timestamp_mode = true;
 #if BOOST_VERSION > 105800
 #define MY_BOOST_TEST_ADD_ARGS __FILE__, __LINE__,
 #define MY_BOOST_TEST_DEFAULT_DEC_COLLECTOR ,boost::unit_test::decorator::collector::instance()
@@ -75,7 +75,14 @@ struct node_a: public Nodes::Node
 
     bool ProcessImpl()
     {
-        out_a_param.UpdateData(iterations, mo::time_t(mo::ms * iterations));
+        if(timestamp_mode == true)
+        {
+            out_a_param.UpdateData(iterations, mo::time_t(mo::ms * iterations));
+        }else
+        {
+            out_a_param.UpdateData(iterations, mo::tag::_frame_number = iterations);
+        }
+        
         _modified = true;
         ++iterations;
         return true;
@@ -91,7 +98,14 @@ struct node_b: public Nodes::Node
 
     bool ProcessImpl()
     {
-        out_b_param.UpdateData(iterations, mo::time_t(mo::ms * iterations));
+        if(timestamp_mode == true)
+        {
+            out_b_param.UpdateData(iterations, mo::time_t(mo::ms * iterations));
+        }else
+        {
+            out_b_param.UpdateData(iterations, mo::tag::_frame_number = iterations);
+        }
+        
         _modified = true;
         ++iterations;
         return true;
@@ -131,7 +145,14 @@ struct node_d : public Nodes::Node
 	MO_END;
 	bool ProcessImpl()
 	{
-		out_d_param.UpdateData(*in_d, *in_d_param.GetTimestamp());
+        if(timestamp_mode == true)
+        {
+            out_d_param.UpdateData(*in_d, *in_d_param.GetTimestamp());
+        }else
+        {
+            out_d_param.UpdateData(*in_d, in_d_param.GetFrameNumber());
+        }
+		
 		++iterations;
 		return true;
 	}
@@ -213,7 +234,19 @@ struct BranchingFixture
     rcc::shared_ptr<aq::IDataStream> ds;
 };
 using namespace mo;
-static const mo::ParameterTypeFlags buffer_types[] = { CircularBuffer_e , Map_e, StreamBuffer_e, BlockingStreamBuffer_e, NNStreamBuffer_e };
+static const std::pair<mo::ParameterTypeFlags, bool> settings[] = 
+{
+    {CircularBuffer_e, true} , 
+    {Map_e, true}, 
+    {StreamBuffer_e, true}, 
+    {BlockingStreamBuffer_e, true}, 
+    {NNStreamBuffer_e, true},
+    { CircularBuffer_e, false } ,
+    { Map_e, false },
+    { StreamBuffer_e, false },
+    { BlockingStreamBuffer_e, false },
+    { NNStreamBuffer_e, false }
+};
 
 BOOST_FIXTURE_TEST_SUITE(suite, BranchingFixture)
 /*     a
@@ -223,8 +256,9 @@ BOOST_FIXTURE_TEST_SUITE(suite, BranchingFixture)
 *     | /
 *     c
 */
-BOOST_AUTO_TEST_CASE(branching_direct)
+BOOST_AUTO_TEST_CASE(branching_direct_ts)
 {
+    timestamp_mode = true;
     a->AddChild(b);
     BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a"));
     BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
@@ -239,13 +273,32 @@ BOOST_AUTO_TEST_CASE(branching_direct)
         BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
     }
 }
-
-BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, buffer_types, buffer_types + 5)
+BOOST_AUTO_TEST_CASE(branching_direct_fn)
 {
+    timestamp_mode = false;
+    a->AddChild(b);
+    BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a"));
+    BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
+    for (int i = 0; i < 100; ++i)
+    {
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(b->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(a->out_a, i);
+        BOOST_REQUIRE_EQUAL(b->out_b, i);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
+    }
+}
+
+
+BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, settings, settings + 10)
+{
+    timestamp_mode = param.second;
 	a->AddChild(b);
-	std::cout << "====== Buffer type " << mo::ParameterTypeFlagsToString(param) << " ==========\n";
-	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
-	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+	std::cout << "====== Buffer type " << mo::ParameterTypeFlagsToString(param.first) << " ==========\n";
+	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
+	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
 	for (int i = 0; i < 1000; ++i)
 	{
 		a->Process();
@@ -265,8 +318,9 @@ BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, buffer_types, buffer_types + 5)
 *     | /
 *     c
 */
-BOOST_AUTO_TEST_CASE(merging_direct)
+BOOST_AUTO_TEST_CASE(merging_direct_ts)
 {
+    timestamp_mode = true;
 	b->SetDataStream(ds.Get());
 	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a"));
 	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
@@ -281,6 +335,25 @@ BOOST_AUTO_TEST_CASE(merging_direct)
 		BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
 		BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
 	}
+}
+
+BOOST_AUTO_TEST_CASE(merging_direct_fn)
+{
+    timestamp_mode = false;
+    b->SetDataStream(ds.Get());
+    BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a"));
+    BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b"));
+    for (int i = 0; i < 100; ++i)
+    {
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(b->iterations, i);
+        BOOST_REQUIRE_EQUAL(c->iterations, i);
+        b->Process();
+        BOOST_REQUIRE_EQUAL(b->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + b->out_b);
+    }
 }
 
 
@@ -303,8 +376,43 @@ struct node_e: public Nodes::Node
 };
 MO_REGISTER_CLASS(node_e)
 
-BOOST_AUTO_TEST_CASE(merging_direct_desynced)
+BOOST_AUTO_TEST_CASE(merging_direct_desynced_ts)
 {
+    timestamp_mode = true;
+    rcc::shared_ptr<node_a> a;
+    rcc::shared_ptr<node_e> e;
+    rcc::shared_ptr<node_c> c;
+    rcc::shared_ptr<aq::IDataStream> ds;
+    ds = ds.Create();
+    ds->StopThread();
+    a = a.Create();
+    e = e.Create();
+    c = c.Create();
+    a->SetDataStream(ds.Get());
+
+    e->SetDataStream(ds.Get());
+    BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | mo::CircularBuffer_e)));
+    BOOST_REQUIRE(c->ConnectInput(e, "out", "in_b"));
+    int e_iters = 0;
+    for (int i = 0; i < 100; ++i)
+    {
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(e->iterations, e_iters);
+        BOOST_REQUIRE_EQUAL(c->iterations, e_iters);
+        if (i % 2 == 0)
+        {
+            e->Process();
+            ++e_iters;
+            BOOST_REQUIRE_EQUAL(e->iterations, e_iters);
+            BOOST_REQUIRE_EQUAL(c->iterations, e_iters);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(merging_direct_desynced_fn)
+{
+    timestamp_mode = false;
     rcc::shared_ptr<node_a> a;
     rcc::shared_ptr<node_e> e;
     rcc::shared_ptr<node_c> c;
@@ -358,8 +466,9 @@ struct DiamondFixture
 
 BOOST_FIXTURE_TEST_SUITE(DiamondSuite, DiamondFixture)
 
-BOOST_AUTO_TEST_CASE(diamond_direct)
+BOOST_AUTO_TEST_CASE(diamond_direct_ts)
 {
+    timestamp_mode = true;
     BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));
@@ -379,10 +488,11 @@ BOOST_AUTO_TEST_CASE(diamond_direct)
 	}
 }
 
-BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_top, buffer_types, buffer_types + 5)
+BOOST_AUTO_TEST_CASE(diamond_direct_fn)
 {
-    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
-    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    timestamp_mode = false;
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));
     BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
     for (int i = 0; i < 100; ++i)
@@ -400,32 +510,12 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_top, buffer_types, buffer_types + 5)
     }
 }
 
-BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, buffer_types, buffer_types + 5)
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_top, settings, settings + 10)
 {
-    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
-    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
-    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
-    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
-    for (int i = 0; i < 100; ++i)
-    {
-        BOOST_REQUIRE_EQUAL(a->iterations, i);
-        BOOST_REQUIRE_EQUAL(d1->iterations, i);
-        BOOST_REQUIRE_EQUAL(d2->iterations, i);
-        BOOST_REQUIRE_EQUAL(c->iterations, i);
-        a->Process();
-        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
-        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
-    }
-}
-
-BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_left, buffer_types, buffer_types + 5)
-{
-    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
-    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
-    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    timestamp_mode = param.second;
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));
     BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
     for (int i = 0; i < 100; ++i)
     {
@@ -442,12 +532,57 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_left, buffer_types, buffer_types + 5
     }
 }
 
-BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_right, buffer_types, buffer_types + 5)
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, settings, settings + 10)
 {
+    timestamp_mode = param.second;
     BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
-    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
+    for (int i = 0; i < 100; ++i)
+    {
+        BOOST_REQUIRE_EQUAL(a->iterations, i);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i);
+        BOOST_REQUIRE_EQUAL(c->iterations, i);
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
+    }
+}
+
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_left, settings, settings + 10)
+{
+    timestamp_mode = param.second;
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b"));
+    for (int i = 0; i < 100; ++i)
+    {
+        BOOST_REQUIRE_EQUAL(a->iterations, i);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i);
+        BOOST_REQUIRE_EQUAL(c->iterations, i);
+        a->Process();
+        BOOST_REQUIRE_EQUAL(a->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d1->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(d2->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->iterations, i + 1);
+        BOOST_REQUIRE_EQUAL(c->sum, a->out_a + a->out_a);
+    }
+}
+
+BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_right, settings, settings + 10)
+{
+    timestamp_mode = param.second;
+    BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
+    BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
     BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a"));    
-    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param)));
+    BOOST_REQUIRE(c->ConnectInput(d2, "out_d", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
     for (int i = 0; i < 100; ++i)
     {
         BOOST_REQUIRE_EQUAL(a->iterations, i);
