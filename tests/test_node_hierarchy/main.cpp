@@ -367,7 +367,13 @@ struct node_e: public Nodes::Node
     MO_END;
     bool ProcessImpl()
     {
-        out_param.UpdateData(iterations*2, mo::time_t(mo::ms * iterations*2));
+        if(timestamp_mode)
+        {
+            out_param.UpdateData(iterations*2, mo::time_t(mo::ms * iterations*2));
+        }else
+        {
+            out_param.UpdateData(iterations* 2, mo::tag::_frame_number = iterations*2);
+        }
         _modified = true;
         ++iterations;
         return true;
@@ -535,6 +541,8 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_top, settings, settings + 10)
 BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, settings, settings + 10)
 {
     timestamp_mode = param.second;
+    std::cout << "Setting timestamp mode to " << (timestamp_mode ? "on\n" : "off\n");
+    std::cout << "Using buffer " << mo::ParameterTypeFlagsToString(param.first) << std::endl;
     BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
@@ -557,6 +565,8 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, settings, settings + 10)
 BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_left, settings, settings + 10)
 {
     timestamp_mode = param.second;
+    std::cout << "Setting timestamp mode to " << (timestamp_mode ? "on\n" : "off\n");
+    std::cout << "Using buffer " << mo::ParameterTypeFlagsToString(param.first) << std::endl;
     BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
     BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
