@@ -31,7 +31,7 @@ namespace aq
             ar(bt);
             if(bt.success)
                 buffer_time = bt.value;
-            ar(CEREAL_NVP(type));
+            ar(CEREAL_OPTIONAL_NVP(type, "Direct"));
         }
         template<class AR> void save(AR& ar) const
         {
@@ -40,22 +40,36 @@ namespace aq
                 ar(CEREAL_NVP(sync));
             if(buffer_size != -1)
                 ar(CEREAL_NVP(buffer_size));
-            ar(CEREAL_NVP(type));
+            if(type != "Direct")
+                ar(CEREAL_NVP(type));
         }
     };
     class AQUILA_EXPORTS JSONOutputArchive : public cereal::JSONOutputArchive
     {
+        const std::map<std::string, std::string>& _vm;
+        const std::map<std::string, std::string>& _sm;
+        bool _writing_defaults = false;
     public:
-        JSONOutputArchive(std::ostream & stream, Options const & options = Options::Default()) :
-            cereal::JSONOutputArchive(stream, options)
+        JSONOutputArchive(std::ostream & stream,
+                          Options const & options = Options::Default(),
+                          const std::map<std::string, std::string>& vm = std::map<std::string, std::string>(),
+                          const std::map<std::string, std::string>& sm = std::map<std::string, std::string>()) :
+            cereal::JSONOutputArchive(stream, options),
+            _vm(vm),
+            _sm(sm)
         {
-            
+            _writing_defaults = true;
+            if(sm.size())
+                (*this)(cereal::make_nvp("DefaultStrings", sm));
+            if(vm.size())
+                (*this)(cereal::make_nvp("DefaultVariables", vm));
+            _writing_defaults = false;
         }
 
         //! Destructor, flushes the JSON
         ~JSONOutputArchive() CEREAL_NOEXCEPT
         {
-            
+
         }
 
         //! Saves some binary data, encoded as a base64 string, with an optional name
@@ -117,7 +131,22 @@ namespace aq
         //! Saves a double to the current node
         void saveValue(double d) { itsWriter.Double(d); }
         //! Saves a string to the current node
-        void saveValue(std::string const & s) { itsWriter.String(s.c_str(), static_cast<rapidjson::SizeType>(s.size())); }
+        void saveValue(std::string const & s) {
+            if(!_writing_defaults)
+            {
+                for(const auto& str : _sm)
+                {
+                    auto pos = s.find(str.second);
+                    if(pos != std::string::npos)
+                    {
+                        std::string write_str = s.substr(0, pos) + "${" + str.first + "}" + s.substr(pos + str.second.size());
+                        itsWriter.String(write_str.c_str(), static_cast<rapidjson::SizeType>(write_str.size()));
+                        return;
+                    }
+                }
+            }
+            itsWriter.String(s.c_str(), static_cast<rapidjson::SizeType>(s.size()));
+        }
         //! Saves a const char * to the current node
         void saveValue(char const * s) { itsWriter.String(s); }
         //! Saves a nullptr to the current node
