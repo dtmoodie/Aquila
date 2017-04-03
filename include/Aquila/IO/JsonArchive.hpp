@@ -1,6 +1,8 @@
 #pragma once
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/string.hpp>
 
 #include <Aquila/Nodes/Node.h>
 #include <Aquila/IDataStream.hpp>
@@ -327,7 +329,7 @@ namespace aq
             variable_replace_mapping(vm),
             string_replace_mapping(sm)
         {
-            
+
         }
 
         ~JSONInputArchive() CEREAL_NOEXCEPT = default;
@@ -353,7 +355,7 @@ namespace aq
             itsNextName = nullptr;
         };
 
-    
+
 
         //! Searches for the expectedName node if it doesn't match the actualName
         /*! This needs to be called before every load or node start occurs.  This function will
@@ -486,8 +488,8 @@ namespace aq
         }
 
         //! Loads a value from the current node - bool overload
-        void loadValue(bool & val) 
-        { 
+        void loadValue(bool & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -506,8 +508,8 @@ namespace aq
 
         }
         //! Loads a value from the current node - int64 overload
-        void loadValue(int64_t & val) 
-        { 
+        void loadValue(int64_t & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -521,12 +523,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = itsIteratorStack.back().value().GetInt64(); 
-            ++itsIteratorStack.back(); 
+            val = itsIteratorStack.back().value().GetInt64();
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - uint64 overload
-        void loadValue(uint64_t & val) 
-        { 
+        void loadValue(uint64_t & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -540,12 +542,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = itsIteratorStack.back().value().GetUint64(); 
-            ++itsIteratorStack.back(); 
+            val = itsIteratorStack.back().value().GetUint64();
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - float overload
-        void loadValue(float & val) 
-        { 
+        void loadValue(float & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -559,12 +561,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = static_cast<float>(itsIteratorStack.back().value().GetDouble()); 
-            ++itsIteratorStack.back(); 
+            val = static_cast<float>(itsIteratorStack.back().value().GetDouble());
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - double overload
-        void loadValue(double & val) 
-        { 
+        void loadValue(double & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -578,12 +580,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = itsIteratorStack.back().value().GetDouble(); 
-            ++itsIteratorStack.back(); 
+            val = itsIteratorStack.back().value().GetDouble();
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - string overload
-        void loadValue(std::string & val) 
-        { 
+        void loadValue(std::string & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -615,8 +617,8 @@ namespace aq
         // the int32_t or int64_t on various compiler/OS combinations.  MSVC doesn't need any of this.
 
 
-    
-        
+
+
     };
 
     // ######################################################################
