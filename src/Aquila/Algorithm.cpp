@@ -128,6 +128,9 @@ Algorithm::InputState Algorithm::CheckInputs()
     boost::optional<size_t> fn;
     // First check to see if we have a sync input, if we do then use its synchronizatio method
     // TODO: Handle processing queue
+#ifdef _DEBUG
+    std::vector<std::tuple<std::string, boost::optional<mo::time_t>, size_t>> input_states;
+#endif
     if(_pimpl->sync_input)
     {
         ts = _pimpl->sync_input->GetTimestamp();
@@ -143,6 +146,9 @@ Algorithm::InputState Algorithm::CheckInputs()
         for(auto input : inputs)
         {
             auto in_ts = input->GetTimestamp();
+#ifdef _DEBUG
+            input_states.emplace_back(input->GetTreeName(), in_ts, 0);
+#endif
             if(!in_ts)
                 continue;
             if(in_ts)
@@ -160,9 +166,16 @@ Algorithm::InputState Algorithm::CheckInputs()
         if(!ts)
         {
             fn = inputs[0]->GetInputFrameNumber();
+#ifdef _DEBUG
+            input_states.emplace_back(inputs[0]->GetTreeName(), boost::optional<mo::time_t>(), *fn);
+#endif
             for(int i = 1; i < inputs.size(); ++i)
             {
-                fn = std::min<size_t>(*fn, inputs[i]->GetInputFrameNumber());
+                auto in_fn = inputs[i]->GetInputFrameNumber();
+                fn = std::min<size_t>(*fn, in_fn);
+#ifdef _DEBUG
+                input_states.emplace_back(inputs[i]->GetTreeName(), boost::optional<mo::time_t>(), in_fn);
+#endif
             }
         }
     }
