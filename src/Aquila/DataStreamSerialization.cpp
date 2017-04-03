@@ -161,20 +161,21 @@ void IDataStream::Save(const std::string& config_file, std::vector<rcc::shared_p
         try
         {
             std::ofstream ofs(config_file, std::ios::binary);
-            aq::JSONOutputArchive ar(ofs);
-            if(vm.size())
-            {
-                ar(cereal::make_nvp("DefaultVariables", vm));
-            }
+            std::map<std::string, std::string> write_sm;
             if(sm.size())
             {
-                std::map<std::string, std::string> write_sm;
                 for(const auto& pair : sm)
                 {
                     write_sm[pair.first.substr(2, pair.first.size() - 3)] = pair.second;
                 }
-                ar(cereal::make_nvp("DefaultStrings", write_sm));
+                //ar(cereal::make_nvp("DefaultStrings", write_sm));
             }
+            aq::JSONOutputArchive ar(ofs, aq::JSONOutputArchive::Options(),vm, write_sm );
+            if(vm.size())
+            {
+                //ar(cereal::make_nvp("DefaultVariables", vm));
+            }
+
             ar(cereal::make_nvp("DataStreams",streams));
         }
         catch (cereal::RapidJSONException&e)
