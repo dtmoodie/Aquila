@@ -77,16 +77,18 @@ namespace aq
             ar(CEREAL_NVP(label), CEREAL_NVP(confidence), CEREAL_NVP(classNumber));
         }
     };
-    
     struct AQUILA_EXPORTS DetectedObject2d
     {
+        enum {Dims = 2};
         std::vector<Classification> detections;
         cv::Rect2f boundingBox;
         boost::optional<mo::time_t> timestamp;
+        size_t framenumber = 0;
+        int id = 0;
         template<class AR>
         void serialize(AR& ar)
         {
-            ar(CEREAL_NVP(boundingBox), CEREAL_NVP(detections), timestamp);
+            ar(CEREAL_NVP(boundingBox), CEREAL_NVP(detections), CEREAL_NVP(timestamp), CEREAL_NVP(id), CEREAL_NVP(framenumber));
         }
     };
 
@@ -94,6 +96,7 @@ namespace aq
 
     struct AQUILA_EXPORTS DetectedObject3d
     {
+        enum {Dims = 3};
         std::vector<Classification> detections;
         /*!
          * \brief pose determines the pose to the center of the object
@@ -103,12 +106,13 @@ namespace aq
          * \brief size is the centered size of the object
          */
         Eigen::Vector3d size;
-        long long timestamp;
-
+        boost::optional<mo::time_t> timestamp;
+        size_t framenumber = 0;
+        int id = 0;
         template<class AR>
         void serialize(AR& ar)
         {
-            ar(CEREAL_NVP(pose), CEREAL_NVP(size), CEREAL_NVP(detections), CEREAL_NVP(timestamp));
+            ar(CEREAL_NVP(pose), CEREAL_NVP(size), CEREAL_NVP(detections), CEREAL_NVP(timestamp), CEREAL_NVP(id), CEREAL_NVP(framenumber));
         }
     };
 
