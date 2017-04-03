@@ -1,6 +1,8 @@
 #pragma once
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/string.hpp>
 
 #include <Aquila/Nodes/Node.h>
 #include <Aquila/IDataStream.hpp>
@@ -24,7 +26,7 @@ namespace aq
             ar(CEREAL_NVP(name));
             ar(CEREAL_OPTIONAL_NVP(sync, false));
             ar(CEREAL_OPTIONAL_NVP(buffer_size, -1));
-            ar(CEREAL_NVP(type));
+            ar(CEREAL_OPTIONAL_NVP(type, "Direct"));
         }
         template<class AR> void save(AR& ar) const
         {
@@ -33,22 +35,36 @@ namespace aq
                 ar(CEREAL_NVP(sync));
             if(buffer_size != -1)
                 ar(CEREAL_NVP(buffer_size));
-            ar(CEREAL_NVP(type));
+            if(type != "Direct")
+                ar(CEREAL_NVP(type));
         }
     };
     class AQUILA_EXPORTS JSONOutputArchive : public cereal::JSONOutputArchive
     {
+        const std::map<std::string, std::string>& _vm;
+        const std::map<std::string, std::string>& _sm;
+        bool _writing_defaults = false;
     public:
-        JSONOutputArchive(std::ostream & stream, Options const & options = Options::Default()) :
-            cereal::JSONOutputArchive(stream, options)
+        JSONOutputArchive(std::ostream & stream,
+                          Options const & options = Options::Default(),
+                          const std::map<std::string, std::string>& vm = std::map<std::string, std::string>(),
+                          const std::map<std::string, std::string>& sm = std::map<std::string, std::string>()) :
+            cereal::JSONOutputArchive(stream, options),
+            _vm(vm),
+            _sm(sm)
         {
-            
+            _writing_defaults = true;
+            if(sm.size())
+                (*this)(cereal::make_nvp("DefaultStrings", sm));
+            if(vm.size())
+                (*this)(cereal::make_nvp("DefaultVariables", vm));
+            _writing_defaults = false;
         }
 
         //! Destructor, flushes the JSON
         ~JSONOutputArchive() CEREAL_NOEXCEPT
         {
-            
+
         }
 
         //! Saves some binary data, encoded as a base64 string, with an optional name
@@ -110,7 +126,22 @@ namespace aq
         //! Saves a double to the current node
         void saveValue(double d) { itsWriter.Double(d); }
         //! Saves a string to the current node
-        void saveValue(std::string const & s) { itsWriter.String(s.c_str(), static_cast<rapidjson::SizeType>(s.size())); }
+        void saveValue(std::string const & s) {
+            if(!_writing_defaults)
+            {
+                for(const auto& str : _sm)
+                {
+                    auto pos = s.find(str.second);
+                    if(pos != std::string::npos)
+                    {
+                        std::string write_str = s.substr(0, pos) + "${" + str.first + "}" + s.substr(pos + str.second.size());
+                        itsWriter.String(write_str.c_str(), static_cast<rapidjson::SizeType>(write_str.size()));
+                        return;
+                    }
+                }
+            }
+            itsWriter.String(s.c_str(), static_cast<rapidjson::SizeType>(s.size()));
+        }
         //! Saves a const char * to the current node
         void saveValue(char const * s) { itsWriter.String(s); }
         //! Saves a nullptr to the current node
@@ -291,7 +322,7 @@ namespace aq
             variable_replace_mapping(vm),
             string_replace_mapping(sm)
         {
-            
+
         }
 
         ~JSONInputArchive() CEREAL_NOEXCEPT = default;
@@ -317,7 +348,7 @@ namespace aq
             itsNextName = nullptr;
         };
 
-    
+
 
         //! Searches for the expectedName node if it doesn't match the actualName
         /*! This needs to be called before every load or node start occurs.  This function will
@@ -450,8 +481,8 @@ namespace aq
         }
 
         //! Loads a value from the current node - bool overload
-        void loadValue(bool & val) 
-        { 
+        void loadValue(bool & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -470,8 +501,8 @@ namespace aq
 
         }
         //! Loads a value from the current node - int64 overload
-        void loadValue(int64_t & val) 
-        { 
+        void loadValue(int64_t & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -485,12 +516,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = itsIteratorStack.back().value().GetInt64(); 
-            ++itsIteratorStack.back(); 
+            val = itsIteratorStack.back().value().GetInt64();
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - uint64 overload
-        void loadValue(uint64_t & val) 
-        { 
+        void loadValue(uint64_t & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -504,12 +535,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = itsIteratorStack.back().value().GetUint64(); 
-            ++itsIteratorStack.back(); 
+            val = itsIteratorStack.back().value().GetUint64();
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - float overload
-        void loadValue(float & val) 
-        { 
+        void loadValue(float & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -523,12 +554,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = static_cast<float>(itsIteratorStack.back().value().GetDouble()); 
-            ++itsIteratorStack.back(); 
+            val = static_cast<float>(itsIteratorStack.back().value().GetDouble());
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - double overload
-        void loadValue(double & val) 
-        { 
+        void loadValue(double & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -542,12 +573,12 @@ namespace aq
             }
             search();
             if (itsLoadOptional) return;
-            val = itsIteratorStack.back().value().GetDouble(); 
-            ++itsIteratorStack.back(); 
+            val = itsIteratorStack.back().value().GetDouble();
+            ++itsIteratorStack.back();
         }
         //! Loads a value from the current node - string overload
-        void loadValue(std::string & val) 
-        { 
+        void loadValue(std::string & val)
+        {
             if (itsNextName)
             {
                 auto itr = variable_replace_mapping.find(itsNextName);
@@ -579,8 +610,8 @@ namespace aq
         // the int32_t or int64_t on various compiler/OS combinations.  MSVC doesn't need any of this.
 
 
-    
-        
+
+
     };
 
     // ######################################################################
