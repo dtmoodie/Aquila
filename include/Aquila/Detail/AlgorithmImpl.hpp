@@ -6,7 +6,7 @@ namespace aq
 {
     struct Algorithm::impl
     {
-        size_t fn;
+        size_t fn = -1;
         boost::optional<mo::time_t> ts;
         boost::optional<mo::time_t> last_ts;
         mo::InputParameter* sync_input = nullptr;

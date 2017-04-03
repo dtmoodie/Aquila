@@ -20,11 +20,14 @@
 #define BOOST_TEST_MODULE "AquilaNodes"
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include <type_traits>
+#include <boost/log/expressions.hpp>
+#include <boost/log/common.hpp>
+#include <boost/log/attributes.hpp>
 #include <boost/thread.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
+#include <type_traits>
 //#include "../unit_test.hpp"
 
 using namespace aq;
@@ -169,6 +172,7 @@ struct GlobalFixture
     GlobalFixture()
     {
         aq::SetupLogging();
+
         mo::MetaObjectFactory::Instance()->RegisterTranslationUnit();
         boost::filesystem::path currentDir = boost::filesystem::path("./").parent_path();
     #ifdef _MSC_VER
@@ -202,6 +206,7 @@ struct GlobalFixture
         g_allocator->SetName("Global Allocator");
         mo::GpuThreadAllocatorSetter<cv::cuda::GpuMat>::Set(g_allocator);
         mo::CpuThreadAllocatorSetter<cv::Mat>::Set(g_allocator);
+        boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::trace);
     }
     ~GlobalFixture()
     {
@@ -296,7 +301,7 @@ BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, settings, settings + 10)
 {
     timestamp_mode = param.second;
 	a->AddChild(b);
-	std::cout << "====== Buffer type " << mo::ParameterTypeFlagsToString(param.first) << " ==========\n";
+    std::cout << "Buffer: " << mo::ParameterTypeFlagsToString(param.first) << " ts: " << (timestamp_mode ? "on" : "off" )<< std::endl;
 	BOOST_REQUIRE(c->ConnectInput(a, "out_a", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
 	BOOST_REQUIRE(c->ConnectInput(b, "out_b", "in_b", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
 	for (int i = 0; i < 1000; ++i)
@@ -367,7 +372,13 @@ struct node_e: public Nodes::Node
     MO_END;
     bool ProcessImpl()
     {
-        out_param.UpdateData(iterations*2, mo::time_t(mo::ms * iterations*2));
+        if(timestamp_mode)
+        {
+            out_param.UpdateData(iterations*2, mo::time_t(mo::ms * iterations*2));
+        }else
+        {
+            out_param.UpdateData(iterations* 2, mo::tag::_frame_number = iterations*2);
+        }
         _modified = true;
         ++iterations;
         return true;
@@ -535,6 +546,7 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_top, settings, settings + 10)
 BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, settings, settings + 10)
 {
     timestamp_mode = param.second;
+    std::cout << "Buffer: " << mo::ParameterTypeFlagsToString(param.first) << " ts: " << (timestamp_mode ? "on" : "off") << std::endl;
     BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
@@ -557,6 +569,9 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, settings, settings + 10)
 BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_left, settings, settings + 10)
 {
     timestamp_mode = param.second;
+    //std::cout << "Setting timestamp mode to " << (timestamp_mode ? "on\n" : "off\n");
+    //std::cout << "Using buffer " << mo::ParameterTypeFlagsToString(param.first) << std::endl;
+    std::cout << "Buffer: " << mo::ParameterTypeFlagsToString(param.first) << " ts: " << (timestamp_mode ? "on" : "off") << std::endl;
     BOOST_REQUIRE(d1->ConnectInput(a, "out_a", "in_d", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
     BOOST_REQUIRE(d2->ConnectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(c->ConnectInput(d1, "out_d", "in_a", mo::ParameterTypeFlags(mo::ForceBufferedConnection_e | param.first)));
