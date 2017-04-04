@@ -84,6 +84,7 @@ namespace aq
         std::vector<Classification> detections;
         cv::Rect2f boundingBox;
         boost::optional<mo::time_t> timestamp;
+        size_t framenumber = 0;
         int id = 0;
         template<class AR>
         void serialize(AR& ar)
@@ -107,6 +108,7 @@ namespace aq
          */
         Eigen::Vector3d size;
         boost::optional<mo::time_t> timestamp;
+        size_t framenumber = 0;
         int id = 0;
         template<class AR>
         void serialize(AR& ar)
