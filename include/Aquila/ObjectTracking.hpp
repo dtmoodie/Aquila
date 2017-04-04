@@ -108,7 +108,7 @@ struct AQUILA_EXPORTS TrackedObject2d
         }
     }
 
-    virtual void Track(const aq::SyncedMemory& img, long long ts)
+    virtual void Track(const aq::SyncedMemory& img, mo::time_t ts)
     {
         // No tracking is done in base class
     }
@@ -128,7 +128,7 @@ struct AQUILA_EXPORTS TrackedObject2d
     /*!
      * \brief initial_detection_timestamp is the timestamp of first detection
      */
-    long long initial_detection_timestamp;
+    boost::optional<mo::time_t> initial_detection_timestamp;
     /*!
      * \brief detection_history past N detections
      */
@@ -213,7 +213,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
         float score = 0.0;
         if(obj.timestamp > predicted_timestamp)
         {
-            Predict(obj.timestamp);
+            Predict(*obj.timestamp);
         }else if(obj.timestamp < predicted_timestamp && obj.timestamp < current_state_timestamp)
         {
             return T::Score(obj);
@@ -251,7 +251,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
      * \brief When no detection is present in this frame, drift the track
      * \param timestamp timestamp of current frame
      */
-    void Track(const aq::SyncedMemory& img, long long ts)
+    void Track(const aq::SyncedMemory& img, mo::time_t ts)
     {
         // Can't drift a track to the past
         if(ts < current_state_timestamp)
@@ -259,7 +259,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
         auto dt = ts - current_state_timestamp;
         for(int i = 0; i < T::Dims; ++i)
         {
-            kf.transitionMatrix.at<float>(T::Dims + i, i) = dt;
+            kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
         }
         cv::Mat state = kf.predict();
         kf.statePost = state;
@@ -274,13 +274,13 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
         cv::Mat state(T::Dims * 3, 1, CV_32F);
         if(initialized)
         {
-            auto dt = obj.timestamp - current_state_timestamp;
+            auto dt = *obj.timestamp - current_state_timestamp;
             for(int i = 0; i < T::Dims; ++i)
             {
-                kf.transitionMatrix.at<float>(T::Dims + i, i) = dt;
+                kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
             }
         }
-        current_state_timestamp = obj.timestamp;
+        current_state_timestamp = *obj.timestamp;
         if(!initialized)
         {
             if(this->detection_history.size() > 0)
@@ -320,7 +320,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
     }
 
     // TODO probably need to do some timestamp adjustment here for non constant frame rate
-    cv::Mat Predict(long long ts)
+    cv::Mat Predict(mo::time_t ts)
     {
         CV_Assert(initialized);
         if(ts == current_state_timestamp)
@@ -331,7 +331,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
         auto dt = ts - current_state_timestamp;
         for(int i = 0; i < T::Dims; ++i)
         {
-            kf.transitionMatrix.at<float>(T::Dims + i, i) = dt;
+            kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
         }
 
         predicted_state = kf.predict();
@@ -414,8 +414,8 @@ protected:
 
     cv::KalmanFilter kf;
     bool initialized;
-    long long current_state_timestamp;
-    long long predicted_timestamp;
+    mo::time_t current_state_timestamp;
+    mo::time_t predicted_timestamp;
     cv::Mat predicted_state;
 };
 

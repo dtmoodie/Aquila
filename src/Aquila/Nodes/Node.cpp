@@ -138,6 +138,8 @@ namespace aq
             long long throw_count = 0;
             bool disable_due_to_errors = false;
             std::string tree_name;
+            long long iterations_since_execution = 0;
+            const char* last_execution_failure_reason = 0;
 #ifdef _DEBUG
         std::vector<long long> timestamps;
 #endif
@@ -259,8 +261,14 @@ void Node::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
 
 bool Node::Process()
 {
+    ++_pimpl_node->iterations_since_execution;
+    if(_pimpl_node->iterations_since_execution > 100)
+    {
+        LOG(warning) << this->GetTreeName() << " has not executed in " << _pimpl_node->iterations_since_execution << " iterations due to "
+                     << _pimpl_node->last_execution_failure_reason ? _pimpl_node->last_execution_failure_reason : "";
+    }
     if(_enabled == true && _pimpl_node->disable_due_to_errors == false)
-    { 
+    {
         mo::scoped_profile profiler(this->GetTreeName().c_str(), &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
         boost::recursive_mutex::scoped_try_lock lock(*_mtx);
         boost::posix_time::ptime start = boost::posix_time::microsec_clock::universal_time();
@@ -280,19 +288,29 @@ bool Node::Process()
             mo::scoped_profile profiler("CheckInputs", &this->_rmt_hash, &this->_rmt_cuda_hash, &Stream());
             auto input_state = CheckInputs();
             if(input_state == Algorithm::NoneValid)
+            {
+                _pimpl_node->last_execution_failure_reason = "No valid inputs";
                 return false;
+            }
             if(input_state == Algorithm::NotUpdated && _modified == false)
+            {
+                _pimpl_node->last_execution_failure_reason = "Inputs not updated and parameters not updated";
                 return false;
+            }
         }
         _modified = false;
-        
+
         try
         {
+            _pimpl_node->last_execution_failure_reason = "Exception thrown";
             if (!ProcessImpl())
-                return false;
+            {
+                _pimpl_node->iterations_since_execution = 0;
+            }
         }CATCH_MACRO
-        
-    } 
+        _pimpl_node->last_execution_failure_reason = 0;
+        _pimpl_node->iterations_since_execution = 0;
+    }
 
     for(rcc::shared_ptr<Node>& child : _children)
     {
@@ -436,7 +454,9 @@ Node* Node::GetNodeInScope(const std::string& name)
     boost::recursive_mutex::scoped_lock lock(*_mtx);
     if(name == GetTreeName())
         return this;
-    for(auto& child : _children)
+    auto current_children = _children;
+    lock.unlock();
+    for(auto& child : current_children )
     {
         auto result = child->GetNodeInScope(name);
         if(result)
