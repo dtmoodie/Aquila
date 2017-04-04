@@ -374,6 +374,12 @@ endif()
 if(WITH_PYTHON)
   add_subdirectory("python")
 endif()
+# =====================
+# modules 
+SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
+foreach( module ${modules})
+   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
+endforeach()
 
 if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
     include(CTest)
