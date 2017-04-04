@@ -319,8 +319,17 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
             }*/
 #endif
 #endif
-            if(ts && param->CheckFlags(mo::Buffer_e))
-                _pimpl->_ts_processing_queue.push(*ts);
+            if(param->CheckFlags(mo::Buffer_e))
+            {
+                if(ts)
+                {
+                    _pimpl->_ts_processing_queue.push(*ts);
+                }else
+                {
+                    _pimpl->_fn_processing_queue.push(param->GetFrameNumber());
+                }
+            }
+
         }
     }else if (_pimpl->_sync_method == SyncNewest)
     {
