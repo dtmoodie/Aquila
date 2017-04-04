@@ -103,7 +103,7 @@ SyncedMemory::SyncedMemory(cv::MatAllocator* cpu_allocator, cv::cuda::GpuMat::Al
     _pimpl->h_data[0].allocator = cpu_allocator;
 }
 
-const cv::Mat&                
+const cv::Mat&
 SyncedMemory::GetMat(cv::cuda::Stream& stream, int index) const
 {
     if(index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
@@ -118,7 +118,7 @@ SyncedMemory::GetMat(cv::cuda::Stream& stream, int index) const
     return _pimpl->h_data[index];
 }
 
-cv::Mat&                    
+cv::Mat&
 SyncedMemory::GetMatMutable(cv::cuda::Stream& stream, int index)
 {
     if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
@@ -131,11 +131,14 @@ SyncedMemory::GetMatMutable(cv::cuda::Stream& stream, int index)
     return _pimpl->h_data[index];
 }
 
-const cv::cuda::GpuMat&        
+const cv::cuda::GpuMat&
 SyncedMemory::GetGpuMat(cv::cuda::Stream& stream, int index) const
 {
     if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
         THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
+    CV_DbgAssert(_pimpl);
+    ASSERT_EQ(_pimpl->h_data.size(), _pimpl->d_data.size());
+    ASSERT_EQ(_pimpl->h_data.size(),_pimpl->sync_flags.size());
     if (_pimpl->sync_flags[index] == DO_NOT_SYNC)
         return _pimpl->d_data[index];
     if (_pimpl->sync_flags[index] == HOST_UPDATED)
@@ -150,7 +153,7 @@ SyncedMemory::GetGpuMat(cv::cuda::Stream& stream, int index) const
     return _pimpl->d_data[index];
 }
 
-cv::cuda::GpuMat&            
+cv::cuda::GpuMat&
 SyncedMemory::GetGpuMatMutable(cv::cuda::Stream& stream, int index)
 {
     if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
@@ -187,7 +190,7 @@ SyncedMemory::GetMatVecMutable(cv::cuda::Stream& stream)
             _pimpl->d_data[i].download(_pimpl->h_data[i], stream);
         _pimpl->sync_flags[i] = HOST_UPDATED;
     }
-    
+
     return _pimpl->h_data;
 }
 

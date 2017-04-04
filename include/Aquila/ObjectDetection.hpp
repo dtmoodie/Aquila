@@ -77,6 +77,7 @@ namespace aq
             ar(CEREAL_NVP(label), CEREAL_NVP(confidence), CEREAL_NVP(classNumber));
         }
     };
+
     struct AQUILA_EXPORTS DetectedObject2d
     {
         enum {Dims = 2};
@@ -88,7 +89,7 @@ namespace aq
         template<class AR>
         void serialize(AR& ar)
         {
-            ar(CEREAL_NVP(boundingBox), CEREAL_NVP(detections), CEREAL_NVP(timestamp), CEREAL_NVP(id), CEREAL_NVP(framenumber));
+            ar(CEREAL_NVP(boundingBox), CEREAL_NVP(detections), CEREAL_NVP(timestamp), CEREAL_NVP(id));
         }
     };
 
@@ -112,7 +113,7 @@ namespace aq
         template<class AR>
         void serialize(AR& ar)
         {
-            ar(CEREAL_NVP(pose), CEREAL_NVP(size), CEREAL_NVP(detections), CEREAL_NVP(timestamp), CEREAL_NVP(id), CEREAL_NVP(framenumber));
+            ar(CEREAL_NVP(pose), CEREAL_NVP(size), CEREAL_NVP(detections), CEREAL_NVP(timestamp), CEREAL_NVP(id));
         }
     };
 

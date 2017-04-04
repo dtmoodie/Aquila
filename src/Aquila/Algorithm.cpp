@@ -136,7 +136,17 @@ Algorithm::InputState Algorithm::CheckInputs()
     // First check to see if we have a sync input, if we do then use its synchronizatio method
     // TODO: Handle processing queue
 #ifdef _DEBUG
-    std::vector<std::tuple<std::string, boost::optional<mo::time_t>, size_t>> input_states;
+    struct InputState
+    {
+        InputState(const std::string& name_,
+                   const boost::optional<mo::time_t>& ts_,
+                   size_t fn_): name(name_), ts(ts_), fn(fn_){}
+        std::string name;
+        boost::optional<mo::time_t> ts;
+        size_t fn;
+    };
+
+    std::vector<InputState> input_states;
 #endif
     if(_pimpl->sync_input)
     {
@@ -172,11 +182,11 @@ Algorithm::InputState Algorithm::CheckInputs()
         }
         if(!ts)
         {
-            fn = inputs[0]->GetInputFrameNumber();
+            fn = -1;
 #ifdef _DEBUG
             input_states.emplace_back(inputs[0]->GetTreeName(), boost::optional<mo::time_t>(), *fn);
 #endif
-            for(int i = 1; i < inputs.size(); ++i)
+            for(int i = 0; i < inputs.size(); ++i)
             {
                 if(inputs[i]->IsInputSet())
                 {
@@ -215,6 +225,8 @@ Algorithm::InputState Algorithm::CheckInputs()
                     // Input is not optional
                     if (auto param = input->GetInputParam())
                     {
+                        if(param->CheckFlags(mo::Unstamped_e))
+                            continue;
                         LOG(trace) << "Failed to get input for \"" << input->GetTreeName() << "\" (" << param->GetTreeName() << ") at timestamp " << ts;
                         return NoneValid;
                     }else
@@ -222,6 +234,7 @@ Algorithm::InputState Algorithm::CheckInputs()
                         LOG(trace) << "Input not set \"" << input->GetTreeName() << "\"";
                         return NoneValid;
                     }
+
                 }
             }
         }
@@ -333,8 +346,17 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
             }*/
 #endif
 #endif
-            if(ts && param->CheckFlags(mo::Buffer_e))
-                _pimpl->_ts_processing_queue.push(*ts);
+            if(param->CheckFlags(mo::Buffer_e))
+            {
+                if(ts)
+                {
+                    _pimpl->_ts_processing_queue.push(*ts);
+                }else
+                {
+                    _pimpl->_fn_processing_queue.push(param->GetFrameNumber());
+                }
+            }
+
         }
     }else if (_pimpl->_sync_method == SyncNewest)
     {
