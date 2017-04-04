@@ -123,7 +123,14 @@ Algorithm::InputState Algorithm::CheckInputs()
     auto inputs = this->GetInputs();
     if(inputs.size() == 0)
         return AllValid;
-
+    for(auto input : inputs)
+    {
+        if(!input->IsInputSet() && ! input->CheckFlags(mo::Optional_e))
+        {
+            LOG(trace) << "Required input (" << input->GetTreeName() << ") is not set to anything";
+            return NoneValid;
+        }
+    }
     boost::optional<mo::time_t> ts;
     boost::optional<size_t> fn;
     // First check to see if we have a sync input, if we do then use its synchronizatio method
@@ -171,11 +178,14 @@ Algorithm::InputState Algorithm::CheckInputs()
 #endif
             for(int i = 1; i < inputs.size(); ++i)
             {
-                auto in_fn = inputs[i]->GetInputFrameNumber();
-                fn = std::min<size_t>(*fn, in_fn);
+                if(inputs[i]->IsInputSet())
+                {
+                    auto in_fn = inputs[i]->GetInputFrameNumber();
+                    fn = std::min<size_t>(*fn, in_fn);
 #ifdef _DEBUG
-                input_states.emplace_back(inputs[i]->GetTreeName(), boost::optional<mo::time_t>(), in_fn);
+                    input_states.emplace_back(inputs[i]->GetTreeName(), boost::optional<mo::time_t>(), in_fn);
 #endif
+                }
             }
         }
     }
@@ -226,15 +236,24 @@ Algorithm::InputState Algorithm::CheckInputs()
         boost::optional<mo::time_t> ts;
         for(auto input : inputs)
         {
+            if(!input->IsInputSet() && ! input->CheckFlags(Optional_e))
+            {
+                LOG(trace) << "Input not set \"" << input->GetTreeName() << "\"";
+                return NoneValid;
+            }
             if(!input->GetInput(*fn, &ts))
             {
+                if(input->CheckFlags(Desynced_e))
+                {
+                    continue;
+                }
                 if (input->CheckFlags(Optional_e))
                 {
                     // If the input isn't set and it's optional then this is ok
-                    if (input->GetInputParam())
+                    if (input->IsInputSet())
                     {
                         // Input is optional and set, but couldn't get the right timestamp, error
-                        LOG(debug) << "Failed to get input \"" << input->GetTreeName() << "\" at framenumber " << *fn;
+                        LOG(debug) << "Input is set to \"" << input->GetTreeName() << "\" but could not get at frame number " << *fn;
                     }
                     else
                     {
@@ -247,11 +266,6 @@ Algorithm::InputState Algorithm::CheckInputs()
                     if (auto param = input->GetInputParam())
                     {
                         LOG(trace) << "Failed to get input for \"" << input->GetTreeName() << "\" (" << param->GetTreeName() << ") at framenumber " << *fn << " actual frame number " << input->GetFrameNumber();
-                        return NoneValid;
-                    }
-                    else
-                    {
-                        LOG(trace) << "Input not set \"" << input->GetTreeName() << "\"";
                         return NoneValid;
                     }
                 }
