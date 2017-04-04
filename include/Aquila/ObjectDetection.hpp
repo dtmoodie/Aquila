@@ -106,7 +106,7 @@ namespace aq
          * \brief size is the centered size of the object
          */
         Eigen::Vector3d size;
-        long long timestamp;
+        boost::optional<mo::time_t> timestamp;
         int id = 0;
         template<class AR>
         void serialize(AR& ar)
