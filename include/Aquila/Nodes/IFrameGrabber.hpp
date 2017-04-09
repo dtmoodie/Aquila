@@ -34,10 +34,10 @@ namespace aq
     {
         class IFrameGrabber;
         class FrameGrabberInfo;
+        class Grabber;
+        class GrabberInfo;
     }
 }
-
-
 
 namespace aq
 {
@@ -46,6 +46,29 @@ namespace aq
     namespace Nodes
     {
     
+    class AQUILA_EXPORTS GrabberInfo : virtual public mo::IMetaObjectInfo
+    {
+    public:
+        virtual int CanLoad(const std::string& path) const;
+        virtual void ListPaths(std::vector<std::string>& paths) const;
+        virtual int Timeout() const;
+    };
+    class AQUILA_EXPORTS IGrabber : public TInterface<ctcrc32("aq::Nodes::IGrabber"), Algorithm>
+    {
+    public:
+        typedef GrabberInfo InterfaceInfo;
+        typedef IGrabber Interface;
+        typedef rcc::shared_ptr<IGrabber> Ptr;
+        MO_BEGIN(IGrabber, Algorithm)
+            PARAM(std::string, loaded_document, "")
+        MO_END;
+
+        virtual bool Load(const std::string& path) = 0;
+        virtual bool Grab() = 0;
+    protected:
+        bool ProcessImpl();
+    };
+
     class AQUILA_EXPORTS FrameGrabberInfo: virtual public NodeInfo
     {
     public:
@@ -54,7 +77,7 @@ namespace aq
          * \param document is a string descibing a file / path / URI to load
          * \return 0 if the document cannot be loaded, priority of the frame grabber otherwise.  Higher value means higher compatibility with this document
          */
-        virtual int CanLoadDocument(const ::std::string& document) const = 0;
+        virtual int CanLoadPath(const std::string& document) const;
         /*!
          * \brief LoadTimeout returns the ms that should be allowed for the frame grabber's LoadFile function before a timeout condition
          * \return timeout in ms
@@ -63,119 +86,30 @@ namespace aq
 
         // Function used for listing what documents are available for loading, used in cases of connected devices to list what
         // devices have been enumerated
-        virtual ::std::vector<::std::string> ListLoadableDocuments() const;
+        virtual std::vector<std::string> ListLoadablePaths() const;
 
-        ::std::string Print() const;
+        std::string Print() const;
     };
 
-
-    
     // Interface class for the base level of features frame grabber
-    class AQUILA_EXPORTS IFrameGrabber: public TInterface<ctcrc32("aq::Nodes::IFrameGrabber"), Node>
+    class AQUILA_EXPORTS IFrameGrabber: virtual public TInterface<ctcrc32("aq::Nodes::FrameGrabber"), Node>
     {
     public:
         typedef FrameGrabberInfo InterfaceInfo;
         typedef IFrameGrabber Interface;
 
-        static rcc::shared_ptr<IFrameGrabber> Create(const ::std::string& uri, const ::std::string& preferred_loader = "");
-        static ::std::vector<::std::string> ListAllLoadableDocuments();
-
-        IFrameGrabber();
-        virtual bool LoadFile(const ::std::string& file_path) = 0;
-        virtual long long GetFrameNumber() = 0;
-        virtual long long GetNumFrames() = 0;
-        virtual ::std::string GetSourceFilename();
-        
-        virtual TS<SyncedMemory> GetCurrentFrame(cv::cuda::Stream& stream) = 0;
-        virtual TS<SyncedMemory> GetFrame(int index, cv::cuda::Stream& stream) = 0;
-        virtual TS<SyncedMemory> GetNextFrame(cv::cuda::Stream& stream) = 0;
-        // Get a frame relative to the current frame.  Index can be positive and negative
-        virtual TS<SyncedMemory> GetFrameRelative(int index, cv::cuda::Stream& stream) = 0;
-
-        virtual rcc::shared_ptr<ICoordinateManager> GetCoordinateManager() = 0;
-        virtual void InitializeFrameGrabber(IDataStream* stream);
-        virtual void Init(bool firstInit);
-        virtual void Serialize(ISimpleSerializer* pSerializer);
-
+        static rcc::shared_ptr<IFrameGrabber> Create(const std::string& doc, const std::string& preferred_loader = "");
+        // Returns all data sources that can be loaded with the name of the loader that can load it
+        static std::vector<std::pair<std::string, std::string>> ListAllLoadableDocuments();
         
         MO_DERIVE(IFrameGrabber, Node)
             MO_SIGNAL(void, update)
             MO_SLOT(void, Restart)
-            OUTPUT(SyncedMemory, current_frame, SyncedMemory())
-            PARAM(std::string, loaded_document, "")
-            MO_SLOT(void, on_loaded_document_modified, mo::Context*, mo::IParameter*)
-        MO_END
-        
-    protected:
-        bool ProcessImpl();
-
-        IFrameGrabber(const IFrameGrabber&) = delete;
-        IFrameGrabber& operator=(const IFrameGrabber&) = delete;
-        IDataStream* parent_stream;
-        //cv::cuda::Stream stream;
-        //mo::Context ctx;
+            PARAM(std::vector<std::string>, loaded_document, {})
+            PARAM_UPDATE_SLOT(loaded_document)
+            MO_SLOT(bool, Load, std::string)
+            MO_SLOT(bool, Load, std::vector<std::string>)
+        MO_END;
     };
-    //   [ 0 ,1, 2, 3, 4, 5 ....... N-5, N-4, N-3, N-2, N-1, N]
-    //    buffer begin                                  buffer end
-    //            |      safe playback frames          |
-    //        buffer begin + 5 < playback            > buffer end - 5
-    //                    
-    class AQUILA_EXPORTS FrameGrabberBuffered: public IFrameGrabber
-    {
-    public:
-        FrameGrabberBuffered();
-        virtual ~FrameGrabberBuffered();
-        
-        virtual long long GetFrameNumber();
-        
-        virtual TS<SyncedMemory> GetCurrentFrame(cv::cuda::Stream& stream);
-        virtual void Init(bool firstInit);
-        virtual void Serialize(ISimpleSerializer* pSerializer);
-
-        SyncedMemory get_frame(int ts, cv::cuda::Stream& stream);
-
-        MO_DERIVE(FrameGrabberBuffered, IFrameGrabber)
-            PARAM(int, frame_buffer_size, 10)
-            OUTPUT(boost::circular_buffer<TS<SyncedMemory>>, frame_buffer, boost::circular_buffer<TS<SyncedMemory>>())
-            MO_SLOT(TS<SyncedMemory>, GetFrame, int, cv::cuda::Stream&)
-            MO_SLOT(TS<SyncedMemory>, GetNextFrame, cv::cuda::Stream&)
-            MO_SLOT(TS<SyncedMemory>, GetFrameRelative, int, cv::cuda::Stream&)
-        MO_END
-    protected:
-        virtual void PushFrame(TS<SyncedMemory> frame, bool blocking = true);
-        boost::mutex                             buffer_mtx;
-        boost::mutex                             grabber_mtx;
-        std::atomic_llong                        buffer_begin_frame_number;
-        std::atomic_llong                        buffer_end_frame_number;
-        std::atomic_llong                        playback_frame_number;
-        // If the buffering thread is too far ahead, it will wait on this condition variable
-        // until the read thread reads an image from the frame buffer
-        boost::condition_variable                frame_read_cv;
-        // If the read thread is too far ahead of the buffer thread, then it will wait on this
-        // condition variable for a notification of grabbing of a new image
-        boost::condition_variable                frame_grabbed_cv;
-        bool                                     _is_stream;
-        std::queue<long long>        _frame_number_playback_queue;
-    };
-    class AQUILA_EXPORTS FrameGrabberThreaded: public FrameGrabberBuffered
-    {
-    public:
-        FrameGrabberThreaded();
-        MO_DERIVE(FrameGrabberThreaded, FrameGrabberBuffered)
-            MO_SLOT(void, StartThreads)
-            MO_SLOT(void, StopThreads)
-            MO_SLOT(void, PauseThreads)
-            MO_SLOT(void, ResumeThreads)
-            MO_SLOT(int, Buffer)
-            PROPERTY(mo::ThreadHandle, _buffer_thread_handle, mo::ThreadPool::Instance()->RequestThread())
-            MO_SIGNAL(void, eos)
-        MO_END
-            void Init(bool firstInit);
-    protected:
-        // Should only ever be called from the buffer thread
-        virtual TS<SyncedMemory> GetFrameImpl(int index, cv::cuda::Stream& stream) = 0;
-        virtual TS<SyncedMemory> GetNextFrameImpl(cv::cuda::Stream& stream) = 0;
-        long long _empty_frame_count;
-    };
-    }
-}
+    } // namespace nodes
+} // namespace aq

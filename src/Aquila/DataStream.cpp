@@ -111,10 +111,14 @@ void DataStream::update()
 {
     dirty_flag = true;
 }
-
-void DataStream::parameter_updated(mo::IMetaObject* obj, mo::IParameter* param)
+void DataStream::input_changed(Nodes::Node* node, mo::InputParameter* param)
 {
     dirty_flag = true;
+}
+void DataStream::parameter_updated(mo::IMetaObject* obj, mo::IParameter* param)
+{
+    if(param->CheckFlags(mo::Control_e) || param->CheckFlags(mo::Source_e))
+        dirty_flag = true;
 }
 
 void DataStream::parameter_added(mo::IMetaObject* obj, mo::IParameter* param)
@@ -244,7 +248,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
             auto fg_info = dynamic_cast<Nodes::FrameGrabberInfo*>(info);
             if(fg_info)
             {
-                int priority = fg_info->CanLoadDocument(file_to_load);
+                int priority = fg_info->CanLoadPath(file_to_load);
                 if(priority != 0)
                 {
                     valid_frame_grabbers.push_back(constructor);
@@ -289,9 +293,8 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
     {
         auto fg = rcc::shared_ptr<IFrameGrabber>(valid_frame_grabbers[idx[i]]->Construct());
         auto fg_info = dynamic_cast<FrameGrabberInfo*>(valid_frame_grabbers[idx[i]]->GetObjectInfo());
-        fg->InitializeFrameGrabber(this);
         fg->Init(true);
-        //std::promise<bool> promise;
+        fg->SetDataStream(this);
         struct thread_load_object
         {
             std::promise<bool> promise;
@@ -299,7 +302,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
             std::string document;
             void load()
             {
-                promise.set_value(fg->LoadFile(document));
+                promise.set_value(fg->Load(document));
             }
         };
         auto obj = new thread_load_object();
@@ -364,7 +367,7 @@ bool IDataStream::CanLoadDocument(const std::string& document)
             auto fg_info = dynamic_cast<FrameGrabberInfo*>(info);
             if (fg_info)
             {
-                int priority = fg_info->CanLoadDocument(doc_to_load);
+                int priority = fg_info->CanLoadPath(doc_to_load);
                 if (priority != 0)
                 {
                     LOG(debug) << fg_info->GetObjectName() << " can load document";
@@ -583,6 +586,9 @@ int DataStream::process()
         {
             return 1;
         }
+    }else
+    {
+        return 10;
     }
     return 10;
 }

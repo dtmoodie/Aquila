@@ -142,6 +142,7 @@ namespace Nodes
         MO_BEGIN(Node)
             MO_SLOT(void, reset)
             MO_SIGNAL(void, node_updated, Node*)
+            MO_SIGNAL(void, input_changed, Node*, mo::InputParameter*)
         MO_END
 
     protected:

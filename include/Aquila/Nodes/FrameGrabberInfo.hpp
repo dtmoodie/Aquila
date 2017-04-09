@@ -12,16 +12,16 @@ namespace aq
 
 
 // I tried placing these as functions inside of the MetaObjectInfoImpl specialization, but msvc doesn't like that. :(
-template<class T> struct GetLoadableDocumentsHelper
+template<class T> struct GetLoadablePathsHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasLoadableDocuments, ListLoadableDocuments, std::vector<std::string>(*)(void));
+    DEFINE_HAS_STATIC_FUNCTION(HasLoadablePaths, ListLoadablePaths, std::vector<std::string>(*)(void));
     template<class U> 
-    static std::vector<std::string> helper(typename std::enable_if<HasLoadableDocuments<U>::value, void>::type* = 0)
+    static std::vector<std::string> helper(typename std::enable_if<HasLoadablePaths<U>::value, void>::type* = 0)
     { 
-        return U::ListLoadableDocuments(); 
+        return U::ListLoadablePaths();
     }
     template<class U> 
-    static std::vector<std::string> helper(typename std::enable_if<!HasLoadableDocuments<U>::value, void>::type* = 0)
+    static std::vector<std::string> helper(typename std::enable_if<!HasLoadablePaths<U>::value, void>::type* = 0)
     { 
         return std::vector<std::string>(); 
     }
@@ -84,9 +84,9 @@ namespace mo
             return GetTimeoutHelper<Type>::Get();
         }
 
-        std::vector<std::string> ListLoadableDocuments() const
+        std::vector<std::string> ListLoadablePaths() const
         {
-            return GetLoadableDocumentsHelper<Type>::Get();
+            return GetLoadablePathsHelper<Type>::Get();
         }
 
         int CanLoadDocument(const std::string& document) const

@@ -224,6 +224,8 @@ bool Node::ConnectInput(rcc::shared_ptr<Node> output_node,    mo::IParameter* ou
     if (this->IMetaObject::ConnectInput(input_param, output_node.Get(), output_param, type))
     {
         AddParent(output_node.Get());
+        Node* This = this;
+        sig_input_changed(This, input_param);
         return true;
     }
     else
@@ -262,7 +264,7 @@ void Node::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
 bool Node::Process()
 {
     ++_pimpl_node->iterations_since_execution;
-    if(_pimpl_node->iterations_since_execution > 100)
+    if(_pimpl_node->iterations_since_execution % 100 == 0)
     {
         LOG(warning) << this->GetTreeName() << " has not executed in " << _pimpl_node->iterations_since_execution << " iterations due to "
                      << _pimpl_node->last_execution_failure_reason ? _pimpl_node->last_execution_failure_reason : "";
