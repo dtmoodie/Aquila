@@ -31,13 +31,13 @@ namespace aq
     {
         template<class...U> TS(U...args):T(args...)
         {
-            timestamp = 0.0;
+            timestamp = 0.0 * mo::second;
             frame_number = 0;
         }
-        template<class...U> TS(double ts, long long frame_number, U...args) : T(args...)
+        template<class...U> TS(mo::time_t ts, size_t fn, U...args) : T(args...)
         {
             timestamp = ts;
-            this->frame_number = frame_number;
+            this->frame_number = fn;
         }
         template<class A> void serialize(A& ar)
         {
@@ -46,8 +46,8 @@ namespace aq
             ar(*static_cast<T*>(this));
         }
 
-        double timestamp;
-        long long frame_number;
+        mo::time_t timestamp;
+        size_t frame_number;
     };
 
 

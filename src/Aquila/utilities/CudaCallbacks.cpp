@@ -13,11 +13,11 @@ using namespace aq::cuda;
 void aq::cuda::ICallback::cb_func_async_event_loop(int status, void* user_data)
 {
     mo::SetCudaThread();
-    auto cb = static_cast<ICallbackEventLoop*>(user_data);
+    std::shared_ptr<ICallbackEventLoop> cb(static_cast<ICallbackEventLoop*>(user_data));
+
     mo::ThreadSpecificQueue::Push([cb]()
     {
         cb->run();
-        delete cb;
     }, cb->event_loop_thread_id);
 }
 

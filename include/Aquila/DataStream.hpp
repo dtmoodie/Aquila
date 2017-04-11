@@ -39,6 +39,7 @@ namespace aq
             MO_SIGNAL(void, StopThreads)
 
             MO_SLOT(void, StartThread)
+            MO_SLOT(void, input_changed, Nodes::Node*, mo::InputParameter*)
             MO_SLOT(void, StopThread)
             MO_SLOT(void, PauseThread)
             MO_SLOT(void, ResumeThread)

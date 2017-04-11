@@ -4,7 +4,7 @@ namespace aq
 {
     namespace Nodes
     {
-        class AQUILA_EXPORTS Processing : public Node
+        /*class AQUILA_EXPORTS Processing : public Node
         {
             virtual TS<SyncedMemory> process(TS<SyncedMemory> input, cv::cuda::Stream& stream) = 0;
         };
@@ -19,7 +19,7 @@ namespace aq
         {
             virtual TS<SyncedMemory> process(TS<SyncedMemory> input, cv::cuda::Stream& stream);
             virtual cv::cuda::GpuMat doProcess(cv::cuda::GpuMat& mat, double timestamp, int frame_number, cv::cuda::Stream& stream) = 0;
-        };
+        };*/
     }
     
 }
