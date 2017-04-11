@@ -48,36 +48,9 @@ struct test_framegrabber: public IFrameGrabber
     {
         return 255;
     }
-    TS<SyncedMemory> GetCurrentFrame(cv::cuda::Stream& stream)
-    {
-        return TS<SyncedMemory>(current);
-    }
-    TS<SyncedMemory> GetNextFrame(cv::cuda::Stream& stream)
-    {
-        ++ts;
-        Process();
-        return GetCurrentFrame(stream);
-    }
-    TS<SyncedMemory> GetFrame(int ts, cv::cuda::Stream& stream)
-    {
-        cv::Mat output;
-        output.create(128,128, CV_8U);
-        output.setTo(ts);
-        return output;
-    }
-    TS<SyncedMemory> GetFrameRelative(int offset, cv::cuda::Stream& stream)
-    {
-        cv::Mat output;
-        output.create(128,128, CV_8U);
-        output.setTo(ts + offset);
-        return output;
-    }
-    rcc::shared_ptr<aq::ICoordinateManager> GetCoordinateManager()
-    {
-        return rcc::shared_ptr<aq::ICoordinateManager>();
-    }
 
-    MO_DERIVE(test_framegrabber, IFrameGrabber);
+    MO_DERIVE(test_framegrabber, IFrameGrabber)
+        OUTPUT(SyncedMemory, current_frame, {})
     MO_END;
     int ts = 0;
     cv::Mat current;
@@ -95,7 +68,7 @@ struct test_framegrabber: public IFrameGrabber
 struct img_node: public Node
 {
     MO_DERIVE(img_node, Node);
-        INPUT(SyncedMemory, input, nullptr);
+        INPUT(SyncedMemory, input, nullptr)
     MO_END;
 
     bool ProcessImpl()

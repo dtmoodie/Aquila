@@ -59,7 +59,7 @@ namespace aq
         typedef GrabberInfo InterfaceInfo;
         typedef IGrabber Interface;
         typedef rcc::shared_ptr<IGrabber> Ptr;
-        MO_BEGIN(IGrabber, Algorithm)
+        MO_BEGIN(IGrabber)
             PARAM(std::string, loaded_document, "")
         MO_END;
 

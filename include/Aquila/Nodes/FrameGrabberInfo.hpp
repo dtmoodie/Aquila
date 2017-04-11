@@ -70,6 +70,9 @@ template<class T> struct GetCanLoadHelper
     {
         return helper<T>(doc);
     }
+    enum{
+        value = HasCanLoad<T>::value
+    };
 };
 
 
@@ -89,9 +92,12 @@ namespace mo
             return GetLoadablePathsHelper<Type>::Get();
         }
 
-        int CanLoadDocument(const std::string& document) const
+        int CanLoadPath(const std::string& document) const
         {
-            return GetCanLoadHelper<Type>::Get(document);
+            if(GetCanLoadHelper<Type>::value)
+                return GetCanLoadHelper<Type>::Get(document);
+            else
+                return aq::Nodes::FrameGrabberInfo::CanLoadPath(document);
         }
 
         std::vector<std::string> GetNodeCategory() const
