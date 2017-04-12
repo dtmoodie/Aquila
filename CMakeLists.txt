@@ -31,16 +31,16 @@ set(RCC_PERMODULE_INTERFACE_SOURCE
 include_directories(${RCC_INCLUDE_DIRS})
 ADD_SUBDIRECTORY("dependencies/pplx")
 
-find_package(OpenCV 3.0 QUIET COMPONENTS  
-	core 
-	imgproc 
-	highgui 
-	cudaimgproc 
-	cudawarping 
-	cudafeatures2d 
-	cudaoptflow 
-	cudacodec 
-	cudabgsegm
+find_package(OpenCV 3.0 QUIET COMPONENTS
+    core
+    imgproc
+    highgui
+    cudaimgproc
+    cudawarping
+    cudafeatures2d
+    cudaoptflow
+    cudacodec
+    cudabgsegm
 )
 
 find_package(Gstreamer QUIET)
@@ -84,24 +84,24 @@ IF(${Aquila_JETSON})
     LIST(APPEND defs_ "-DJETSON")
 ENDIF(${Aquila_JETSON})
 
-set(BOOST_REQUIRED_MODULES 
-	system 
-	filesystem 
-	thread 
-	date_time 
-	iostreams 
-	chrono 
-	regex 
-	log 
-	log_setup 
-	atomic 
+set(BOOST_REQUIRED_MODULES
+    system
+    filesystem
+    thread
+    date_time
+    iostreams
+    chrono
+    regex
+    log
+    log_setup
+    atomic
     unit_test_framework
 )
 set(Boost_USE_STATIC_LIBS        OFF)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME     OFF)
 ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
-find_package(Boost 1.47.0 QUIET COMPONENTS ${BOOST_REQUIRED_MODULES}) 
+find_package(Boost 1.47.0 QUIET COMPONENTS ${BOOST_REQUIRED_MODULES})
 
 FILE(GLOB_RECURSE src "src/*.cpp" "remotery/lib/*.c")
 FILE(GLOB_RECURSE hdr "remotery/lib/*.h" "include/*.hpp" "include/*.h" "src/*.hpp")
@@ -131,15 +131,15 @@ INCLUDE_DIRECTORIES(
     ${PPLX_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib
     )
-	
+
 if(Qt5_FOUND)
-	include_directories(
-		${Qt5Core_INCLUDE_DIRS}
-		${Qt5Gui_INCLUDE_DIRS} 
-		${Qt5Widgets_INCLUDE_DIRS}
-		${Qt5Network_INCLUDE_DIRS}
-		)
-	add_definitions(-DHAVE_QT)
+    include_directories(
+        ${Qt5Core_INCLUDE_DIRS}
+        ${Qt5Gui_INCLUDE_DIRS}
+        ${Qt5Widgets_INCLUDE_DIRS}
+        ${Qt5Network_INCLUDE_DIRS}
+        )
+    add_definitions(-DHAVE_QT)
 endif()
 
 
@@ -164,27 +164,27 @@ ELSE(WIN32)
     SET(LIB_BUILD_DIR_RELEASE "${LIBRARY_OUTPUT_PATH};${CMAKE_BINARY_DIR}")
     SET(LIB_BUILD_DIR_DEBUG "${LIBRARY_OUTPUT_PATH};${CMAKE_BINARY_DIR}")
 ENDIF(WIN32)
-set(aquila_include_dirs_ 
-	"${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/dependencies/cereal/include;"
+set(aquila_include_dirs_
+    "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/dependencies/cereal/include;"
     "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/instantiations;"
     "${CMAKE_CURRENT_SOURCE_DIR}/include;"
     "${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib;"
     "${Boost_INCLUDE_DIRS};${OpenCV_INCLUDE_DIRS};"
     "${RCC_INCLUDE_DIRS};"
-	"${EIGEN3_INCLUDE_DIR};"
+    "${EIGEN3_INCLUDE_DIR};"
     "${PPLX_INCLUDE_DIRS}"
-	)
+    )
 if(Qt5_FOUND)
-	list(APPEND aquila_include_dirs_ 
-		"${Qt5Gui_INCLUDE_DIRS};"
-		"${Qt5Widgets_INCLUDE_DIRS};"
-		"${Qt5Network_INCLUDE_DIRS};"
-	)
+    list(APPEND aquila_include_dirs_
+        "${Qt5Gui_INCLUDE_DIRS};"
+        "${Qt5Widgets_INCLUDE_DIRS};"
+        "${Qt5Network_INCLUDE_DIRS};"
+    )
 endif()
-	
+
 set(Aquila_INCLUDE_DIRECTORIES
     ${aquila_include_dirs_}
-	 CACHE PATH "" FORCE
+     CACHE PATH "" FORCE
 )
 
 set(Aquila_LIBRARIES
@@ -287,12 +287,12 @@ file(GLOB children RELATIVE ${PROJECT_SOURCE_DIR}/${curdir} ${PROJECT_SOURCE_DIR
         endif()
    endforeach()
 endmacro()
- 
+
 GroupSources(include)
 GroupSources(src)
 
 cuda_add_library(Aquila SHARED
-    ${src}  
+    ${src}
     ${hdr}
     ${knl}
     ${RuntimeObjectSystem_SRCS}
@@ -307,7 +307,7 @@ TARGET_LINK_LIBRARIES(Aquila
     pplx
     ${Parameters_LIBRARIES}
     ${CUDA_CUDART_LIBRARY}
-    
+    MetaParameters
     RuntimeObjectSystem
     RuntimeCompiler
     ${LINK_LIBS}
@@ -315,9 +315,9 @@ TARGET_LINK_LIBRARIES(Aquila
     ${Boost_LIBRARIES}
 )
 if(Qt5_FOUND)
-	target_link_libraries(Aquila
-		Qt5::OpenGL
-	)
+    target_link_libraries(Aquila
+        Qt5::OpenGL
+    )
 endif()
 
 if(MXNET_FOUND)
@@ -375,7 +375,7 @@ if(WITH_PYTHON)
   add_subdirectory("python")
 endif()
 # =====================
-# modules 
+# modules
 SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
 foreach( module ${modules})
    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
@@ -425,7 +425,7 @@ if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
         add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
         if(MSVC)
           CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/Aquila/${test}.vcxproj.user @ONLY)
-		  CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)
+          CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)
         endif()
     endforeach()
 endif()

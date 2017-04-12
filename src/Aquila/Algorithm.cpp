@@ -12,7 +12,7 @@
 #include <Aquila/IO/JsonArchive.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
-
+#include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
 INSTANTIATE_META_PARAMETER(std::vector<rcc::shared_ptr<aq::Algorithm>>)
 using namespace mo;
 using namespace aq;
@@ -150,9 +150,9 @@ Algorithm::InputState Algorithm::CheckInputs()
 #endif
     if(_pimpl->sync_input)
     {
-        ts = _pimpl->sync_input->GetTimestamp();
+        ts = _pimpl->sync_input->GetInputTimestamp();
         if(!ts)
-            fn = _pimpl->sync_input->GetFrameNumber();
+            fn = _pimpl->sync_input->GetInputFrameNumber();
         if(_pimpl->_sync_method == SyncEvery)
         {
 
@@ -162,30 +162,30 @@ Algorithm::InputState Algorithm::CheckInputs()
         // Check all inputs to see if any are timestamped.
         for(auto input : inputs)
         {
-            auto in_ts = input->GetTimestamp();
-#ifdef _DEBUG
-            input_states.emplace_back(input->GetTreeName(), in_ts, 0);
-#endif
-            if(!in_ts)
-                continue;
-            if(in_ts)
+            if(input->IsInputSet())
             {
-                if(!ts)
-                {
-                    ts = in_ts;
+                auto in_ts = input->GetInputTimestamp();
+#ifdef _DEBUG
+                input_states.emplace_back(input->GetTreeName(), in_ts, 0);
+#endif
+                if(!in_ts)
                     continue;
-                }else
+                if(in_ts)
                 {
-                    ts = std::min<mo::time_t>(*ts, *in_ts);
+                    if(!ts)
+                    {
+                        ts = in_ts;
+                        continue;
+                    }else
+                    {
+                        ts = std::min<mo::time_t>(*ts, *in_ts);
+                    }
                 }
             }
         }
         if(!ts)
         {
             fn = -1;
-#ifdef _DEBUG
-            input_states.emplace_back(inputs[0]->GetTreeName(), boost::optional<mo::time_t>(), *fn);
-#endif
             for(int i = 0; i < inputs.size(); ++i)
             {
                 if(inputs[i]->IsInputSet())
@@ -209,7 +209,7 @@ Algorithm::InputState Algorithm::CheckInputs()
         {
             if(!input->GetInput(ts, &fn))
             {
-                if(input->CheckFlags(Optional_e))
+                if(input->CheckFlags(mo::Optional_e))
                 {
                     // If the input isn't set and it's optional then this is ok
                     if(input->GetInputParam())
@@ -333,7 +333,7 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
     {
         if(param == _pimpl->sync_input)
         {
-            auto ts = param->GetTimestamp();
+            auto ts = _pimpl->sync_input->GetInputTimestamp();
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -346,14 +346,14 @@ void Algorithm::onParameterUpdate(mo::Context* ctx, mo::IParameter* param)
             }*/
 #endif
 #endif
-            if(param->CheckFlags(mo::Buffer_e))
+            if(_pimpl->sync_input->CheckFlags(mo::Buffer_e))
             {
                 if(ts)
                 {
                     _pimpl->_ts_processing_queue.push(*ts);
                 }else
                 {
-                    _pimpl->_fn_processing_queue.push(param->GetFrameNumber());
+                    _pimpl->_fn_processing_queue.push(_pimpl->sync_input->GetInputFrameNumber());
                 }
             }
 

@@ -18,7 +18,7 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/array.hpp>
 #include <boost/lexical_cast.hpp>
-
+#include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
 INSTANTIATE_META_PARAMETER(aq::SyncedMemory);
 INSTANTIATE_META_PARAMETER(std::vector<aq::SyncedMemory>);
 INSTANTIATE_META_PARAMETER(cv::Mat);

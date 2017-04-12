@@ -22,7 +22,7 @@ std::vector<std::string> ListConstructableNodes1()
 {
     return aq::Nodes::Node::ListConstructableNodes("");
 }
-std::vector<std::string> ListDevices()
+std::vector<std::pair<std::string, std::string>> ListDevices()
 {
     return aq::Nodes::IFrameGrabber::ListAllLoadableDocuments();
 }

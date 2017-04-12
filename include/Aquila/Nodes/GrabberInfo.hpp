@@ -19,14 +19,14 @@ namespace Grabbers
     }
     template<class U> void HasListHelper(std::vector<std::string>& path, typename std::enable_if<!HasListPaths<U>::value, void>::type* = 0)
     {
-        
+
     }
     DEFINE_HAS_STATIC_FUNCTION(HasTimeout, Timeout, int(*)(void));
-    template<class U> int HasTimeoutHelper(typename std::enable_if<HasListPaths<U>::value, void>::type* = 0)
+    template<class U> int HasTimeoutHelper(typename std::enable_if<HasTimeout<U>::value, void>::type* = 0)
     {
         return U::Timeout();
     }
-    template<class U> int HasTimeoutHelper(typename std::enable_if<!HasListPaths<U>::value, void>::type* = 0)
+    template<class U> int HasTimeoutHelper(typename std::enable_if<!HasTimeout<U>::value, void>::type* = 0)
     {
         return 1000;
     }

@@ -12,11 +12,12 @@
 #include "MetaObject/Parameters/Buffers/Map.hpp"
 #include "MetaObject/Parameters/Buffers/NNStreamBuffer.hpp"
 #include "MetaObject/Parameters/IO/CerealPolicy.hpp"
+#include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
 //#include "MetaObject/Parameters/IO/TextPolicy.hpp"
 using namespace aq;
 
 aq::Classification::Classification(const std::string& label_, float confidence_, int classNumber_) :
-    label(label_), confidence(confidence_), classNumber(classNumber_) 
+    label(label_), confidence(confidence_), classNumber(classNumber_)
 {
 
 }
