@@ -1,8 +1,8 @@
 #include "Aquila/ObjectDetection.hpp"
+#include "Aquila/ObjectDetectionSerialization.hpp"
+
 #include <Aquila/rcc/external_includes/cv_imgproc.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/cereal.hpp>
-#include <cereal/types/string.hpp>
+
 #include "MetaObject/Parameters/MetaParameter.hpp"
 #include "MetaObject/Parameters/UI/Qt/OpenCV.hpp"
 #include "MetaObject/Parameters/UI/Qt/Containers.hpp"
@@ -13,7 +13,7 @@
 #include "MetaObject/Parameters/Buffers/NNStreamBuffer.hpp"
 #include "MetaObject/Parameters/IO/CerealPolicy.hpp"
 #include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
-//#include "MetaObject/Parameters/IO/TextPolicy.hpp"
+
 using namespace aq;
 
 aq::Classification::Classification(const std::string& label_, float confidence_, int classNumber_) :
@@ -35,6 +35,7 @@ void aq::CreateColormap(cv::Mat& lut, int num_classes, int ignore_class)
 INSTANTIATE_META_PARAMETER(DetectedObject)
 INSTANTIATE_META_PARAMETER(Classification)
 INSTANTIATE_META_PARAMETER(std::vector<DetectedObject>)
+INSTANTIATE_META_PARAMETER(std::vector<DetectedObject3d>)
 
 template AQUILA_EXPORTS void DetectedObject::serialize<cereal::JSONInputArchive>(cereal::JSONInputArchive& ar);
 template AQUILA_EXPORTS void DetectedObject::serialize<cereal::JSONOutputArchive>(cereal::JSONOutputArchive& ar);
