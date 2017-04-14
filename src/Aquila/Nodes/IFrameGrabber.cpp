@@ -216,6 +216,10 @@ bool IFrameGrabber::Load(std::string path)
 
 bool IFrameGrabber::Load(std::vector<std::string> path)
 {
+    for(const auto& p : path)
+    {
+        Load(p);
+    }
     return false;
 }
 //MO_REGISTER_CLASS(IFrameGrabber)
