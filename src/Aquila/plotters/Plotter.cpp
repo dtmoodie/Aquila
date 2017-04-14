@@ -4,9 +4,9 @@
 
 #include <ISimpleSerializer.h>
 #include <map>
-using namespace aq;
+//using namespace aq;
 
-void Plotter::Init(bool firstInit)
+/*void Plotter::Init(bool firstInit)
 {
     PlotInit(firstInit);
     IMetaObject::Init(firstInit);
@@ -152,3 +152,4 @@ mo::IParameter* QtPlotter::addParameter(mo::IParameter* param)
     return param;
 }
 #endif
+*/

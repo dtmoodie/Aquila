@@ -26,7 +26,7 @@ namespace mo
 
 */
 
-namespace aq
+/*namespace aq
 {
     class PlotterInfo;
     class AQUILA_EXPORTS Plotter : public TInterface<IID_Plotter, mo::IMetaObject>
@@ -73,6 +73,6 @@ namespace aq
     private:
     };
 
-}
+}*/
 
 

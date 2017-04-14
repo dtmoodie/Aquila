@@ -18,12 +18,22 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/array.hpp>
 #include <boost/lexical_cast.hpp>
+
+#ifdef MO_EXPORTS
+#undef MO_EXPORTS
+#endif
+#if (defined WIN32 || defined _WIN32 || defined WINCE || defined __CYGWIN__) && (defined Aquila_EXPORTS)
+#  define MO_EXPORTS __declspec(dllexport)
+#elif defined __GNUC__ && __GNUC__ >= 4
+#  define MO_EXPORTS __attribute__ ((visibility ("default")))
+#else
+#  define MO_EXPORTS
+#endif
 #include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
 INSTANTIATE_META_PARAMETER(aq::SyncedMemory);
 INSTANTIATE_META_PARAMETER(std::vector<aq::SyncedMemory>);
 INSTANTIATE_META_PARAMETER(cv::Mat);
 INSTANTIATE_META_PARAMETER(std::vector<cv::Mat>);
-
 
 using namespace aq;
 

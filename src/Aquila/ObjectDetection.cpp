@@ -12,6 +12,16 @@
 #include "MetaObject/Parameters/Buffers/Map.hpp"
 #include "MetaObject/Parameters/Buffers/NNStreamBuffer.hpp"
 #include "MetaObject/Parameters/IO/CerealPolicy.hpp"
+#ifdef MO_EXPORTS
+#undef MO_EXPORTS
+#endif
+#if (defined WIN32 || defined _WIN32 || defined WINCE || defined __CYGWIN__) && (defined Aquila_EXPORTS)
+#  define MO_EXPORTS __declspec(dllexport)
+#elif defined __GNUC__ && __GNUC__ >= 4
+#  define MO_EXPORTS __attribute__ ((visibility ("default")))
+#else
+#  define MO_EXPORTS
+#endif
 #include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
 
 using namespace aq;

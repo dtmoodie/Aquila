@@ -13,7 +13,7 @@ PlotManager* PlotManager::Instance()
 
 rcc::shared_ptr<Plotter> PlotManager::GetPlot(const std::string& plotName)
 {
-    auto pConstructor = mo::MetaObjectFactory::Instance()->GetConstructor(plotName.c_str());
+/*    auto pConstructor = mo::MetaObjectFactory::Instance()->GetConstructor(plotName.c_str());
     //IObjectConstructor* pConstructor = ObjectManager::Instance().m_pRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor(plotName.c_str());
     if (pConstructor && pConstructor->GetInterfaceId() == IID_Plotter)
     {
@@ -48,25 +48,27 @@ rcc::shared_ptr<Plotter> PlotManager::GetPlot(const std::string& plotName)
     else
     {
         LOG(warning) << "[ PlotManager ] failed to get constructor " << plotName;
-    }
+    }*/
     return rcc::shared_ptr<Plotter>();
 }
 
 std::vector<std::string> PlotManager::GetAvailablePlots()
 {
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
     std::vector<std::string> output;
+    /*auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
+    
     for (size_t i = 0; i < constructors.size(); ++i)
     {
         output.push_back(constructors[i]->GetName());
-    }
+    }*/
     return output;
 }
 std::vector<std::string> PlotManager::GetAcceptablePlotters(mo::IParameter* param)
 {
-    //auto constructors = ObjectManager::Instance().GetConstructorsForInterface(IID_Plotter);
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
     std::vector<std::string> output;
+    //auto constructors = ObjectManager::Instance().GetConstructorsForInterface(IID_Plotter);
+    /*auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
+    
     for(auto& constructor : constructors)
     {
         auto object_info = constructor->GetObjectInfo();
@@ -81,12 +83,12 @@ std::vector<std::string> PlotManager::GetAcceptablePlotters(mo::IParameter* para
                 }
             }
         }
-    }
+    }*/
     return output;
 }
 bool PlotManager::CanPlotParameter(mo::IParameter* param)
 {
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
+    /*auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
     //auto constructors = ObjectManager::Instance().GetConstructorsForInterface(IID_Plotter);
     for(auto& constructor : constructors)
     {
@@ -102,6 +104,6 @@ bool PlotManager::CanPlotParameter(mo::IParameter* param)
                 }
             }
         }
-    }
+    }*/
     return false;
 }

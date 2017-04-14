@@ -5,6 +5,7 @@
 
 namespace aq
 {
+    class Plotter;
     class AQUILA_EXPORTS PlotManager
     {
     public:
