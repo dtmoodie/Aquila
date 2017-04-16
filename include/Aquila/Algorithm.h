@@ -31,7 +31,7 @@ namespace aq
         virtual bool       Process();
         
         double             GetAverageProcessingTime() const;
-
+        virtual int   SetupVariableManager(mo::IVariableManager* mgr);
         virtual void       SetEnabled(bool value);
         bool               IsEnabled() const;
 

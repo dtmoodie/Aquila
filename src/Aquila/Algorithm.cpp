@@ -315,7 +315,15 @@ void Algorithm::SetSyncInput(const std::string& name)
         LOG(warning) << "Unable to set sync input for " << this->GetTypeName() << " to " << name;
     }
 }
-
+int Algorithm::SetupVariableManager(mo::IVariableManager* mgr)
+{
+    int count = mo::IMetaObject::SetupVariableManager(mgr);
+    for(auto& child : _algorithm_components)
+    {
+        count += child->SetupVariableManager(mgr);
+    }
+    return count;
+}
 void Algorithm::SetSyncMethod(SyncMethod _method)
 {
     if(_pimpl->_sync_method == SyncEvery && _method != SyncEvery)
