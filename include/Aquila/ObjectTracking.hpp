@@ -77,6 +77,8 @@ struct AQUILA_EXPORTS TrackedObject2d
 {
     enum {Dims = 2};
     typedef DetectedObject2d DetectionType;
+    typedef std::shared_ptr<TrackedObject2d> Ptr;
+    typedef std::vector<Ptr> TrackSet;
     TrackedObject2d()
     {
         detection_history.set_capacity(30);
@@ -88,11 +90,6 @@ struct AQUILA_EXPORTS TrackedObject2d
      */
     virtual float Score(const DetectedObject2d& obj)
     {
-        /*float score = cv::norm(
-                    cv::Vec2f(obj.boundingBox.x + obj.boundingBox.width / 2, obj.boundingBox.y + obj.boundingBox.height / 2),
-                    cv::Vec2f(last_bb.x + last_bb.width / 2, last_bb.y + last_bb.height / 2));
-        score += cv::norm(cv::Vec2f(obj.boundingBox.width, obj.boundingBox.height), cv::Vec2f(last_bb.width, last_bb.height));
-        return score;*/
         return iou(obj.boundingBox, last_bb);
     }
 
@@ -108,9 +105,10 @@ struct AQUILA_EXPORTS TrackedObject2d
         }
     }
 
-    virtual void Track(const aq::SyncedMemory& img, mo::time_t ts)
+    virtual float Track(const aq::SyncedMemory& img, mo::time_t ts, cv::cuda::Stream& stream)
     {
         // No tracking is done in base class
+        return 0.0f;
     }
 
     /*!
