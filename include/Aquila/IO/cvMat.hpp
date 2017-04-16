@@ -67,7 +67,7 @@ namespace cereal
         ar(CEREAL_NVP(cols));
         ar(CEREAL_NVP(type));
         ar(CEREAL_NVP(continuous));
-        if(mat.rows * mat.cols < 25 && mat.channels() == 1)
+        if(mat.rows * mat.cols < 15*15 && mat.channels() == 1)
         {
             std::vector<float> data(mat.rows * mat.cols);
             mat.convertTo(cv::Mat(mat.rows, mat.cols, CV_32F, data.data()), CV_32F);
@@ -97,7 +97,7 @@ namespace cereal
         ar(CEREAL_NVP(cols));
         ar(CEREAL_NVP(type));
         ar(CEREAL_NVP(continuous));
-        if(rows * cols < 25 && type <= CV_64F)
+        if(rows * cols < 15 * 15 && type <= CV_64F)
         {
             std::vector<float> data;
             ar(CEREAL_NVP(data));
