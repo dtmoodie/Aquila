@@ -549,7 +549,7 @@ void DataStream::RemoveVariableSink(IVariableSink* sink)
 }
 void DataStream::StartThread()
 {
-    StopThread();
+//    StopThread();
     sig_StartThreads();
     _processing_thread.Start();
 }
