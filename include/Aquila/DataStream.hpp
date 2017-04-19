@@ -61,7 +61,7 @@ namespace aq
         virtual std::shared_ptr<mo::IVariableManager>     GetVariableManager();
         virtual mo::RelayManager*                         GetRelayManager();
         virtual IParameterBuffer*                         GetParameterBuffer();
-        virtual rcc::weak_ptr<WindowCallbackHandler>    GetWindowCallbackManager();
+        virtual rcc::weak_ptr<WindowCallbackHandler>      GetWindowCallbackManager();
         virtual std::vector<rcc::shared_ptr<Nodes::Node>> GetNodes() const;
         virtual std::vector<rcc::shared_ptr<Nodes::Node>> GetAllNodes() const;
         virtual bool                                      LoadDocument(const std::string& document, const std::string& prefered_loader = "");
