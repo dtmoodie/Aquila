@@ -21,7 +21,7 @@ namespace aq
     struct AQUILA_EXPORTS DetectedObject2d
     {
         enum {Dims = 2};
-        std::vector<Classification> detections;
+        Classification classification;
         cv::Rect2f boundingBox;
         boost::optional<mo::time_t> timestamp;
         size_t framenumber = 0;
@@ -34,7 +34,7 @@ namespace aq
     struct AQUILA_EXPORTS DetectedObject3d
     {
         enum {Dims = 3};
-        std::vector<Classification> detections;
+        Classification classification;
         /*!
          * \brief pose determines the pose to the center of the object
          */

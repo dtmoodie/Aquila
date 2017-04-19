@@ -22,6 +22,8 @@ namespace mo
     A plotter object is a proxy that handles plotting a single parameter.  This object is created from
     the factory for a given parameter and it is installed into a plot.  A plot object handles rendering
     all plotters that have been installed in the plot.
+
+
 */
 
 namespace aq
