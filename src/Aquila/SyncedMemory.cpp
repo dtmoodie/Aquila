@@ -491,9 +491,12 @@ void TypedInputParameterPtr<SyncedMemory>::SetUserDataPtr(const SyncedMemory** u
 
 void TypedInputParameterPtr<SyncedMemory>::onInputUpdate(Context* ctx, IParameter* param)
 {
+    (void)param;
     if(this->input)
     {
-        this->Commit(this->input->GetTimestamp(), ctx);
+        boost::recursive_mutex::scoped_lock lock(this->input->mtx());
+        //this->Commit(this->input->GetTimestamp(), ctx, this->input->GetFrameNumber(), this->input->GetCoordinateSystem());
+        this->_update_signal(ctx, this);
         if((ctx && this->_ctx && ctx->thread_id == this->_ctx->thread_id) || (ctx == nullptr &&  this->_ctx == nullptr))
         {
             if(userVar)
@@ -501,8 +504,10 @@ void TypedInputParameterPtr<SyncedMemory>::onInputUpdate(Context* ctx, IParamete
         }
     }else if(this->shared_input)
     {
-        this->Commit(this->shared_input->GetTimestamp(), ctx);
-        if((ctx && this->_ctx && ctx->thread_id == this->_ctx->thread_id) || (ctx == nullptr &&  this->_ctx == nullptr))
+        boost::recursive_mutex::scoped_lock lock(this->shared_input->mtx());
+        //this->Commit(this->shared_input->GetTimestamp(), ctx, this->shared_input->GetFrameNumber(), this->shared_input->GetCoordinateSystem());
+        this->_update_signal(ctx, this);
+        if((ctx && this->_ctx && ctx->thread_id == this->_ctx->thread_id) || ((ctx == nullptr) &&  (this->_ctx == nullptr)))
         {
             if(userVar)
                 *userVar = this->shared_input->GetDataPtr();
@@ -511,50 +516,76 @@ void TypedInputParameterPtr<SyncedMemory>::onInputUpdate(Context* ctx, IParamete
 }
 
 
-bool TypedInputParameterPtr<SyncedMemory>::GetInput(boost::optional<mo::time_t> ts, size_t* fn)
+bool TypedInputParameterPtr<SyncedMemory>::GetInput(boost::optional<mo::time_t> ts, size_t* fn_)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
     if(userVar)
     {
         if(this->shared_input)
         {
-            *userVar = this->shared_input->GetDataPtr(ts, this->_ctx, fn);
+            size_t fn;
+            *userVar = this->shared_input->GetDataPtr(ts, this->_ctx, &fn);
             if(*userVar != nullptr)
             {
-                return !(*userVar)->empty();
+                if(!(*userVar)->empty())
+                {
+                    this->_ts = ts;
+                    if(fn_)
+                        *fn_ = fn;
+                    this->_fn = fn;
+                    return true;
+                }
+
             }
         }
         if(this->input)
         {
-            *userVar = this->input->GetDataPtr(ts, this->_ctx, fn);
+            size_t fn;
+            *userVar = this->input->GetDataPtr(ts, this->_ctx, &fn);
             if(*userVar != nullptr)
             {
-                return !(*userVar)->empty();
+                if(!(*userVar)->empty())
+                {
+                    this->_ts = ts;
+                    if(fn_)
+                        *fn_ = fn;
+                    this->_fn = fn;
+                    return true;
+                }
             }
         }
     }
     return false;
 }
 
-bool TypedInputParameterPtr<SyncedMemory>::GetInput(size_t fn, boost::optional<mo::time_t>* ts)
+bool TypedInputParameterPtr<SyncedMemory>::GetInput(size_t fn, boost::optional<mo::time_t>* ts_)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    boost::optional<mo::time_t> ts;
     if(userVar)
     {
         if(this->shared_input)
         {
-            *userVar = this->shared_input->GetDataPtr(fn, this->_ctx, ts);
-            if(*userVar != nullptr)
+            *userVar = this->shared_input->GetDataPtr(fn, this->_ctx, &ts);
+            if(*userVar != nullptr && !(*userVar)->empty())
             {
-                return !(*userVar)->empty();
+                if(ts_)
+                    *ts_ = ts;
+                this->_ts = ts;
+                this->_fn = fn;
+                return true;
             }
         }
         if(this->input)
         {
-            *userVar = this->input->GetDataPtr(fn, this->_ctx, ts);
-            if(*userVar != nullptr)
+            *userVar = this->input->GetDataPtr(fn, this->_ctx, &ts);
+            if(*userVar != nullptr && !(*userVar)->empty())
             {
-                return !(*userVar)->empty();
+                if(ts_)
+                    *ts_ = ts;
+                this->_ts = ts;
+                this->_fn = fn;
+                return true;
             }
         }
     }
@@ -571,4 +602,4 @@ void TypedInputParameterPtr<SyncedMemory>::onInputDelete(IParameter const* param
     }
 }
 
-TEMPLATE_EXTERN template class TypedInputParameterPtr<SyncedMemory>;
+//TEMPLATE_EXTERN template class TypedInputParameterPtr<SyncedMemory>;
