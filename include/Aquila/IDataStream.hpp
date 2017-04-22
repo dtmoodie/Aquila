@@ -3,7 +3,7 @@
 #include "Aquila/rcc/SystemTable.hpp"
 #include <MetaObject/IMetaObject.hpp>
 
-#include <shared_ptr.hpp>
+#include <RuntimeObjectSystem/shared_ptr.hpp>
 #include <type_traits>
 #include <vector>
 #include <memory>
@@ -15,16 +15,12 @@ namespace aq
         class Node;
         class IFrameGrabber;
     }
-    class IViewManager;
-    class ICoordinateManager;
     class IRenderEngine;
-    class ITrackManager;
-    
     class IParameterBuffer;
     class IVariableSink;
     class WindowCallbackHandler;
 
-    class AQUILA_EXPORTS IDataStream: public TInterface<IID_DataStream, mo::IMetaObject>
+    class AQUILA_EXPORTS IDataStream: public TInterface<ctcrc32("IDataStream"), mo::IMetaObject>
     {
     public:
         typedef rcc::shared_ptr<IDataStream> Ptr;
@@ -45,31 +41,16 @@ namespace aq
                          const VariableMap& vm, const VariableMap& sm);
         static bool CanLoadDocument(const std::string& document);
 
-
         virtual std::vector<rcc::weak_ptr<Nodes::Node>> GetTopLevelNodes() = 0;
-
-        // Handles user interactions such as moving the viewport, user interface callbacks, etc
-        virtual rcc::weak_ptr<IViewManager>            GetViewManager() = 0;
-
-        // Handles conversion of coordinate systems, such as to and from image coordinates, world coordinates, render scene coordinates, etc.
-        virtual rcc::weak_ptr<ICoordinateManager>      GetCoordinateManager() = 0;
         
         // Handles actual rendering of data.  Use for adding extra objects to the scene
         virtual rcc::weak_ptr<IRenderEngine>           GetRenderingEngine() = 0;
-        
-        // Handles tracking objects within a stream and communicating with the global track manager to track across multiple data streams
-        virtual rcc::weak_ptr<ITrackManager>            GetTrackManager() = 0;
-
-
         virtual mo::RelayManager*                       GetRelayManager() = 0;
         virtual std::shared_ptr<mo::IVariableManager>   GetVariableManager() = 0;
         virtual rcc::weak_ptr<WindowCallbackHandler>    GetWindowCallbackManager() = 0;
-
         virtual IParameterBuffer*                       GetParameterBuffer() = 0;
-
         virtual std::vector<rcc::shared_ptr<Nodes::Node>> GetNodes() const = 0;
         virtual std::vector<rcc::shared_ptr<Nodes::Node>> GetAllNodes() const = 0;
-
         virtual bool LoadDocument(const std::string& document, const std::string& prefered_loader = "") = 0;
 
         virtual std::vector<rcc::shared_ptr<Nodes::Node>> AddNode(const std::string& nodeName) = 0;

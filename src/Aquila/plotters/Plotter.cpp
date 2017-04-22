@@ -1,8 +1,9 @@
 #include "Aquila/plotters/Plotter.h"
 #include <MetaObject/Parameters/IParameter.hpp>
 #include <MetaObject/Detail/IMetaObjectImpl.hpp>
-
-#include <ISimpleSerializer.h>
+#include "MetaObject/Parameters/detail/TypedInputParameterPtrImpl.hpp"
+#include "MetaObject/Parameters/detail/TypedParameterPtrImpl.hpp"
+#include <RuntimeObjectSystem/ISimpleSerializer.h>
 #include <map>
 using namespace aq;
 

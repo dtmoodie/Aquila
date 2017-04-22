@@ -1,5 +1,5 @@
 #include "Aquila/rendering/RenderingEngine.h"
-#include "ObjectInterfacePerModule.h"
+#include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 #include "Aquila/rcc/SystemTable.hpp"
 
 using namespace aq;

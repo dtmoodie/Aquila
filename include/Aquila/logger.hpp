@@ -4,7 +4,7 @@
 #include <boost/log/sinks/basic_sink_backend.hpp>
 #include "Aquila/Detail/Export.hpp"
 #include <boost/log/trivial.hpp>
-#include "ObjectInterface.h"
+#include "RuntimeObjectSystem/ObjectInterface.h"
 #include <MetaObject/Signals/TypedSignal.hpp>
 
 namespace aq

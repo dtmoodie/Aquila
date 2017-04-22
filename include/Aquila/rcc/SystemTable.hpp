@@ -1,5 +1,5 @@
 #pragma once
-#include <shared_ptr.hpp>
+#include <RuntimeObjectSystem/shared_ptr.hpp>
 #include <MetaObject/Detail/TypeInfo.h>
 #include <map>
 #include <memory>

@@ -40,9 +40,9 @@
 // RCC includes
 #include <IObject.h>
 #include <IObjectInfo.h>
-#include <ObjectInterfacePerModule.h>
-#include <RuntimeLinkLibrary.h>
-#include <shared_ptr.hpp>
+#include <RuntimeObjectSystem/ObjectInterfacePerModule.h>
+#include <RuntimeObjectSystem/RuntimeLinkLibrary.h>
+#include <RuntimeObjectSystem/shared_ptr.hpp>
 
 // Dependent in house libraries
 #include <MetaObject/MetaObject.hpp>

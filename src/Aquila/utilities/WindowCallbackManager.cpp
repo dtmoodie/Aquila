@@ -1,6 +1,6 @@
 #include "Aquila/utilities/WindowCallbackManager.h"
 #include "Aquila/utilities/UiCallbackHandlers.h"
-#include "ObjectInterfacePerModule.h"
+#include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 #include "Aquila/rcc/SystemTable.hpp"
 #include <Aquila/utilities/CudaCallbacks.hpp>
 #include <opencv2/highgui.hpp>

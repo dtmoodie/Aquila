@@ -23,7 +23,12 @@ ELSE(WIN32)
   SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Executable output path" FORCE)
 ENDIF(WIN32)
 
-ADD_SUBDIRECTORY("dependencies/MetaObject")
+find_package(MetaObject QUIET)
+if(MetaObject_FOUND)
+	include_directories(${MetaObject_INCLUDE_DIRS})
+else()
+	ADD_SUBDIRECTORY("dependencies/MetaObject")
+endif()
 set(RCC_PERMODULE_INTERFACE_SOURCE
     ${RCC_PERMODULE_INTERFACE_SOURCE}
     CACHE PATH "" FORCE
@@ -298,6 +303,12 @@ cuda_add_library(Aquila SHARED
     ${RuntimeObjectSystem_SRCS}
     src/precompiled.hpp
 )
+
+target_include_directories(Aquila 
+  PUBLIC 
+    $<BUILD_INTERFACE:${RCC_INCLUDE_DIRS};${MetaObject_INCLUDE_DIRS}>
+)
+
 ocv_add_precompiled_header_to_target(Aquila src/precompiled.hpp)
 SOURCE_GROUP("Header Files\\External" FILES ${ext_inc})
 

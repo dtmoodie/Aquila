@@ -8,7 +8,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-#include "AUArray.h"
+#include "RuntimeCompiler/AUArray.h"
 using namespace aq;
 
 NodeFactory* NodeFactory::Instance()
@@ -29,7 +29,7 @@ NodeFactory::~NodeFactory()
 
 void NodeFactory::onConstructorsAdded()
 {
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_NodeObject);
+    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(aq::Nodes::Node::s_interfaceID);
     std::vector<Nodes::Node*> newNodes;
     for (size_t i = 0; i < constructors.size(); ++i)
     {
@@ -39,7 +39,7 @@ void NodeFactory::onConstructorsAdded()
             auto ptr = constructors[i]->GetConstructedObject(j);
             if (ptr)
             {
-                ptr = ptr->GetInterface(IID_NodeObject);
+                ptr = ptr->GetInterface(aq::Nodes::Node::s_interfaceID);
                 if (ptr)
                 {
                     auto nodePtr = static_cast<Nodes::Node*>(ptr);

@@ -54,10 +54,7 @@ namespace aq
         std::vector<rcc::weak_ptr<aq::Nodes::Node>> GetTopLevelNodes();
         virtual mo::Context*                              GetContext() const;
         virtual void                                      InitCustom(bool firstInit);
-        virtual rcc::weak_ptr<IViewManager>               GetViewManager();
-        virtual rcc::weak_ptr<ICoordinateManager>         GetCoordinateManager();
         virtual rcc::weak_ptr<IRenderEngine>              GetRenderingEngine();
-        virtual rcc::weak_ptr<ITrackManager>              GetTrackManager();
         virtual std::shared_ptr<mo::IVariableManager>     GetVariableManager();
         virtual mo::RelayManager*                         GetRelayManager();
         virtual IParameterBuffer*                         GetParameterBuffer();
@@ -90,10 +87,8 @@ namespace aq
         std::map<mo::TypeInfo, std::unique_ptr<ISingleton>>       _iobject_singletons;
         int                                                       stream_id;
         size_t                                                    _thread_id;
-        rcc::shared_ptr<IViewManager>                             view_manager;
-        rcc::shared_ptr<ICoordinateManager>                       coordinate_manager;
+
         rcc::shared_ptr<IRenderEngine>                            rendering_engine;
-        rcc::shared_ptr<ITrackManager>                            track_manager;
         std::shared_ptr<mo::IVariableManager>                     variable_manager;
         std::shared_ptr<mo::RelayManager>                         relay_manager;
         std::shared_ptr<IParameterBuffer>                         _parameter_buffer;

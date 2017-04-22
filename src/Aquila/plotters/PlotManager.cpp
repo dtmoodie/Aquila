@@ -1,7 +1,9 @@
 #include "Aquila/plotters/PlotManager.h"
-#include "IObjectState.hpp"
+#include "RuntimeObjectSystem/IObjectState.hpp"
 #include <MetaObject/Logging/Log.hpp>
 #include "Aquila/plotters/PlotInfo.hpp"
+#include "MetaObject/Parameters/detail/TypedInputParameterPtrImpl.hpp"
+#include "MetaObject/Parameters/detail/TypedParameterPtrImpl.hpp"
 using namespace aq;
 
 
@@ -15,12 +17,12 @@ rcc::shared_ptr<Plotter> PlotManager::GetPlot(const std::string& plotName)
 {
     auto pConstructor = mo::MetaObjectFactory::Instance()->GetConstructor(plotName.c_str());
     //IObjectConstructor* pConstructor = ObjectManager::Instance().m_pRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor(plotName.c_str());
-    if (pConstructor && pConstructor->GetInterfaceId() == IID_Plotter)
+    if (pConstructor && pConstructor->GetInterfaceId() == Plotter::s_interfaceID)
     {
         IObject* obj = pConstructor->Construct();
         if (obj)
         {
-            obj = obj->GetInterface(IID_Plotter);
+            obj = obj->GetInterface(Plotter::s_interfaceID);
             if (obj)
             {
                 Plotter* plotter = static_cast<Plotter*>(obj);
@@ -55,7 +57,7 @@ rcc::shared_ptr<Plotter> PlotManager::GetPlot(const std::string& plotName)
 std::vector<std::string> PlotManager::GetAvailablePlots()
 {
     std::vector<std::string> output;
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
+    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(Plotter::s_interfaceID);
     
     for (size_t i = 0; i < constructors.size(); ++i)
     {
@@ -66,7 +68,7 @@ std::vector<std::string> PlotManager::GetAvailablePlots()
 std::vector<std::string> PlotManager::GetAcceptablePlotters(mo::IParameter* param)
 {
     std::vector<std::string> output;
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
+    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(Plotter::s_interfaceID);
     
     for(auto& constructor : constructors)
     {
@@ -87,7 +89,7 @@ std::vector<std::string> PlotManager::GetAcceptablePlotters(mo::IParameter* para
 }
 bool PlotManager::CanPlotParameter(mo::IParameter* param)
 {
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(IID_Plotter);
+    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(Plotter::s_interfaceID);
     //auto constructors = ObjectManager::Instance().GetConstructorsForInterface(IID_Plotter);
     for(auto& constructor : constructors)
     {

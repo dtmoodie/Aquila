@@ -24,7 +24,7 @@
 #endif
 
 #ifndef _MSC_VER
-  #include "RuntimeLinkLibrary.h"
+  #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
   #ifdef NDEBUG
     RUNTIME_COMPILER_LINKLIBRARY("-lAquila")
   #else

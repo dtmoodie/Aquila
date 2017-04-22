@@ -58,8 +58,8 @@ namespace cereal
     typename std::enable_if<traits::is_output_serializable<BinaryData<_Scalar>, Archive>::value, void>::type
     save(Archive& ar, const Eigen::Transform<_Scalar, _Dim, _Mode, _Options>& m)
     {
-        int32_t rows = m.rows();
-        int32_t cols = m.cols();
+        int32_t rows = _Dim + 1;
+        int32_t cols = _Dim + 1;
         ar(rows, cols);
         ar(binary_data(m.data(), rows * cols * sizeof(_Scalar)));
     }

@@ -1,7 +1,7 @@
 #include "Aquila/utilities/ColorScale.hpp"
 
 using namespace aq;
-__host__ __device__ ColorScale::ColorScale(double start_, double slope_, bool symmetric_)
+__host__ __device__ ColorScale::ColorScale(float start_, float slope_, bool symmetric_)
 {
     start = start_;
     slope = slope_;

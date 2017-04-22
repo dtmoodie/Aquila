@@ -1,6 +1,6 @@
 #pragma once
 #include "cv_link_config.hpp"
-#include "RuntimeLinkLibrary.h"
+#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #include "cv_core.hpp"
 #include <opencv2/videoio.hpp>
 

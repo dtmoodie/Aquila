@@ -2,7 +2,7 @@
 #include "cv_link_config.hpp"
 #include "cv_core.hpp"
 #include "opencv2/cudacodec.hpp"
-#include "RuntimeLinkLibrary.h"
+#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #ifdef _MSC_VER // Windows
 
 #ifdef _DEBUG

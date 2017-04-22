@@ -29,7 +29,7 @@ namespace mo
 namespace aq
 {
     class PlotterInfo;
-    class AQUILA_EXPORTS Plotter : public TInterface<IID_Plotter, mo::IMetaObject>
+    class AQUILA_EXPORTS Plotter : public TInterface<ctcrc32("IPlotter"), mo::IMetaObject>
     {
     public:
         typedef PlotterInfo InterfaceInfo;

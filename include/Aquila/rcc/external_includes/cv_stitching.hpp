@@ -1,6 +1,6 @@
 #pragma once
 #include "cv_link_config.hpp"
-#include "RuntimeLinkLibrary.h"
+#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #include <opencv2/stitching.hpp>
 #if _WIN32
 #if _DEBUG

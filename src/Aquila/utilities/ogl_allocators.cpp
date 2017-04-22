@@ -1,12 +1,12 @@
 #include "Aquila/utilities/ogl_allocators.h"
-#include "ObjectInterfacePerModule.h"
+#include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 #include "Aquila/rcc/SystemTable.hpp"
 #include <Aquila/rcc/external_includes/cv_core.hpp>
 #ifdef HAVE_QT
 #include <QOpenGLContext>
 #include <qwindow.h>
 #endif
-#include <ISimpleSerializer.h>
+#include <RuntimeObjectSystem/ISimpleSerializer.h>
 
 
 using namespace aq;

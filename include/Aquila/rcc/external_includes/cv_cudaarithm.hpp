@@ -1,7 +1,7 @@
 #pragma once
 #include "cv_link_config.hpp"
 #include "opencv2/cudaarithm.hpp"
-#include "RuntimeLinkLibrary.h"
+#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #ifdef _MSC_VER // Windows
 
 #ifdef _DEBUG

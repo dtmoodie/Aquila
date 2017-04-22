@@ -1,7 +1,7 @@
 #pragma once
 #include "cv_link_config.hpp"
 #include "cv_core.hpp"
-#include "RuntimeLinkLibrary.h"
+#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #include <opencv2/imgcodecs.hpp>
 #if _WIN32
 #if _DEBUG

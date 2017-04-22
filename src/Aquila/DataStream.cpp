@@ -4,13 +4,9 @@
 #include "Aquila/utilities/sorting.hpp"
 #include "Aquila/Logging.h"
 
-
 #include "Aquila/ParameterBuffer.h"
 #include "Aquila/IVariableSink.h"
-#include "Aquila/IViewManager.h"
-#include "Aquila/ICoordinateManager.h"
 #include "Aquila/rendering/RenderingEngine.h"
-#include "Aquila/tracking/ITrackManager.h"
 #include "Aquila/Nodes/IFrameGrabber.hpp"
 #include "Aquila/Nodes/Node.h"
 #include "Aquila/Nodes/NodeFactory.h"
@@ -137,8 +133,8 @@ void DataStream::InitCustom(bool firstInit)
     if(firstInit)
     {
         this->SetupSignals(GetRelayManager());
+        _processing_thread.Start();
     }
-    _processing_thread.Start();
 }
 
 DataStream::~DataStream()
@@ -168,27 +164,11 @@ std::vector<rcc::weak_ptr<aq::Nodes::Node>> DataStream::GetTopLevelNodes()
     }
     return output;
 }
-rcc::weak_ptr<IViewManager> DataStream::GetViewManager()
-{
-    return view_manager;
-}
-
-// Handles conversion of coordinate systems, such as to and from image coordinates, world coordinates, render scene coordinates, etc.
-rcc::weak_ptr<ICoordinateManager> DataStream::GetCoordinateManager()
-{
-    return coordinate_manager;
-}
 
 // Handles actual rendering of data.  Use for adding extra objects to the scene
 rcc::weak_ptr<IRenderEngine> DataStream::GetRenderingEngine()
 {
     return rendering_engine;
-}
-
-// Handles tracking objects within a stream and communicating with the global track manager to track across multiple data streams
-rcc::weak_ptr<ITrackManager> DataStream::GetTrackManager()
-{
-    return track_manager;
 }
 
 mo::RelayManager* DataStream::GetRelayManager()

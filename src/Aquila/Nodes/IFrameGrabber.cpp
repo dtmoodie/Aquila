@@ -2,13 +2,12 @@
 #include "Aquila/IDataStream.hpp"
 #include "Aquila/utilities/sorting.hpp"
 #include "Aquila/Nodes/FrameGrabberInfo.hpp"
-#include <Aquila/ICoordinateManager.h>
 #include <MetaObject/Logging/Log.hpp>
 #include <MetaObject/Logging/Profiling.hpp>
 #include <MetaObject/Detail/IMetaObjectImpl.hpp>
 #include <MetaObject/MetaObjectFactory.hpp>
 #include <MetaObject/Logging/Profiling.hpp>
-#include "ISimpleSerializer.h"
+#include "RuntimeObjectSystem/ISimpleSerializer.h"
 
 using namespace aq;
 using namespace aq::Nodes;

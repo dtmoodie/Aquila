@@ -7,11 +7,11 @@ namespace aq
 {
     struct AQUILA_EXPORTS ColorScale
     {
-	    __host__ __device__ ColorScale(double start_ = 0, double slope_ = 1, bool symmetric_ = false);
+	    __host__ __device__ ColorScale(float start_ = 0, float slope_ = 1, bool symmetric_ = false);
 	    // Defines where this color starts to take effect, between zero and 1
-	    double start;
+        float start;
 	    // Defines the slope of increase / decrease for this color between 
-	    double slope;
+        float slope;
 	    // Defines if the slope decreases after it peaks
 	    bool	symmetric;
 	    // Defines if this color starts high then goes low

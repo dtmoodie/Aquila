@@ -1,6 +1,5 @@
 #include "Aquila/DataStream.hpp"
 #include "Aquila/Nodes/Node.h"
-#include "Aquila/ICoordinateManager.h"
 #include "Aquila/IO/JsonArchive.hpp"
 #include <Aquila/IO/memory.hpp>
 #include "MetaObject/IO/Serializer.hpp"

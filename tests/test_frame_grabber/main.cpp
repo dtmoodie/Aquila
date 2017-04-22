@@ -6,15 +6,12 @@
 #include "Aquila/Nodes/IFrameGrabber.hpp"
 #include "Aquila/Logging.h"
 #include "Aquila/Nodes/FrameGrabberInfo.hpp"
-#include "Aquila/ICoordinateManager.h"
-
 
 #include "MetaObject/Parameters/ParameterMacros.hpp"
 #include "MetaObject/Parameters/TypedInputParameter.hpp"
 #include "MetaObject/MetaObjectFactory.hpp"
 #include "MetaObject/Detail/MetaObjectMacros.hpp"
 #include "MetaObject/MetaObjectFactory.hpp"
-
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaFrameGrabbers"

@@ -1,6 +1,6 @@
 #pragma once
 #include "Aquila/Nodes/Node.h"
-#include "shared_ptr.hpp"
+#include "RuntimeObjectSystem/shared_ptr.hpp"
 #include <MetaObject/Logging/Log.hpp>
 #include <MetaObject/IO/Serializer.hpp>
 

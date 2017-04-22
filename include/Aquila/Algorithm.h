@@ -1,7 +1,7 @@
 #pragma once
 #include "Aquila/Detail/Export.hpp"
 #include <MetaObject/MetaObject.hpp>
-#include <shared_ptr.hpp>
+#include <RuntimeObjectSystem/shared_ptr.hpp>
 
 namespace aq
 {

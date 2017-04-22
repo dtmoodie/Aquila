@@ -3,7 +3,7 @@
 // Guard this file from being compiled by nvcc
 #ifndef __CUDACC__
 #include "Export.hpp"
-#include "IRuntimeObjectSystem.h"
+#include "RuntimeObjectSystem/IRuntimeObjectSystem.h"
 #endif
 
 #define TOKEN_TO_STRING_(token) #token
@@ -11,7 +11,7 @@
 
 
 #ifdef PLUGIN_NAME
-  #include "RuntimeLinkLibrary.h"
+  #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
   #if (defined WIN32 || defined _WIN32 || defined WINCE || defined __CYGWIN__)
     #define PLUGIN_EXPORTS __declspec(dllexport)
     #ifdef _DEBUG

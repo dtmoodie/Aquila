@@ -5,8 +5,8 @@
 #include <boost/thread.hpp>
 #include <opencv2/core/cuda.hpp>
 #include <map>
-#include "RuntimeInclude.h"
-#include "RuntimeSourceDependency.h"
+#include "RuntimeObjectSystem/RuntimeInclude.h"
+#include "RuntimeObjectSystem/RuntimeSourceDependency.h"
 RUNTIME_COMPILER_SOURCEDEPENDENCY
 RUNTIME_MODIFIABLE_INCLUDE
 namespace aq

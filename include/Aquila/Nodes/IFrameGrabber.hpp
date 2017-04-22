@@ -15,9 +15,9 @@
 #include <MetaObject/Thread/ThreadHandle.hpp>
 #include <MetaObject/Thread/ThreadPool.hpp>
 
-#include <RuntimeInclude.h>
-#include <RuntimeSourceDependency.h>
-#include <shared_ptr.hpp>
+#include <RuntimeObjectSystem/RuntimeInclude.h>
+#include <RuntimeObjectSystem/RuntimeSourceDependency.h>
+#include <RuntimeObjectSystem/shared_ptr.hpp>
 
 #include <boost/circular_buffer.hpp>
 #include <boost/thread.hpp>
@@ -42,7 +42,6 @@ namespace aq
 namespace aq
 {
     class IDataStream;
-    class ICoordinateManager;
     namespace Nodes
     {
     
