@@ -20,7 +20,7 @@ namespace aq
     class IVariableSink;
     class WindowCallbackHandler;
 
-    class AQUILA_EXPORTS IDataStream: public TInterface<ctcrc32("IDataStream"), mo::IMetaObject>
+    class AQUILA_EXPORTS IDataStream: public TInterface<IDataStream, mo::IMetaObject>
     {
     public:
         typedef rcc::shared_ptr<IDataStream> Ptr;
@@ -44,7 +44,6 @@ namespace aq
         virtual std::vector<rcc::weak_ptr<Nodes::Node>> GetTopLevelNodes() = 0;
         
         // Handles actual rendering of data.  Use for adding extra objects to the scene
-        virtual rcc::weak_ptr<IRenderEngine>           GetRenderingEngine() = 0;
         virtual mo::RelayManager*                       GetRelayManager() = 0;
         virtual std::shared_ptr<mo::IVariableManager>   GetVariableManager() = 0;
         virtual rcc::weak_ptr<WindowCallbackHandler>    GetWindowCallbackManager() = 0;

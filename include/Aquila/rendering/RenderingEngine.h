@@ -10,19 +10,19 @@ namespace mo
 namespace aq
 {
     // Render objects are objects that are rendered inside of a scene
-    class IRenderObject : public TInterface<ctcrc32("IRenderObject"), mo::IMetaObject>
+    class IRenderObject : public TInterface<IRenderObject, mo::IMetaObject>
     {
     public:
         virtual void Render() = 0;
     };
 
-    class IRenderObjectConstructor : public TInterface<ctcrc32("IRenderConstructor"), mo::IMetaObject>
+    class IRenderObjectConstructor : public TInterface<IRenderObjectConstructor, mo::IMetaObject>
     {
     public:
         virtual std::shared_ptr<IRenderObject> Construct(std::shared_ptr<mo::IParameter> param) = 0;
     };
 
-    class IRenderObjectFactory : public TInterface<ctcrc32("IRenderObjectFactory"), mo::IMetaObject>
+    class IRenderObjectFactory : public TInterface<IRenderObjectFactory, mo::IMetaObject>
     {
     public:
         virtual std::shared_ptr<IRenderObject> Create(std::shared_ptr<mo::IParameter> param) = 0;
@@ -32,21 +32,21 @@ namespace aq
     };
 
     // Render scene holds all objects in a scene, enables / disables specific objects, etc.
-    class IRenderScene : public TInterface<ctcrc32("IRenderScene"), IObject>
+    class IRenderScene : public TInterface<IRenderScene, IObject>
     {
     public:
         virtual void Render() = 0;
         virtual void AddRenderObject(std::shared_ptr<IRenderObject> obj) = 0;
     };
 
-    class IRenderInteractor : TInterface<ctcrc32("IRenderInteractor"), IObject>
+    class IRenderInteractor : TInterface<IRenderInteractor, IObject>
     {
     public:
 
     };
 
     // Render engine handles actually calling render, update, etc
-    class IRenderEngine: public TInterface<ctcrc32("IRenderEngine"), IObject>
+    class IRenderEngine: public TInterface<IRenderEngine, IObject>
     {
     public:
         virtual void Render() = 0;

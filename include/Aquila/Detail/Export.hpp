@@ -15,10 +15,8 @@
   #ifndef Aquila_EXPORTS
     #ifdef _DEBUG
       #pragma comment(lib, "Aquilad.lib")
-      #pragma comment(lib, "pplx_2_7d.lib")
     #else
       #pragma comment(lib, "Aquila.lib")
-      #pragma comment(lib, "pplx_2_7.lib")
     #endif
   #endif
 #endif

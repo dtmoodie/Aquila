@@ -1,5 +1,6 @@
 #include "Aquila/Logging.h"
 #include "MetaObject/Logging/Log.hpp"
+#include "Aquila/Logger.hpp"
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -29,8 +30,8 @@
 #include <boost/log/sinks/async_frontend.hpp>
 #include <boost/log/sinks/basic_sink_backend.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/log/trivial.hpp>
 
-#include <Aquila/logger.hpp>
 #include <opencv2/core.hpp>
 
 #ifdef _MSC_VER

@@ -6,7 +6,7 @@
 namespace aq
 {
     class AQUILA_EXPORTS Algorithm :
-            public TInterface<ctcrc32("aq::Algorithm"), mo::IMetaObject>
+            public TInterface<Algorithm, mo::IMetaObject>
     {
     public:
         enum SyncMethod

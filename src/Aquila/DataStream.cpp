@@ -165,12 +165,6 @@ std::vector<rcc::weak_ptr<aq::Nodes::Node>> DataStream::GetTopLevelNodes()
     return output;
 }
 
-// Handles actual rendering of data.  Use for adding extra objects to the scene
-rcc::weak_ptr<IRenderEngine> DataStream::GetRenderingEngine()
-{
-    return rendering_engine;
-}
-
 mo::RelayManager* DataStream::GetRelayManager()
 {
     if (relay_manager == nullptr)

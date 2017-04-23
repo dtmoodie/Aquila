@@ -80,7 +80,7 @@ namespace Nodes
     struct NodeInfo;
     
     class AQUILA_EXPORTS Node:
-            public TInterface<ctcrc32("aq::Nodes::Node"), Algorithm>
+            public TInterface<Node, Algorithm>
     {
     public:
         typedef NodeInfo InterfaceInfo;

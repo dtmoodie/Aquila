@@ -39,8 +39,16 @@ get_filename_component(Aquila_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 # Our library dependencies (contains definitions for IMPORTED targets)
 
+set(Aquila_HAS_QT "@AQ_QT@")
+
 include(${Aquila_DIR}/cmake/configure_bin_dirs.cmake)
 include(${Aquila_DIR}/cmake/utilities.cmake)
+
+find_package(Eigen3 REQUIRED)
+
+if(Aquila_HAS_QT AND NOT TARGET Qt5::OpenGL)
+	find_package(Qt5 REQUIRED COMPONENTS OpenGL)
+endif(Aquila_HAS_QT AND NOT TARGET Qt5::OpenGL)
 
 if(NOT TARGET MetaObject)
 	find_package(MetaObject REQUIRED)
@@ -50,10 +58,12 @@ if(NOT RCC_INCLUDE_DIRS)
 	find_package(RCC REQUIRED)
 endif(NOT RCC_INCLUDE_DIRS)
 
-set(Aquila_INCLUDE_DIRS "${Aquila_DIR}/include;${MetaObject_INCLUDE_DIRS};${RCC_INCLUDE_DIRS}")
+set(Aquila_INCLUDE_DIRS "${Aquila_DIR}/include;${MetaObject_INCLUDE_DIRS};${RCC_INCLUDE_DIRS};${EIGEN3_INCLUDE_DIR}")
 if(NOT TARGET Aquila)
   include("${Aquila_DIR}/AquilaTargets.cmake")
 endif()
  
 # These are IMPORTED targets created by AquilaTargets.cmake
 set(Aquila_LIBRARIES Aquila)
+set(Aquila_LIB_DIR ${Aquila_DIR}/lib)
+set(Aquila_BIN_DIRS ${Aquila_DIR}/bin;${MetaObject_BIN_DIRS})

@@ -19,7 +19,7 @@ namespace aq
 {
     class IDataStream;
     // Single instance per stream
-    class AQUILA_EXPORTS WindowCallbackHandler: public TInterface<ctcrc32("WindowCallbackHandler"),mo::IMetaObject>
+    class AQUILA_EXPORTS WindowCallbackHandler: public TInterface<WindowCallbackHandler,mo::IMetaObject>
     {
     public:
         enum 

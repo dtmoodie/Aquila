@@ -52,7 +52,7 @@ namespace aq
         virtual void ListPaths(std::vector<std::string>& paths) const;
         virtual int Timeout() const;
     };
-    class AQUILA_EXPORTS IGrabber : public TInterface<ctcrc32("aq::Nodes::IGrabber"), Algorithm>
+    class AQUILA_EXPORTS IGrabber : public TInterface<IGrabber, Algorithm>
     {
     public:
         typedef GrabberInfo InterfaceInfo;
@@ -91,7 +91,7 @@ namespace aq
     };
 
     // Interface class for the base level of features frame grabber
-    class AQUILA_EXPORTS IFrameGrabber: virtual public TInterface<ctcrc32("aq::Nodes::FrameGrabber"), Node>
+    class AQUILA_EXPORTS IFrameGrabber: virtual public TInterface<IFrameGrabber, Node>
     {
     public:
         typedef FrameGrabberInfo InterfaceInfo;

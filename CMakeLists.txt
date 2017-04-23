@@ -340,7 +340,11 @@ message(STATUS
 )
 
 # ----------------- Install
-
+if(Qt5_FOUND)
+	set(AQ_QT ON)
+else()
+	set(AQ_QT OFF)
+endif()
 configure_file(AquilaConfig.cmake.in
 	"${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
 )
@@ -379,7 +383,8 @@ install(DIRECTORY cmake DESTINATION ./ FILES_MATCHING PATTERN "*.cmake")
 
 install(FILES
   "${PROJECT_BINARY_DIR}/AquilaConfig.cmake"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT dev
+)
 
 install(EXPORT AquilaTargets DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT dev)
 
