@@ -29,19 +29,31 @@
 # ===================================================================================
 
 
-find_package(OpenCV 3.0 REQUIRED core)
-  include_directories(${OpenCV_INCLUDE_DIRS})
+# - Config file for the Aquila package
+# It defines the following variables
+#  Aquila_INCLUDE_DIRS - include directories for Aquila
+#  Aquila_LIBRARIES    - libraries to link against
+ 
+# Compute paths
+get_filename_component(Aquila_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
-find_package(Boost REQUIRED)
-  include_directories(${Boost_INCLUDE_DIRS})
-  link_directories(${Boost_LIBRARY_DIR})
-  link_directories(${Boost_LIBRARY_DIR_RELEASE})
-  link_directories(${Boost_LIBRARY_DIR_DEBUG})
+# Our library dependencies (contains definitions for IMPORTED targets)
 
-SET(Aquila_INCLUDE_DIRS     "${CMAKE_CURRENT_LIST_DIR}/include" CACHE PATH "")
-SET(Aquila_LIBS @Aquila_LIBS@ CACHE STRING "")
-SET(Aquila_LIB_DIRS_DEBUG   "${CMAKE_CURRENT_LIST_DIR}/lib"  CACHE PATH "")
-SET(Aquila_LIB_DIRS_RELEASE "${CMAKE_CURRENT_LIST_DIR}/lib"  CACHE PATH "")
-SET(Aquila_BIN_DIRS_Debug   "${CMAKE_CURRENT_LIST_DIR}/bin"  CACHE PATH "")
-SET(Aquila_BIN_DIRS_RELEASE "${CMAKE_CURRENT_LIST_DIR}/bin" CACHE PATH "")
-SET(Aquila_DEFS @Aquila_DEFS@ CACHE STRING "")
+include(${Aquila_DIR}/cmake/configure_bin_dirs.cmake)
+include(${Aquila_DIR}/cmake/utilities.cmake)
+
+if(NOT TARGET MetaObject)
+	find_package(MetaObject REQUIRED)
+endif(NOT TARGET MetaObject)
+
+if(NOT RCC_INCLUDE_DIRS)
+	find_package(RCC REQUIRED)
+endif(NOT RCC_INCLUDE_DIRS)
+
+set(Aquila_INCLUDE_DIRS "${Aquila_DIR}/include;${MetaObject_INCLUDE_DIRS};${RCC_INCLUDE_DIRS}")
+if(NOT TARGET Aquila)
+  include("${Aquila_DIR}/AquilaTargets.cmake")
+endif()
+ 
+# These are IMPORTED targets created by AquilaTargets.cmake
+set(Aquila_LIBRARIES Aquila)

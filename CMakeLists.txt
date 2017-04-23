@@ -35,7 +35,7 @@ set(RCC_PERMODULE_INTERFACE_SOURCE
 )
 include_directories(${RCC_INCLUDE_DIRS})
 ADD_SUBDIRECTORY("dependencies/pplx")
-
+include(cmake/configure_bin_dirs.cmake)
 find_package(OpenCV 3.0 QUIET COMPONENTS
     core
     imgproc
@@ -113,7 +113,6 @@ FILE(GLOB_RECURSE hdr "remotery/lib/*.h" "include/*.hpp" "include/*.h" "src/*.hp
 FILE(GLOB_RECURSE ext_inc "include/Aquila/rcc/external_includes")
 FILE(GLOB_RECURSE knl "src/*.cu")
 
-
 find_package(mxnet QUIET)
 if(${MXNET_FOUND})
   INCLUDE_DIRECTORIES(${MXNET_INCLUDE_DIRS})
@@ -124,7 +123,6 @@ if(${MXNET_FOUND})
   add_definitions(-DMSHADOW_USE_CUDNN=1)
 endif()
 
-
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/dependencies/MetaObject/dependencies/cereal/include")
 
 INCLUDE_DIRECTORIES(
@@ -132,7 +130,6 @@ INCLUDE_DIRECTORIES(
     ${Boost_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS}
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    ${Parameters_INCLUDE}
     ${PPLX_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib
     )
@@ -147,7 +144,6 @@ if(Qt5_FOUND)
     add_definitions(-DHAVE_QT)
 endif()
 
-
 set_target_properties(pplx PROPERTIES FOLDER Dependencies)
 set_target_properties(MetaObject PROPERTIES FOLDER Dependencies)
 IF(NOT WIN32)
@@ -155,87 +151,13 @@ IF(NOT WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 ENDIF()
 
-
-#===================================================================
-#Export variables for other projects to use
-
-SET(LIB_BUILD_DIR_RELEASE "")
-SET(LIB_BUILD_DIR_DEBUG "")
-
-IF(WIN32)
-    SET(LIB_BUILD_DIR_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo")
-    SET(LIB_BUILD_DIR_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/Debug")
-ELSE(WIN32)
-    SET(LIB_BUILD_DIR_RELEASE "${LIBRARY_OUTPUT_PATH};${CMAKE_BINARY_DIR}")
-    SET(LIB_BUILD_DIR_DEBUG "${LIBRARY_OUTPUT_PATH};${CMAKE_BINARY_DIR}")
-ENDIF(WIN32)
-set(aquila_include_dirs_
-    "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/dependencies/cereal/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/MetaObject/instantiations;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib;"
-    "${Boost_INCLUDE_DIRS};${OpenCV_INCLUDE_DIRS};"
-    "${RCC_INCLUDE_DIRS};"
-    "${EIGEN3_INCLUDE_DIR};"
-    "${PPLX_INCLUDE_DIRS}"
-    )
-if(Qt5_FOUND)
-    list(APPEND aquila_include_dirs_
-        "${Qt5Gui_INCLUDE_DIRS};"
-        "${Qt5Widgets_INCLUDE_DIRS};"
-        "${Qt5Network_INCLUDE_DIRS};"
-    )
-endif()
-
-set(Aquila_INCLUDE_DIRECTORIES
-    ${aquila_include_dirs_}
-     CACHE PATH "" FORCE
-)
-
-set(Aquila_LIBRARIES
-    "Aquila;"
-    "${Boost_LIBRARIES};"
-    "${Parameters_LIBRARIES};"
-    "pplx" CACHE PATH "" FORCE
-)
-
-set(Aquila_LIBS
-    "Aquila;"
-    "${Parameters_LIBRARIES};"
-    "pplx"
-)
-
-SET(Aquila_LIB_DIRS_DEBUG
-    "${LIB_BUILD_DIR_DEBUG};"
-    "${Boost_LIBRARY_DIR};"
-    "${Boost_LIBRARY_DIR_DEBUG};"
-    "${CUDA_LIB_DIR}"
-    CACHE PATH "" FORCE
-)
-
-SET(Aquila_LIB_DIRS_RELEASE
-    "${LIB_BUILD_DIR_RELEASE};"
-    "${Boost_LIBRARY_DIR};"
-    "${Boost_LIBRARY_DIR_RELEASE};"
-    "${CUDA_LIB_DIR}"
-    CACHE PATH "" FORCE
-)
-
-SET(Aquila_DEFS "${defs_}"
-    CACHE PATH "" FORCE
-)
-
-CONFIGURE_FILE(AquilaConfig.cmake.in
-    ${CMAKE_BINARY_DIR}/AquilaConfig.cmake @ONLY
-)
-
 # Link directories
 LINK_DIRECTORIES(${Parameters_LIB_DIRS_DEBUG})
 LINK_DIRECTORIES(${Parameters_LIB_DIRS_RELEASE})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIR_RELEASE})
-# Reporting section
 
+# ---------------- Reporting section
 if(RCC_VERBOSE_CONFIG)
 message(STATUS
 "================ Aquila ===============
@@ -315,7 +237,6 @@ SOURCE_GROUP("Header Files\\External" FILES ${ext_inc})
 
 TARGET_LINK_LIBRARIES(Aquila
     ${OpenCV_LIBS}
-    pplx
     ${Parameters_LIBRARIES}
     ${CUDA_CUDART_LIBRARY}
     MetaParameters
@@ -337,6 +258,7 @@ endif()
 
 if(WIN32)
     target_link_libraries(Aquila OpenGL32)
+	target_compile_options(Aquila PRIVATE "/bigobj")
 else(WIN32)
   if(UNIX)
     target_link_libraries(Aquila GL GLU)
@@ -344,40 +266,9 @@ else(WIN32)
 endif(WIN32)
 
 ADD_DEPENDENCIES(Aquila
-    pplx
     RuntimeObjectSystem
     RuntimeCompiler
 )
-
-install(TARGETS Aquila
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-)
-
-install(DIRECTORY include/
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.h"
-)
-
-install(DIRECTORY include/
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.hpp"
-)
-
-install(FILES ${CMAKE_BINARY_DIR}/AquilaConfig.cmake
-        DESTINATION ./
-)
-
-if(WIN32)
-    install(DIRECTORY ${CMAKE_BINARY_DIR}/Debug/
-        DESTINATION bin
-        FILES_MATCHING PATTERN "*.pdb")
-    install(DIRECTORY ${CMAKE_BINARY_DIR}/RelWithDebInfo/
-        DESTINATION bin
-        FILES_MATCHING PATTERN "*.pdb")
-endif(WIN32)
-
 
 if(UNIX)
     TARGET_LINK_LIBRARIES(Aquila dl)
@@ -447,3 +338,48 @@ message(STATUS
     "  Eigen3\t\t${EIGEN_MAJOR_VERSION}.${EIGEN_MINOR_VERSION}\n"
     "  Tests\t\t${Boost_UNIT_TEST_FRAMEWORK_FOUND}"
 )
+
+# ----------------- Install
+
+configure_file(AquilaConfig.cmake.in
+	"${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
+)
+
+install(TARGETS Aquila
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib
+)
+
+install(TARGETS Aquila
+	DESTINATION lib
+	EXPORT AquilaTargets
+)
+
+install(DIRECTORY include/
+	DESTINATION include
+	FILES_MATCHING PATTERN "*.h"
+)
+
+install(DIRECTORY include/
+	DESTINATION include
+	FILES_MATCHING PATTERN "*.hpp"
+)
+
+if(WIN32)
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/Debug/
+        DESTINATION bin
+        FILES_MATCHING PATTERN "*.pdb")
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/RelWithDebInfo/
+        DESTINATION bin
+        FILES_MATCHING PATTERN "*.pdb")
+endif(WIN32)
+
+install(DIRECTORY cmake DESTINATION ./ FILES_MATCHING PATTERN "*.cmake")
+
+install(FILES
+  "${PROJECT_BINARY_DIR}/AquilaConfig.cmake"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT dev)
+
+install(EXPORT AquilaTargets DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT dev)
+

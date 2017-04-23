@@ -23,15 +23,23 @@ void aq::cuda::ICallback::cb_func_async_event_loop(int status, void* user_data)
 
 void aq::cuda::ICallback::cb_func_async(int status, void* user_data)
 {
+
+    mo::SetCudaThread();
+    std::shared_ptr<ICallbackEventLoop> cb(static_cast<ICallbackEventLoop*>(user_data));
+
+    mo::ThreadSpecificQueue::Push([cb]()
+    {
+        cb->run();
+    }, cb->event_loop_thread_id);
 #ifdef _MSC_VER
-    pplx::create_task([user_data]()->void
+    /*pplx::create_task([user_data]()->void
     {
         auto cb = static_cast<ICallback*>(user_data);
         auto start = clock();
         cb->run();
         LOG(trace) << "Callback execution time: " << clock() - start << " ms";
         delete cb;
-    });
+    });*/
 #else
     auto cb = static_cast<ICallback*>(user_data);
     auto start = clock();

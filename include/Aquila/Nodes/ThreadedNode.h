@@ -16,10 +16,6 @@ namespace aq
             
             Node::Ptr AddChild(Node* child);
             Node::Ptr AddChild(Node::Ptr child);
-            /*bool      ConnectInput(rcc::shared_ptr<Node> node, 
-                                   const std::string& input_name, 
-                                   const std::string& output_name, 
-                                   mo::ParameterTypeFlags type = mo::StreamBuffer_e);*/
 
             MO_DERIVE(ThreadedNode, Node);
                 MO_SLOT(void, StopThread);
