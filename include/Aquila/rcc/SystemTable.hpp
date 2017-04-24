@@ -1,9 +1,10 @@
 #pragma once
+#include <Aquila/Detail/Export.hpp>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 #include <MetaObject/Detail/TypeInfo.h>
 #include <map>
 #include <memory>
-struct ISingleton
+struct AQUILA_EXPORTS ISingleton
 {
     virtual ~ISingleton(){}
 };
@@ -11,7 +12,7 @@ struct ISingleton
 template<typename T> struct Singleton: public ISingleton
 {
     Singleton(T* ptr_): ptr(ptr_){}
-    ~Singleton()
+    virtual ~Singleton()
     {
         delete ptr;
     }
@@ -27,7 +28,7 @@ template<typename T> struct IObjectSingleton: public ISingleton
     operator T*() const {return ptr.get(); }
 };
 
-struct SystemTable
+struct AQUILA_EXPORTS SystemTable
 {
     SystemTable();
     void CleanUp();
@@ -45,7 +46,7 @@ struct SystemTable
     template<typename T> 
     T* SetSingleton(T* singleton, int stream_id = -1)
     {
-        g_singletons[mo::TypeInfo(typeid(T))] = std::unique_ptr<ISingleton>(new Singleton<T>(singleton));
+        g_singletons[mo::TypeInfo(typeid(T))] = std::shared_ptr<ISingleton>(new Singleton<T>(singleton));
         return singleton;
     }
     
@@ -57,5 +58,5 @@ struct SystemTable
         DeleteSingleton(mo::TypeInfo(typeid(T)));
     }
 private:
-    std::map<mo::TypeInfo, std::unique_ptr<ISingleton>> g_singletons;
+    std::map<mo::TypeInfo, std::shared_ptr<ISingleton>> g_singletons;
 };
