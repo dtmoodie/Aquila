@@ -963,7 +963,12 @@ namespace cereal
                         if(buffer)
                         {
                             info.type = mo::ParameterTypeFlagsToString(buffer->GetBufferType());
-                            info.buffer_size = buffer->GetSize();
+                            auto size = buffer->GetFrameBufferCapacity();
+                            if(size)
+                                info.buffer_size = *size;
+                            auto time_padding = buffer->GetTimePaddingCapacity();
+                            if(time_padding)
+                                info.buffer_time = time_padding;
                         }
                     }
                     info.name = input_name;
@@ -1087,9 +1092,9 @@ namespace cereal
                                                   mo::IParameter* p = input->GetInputParam();
                                                   if(mo::Buffer::IBuffer* b = dynamic_cast<mo::Buffer::IBuffer*>(p))
                                                   {
-                                                      b->SetFrameBufferSize(itr->second.buffer_size);
+                                                      b->SetFrameBufferCapacity(itr->second.buffer_size);
                                                       if(itr->second.buffer_time)
-                                                        b->SetTimestampSize(*itr->second.buffer_time);
+                                                        b->SetTimePaddingCapacity(*itr->second.buffer_time);
                                                   }
                                               }
                                               if(itr->second.sync)
