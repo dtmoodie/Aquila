@@ -209,6 +209,9 @@ Algorithm::InputState Algorithm::CheckInputs()
         {
             if(!input->GetInput(ts, &fn))
             {
+                if(input->CheckFlags(mo::Desynced_e))
+                    if(input->GetInput(boost::optional<mo::time_t>(), &fn))
+                        continue;
                 if(input->CheckFlags(mo::Optional_e))
                 {
                     // If the input isn't set and it's optional then this is ok
