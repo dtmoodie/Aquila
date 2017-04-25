@@ -72,18 +72,22 @@ namespace aq
         SyncedMemory(const std::vector<cv::Mat>& h_mat, const std::vector<cv::cuda::GpuMat>& d_mat, const std::vector<SYNC_STATE> state);
         SyncedMemory clone(cv::cuda::Stream& stream);
 
-        const cv::Mat&                         GetMat(cv::cuda::Stream& stream, int = 0) const;
-        cv::Mat&                               GetMatMutable(cv::cuda::Stream& stream, int = 0);
+        const cv::Mat&                         GetMat(cv::cuda::Stream& stream, int idx = 0) const;
+        cv::Mat&                               GetMatMutable(cv::cuda::Stream& stream, int idx = 0);
+        const cv::Mat&                         GetMatNoSync(int idx = 0) const;
 
-        const cv::cuda::GpuMat&                 GetGpuMat(cv::cuda::Stream& stream, int = 0) const;
-        cv::cuda::GpuMat&                       GetGpuMatMutable(cv::cuda::Stream& stream, int = 0);
+        const cv::cuda::GpuMat&                GetGpuMat(cv::cuda::Stream& stream, int idx = 0) const;
+        cv::cuda::GpuMat&                      GetGpuMatMutable(cv::cuda::Stream& stream, int idx = 0);
+        const cv::cuda::GpuMat&                GetGpuMatNoSync(int idx = 0) const;
 
-        const std::vector<cv::Mat>&             GetMatVec(cv::cuda::Stream& stream) const;
-        std::vector<cv::Mat>&                   GetMatVecMutable(cv::cuda::Stream& stream);
+        const std::vector<cv::Mat>&            GetMatVec(cv::cuda::Stream& stream) const;
+        std::vector<cv::Mat>&                  GetMatVecMutable(cv::cuda::Stream& stream);
 
         const std::vector<cv::cuda::GpuMat>&   GetGpuMatVec(cv::cuda::Stream& stream) const;
         std::vector<cv::cuda::GpuMat>&         GetGpuMatVecMutable(cv::cuda::Stream& stream);
+
         SYNC_STATE                             GetSyncState(int index = 0) const;
+
         mo::Context*                           GetContext() const;
         void                                   SetContext(mo::Context* ctx);
 
@@ -102,6 +106,7 @@ namespace aq
         int GetDim(int dim) const;
         int GetDepth() const;
         int GetType() const;
+        int GetElemSize() const;
         template<typename A> void load(A& ar);
         template<typename A> void save(A & ar) const;
     private:
