@@ -524,30 +524,33 @@ bool TypedInputParameterPtr<SyncedMemory>::GetInput(boost::optional<mo::time_t> 
         if(this->shared_input)
         {
             size_t fn;
-            *userVar = this->shared_input->GetDataPtr(ts, this->_ctx, &fn);
-            if(*userVar != nullptr)
+            auto ptr = this->shared_input->GetDataPtr(ts, this->_ctx, &fn);
+            if(ptr)
             {
-                if(!(*userVar)->empty())
+                this->current = *ptr;
+                *userVar = &current;
+                if (!current.empty())
                 {
                     this->_ts = ts;
-                    if(fn_)
+                    if (fn_)
                         *fn_ = fn;
                     this->_fn = fn;
                     return true;
                 }
-
             }
         }
         if(this->input)
         {
             size_t fn;
-            *userVar = this->input->GetDataPtr(ts, this->_ctx, &fn);
-            if(*userVar != nullptr)
+            auto ptr = this->input->GetDataPtr(ts, this->_ctx, &fn);
+            if(ptr)
             {
-                if(!(*userVar)->empty())
+                this->current = *ptr;
+                *userVar = &current;
+                if (!current.empty())
                 {
                     this->_ts = ts;
-                    if(fn_)
+                    if (fn_)
                         *fn_ = fn;
                     this->_fn = fn;
                     return true;

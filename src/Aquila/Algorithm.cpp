@@ -164,6 +164,8 @@ Algorithm::InputState Algorithm::CheckInputs()
         {
             if(input->IsInputSet())
             {
+                if (input->CheckFlags(mo::Desynced_e))
+                    continue;
                 auto in_ts = input->GetInputTimestamp();
 #ifdef _DEBUG
                 input_states.emplace_back(input->GetTreeName(), in_ts, 0);

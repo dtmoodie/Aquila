@@ -138,5 +138,6 @@ protected:
     void updateUserVar();
     virtual void onInputUpdate(Context* ctx, IParameter* param);
     virtual void onInputDelete(IParameter const* param);
+    aq::SyncedMemory current;
 };
 }
