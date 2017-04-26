@@ -41,11 +41,11 @@ void aq::cuda::ICallback::cb_func_async(int status, void* user_data)
         delete cb;
     });*/
 #else
-    auto cb = static_cast<ICallback*>(user_data);
+    /*auto cb = static_cast<ICallback*>(user_data);
     auto start = clock();
     cb->run();
     LOG(trace) << "Callback execution time: " << clock() - start << " ms";
-    delete cb;
+    delete cb;*/
 #endif
 }
 void aq::cuda::ICallback::cb_func(int status, void* user_data)
