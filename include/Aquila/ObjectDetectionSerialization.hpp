@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/IO/cereal_eigen.hpp"
+#include <Aquila/serialization/cereal/eigen.hpp>
 
 #include <cereal/types/vector.hpp>
 #include <cereal/cereal.hpp>

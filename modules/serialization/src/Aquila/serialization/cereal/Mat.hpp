@@ -1,3 +1,4 @@
+#pragma once
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <opencv2/core/mat.hpp>
