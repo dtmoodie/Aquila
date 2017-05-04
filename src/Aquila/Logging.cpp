@@ -1,6 +1,6 @@
 #include "Aquila/Logging.h"
 #include "MetaObject/Logging/Log.hpp"
-#include "Aquila/Logger.hpp"
+#include <Aquila/logger.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -97,7 +97,7 @@ void aq::SetupLogging(const std::string& log_dir)
     auto fmtTimeStamp = boost::log::expressions::
         format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f");
 
-    // File sink 
+    // File sink
     boost::log::formatter logFmt =
         boost::log::expressions::format("[%1%] (%2%) [%3%] [%4%] %5%")
         % fmtTimeStamp
@@ -114,7 +114,7 @@ void aq::SetupLogging(const std::string& log_dir)
         boost::log::keywords::open_mode = std::ios_base::app);
     //fsSink->set_formatter(logFmt);
     fsSink->locked_backend()->auto_flush(true);
-    
+
     log_sink.reset(new boost::log::sinks::asynchronous_sink<aq::ui_collector>());
 
     boost::log::core::get()->add_sink(log_sink);
