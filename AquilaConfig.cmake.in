@@ -33,7 +33,7 @@
 # It defines the following variables
 #  Aquila_INCLUDE_DIRS - include directories for Aquila
 #  Aquila_LIBRARIES    - libraries to link against
- 
+
 # Compute paths
 get_filename_component(Aquila_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
@@ -47,23 +47,36 @@ include(${Aquila_DIR}/cmake/utilities.cmake)
 find_package(Eigen3 REQUIRED)
 
 if(Aquila_HAS_QT AND NOT TARGET Qt5::OpenGL)
-	find_package(Qt5 REQUIRED COMPONENTS OpenGL)
+    find_package(Qt5 REQUIRED COMPONENTS OpenGL)
 endif(Aquila_HAS_QT AND NOT TARGET Qt5::OpenGL)
 
 if(NOT TARGET MetaObject)
-	find_package(MetaObject REQUIRED)
+    find_package(MetaObject REQUIRED)
 endif(NOT TARGET MetaObject)
 
 if(NOT RCC_INCLUDE_DIRS)
-	find_package(RCC REQUIRED)
+    find_package(RCC REQUIRED)
 endif(NOT RCC_INCLUDE_DIRS)
 
-set(Aquila_INCLUDE_DIRS "${Aquila_DIR}/include;${MetaObject_INCLUDE_DIRS};${RCC_INCLUDE_DIRS};${EIGEN3_INCLUDE_DIR}")
+if(NOT TARGET pplx)
+    find_package(pplx REQUIRED)
+endif()
+
+if(Aquila_FIND_COMPONENTS)
+    foreach(PLUGIN ${Aquila_FIND_COMPONENTS})
+        if(NOT TARGET ${PLUGIN})
+            include("${Aquila_DIR}/${PLUGIN}Targets.cmake")
+        endif(NOT TARGET ${PLUGIN})
+    endforeach()
+endif()
+
+set(Aquila_INCLUDE_DIRS "${Aquila_DIR}/../../include;${MetaObject_INCLUDE_DIRS};${RCC_INCLUDE_DIRS};${EIGEN3_INCLUDE_DIR}")
 if(NOT TARGET Aquila)
   include("${Aquila_DIR}/AquilaTargets.cmake")
 endif()
- 
+
 # These are IMPORTED targets created by AquilaTargets.cmake
 set(Aquila_LIBRARIES Aquila)
 set(Aquila_LIB_DIR ${Aquila_DIR}/lib)
 set(Aquila_BIN_DIRS ${Aquila_DIR}/bin;${MetaObject_BIN_DIRS})
+set(Aquila_FOUND ON)

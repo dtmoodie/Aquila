@@ -5,7 +5,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_DEBUG_POSTFIX d)
 include(cmake/utilities.cmake)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
+option(BUILD_DEPENDENCIES "Build dependencies within the AquilOS family" ON)
 IF(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_WIN32)
@@ -23,18 +23,22 @@ ELSE(WIN32)
   SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Executable output path" FORCE)
 ENDIF(WIN32)
 
-find_package(MetaObject QUIET)
-if(MetaObject_FOUND)
-	include_directories(${MetaObject_INCLUDE_DIRS})
+if(NOT BUILD_DEPENDENCIES)
+    find_package(MetaObject REQUIRED)
+    include_directories(${MetaObject_INCLUDE_DIRS})
+    find_package(pplx REQUIRED)
 else()
-	ADD_SUBDIRECTORY("dependencies/MetaObject")
+    ADD_SUBDIRECTORY("dependencies/MetaObject")
+    ADD_SUBDIRECTORY("dependencies/pplx")
+    set(MetaObject_LIBRARIES MetaObject RuntimeObjectSystem RuntimeCompiler)
 endif()
+
 set(RCC_PERMODULE_INTERFACE_SOURCE
     ${RCC_PERMODULE_INTERFACE_SOURCE}
     CACHE PATH "" FORCE
 )
-include_directories(${RCC_INCLUDE_DIRS})
-ADD_SUBDIRECTORY("dependencies/pplx")
+
+
 include(cmake/configure_bin_dirs.cmake)
 find_package(OpenCV 3.0 QUIET COMPONENTS
     core
@@ -102,6 +106,7 @@ set(BOOST_REQUIRED_MODULES
     atomic
     unit_test_framework
 )
+
 set(Boost_USE_STATIC_LIBS        OFF)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME     OFF)
@@ -132,7 +137,7 @@ INCLUDE_DIRECTORIES(
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     ${PPLX_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib
-    )
+)
 
 if(Qt5_FOUND)
     include_directories(
@@ -218,6 +223,13 @@ endmacro()
 GroupSources(include)
 GroupSources(src)
 
+# This is needed becaus cuda + cmake does not properly support target_include_directories https://gitlab.kitware.com/cmake/cmake/issues/16571
+# in the version of cmake that is include with ubuntu 16.04.  Thus to make everything happy we also propagate up the needed build include dirs
+# using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
+set(Aquila_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS};${PPLX_INCLUDE_DIRS}" CACHE PATH "")
+set(Aquila_LIBRARIES "Aquila;${MetaObject_LIBRARIES}" CACHE STRING "")
+INCLUDE_DIRECTORIES(${MetaObject_INCLUDE_DIRS})
+
 cuda_add_library(Aquila SHARED
     ${src}
     ${hdr}
@@ -226,9 +238,10 @@ cuda_add_library(Aquila SHARED
     src/precompiled.hpp
 )
 
-target_include_directories(Aquila 
-  PUBLIC 
-    $<BUILD_INTERFACE:${RCC_INCLUDE_DIRS};${MetaObject_INCLUDE_DIRS}>
+target_include_directories(Aquila
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 ocv_add_precompiled_header_to_target(Aquila src/precompiled.hpp)
@@ -237,7 +250,6 @@ SOURCE_GROUP("Header Files\\External" FILES ${ext_inc})
 
 TARGET_LINK_LIBRARIES(Aquila
     ${OpenCV_LIBS}
-    ${Parameters_LIBRARIES}
     ${CUDA_CUDART_LIBRARY}
     MetaParameters
     RuntimeObjectSystem
@@ -245,6 +257,7 @@ TARGET_LINK_LIBRARIES(Aquila
     ${LINK_LIBS}
     MetaObject
     ${Boost_LIBRARIES}
+    pplx
 )
 if(Qt5_FOUND)
     target_link_libraries(Aquila
@@ -258,7 +271,7 @@ endif()
 
 if(WIN32)
     target_link_libraries(Aquila OpenGL32)
-	target_compile_options(Aquila PRIVATE "/bigobj")
+    target_compile_options(Aquila PRIVATE "/bigobj")
 else(WIN32)
   if(UNIX)
     target_link_libraries(Aquila GL GLU)
@@ -304,7 +317,7 @@ FOREACH(dir ${BIN_DIRS})
   APPEND_BIN_DIR(${dir}_BIN_DIR PROJECT_BIN_DIRS_RELWITHDEBINFO)
 ENDFOREACH(dir ${BIN_DIRS})
 
-	list(APPEND PROJECT_BIN_DIRS_DEBUG ${MetaObject_BIN_DIRS})
+    list(APPEND PROJECT_BIN_DIRS_DEBUG ${MetaObject_BIN_DIRS})
 if(MSVC)
   if(RCC_VERBOSE_CONFIG)
     message(STATUS "Aquila tests binary runtime directories:\n ${PROJECT_BIN_DIRS_DEBUG}")
@@ -343,33 +356,42 @@ message(STATUS
 
 # ----------------- Install
 if(Qt5_FOUND)
-	set(AQ_QT ON)
+    set(AQ_QT ON)
 else()
-	set(AQ_QT OFF)
+    set(AQ_QT OFF)
 endif()
+
 configure_file(AquilaConfig.cmake.in
-	"${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
+    "${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
+)
+
+export(TARGETS Aquila
+    FILE "${PROJECT_BINARY_DIR}/AquilaTargets.cmake"
+)
+
+export(PACKAGE Aquila)
+
+file(COPY "cmake" DESTINATION ${PROJECT_BINARY_DIR})
+
+install(TARGETS Aquila
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 
 install(TARGETS Aquila
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
-)
-
-install(TARGETS Aquila
-	DESTINATION lib
-	EXPORT AquilaTargets
+    DESTINATION lib
+    EXPORT AquilaTargets
 )
 
 install(DIRECTORY include/
-	DESTINATION include
-	FILES_MATCHING PATTERN "*.h"
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h"
 )
 
 install(DIRECTORY include/
-	DESTINATION include
-	FILES_MATCHING PATTERN "*.hpp"
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.hpp"
 )
 
 if(WIN32)
@@ -381,12 +403,13 @@ if(WIN32)
         FILES_MATCHING PATTERN "*.pdb")
 endif(WIN32)
 
-install(DIRECTORY cmake DESTINATION ./ FILES_MATCHING PATTERN "*.cmake")
+install(DIRECTORY cmake DESTINATION share/Aquila FILES_MATCHING PATTERN "*.cmake")
+install(DIRECTORY cmake DESTINATION ${PROJECT_BINARY_DIR} FILES_MATCHING PATTERN "*.cmake")
 
 install(FILES
   "${PROJECT_BINARY_DIR}/AquilaConfig.cmake"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT dev
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev
 )
 
-install(EXPORT AquilaTargets DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT dev)
+install(EXPORT AquilaTargets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
 
