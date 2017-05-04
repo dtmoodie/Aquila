@@ -33,7 +33,7 @@
 #include "Aquila/Detail/Export.hpp"
 #include "Aquila/IDataStream.hpp"
 #include "Aquila/Algorithm.h"
-#include "Aquila/SyncedMemory.h"
+#include "Aquila/types/SyncedMemory.hpp"
 #include "Aquila/utilities/CudaUtils.hpp"
 #include <Aquila/IO/serialize.hpp>
 

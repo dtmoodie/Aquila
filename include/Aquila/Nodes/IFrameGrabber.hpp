@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/SyncedMemory.h"
+#include "Aquila/types/SyncedMemory.hpp"
 #include "Aquila/Nodes/Node.h"
 #include "Aquila/Nodes/NodeInfo.hpp"
 #include "IObject.h"
@@ -44,7 +44,7 @@ namespace aq
     class IDataStream;
     namespace Nodes
     {
-    
+
     class AQUILA_EXPORTS GrabberInfo : virtual public mo::IMetaObjectInfo
     {
     public:
@@ -100,7 +100,7 @@ namespace aq
         static rcc::shared_ptr<IFrameGrabber> Create(const std::string& doc, const std::string& preferred_loader = "");
         // Returns all data sources that can be loaded with the name of the loader that can load it
         static std::vector<std::pair<std::string, std::string>> ListAllLoadableDocuments();
-        
+
         MO_DERIVE(IFrameGrabber, Node)
             MO_SIGNAL(void, update)
             MO_SLOT(void, Restart)

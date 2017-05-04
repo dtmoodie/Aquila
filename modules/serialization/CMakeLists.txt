@@ -1,0 +1,1 @@
+aquila_declare_module(NAME serialization DEPENDS aquila_types)

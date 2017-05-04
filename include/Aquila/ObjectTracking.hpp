@@ -75,6 +75,11 @@ float extentDistance(const cv::Mat& measurement, const cv::Mat& state)
 
 struct AQUILA_EXPORTS TrackedObject2d
 {
+    enum TrackingState
+    {
+
+    };
+
     enum {Dims = 2};
     typedef DetectedObject2d DetectionType;
     typedef std::shared_ptr<TrackedObject2d> Ptr;
@@ -131,8 +136,9 @@ struct AQUILA_EXPORTS TrackedObject2d
      * \brief detection_history past N detections
      */
     boost::circular_buffer<DetectedObject2d> detection_history;
+    TrackingState state;
 };
-
+typedef TrackedObject2d::TrackSet TrackSet2d;
 
 struct AQUILA_EXPORTS TrackedObject3d
 {

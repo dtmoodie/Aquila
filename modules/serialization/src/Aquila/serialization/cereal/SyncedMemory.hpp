@@ -1,6 +1,10 @@
 #pragma once
+#include <Aquila/types/SyncedMemory.hpp>
+#include "Mat.hpp"
 
-#include "SyncedMemory.h"
+#include <cereal/types/vector.hpp>
+#include <cereal/types/array.hpp>
+
 namespace aq
 {
     template<typename A> void SyncedMemory::load(A& ar)

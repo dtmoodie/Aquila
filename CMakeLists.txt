@@ -64,7 +64,7 @@ find_package(Qt5 QUIET COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
 find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
+#include_directories(${EIGEN3_INCLUDE_DIR})
 
 IF(WIN32)
     SET(CUDA_DEVRT ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cudadevrt.lib)
@@ -243,6 +243,10 @@ target_include_directories(Aquila
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+target_include_directories(Aquila
+  PUBLIC
+    $<BUILD_INTERFACE:${EIGEN_INCLUDE_DIRS}>
+)
 
 ocv_add_precompiled_header_to_target(Aquila src/precompiled.hpp)
 SOURCE_GROUP("Header Files\\External" FILES ${ext_inc})
@@ -291,13 +295,65 @@ if(WITH_PYTHON)
 endif()
 # =====================
 # modules
+set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
+function(aquila_declare_module)
+    set(oneValueArgs NAME)
+    set(multiValueArgs SRC DEPENDS FLAGS)
+    cmake_parse_arguments(aquila_declare_module "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+    if(${aquila_declare_module_SRC})
+        cuda_add_library(aquila_${aquila_declare_module_NAME} ${${aquila_declare_module_SRC}})
+    else()
+        file(GLOB_RECURSE src "src/*.cpp" "src/*.h" "src/*.cu" "src/*.hpp")
+        cuda_add_library(aquila_${aquila_declare_module_NAME} ${src})
+    endif()
+    if(aquila_declare_module_DEPENDS)
+        rcc_link_lib(aquila_${aquila_declare_module_NAME} ${aquila_declare_module_DEPENDS})
+    endif()
+    target_include_directories(aquila_${aquila_declare_module_NAME}
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src>
+            $<INSTALL_INTERFACE:include>
+    )
+
+    if(aquila_declare_module_FLAGS)
+        target_compile_options(aquila_${aquila_declare_module_NAME} PUBLIC ${aquila_declare_module_FLAGS})
+    endif()
+
+    export(TARGETS aquila_${aquila_declare_module_NAME}
+        FILE "${PROJECT_BINARY_DIR}/AquilaTargets-${aquila_declare_module_NAME}.cmake"
+    )
+    install(TARGETS aquila_${aquila_declare_module_NAME}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+    )
+    install(TARGETS aquila_${aquila_declare_module_NAME}
+        DESTINATION lib
+        EXPORT aquila_${aquila_declare_module_NAME}Targets
+    )
+    install(DIRECTORY src/
+        DESTINATION include
+        FILES_MATCHING PATTERN "*.h"
+    )
+
+    install(DIRECTORY src/
+        DESTINATION include
+        FILES_MATCHING PATTERN "*.hpp"
+    )
+install(EXPORT aquila_${aquila_declare_module_NAME}Targets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
+endfunction()
+
 SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
 foreach( module ${modules})
-   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
+    if(TARGET aquila_${module})
+        target_link_libraries(Aquila aquila_${module})
+    endif()
 endforeach()
 set(PROJECT_BIN_DIRS_DEBUG "")
 set(PROJECT_BIN_DIRS_RELEASE "")
 set(PROJECT_BIN_DIRS_RELWITHDEBINFO "")
+
 MACRO(APPEND_BIN_DIR ARG1 ARG2)
 IF(EXISTS "${${ARG1}}" AND IS_DIRECTORY "${${ARG1}}")
     LIST(APPEND ${ARG2} ${${ARG1}})
@@ -317,12 +373,14 @@ FOREACH(dir ${BIN_DIRS})
   APPEND_BIN_DIR(${dir}_BIN_DIR PROJECT_BIN_DIRS_RELWITHDEBINFO)
 ENDFOREACH(dir ${BIN_DIRS})
 
-    list(APPEND PROJECT_BIN_DIRS_DEBUG ${MetaObject_BIN_DIRS})
+list(APPEND PROJECT_BIN_DIRS_DEBUG ${MetaObject_BIN_DIRS})
+
 if(MSVC)
   if(RCC_VERBOSE_CONFIG)
     message(STATUS "Aquila tests binary runtime directories:\n ${PROJECT_BIN_DIRS_DEBUG}")
   endif()
-endif()
+endif(MSVC)
+
 if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
     include(CTest)
     enable_testing()
@@ -365,7 +423,7 @@ configure_file(AquilaConfig.cmake.in
     "${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
 )
 
-export(TARGETS Aquila
+export(TARGETS ${aquila_export_targets}
     FILE "${PROJECT_BINARY_DIR}/AquilaTargets.cmake"
 )
 
@@ -373,13 +431,13 @@ export(PACKAGE Aquila)
 
 file(COPY "cmake" DESTINATION ${PROJECT_BINARY_DIR})
 
-install(TARGETS Aquila
+install(TARGETS ${aquila_export_targets}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
 
-install(TARGETS Aquila
+install(TARGETS ${aquila_export_targets}
     DESTINATION lib
     EXPORT AquilaTargets
 )

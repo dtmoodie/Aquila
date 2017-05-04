@@ -13,7 +13,7 @@
 #define BOOST_TEST_MODULE __FILE__
 #include <boost/test/included/unit_test.hpp>
 #endif
-#include <Aquila/SyncedMemory.h>
+#include <Aquila/types/SyncedMemory.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>

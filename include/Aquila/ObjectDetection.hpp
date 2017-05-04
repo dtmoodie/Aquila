@@ -20,6 +20,7 @@ namespace aq
 
     struct AQUILA_EXPORTS DetectedObject2d
     {
+        typedef std::vector<DetectedObject2d> DetectionList;
         enum {Dims = 2};
         Classification classification;
         cv::Rect2f boundingBox;

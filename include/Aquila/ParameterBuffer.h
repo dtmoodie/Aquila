@@ -1,6 +1,7 @@
 #pragma once
 #include "IParameterBuffer.hpp"
-#include "Aquila/SyncedMemory.h"
+#include "Aquila/types/SyncedMemory.hpp"
+#include "Aquila/types/Stamped.hpp"
 
 #include <boost/circular_buffer.hpp>
 #include <mutex>

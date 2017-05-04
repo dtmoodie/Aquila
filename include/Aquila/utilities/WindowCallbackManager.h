@@ -1,7 +1,7 @@
 #pragma once
 #include "Aquila/Detail/Export.hpp"
 #include "MetaObject/MetaObject.hpp"
-#include "Aquila/SyncedMemory.h"
+#include "Aquila/types/SyncedMemory.hpp"
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 #include <vector>
 #include <opencv2/core/types.hpp>
