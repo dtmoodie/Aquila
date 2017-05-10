@@ -133,7 +133,7 @@ void DataStream::InitCustom(bool firstInit)
     if(firstInit)
     {
         this->SetupSignals(GetRelayManager());
-        _processing_thread.Start();
+        //_processing_thread.Start();
     }
 }
 
