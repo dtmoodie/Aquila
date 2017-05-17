@@ -1,5 +1,5 @@
 #pragma once
-#include "MetaObject/Parameters/IParameter.hpp"
+#include "MetaObject/params/IParameter.hpp"
 namespace aq{
 
 template<typename T> struct FN : public T

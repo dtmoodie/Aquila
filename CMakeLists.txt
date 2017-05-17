@@ -91,7 +91,6 @@ find_package(Qt5 QUIET COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
 find_package(Eigen3 REQUIRED)
-#include_directories(${EIGEN3_INCLUDE_DIR})
 
 IF(WIN32)
     SET(CUDA_DEVRT ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cudadevrt.lib)
@@ -102,10 +101,7 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 SET(LINK_LIBS "")
-ADD_DEFINITIONS(-DOPENCV_FOUND)
 ADD_DEFINITIONS(-DAquila_EXPORTS)
-ADD_DEFINITIONS(-DRMT_DLL)
-ADD_DEFINITIONS(-DBUILD_DIR=${CMAKE_BINARY_DIR})
 IF(${NV_TOOLS_EXT_FOUND})
   ADD_DEFINITIONS(-DUSE_NVTX)
   list(APPEND LINK_LIBS ${NV_TOOLS_EXT_LIB})
@@ -114,11 +110,6 @@ IF(${NV_TOOLS_EXT_FOUND})
   SET(NVTX_BIN_DIR_DBG "${NV_TOOLS_EXT_BIN_DIR}" CACHE PATH "")
   SET(BIN_DIRS "${BIN_DIRS};NVTX" CACHE STRING "" FORCE)
 endif()
-LIST(APPEND defs_ -DRMT_USE_CUDA)
-LIST(APPEND defs_ -DRMT_USE_OPENGL)
-IF(${Aquila_JETSON})
-    LIST(APPEND defs_ "-DJETSON")
-ENDIF(${Aquila_JETSON})
 
 set(BOOST_REQUIRED_MODULES
     system
@@ -139,11 +130,6 @@ set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME     OFF)
 ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 find_package(Boost 1.47.0 QUIET COMPONENTS ${BOOST_REQUIRED_MODULES})
-
-FILE(GLOB_RECURSE src "src/*.cpp" "remotery/lib/*.c")
-FILE(GLOB_RECURSE hdr "remotery/lib/*.h" "include/*.hpp" "include/*.h" "src/*.hpp")
-FILE(GLOB_RECURSE ext_inc "include/Aquila/rcc/external_includes")
-FILE(GLOB_RECURSE knl "src/*.cu")
 
 find_package(mxnet QUIET)
 if(${MXNET_FOUND})
@@ -166,74 +152,19 @@ INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib
 )
 
-if(Qt5_FOUND)
-    include_directories(
-        ${Qt5Core_INCLUDE_DIRS}
-        ${Qt5Gui_INCLUDE_DIRS}
-        ${Qt5Widgets_INCLUDE_DIRS}
-        ${Qt5Network_INCLUDE_DIRS}
-        )
-    add_definitions(-DHAVE_QT)
-endif()
-
 set_target_properties(pplx PROPERTIES FOLDER Dependencies)
-set_target_properties(MetaObject PROPERTIES FOLDER Dependencies)
+foreach(lib ${MetaObject_LIBRARIES})
+    #set_target_properties(${lib} PROPERTIES FOLDER Dependencies)
+endforeach()
+
 IF(NOT WIN32)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 ENDIF()
 
 # Link directories
-LINK_DIRECTORIES(${Parameters_LIB_DIRS_DEBUG})
-LINK_DIRECTORIES(${Parameters_LIB_DIRS_RELEASE})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIR_RELEASE})
-
-# ---------------- Reporting section
-if(RCC_VERBOSE_CONFIG)
-message(STATUS
-"================ Aquila ===============
-    Current source dir: ${CMAKE_CURRENT_SOURCE_DIR}
-    OpenCV found at: ${OpenCV_CONFIG_PATH}
-    NVCC Flags: ${CUDA_NVCC_FLAGS}
-    Jetson: ${Aquila_JETSON}
-    Bulid Type: ${CMAKE_BUILD_TYPE}
-
-    Includes: ${Aquila_INCLUDE_DIRECTORIES}
-
-    Libs: ${Aquila_LIBRARIES}
-
-    Lib dirs:
-    ${Aquila_LIB_DIRS_DEBUG}
-
-    ${Aquila_LIB_DIRS_RELEASE}
-
-    Definitions: ${defs_}
-
-
-++++++++++ RCC++ Defines ++++++++++++++++++
-    OpenCV include dir: ${OpenCV_INCLUDE_DIR}
-    Boost library dir: ${Boost_LIBRARY_DIRS}
-    OpenCV library dir: ${CV_LIB_DIR}
-    Cuda include dir: ${CUDA_INCLUDE_DIRS}
-    NVCC: ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc
-    Cuda RT libs: ${CUDA_LIBRARIES}
-    Cuda Dev RT libs: ${CUDA_DEVRT}
-    Cuda root dir: ${CUDA_TOOLKIT_ROOT_DIR}
-    Binary Dir: ${CMAKE_BINARY_DIR}
-
-    Boost LIBS: ${Boost_LIBRARIES}
-
-    PCL_found: ${PCL_FOUND}
-    PCL_LIB_DIR: ${PCL_LIBRARY_DIRS}
-    Eigen inc: ${EIGEN3_INCLUDE_DIR}
-++++++++++++ Parameters ++++++++++++++++++++
-    Includes: ${Parameters_INCLUDE}
-    UI: ${Parameters_UI_qt}
-")
-endif()
-ADD_DEFINITIONS(${defs_})
-
 
 macro(GroupSources curdir)
 file(GLOB children RELATIVE ${PROJECT_SOURCE_DIR}/${curdir} ${PROJECT_SOURCE_DIR}/${curdir}/*)
@@ -247,89 +178,13 @@ file(GLOB children RELATIVE ${PROJECT_SOURCE_DIR}/${curdir} ${PROJECT_SOURCE_DIR
    endforeach()
 endmacro()
 
-GroupSources(include)
-GroupSources(src)
-
 # This is needed becaus cuda + cmake does not properly support target_include_directories https://gitlab.kitware.com/cmake/cmake/issues/16571
 # in the version of cmake that is include with ubuntu 16.04.  Thus to make everything happy we also propagate up the needed build include dirs
 # using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
 set(Aquila_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS};${PPLX_INCLUDE_DIRS}" CACHE PATH "")
-set(Aquila_LIBRARIES "Aquila;${MetaObject_LIBRARIES}" CACHE STRING "")
-INCLUDE_DIRECTORIES(${MetaObject_INCLUDE_DIRS})
-
-cuda_add_library(Aquila SHARED
-    ${src}
-    ${hdr}
-    ${knl}
-    ${RuntimeObjectSystem_SRCS}
-    src/precompiled.hpp
-)
-
-set_target_properties(Aquila
-    PROPERTIES
-        CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-        CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-        CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-
-target_include_directories(Aquila
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-target_include_directories(Aquila
-  PUBLIC
-    $<BUILD_INTERFACE:${EIGEN_INCLUDE_DIRS}>
-)
-
-ocv_add_precompiled_header_to_target(Aquila src/precompiled.hpp)
-SOURCE_GROUP("Header Files\\External" FILES ${ext_inc})
+set(Aquila_LIBRARIES "${MetaObject_LIBRARIES}" CACHE STRING "")
 
 
-TARGET_LINK_LIBRARIES(Aquila
-    ${OpenCV_LIBS}
-    ${CUDA_CUDART_LIBRARY}
-    MetaParameters
-    RuntimeObjectSystem
-    RuntimeCompiler
-    ${LINK_LIBS}
-    MetaObject
-    ${Boost_LIBRARIES}
-    pplx
-)
-if(Qt5_FOUND)
-    target_link_libraries(Aquila
-        Qt5::OpenGL
-    )
-endif()
-
-if(MXNET_FOUND)
-  TARGET_LINK_LIBRARIES(Aquila ${MXNET_LIBRARY})
-endif()
-
-if(WIN32)
-    target_link_libraries(Aquila OpenGL32)
-    target_compile_options(Aquila PRIVATE "/bigobj")
-else(WIN32)
-  if(UNIX)
-    target_link_libraries(Aquila GL GLU)
-  endif(UNIX)
-endif(WIN32)
-
-ADD_DEPENDENCIES(Aquila
-    RuntimeObjectSystem
-    RuntimeCompiler
-)
-
-if(UNIX)
-    TARGET_LINK_LIBRARIES(Aquila dl)
-endif()
-if(WITH_PYTHON)
-  add_subdirectory("python")
-endif()
 # =====================
 # modules
 set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
@@ -396,37 +251,8 @@ SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
 foreach( module ${modules})
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
 endforeach()
-set(PROJECT_BIN_DIRS_DEBUG "")
-set(PROJECT_BIN_DIRS_RELEASE "")
-set(PROJECT_BIN_DIRS_RELWITHDEBINFO "")
-target_link_libraries(Aquila aquila_types aquila_serialization)
-MACRO(APPEND_BIN_DIR ARG1 ARG2)
-IF(EXISTS "${${ARG1}}" AND IS_DIRECTORY "${${ARG1}}")
-    LIST(APPEND ${ARG2} ${${ARG1}})
-ELSE()
-    if(RCC_VERBOSE_CONFIG)
-        MESSAGE("${ARG1} : ${${ARG1}} is not a valid directory")
-    endif()
-ENDIF()
-ENDMACRO(APPEND_BIN_DIR)
-
-FOREACH(dir ${BIN_DIRS})
-  APPEND_BIN_DIR(${dir}_BIN_DIR_DBG PROJECT_BIN_DIRS_DEBUG)
-  APPEND_BIN_DIR(${dir}_BIN_DIR_OPT PROJECT_BIN_DIRS_RELEASE)
-  APPEND_BIN_DIR(${dir}_BIN_DIR_OPT PROJECT_BIN_DIRS_RELWITHDEBINFO)
-  APPEND_BIN_DIR(${dir}_BIN_DIR PROJECT_BIN_DIRS_DEBUG)
-  APPEND_BIN_DIR(${dir}_BIN_DIR PROJECT_BIN_DIRS_RELEASE)
-  APPEND_BIN_DIR(${dir}_BIN_DIR PROJECT_BIN_DIRS_RELWITHDEBINFO)
-ENDFOREACH(dir ${BIN_DIRS})
-
-list(APPEND PROJECT_BIN_DIRS_DEBUG ${MetaObject_BIN_DIRS})
-
-if(MSVC)
-  if(RCC_VERBOSE_CONFIG)
-    message(STATUS "Aquila tests binary runtime directories:\n ${PROJECT_BIN_DIRS_DEBUG}")
-  endif()
-endif(MSVC)
-
+# ---------------------------------------------------
+# unit tests
 if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
     include(CTest)
     enable_testing()
@@ -440,8 +266,8 @@ if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
         else()
             add_executable(${test} ${test_srcs})
         endif()
-        TARGET_LINK_LIBRARIES(${test} MetaObject Aquila MetaParameters ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
-        ADD_DEPENDENCIES(${test} MetaObject Aquila)
+        TARGET_LINK_LIBRARIES(${test} MetaParameters ${MetaObject_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+        print_target_properties(${test})
         set_target_properties(${test} PROPERTIES FOLDER Tests/Aquila)
         add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
         if(MSVC)
@@ -450,13 +276,6 @@ if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
         endif()
     endforeach()
 endif()
-message(STATUS
-    "-- Aquila config\n"
-    "  MetaObject\t\t${MetaObject_VERSION}\n"
-    "  MxNet\t\t${MXNET_FOUND}\n"
-    "  Eigen3\t\t${EIGEN_MAJOR_VERSION}.${EIGEN_MINOR_VERSION}\n"
-    "  Tests\t\t${Boost_UNIT_TEST_FRAMEWORK_FOUND}"
-)
 
 # ----------------- Install
 if(Qt5_FOUND)
@@ -469,24 +288,6 @@ configure_file(AquilaConfig.cmake.in
     "${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
 )
 
-export(TARGETS ${aquila_export_targets}
-    FILE "${PROJECT_BINARY_DIR}/AquilaTargets.cmake"
-)
-
-export(PACKAGE Aquila)
-
-file(COPY "cmake" DESTINATION ${PROJECT_BINARY_DIR})
-
-install(TARGETS ${aquila_export_targets}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
-
-install(TARGETS ${aquila_export_targets}
-    DESTINATION lib
-    EXPORT AquilaTargets
-)
 
 install(DIRECTORY include/
     DESTINATION include
@@ -514,6 +315,4 @@ install(FILES
   "${PROJECT_BINARY_DIR}/AquilaConfig.cmake"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev
 )
-
-install(EXPORT AquilaTargets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
 

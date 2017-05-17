@@ -1,14 +1,14 @@
 #include "SyncedMemoryMetaParams.hpp"
 #include "Aquila/serialization/cereal/SyncedMemory.hpp"
-#include "MetaObject/Parameters/MetaParameter.hpp"
-#include "MetaObject/Parameters/UI/Qt/OpenCV.hpp"
-#include "MetaObject/Parameters/UI/Qt/Containers.hpp"
-#include "MetaObject/Parameters/UI/Qt/TParameterProxy.hpp"
-#include "MetaObject/Parameters/Buffers/CircularBuffer.hpp"
-#include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
-#include "MetaObject/Parameters/Buffers/Map.hpp"
-#include "MetaObject/Parameters/Buffers/NNStreamBuffer.hpp"
-#include "MetaObject/Parameters/IO/CerealPolicy.hpp"
+#include "MetaObject/params/MetaParameter.hpp"
+#include "MetaObject/params/UI/Qt/OpenCV.hpp"
+#include "MetaObject/params/UI/Qt/Containers.hpp"
+#include "MetaObject/params/UI/Qt/TParameterProxy.hpp"
+#include "MetaObject/params/Buffers/CircularBuffer.hpp"
+#include "MetaObject/params/Buffers/StreamBuffer.hpp"
+#include "MetaObject/params/Buffers/Map.hpp"
+#include "MetaObject/params/Buffers/NNStreamBuffer.hpp"
+#include "MetaObject/params/IO/CerealPolicy.hpp"
 
 #ifdef MO_EXPORTS
 #undef MO_EXPORTS
@@ -20,7 +20,7 @@
 #else
 #  define MO_EXPORTS
 #endif
-#include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
+#include "MetaObject/params/detail/MetaParametersDetail.hpp"
 INSTANTIATE_META_PARAMETER(aq::SyncedMemory);
 INSTANTIATE_META_PARAMETER(std::vector<aq::SyncedMemory>);
 INSTANTIATE_META_PARAMETER(cv::Mat);

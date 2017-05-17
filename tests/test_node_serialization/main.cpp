@@ -5,7 +5,7 @@
 
 #include <MetaObject/Thread/ThreadPool.hpp>
 #include <MetaObject/MetaObject.hpp>
-#include <MetaObject/Parameters/IO/SerializationFunctionRegistry.hpp>
+#include <MetaObject/params/IO/SerializationFunctionRegistry.hpp>
 
 #ifdef _MSC_VER
 #include <boost/test/unit_test.hpp>

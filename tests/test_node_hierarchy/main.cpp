@@ -1,15 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
-#include "MetaObject/Parameters/Buffers/StreamBuffer.hpp"
+#include "MetaObject/params/buffers/StreamBuffer.hpp"
 #include "Aquila/IDataStream.hpp"
 #include "Aquila/Nodes/Node.h"
 #include "Aquila/Nodes/ThreadedNode.h"
 #include "Aquila/Nodes/NodeInfo.hpp"
 
-#include "MetaObject/Parameters/ParameterMacros.hpp"
-#include "MetaObject/Parameters/TypedInputParameter.hpp"
+#include "MetaObject/params/ParameterMacros.hpp"
+#include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/MetaObjectFactory.hpp"
-#include "MetaObject/Detail/MetaObjectMacros.hpp"
+#include "MetaObject/detail/MetaObjectMacros.hpp"
 #include "MetaObject/MetaObjectFactory.hpp"
 #include "MetaObject/Thread/ThreadPool.hpp"
 #include "MetaObject/Detail/Allocator.hpp"

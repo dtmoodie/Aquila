@@ -1,7 +1,7 @@
 #pragma once
 #include "Aquila/Detail/Export.hpp"
 #include "Aquila/types/SyncedMemory.hpp"
-#include <MetaObject/Parameters/TypedInputParameter.hpp>
+#include <MetaObject/params/TInputParam.hpp>
 
 namespace mo
 {
