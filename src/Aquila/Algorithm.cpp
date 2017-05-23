@@ -13,7 +13,7 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
 #include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
-INSTANTIATE_META_PARAMETER(std::vector<rcc::shared_ptr<aq::Algorithm>>)
+INSTANTIATE_META_PARAMETER(std::vector<rcc::shared_ptr<aq::Algorithm>>);
 using namespace mo;
 using namespace aq;
 

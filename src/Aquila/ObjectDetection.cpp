@@ -42,10 +42,10 @@ void aq::CreateColormap(cv::Mat& lut, int num_classes, int ignore_class)
         lut.at<cv::Vec3b>(ignore_class) = cv::Vec3b(0,0,0);
 }
 
-INSTANTIATE_META_PARAMETER(DetectedObject)
-INSTANTIATE_META_PARAMETER(Classification)
-INSTANTIATE_META_PARAMETER(std::vector<DetectedObject>)
-INSTANTIATE_META_PARAMETER(std::vector<DetectedObject3d>)
+INSTANTIATE_META_PARAMETER(DetectedObject);
+INSTANTIATE_META_PARAMETER(Classification);
+INSTANTIATE_META_PARAMETER(std::vector<DetectedObject>);
+INSTANTIATE_META_PARAMETER(std::vector<DetectedObject3d>);
 
 template AQUILA_EXPORTS void DetectedObject::serialize<cereal::JSONInputArchive>(cereal::JSONInputArchive& ar);
 template AQUILA_EXPORTS void DetectedObject::serialize<cereal::JSONOutputArchive>(cereal::JSONOutputArchive& ar);

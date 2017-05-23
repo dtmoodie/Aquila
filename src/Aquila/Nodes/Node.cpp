@@ -610,11 +610,8 @@ std::vector<rcc::weak_ptr<Node>> Node::GetParents() const
 
 void Node::Init(bool firstInit)
 {
-    //ui_collector::set_node_name(getFullTreeName());
-    // Node init should be called first because it is where implicit parameters should be setup
-    // Then in ParmaeteredIObject, the implicit parameters will be added back to the _parameter vector
-    NodeInit(firstInit);
     IMetaObject::Init(firstInit);
+    NodeInit(firstInit);
     if(!firstInit)
     {
         if(_data_stream)

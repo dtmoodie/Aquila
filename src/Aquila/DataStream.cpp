@@ -33,6 +33,7 @@ using namespace aq::Nodes;
 #include "MetaObject/Parameters/detail/MetaParametersDetail.hpp"
 INSTANTIATE_META_PARAMETER(rcc::shared_ptr<IDataStream>);
 INSTANTIATE_META_PARAMETER(rcc::weak_ptr<IDataStream>);
+
 #define CATCH_MACRO                                                         \
     catch (boost::thread_resource_error& err)                               \
 {                                                                           \
