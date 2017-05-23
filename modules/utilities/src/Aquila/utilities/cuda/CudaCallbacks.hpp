@@ -1,6 +1,6 @@
 #pragma once
-#include "Aquila/Detail/Export.hpp"
-#include "ObjectPool.hpp"
+#include "Aquila/core/detail/Export.hpp"
+#include "Aquila/utilities/ObjectPool.hpp"
 #include <opencv2/core/cuda.hpp>
 #include <pplx/pplxtasks.h>
 #include <boost/log/trivial.hpp>
@@ -43,7 +43,7 @@ namespace aq
             static void cb_func_async_event_loop(int status, void* user_data);
             static void cb_func_async(int status, void* user_data);
             static void cb_func(int status, void* user_data);
-            
+
             virtual ~ICallback();
             virtual void run() = 0;
         };
@@ -51,9 +51,9 @@ namespace aq
         {
             size_t event_loop_thread_id;
         };
-        template<typename T, typename C> 
+        template<typename T, typename C>
         auto enqueue_callback_async(
-            const T& user_data, 
+            const T& user_data,
             cv::cuda::Stream& stream) -> void
         {
             static_assert(std::is_base_of<ICallback, C>::value, "Template class argument must inherit from ICallback");
@@ -75,7 +75,7 @@ namespace aq
             std::function<R(T)> func;
             T data;
             std::promise<R> promise;
-            
+
             FunctionCallback(const T& d, const std::function<R(T)> f) : func(f), data(d) {}
             virtual ~FunctionCallback() {}
             virtual void run();
@@ -89,12 +89,12 @@ namespace aq
             virtual ~FunctionCallback() {}
             virtual void run();
         };
-        template<typename _return_type> 
+        template<typename _return_type>
         struct AQUILA_EXPORTS LambdaCallback: public ICallback
         {
             std::function<_return_type()> func;
             std::promise<_return_type> promise;
-            
+
             LambdaCallback(const std::function<_return_type()>& f) : func(f) {}
             ~LambdaCallback() {}
             virtual void run();
@@ -146,7 +146,7 @@ namespace aq
             return future;
         }
 
-        template<typename _Ty> 
+        template<typename _Ty>
         auto enqueue_callback_async(_Ty function, size_t thread, cv::cuda::Stream& stream)->std::future<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>
         {
             auto fc = new LambdaCallbackEvent<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>(function);
@@ -155,7 +155,7 @@ namespace aq
             stream.enqueueHostCallback(&ICallback::cb_func_async_event_loop, fc);
             return future;
         }
-        
+
         template<typename T, typename R> std::future<R>
             enqueue_callback_async(const T& data, const std::function<R(T)>& function, cv::cuda::Stream& stream)
         {

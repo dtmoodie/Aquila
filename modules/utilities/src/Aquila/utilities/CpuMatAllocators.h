@@ -1,7 +1,7 @@
 #pragma once
-#include "MetaObject/Detail/MemoryBlock.h"
+#include "MetaObject/core/detail/MemoryBlock.hpp"
 #include <opencv2/core/mat.hpp>
-#include "Aquila/Detail/Export.hpp"
+#include "Aquila/core/detail/Export.hpp"
 #include <map>
 #include <list>
 #include <tuple>
@@ -27,7 +27,7 @@ namespace aq
         void cleanup(bool force = false);
         std::list<std::tuple<unsigned char*, clock_t, size_t>> deallocate_pool;
         std::recursive_timed_mutex deallocate_pool_mutex;
-        
+
         size_t _initial_block_size;
         std::list<std::shared_ptr<mo::CpuMemoryBlock>> blocks;
     };

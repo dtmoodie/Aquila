@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Aquila/Detail/Export.hpp"
+#include "Aquila/core/detail/Export.hpp"
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/cuda.hpp>
 namespace aq

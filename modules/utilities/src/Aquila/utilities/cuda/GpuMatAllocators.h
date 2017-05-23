@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/Detail/Export.hpp"
+#include "Aquila/core/detail/Export.hpp"
 #include <opencv2/core/cuda.hpp>
 #include <mutex>
 #include <tuple>
@@ -7,7 +7,7 @@
 #include <map>
 #include <memory>
 #include <boost/thread.hpp>
-#include "MetaObject/Detail/MemoryBlock.h"
+#include "MetaObject/core/detail/MemoryBlock.hpp"
 namespace aq
 {
     cv::cuda::GpuMat::Allocator* GetDefaultBlockMemoryAllocator();
@@ -16,7 +16,7 @@ namespace aq
 
 
     AQUILA_EXPORTS void SetScopeName(const std::string& name);
-    AQUILA_EXPORTS const std::string& GetScopeName();
+    AQUILA_EXPORTS const std::string& getScopeName();
 
     template<class Allocator, class MatType>
     class AQUILA_EXPORTS ScopeDebugPolicy: virtual public Allocator
@@ -44,7 +44,7 @@ namespace aq
     {
     public:
         PitchedAllocator();
-        void SizeNeeded(int rows, int cols, int elemSize, size_t& sizeNeeded, size_t& stride);
+        void sizeNeeded(int rows, int cols, int elemSize, size_t& sizeNeeded, size_t& stride);
         void Increment(unsigned char* ptr, size_t size);
         void Decrement(unsigned char* ptr, size_t size);
         void SetScope(const std::string& name);

@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/Detail/Export.hpp"
+#include "Aquila/core/detail/Export.hpp"
 #include "Aquila/rcc/external_includes/cv_core.hpp"
 #include <opencv2/core/cuda.hpp>
 #include <memory>
@@ -47,8 +47,8 @@ namespace aq
 
         SYNC_STATE                             GetSyncState(int index = 0) const;
 
-        mo::Context*                           GetContext() const;
-        void                                   SetContext(mo::Context* ctx);
+        mo::Context*                           getContext() const;
+        void                                   setContext(mo::Context* ctx);
 
         bool Clone(cv::Mat& dest, cv::cuda::Stream& stream, int idx = 0) const;
         bool Clone(cv::cuda::GpuMat& dest, cv::cuda::Stream& stream, int idx = 0) const;

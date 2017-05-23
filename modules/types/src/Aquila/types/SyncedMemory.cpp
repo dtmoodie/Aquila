@@ -2,7 +2,7 @@
 //#include <Aquila/utilities/GpuMatAllocators.h>
 //#include <Aquila/utilities/CudaCallbacks.hpp>
 
-#include <MetaObject/Logging/Log.hpp>
+#include <MetaObject/logging/Log.hpp>
 #include <boost/lexical_cast.hpp>
 
 using namespace aq;
@@ -425,12 +425,12 @@ SyncedMemory::SYNC_STATE SyncedMemory::GetSyncState(int index) const
     CV_Assert(index < _pimpl->sync_flags.size() && index >= 0);
     return _pimpl->sync_flags[index];
 }
-mo::Context* SyncedMemory::GetContext() const
+mo::Context* SyncedMemory::getContext() const
 {
     return _pimpl->_ctx;
 }
 
-void SyncedMemory::SetContext(mo::Context* ctx)
+void SyncedMemory::setContext(mo::Context* ctx)
 {
     _pimpl->_ctx = ctx;
 }

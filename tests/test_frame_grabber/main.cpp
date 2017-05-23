@@ -1,17 +1,17 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
-#include "MetaObject/params/Buffers/StreamBuffer.hpp"
-#include "Aquila/Nodes/Node.h"
-#include "Aquila/Nodes/ThreadedNode.h"
-#include "Aquila/Nodes/IFrameGrabber.hpp"
+#include "MetaObject/params/buffers/StreamBuffer.hpp"
+#include "Aquila/nodes/Node.hpp"
+#include "Aquila/nodes/ThreadedNode.h"
+#include "Aquila/nodes/IFrameGrabber.hpp"
 #include "Aquila/Logging.h"
-#include "Aquila/Nodes/FrameGrabberInfo.hpp"
+#include "Aquila/nodes/FrameGrabberInfo.hpp"
 
 #include "MetaObject/params/ParameterMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
-#include "MetaObject/MetaObjectFactory.hpp"
+#include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/Detail/MetaObjectMacros.hpp"
-#include "MetaObject/MetaObjectFactory.hpp"
+#include "MetaObject/object/MetaObjectFactory.hpp"
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaFrameGrabbers"
@@ -52,11 +52,11 @@ struct test_framegrabber: public IFrameGrabber
     int ts = 0;
     cv::Mat current;
     
-    static int CanLoadDocument(const std::string& doc)
+    static int canLoadDocument(const std::string& doc)
     {
         return 1;
     }
-    static int LoadTimeout()
+    static int loadTimeout()
     {
         return 1;
     }
@@ -83,9 +83,9 @@ MO_REGISTER_CLASS(img_node);
 BOOST_AUTO_TEST_CASE(test_dummy_output)
 {
     aq::SetupLogging();
-    mo::MetaObjectFactory::Instance()->RegisterTranslationUnit();
-    mo::MetaObjectFactory::Instance()->LoadPlugins("");
-    auto info = mo::MetaObjectFactory::Instance()->GetObjectInfo("test_framegrabber");
+    mo::MetaObjectFactory::instance()->registerTranslationUnit();
+    mo::MetaObjectFactory::instance()->LoadPlugins("");
+    auto info = mo::MetaObjectFactory::instance()->GetObjectInfo("test_framegrabber");
     BOOST_REQUIRE(info);
     auto fg_info = dynamic_cast<aq::Nodes::FrameGrabberInfo*>(info);
     BOOST_REQUIRE(fg_info);
@@ -93,14 +93,14 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
     
     auto fg = rcc::shared_ptr<test_framegrabber>::Create();
     auto node = rcc::shared_ptr<img_node>::Create();
-    BOOST_REQUIRE(node->ConnectInput(fg, "input", "current_frame"));
+    BOOST_REQUIRE(node->connectInput(fg, "input", "current_frame"));
     for(int i = 0; i < 100; ++i)
     {
-        fg->Process();
+        fg->process();
     }
 }
 BOOST_AUTO_TEST_CASE(test_enumeration)
 {
     //auto all_docs = aq::Nodes::IFrameGrabber::ListAllLoadableDocuments();
-    std::cout << mo::MetaObjectFactory::Instance()->PrintAllObjectInfo();
+    std::cout << mo::MetaObjectFactory::instance()->PrintAllObjectInfo();
 }

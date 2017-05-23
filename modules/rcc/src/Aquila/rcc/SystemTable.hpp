@@ -1,7 +1,7 @@
 #pragma once
-#include <Aquila/Detail/Export.hpp>
+#include <Aquila/core/detail/Export.hpp>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
-#include <MetaObject/Detail/TypeInfo.h>
+#include <MetaObject/detail/TypeInfo.hpp>
 #include <map>
 #include <memory>
 struct AQUILA_EXPORTS ISingleton
@@ -33,7 +33,7 @@ struct AQUILA_EXPORTS SystemTable
     SystemTable();
     void CleanUp();
     // These are per stream singletons
-    template<typename T> T* GetSingleton()
+    template<typename T> T* getSingleton()
     {
         auto g_itr = g_singletons.find(mo::TypeInfo(typeid(T)));
         if(g_itr != g_singletons.end())
@@ -42,17 +42,17 @@ struct AQUILA_EXPORTS SystemTable
         }
         return nullptr;
     }
-    
-    template<typename T> 
+
+    template<typename T>
     T* SetSingleton(T* singleton, int stream_id = -1)
     {
         g_singletons[mo::TypeInfo(typeid(T))] = std::shared_ptr<ISingleton>(new Singleton<T>(singleton));
         return singleton;
     }
-    
+
     void DeleteSingleton(mo::TypeInfo type);
 
-    template<typename T> 
+    template<typename T>
     void DeleteSingleton()
     {
         DeleteSingleton(mo::TypeInfo(typeid(T)));

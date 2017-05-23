@@ -8,8 +8,8 @@
 #include <cereal/archives/xml.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/tuple.hpp>
-#include <MetaObject/Parameters/IO/CerealPolicy.hpp>
-#include <MetaObject/Parameters/IO/TextPolicy.hpp>
+#include <MetaObject/params/IO/CerealPolicy.hpp>
+#include <MetaObject/params/IO/TextPolicy.hpp>
 #endif
 
 using namespace aq;

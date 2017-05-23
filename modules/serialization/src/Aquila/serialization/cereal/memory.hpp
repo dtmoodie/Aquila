@@ -1,8 +1,9 @@
 #pragma once
-#include "Aquila/Nodes/Node.h"
+#include "serialize.hpp"
+#include "Aquila/nodes/Node.hpp"
 #include "RuntimeObjectSystem/shared_ptr.hpp"
-#include <MetaObject/Logging/Log.hpp>
-#include <MetaObject/IO/Serializer.hpp>
+#include <MetaObject/logging/Log.hpp>
+#include <MetaObject/serialization/Serializer.hpp>
 
 #include <cereal/cereal.hpp>
 #include <cereal/archives/binary.hpp>
@@ -12,7 +13,7 @@
 
 namespace cereal
 {
-    /*
+
     template<class AR, class T> void save(AR& ar, rcc::shared_ptr<T> const & m)
     {
         if(m)
@@ -47,13 +48,13 @@ namespace cereal
             ar(make_nvp("TypeName", type));
             ar(cereal::make_nvp("TypeId", id.m_ConstructorId));
             ar(cereal::make_nvp("InstanceId", id.m_PerTypeId));
-            if (auto obj = mo::MetaObjectFactory::Instance()->Get(id, type.c_str()))
+            if (auto obj = mo::MetaObjectFactory::instance()->get(id, type.c_str()))
             {
                 m = obj;
             }
             else
             {
-                m = mo::MetaObjectFactory::Instance()->Create(type.c_str());
+                m = mo::MetaObjectFactory::instance()->create(type.c_str());
             }
         }
         if (mo::CheckHasBeenSerialized(m->GetObjectId()))
@@ -86,6 +87,6 @@ namespace cereal
         ar(cereal::make_nvp("TypeId", id.m_ConstructorId));
         ar(cereal::make_nvp("InstanceId", id.m_PerTypeId));
         ar(make_nvp("TypeName", type));
-        m.reset(mo::MetaObjectFactory::Instance()->Get(id, type.c_str()));
-    }*/
+        m.reset(mo::MetaObjectFactory::instance()->get(id, type.c_str()));
+    }
 }

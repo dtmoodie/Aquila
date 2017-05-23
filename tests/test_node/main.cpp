@@ -1,17 +1,17 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
-#include "MetaObject/params/Buffers/StreamBuffer.hpp"
-#include "Aquila/Nodes/Node.h"
+#include "MetaObject/params/buffers/StreamBuffer.hpp"
+#include "Aquila/nodes/Node.hpp"
 
 
 #include "Aquila/Logging.h"
-#include "Aquila/Nodes/NodeInfo.hpp"
+#include "Aquila/nodes/NodeInfo.hpp"
 
 #include "MetaObject/params/ParameterMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
-#include "MetaObject/MetaObjectFactory.hpp"
+#include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/Detail/MetaObjectMacros.hpp"
-#include "MetaObject/MetaObjectFactory.hpp"
+#include "MetaObject/object/MetaObjectFactory.hpp"
 
 
 #define BOOST_TEST_DYN_LINK
@@ -101,8 +101,8 @@ MO_REGISTER_CLASS(test_multi_input_node)
 
 BOOST_AUTO_TEST_CASE(test_node_reflection)
 {
-    mo::MetaObjectFactory::Instance()->RegisterTranslationUnit();
-    auto info = mo::MetaObjectFactory::Instance()->GetObjectInfo("test_node");
+    mo::MetaObjectFactory::instance()->registerTranslationUnit();
+    auto info = mo::MetaObjectFactory::instance()->GetObjectInfo("test_node");
     auto node_info = dynamic_cast<NodeInfo*>(info);
     BOOST_REQUIRE(node_info);
     BOOST_REQUIRE_EQUAL(node_info->GetNodeCategory().size(), 2);
@@ -117,11 +117,11 @@ BOOST_AUTO_TEST_CASE(test_node_single_input_output_direct)
 	auto output_node = test_output_node::Create();
 	auto input_node = test_input_node::Create();	
 
-	BOOST_REQUIRE(input_node->ConnectInput(output_node, "value", "value"));
-	output_node->SetDataStream(ds.Get());
+	BOOST_REQUIRE(input_node->connectInput(output_node, "value", "value"));
+	output_node->setDataStream(ds.Get());
 	for (int i = 0; i < 10; ++i)
 	{
-		output_node->Process();
+		output_node->process();
 	}
 	BOOST_REQUIRE_EQUAL(output_node->process_count, 10);
 	BOOST_REQUIRE_EQUAL(input_node->process_count, 10);
@@ -132,20 +132,20 @@ BOOST_AUTO_TEST_CASE(test_node_single_input_output_buffered)
 	auto ds = aq::IDataStream::Create();
 	auto output_node = test_output_node::Create();
 	auto input_node = test_input_node::Create();
-	output_node->SetDataStream(ds.Get());
-	input_node->SetDataStream(ds.Get());
-    static const mo::ParameterTypeFlags test_cases[] = { mo::CircularBuffer_e, mo::ConstMap_e, mo::Map_e, mo::StreamBuffer_e, mo::BlockingStreamBuffer_e, mo::NNStreamBuffer_e };
+	output_node->setDataStream(ds.Get());
+	input_node->setDataStream(ds.Get());
+    static const mo::ParamType test_cases[] = { mo::CircularBuffer_e, mo::ConstMap_e, mo::Map_e, mo::StreamBuffer_e, mo::BlockingStreamBuffer_e, mo::NNStreamBuffer_e };
 	for (int i = 0; i < sizeof(test_cases); ++i)
 	{
 		std::cout << "Buffer type: " << mo::ParameterTypeFlagsToString(test_cases[i]) << std::endl;
 		output_node->process_count = 0;
 		input_node->process_count = 0;
 		output_node->timestamp = 0;
-		BOOST_REQUIRE(input_node->ConnectInput(output_node, "value", "value", test_cases[i]));
+		BOOST_REQUIRE(input_node->connectInput(output_node, "value", "value", test_cases[i]));
 		
 		for (int i = 0; i < 10; ++i)
 		{
-			output_node->Process();
+			output_node->process();
 		}
 		BOOST_REQUIRE_EQUAL(output_node->process_count, 10);
 		BOOST_REQUIRE_EQUAL(input_node->process_count, 10);

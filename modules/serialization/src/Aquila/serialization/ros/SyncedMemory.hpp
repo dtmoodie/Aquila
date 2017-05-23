@@ -56,10 +56,10 @@ template<>
 struct Serializer<aq::SyncedMemory>{
     template<typename Stream>
     inline static void write(Stream& stream, const aq::SyncedMemory& mem){
-        auto ctx = mem.GetContext();
+        auto ctx = mem.getContext();
         if(ctx){
-            const cv::Mat& mat = mem.GetMat(ctx->GetStream());
-            ctx->GetStream().waitForCompletion();
+            const cv::Mat& mat = mem.GetMat(ctx->getStream());
+            ctx->getStream().waitForCompletion();
             Serializer<cv::Mat>::write(stream, mat);
         }else{
             const cv::Mat& mat = mem.GetMat(cv::cuda::Stream::Null());
@@ -75,9 +75,9 @@ struct Serializer<aq::SyncedMemory>{
     }
 
     inline static uint32_t serializedLength(const aq::SyncedMemory& mem){
-        auto ctx = mem.GetContext();
+        auto ctx = mem.getContext();
         if(ctx){
-            const cv::Mat& mat = mem.GetMat(ctx->GetStream());
+            const cv::Mat& mat = mem.GetMat(ctx->getStream());
             return Serializer<cv::Mat>::serializedLength(mat);
         }
         const cv::Mat& mat = mem.GetMat(cv::cuda::Stream::Null()); // this could be made async if we add a GetMatNoSync call
@@ -89,11 +89,11 @@ template<>
 struct Serializer<aq::Stamped<aq::SyncedMemory>>{
     template<typename Stream>
     inline static void write(Stream& stream, const aq::Stamped<aq::SyncedMemory>& mem){
-        auto ctx = mem.data.GetContext();
+        auto ctx = mem.data.getContext();
         cv::Mat mat;
         if(ctx){
-            mat = mem.data.GetMat(ctx->GetStream());
-            ctx->GetStream().waitForCompletion();
+            mat = mem.data.GetMat(ctx->getStream());
+            ctx->getStream().waitForCompletion();
         }else{
             mat = mem.data.GetMat(cv::cuda::Stream::Null());
         }

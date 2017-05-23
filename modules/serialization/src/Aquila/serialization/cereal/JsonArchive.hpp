@@ -4,12 +4,12 @@
 #include <cereal/types/map.hpp>
 #include <cereal/types/string.hpp>
 
-#include <Aquila/Nodes/Node.h>
-#include <Aquila/IDataStream.hpp>
+#include <Aquila/nodes/Node.hpp>
+#include <Aquila/core/IDataStream.hpp>
 
-#include <MetaObject/params/IO/SerializationFunctionRegistry.hpp>
-#include <MetaObject/params/Buffers/IBuffer.hpp>
-#include <MetaObject/params/Buffers/BufferFactory.hpp>
+#include <MetaObject/serialization/SerializationFactory.hpp>
+#include <MetaObject/params/buffers/IBuffer.hpp>
+#include <MetaObject/params/buffers/BufferFactory.hpp>
 
 #include <boost/lexical_cast.hpp>
 
@@ -21,14 +21,14 @@ namespace aq
         std::string type;
         bool sync = false;
         int buffer_size = -1;
-        boost::optional<mo::time_t> buffer_time;
+        boost::optional<mo::Time_t> buffer_time;
 
         template<class AR> void load(AR& ar)
         {
             ar(CEREAL_NVP(name));
             ar(CEREAL_OPTIONAL_NVP(sync, false));
             ar(CEREAL_OPTIONAL_NVP(buffer_size, -1));
-            mo::time_t buf_time;
+            mo::Time_t buf_time;
             auto bt = cereal::make_optional_nvp("buffer_time", buf_time, buf_time);
             ar(bt);
             if(bt.success)
@@ -911,62 +911,62 @@ namespace cereal
 {
     inline void save(JSONOutputArchive& ar, rcc::shared_ptr<aq::IDataStream> const & stream)
     {
-        auto nodes = stream->GetAllNodes();
+        auto nodes = stream->getAllNodes();
         ar(CEREAL_NVP(nodes));
     }
-    inline void save(JSONOutputArchive& ar, std::vector<mo::IParameter*> const& parameters)
+    inline void save(JSONOutputArchive& ar, std::vector<mo::IParam*> const& parameters)
     {
         for (auto& param : parameters)
         {
-            if (!param->CheckFlags(mo::Control_e))
+            if (!param->checkFlags(mo::Control_e))
                 continue;
-            auto func1 = mo::SerializationFunctionRegistry::Instance()->GetJsonSerializationFunction(param->GetTypeInfo());
+            auto func1 = mo::SerializationFactory::instance()->getJsonSerializationFunction(param->getTypeInfo());
             if (func1)
             {
                 if (!func1(param, ar))
                 {
-                    LOG(debug) << "Unable to deserialize " << param->GetName() << " of type " << param->GetTypeInfo().name();
+                    LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
                 }
             }
             else
             {
-                LOG(debug) << "No serialization function exists for  " << param->GetName() << " of type " << param->GetTypeInfo().name();
+                LOG(debug) << "No serialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
             }
         }
     }
 
 
-    inline void save(JSONOutputArchive& ar, std::vector<mo::InputParameter*> const& parameters)
+    inline void save(JSONOutputArchive& ar, std::vector<mo::InputParam*> const& parameters)
     {
         for (auto& param : parameters)
         {
 
-            mo::InputParameter* input_param = dynamic_cast<mo::InputParameter*>(param);
+            mo::InputParam* input_param = dynamic_cast<mo::InputParam*>(param);
             aq::InputInfo info;
             info.type = "Direct";
             if (input_param)
             {
-                mo::IParameter* _input_param = input_param->GetInputParam();
+                mo::IParam* _input_param = input_param->getInputParam();
                 std::string input_name;
                 if (_input_param)
                 {
-                    input_name = _input_param->GetTreeName();
+                    input_name = _input_param->getTreeName();
                     auto pos = input_name.find(" buffer for ");
                     if(pos != std::string::npos)
                     {
                         input_name = input_name.substr(0, input_name.find_first_of(' '));
                     }
 
-                    if(_input_param->CheckFlags(mo::Buffer_e))
+                    if(_input_param->checkFlags(mo::Buffer_e))
                     {
                         mo::Buffer::IBuffer* buffer = dynamic_cast<mo::Buffer::IBuffer*>(_input_param);
                         if(buffer)
                         {
-                            info.type = mo::ParameterTypeFlagsToString(buffer->GetBufferType());
-                            auto size = buffer->GetFrameBufferCapacity();
+                            info.type = mo::paramTypeToString(buffer->getBufferType());
+                            auto size = buffer->getFrameBufferCapacity();
                             if(size)
                                 info.buffer_size = *size;
-                            auto time_padding = buffer->GetTimePaddingCapacity();
+                            auto time_padding = buffer->getTimePaddingCapacity();
                             if(time_padding)
                                 info.buffer_time = time_padding;
                         }
@@ -974,19 +974,19 @@ namespace cereal
                     info.name = input_name;
                 }
             }
-            ar(cereal::make_nvp(param->GetName(), info));
+            ar(cereal::make_nvp(param->getName(), info));
         }
     }
     inline void save(JSONOutputArchive& ar, rcc::weak_ptr<aq::Nodes::Node> const& node)
     {
-        std::string name = node->GetTreeName();
+        std::string name = node->getTreeName();
         ar(CEREAL_NVP(name));
     }
     inline void save(JSONOutputArchive& ar, rcc::weak_ptr<aq::Algorithm> const& obj)
     {
-        auto parameters = obj->GetParameters();
+        auto parameters = obj->getParams();
         std::string type = obj->GetTypeName();
-        const auto& components = obj->GetComponents();
+        const auto& components = obj->getComponents();
         ar(CEREAL_NVP(type));
         if(parameters.size())
             ar(CEREAL_NVP(parameters));
@@ -996,28 +996,28 @@ namespace cereal
 
     inline void save(JSONOutputArchive& ar, rcc::shared_ptr<aq::Nodes::Node> const& node)
     {
-        auto parameters = node->GetParameters();
+        auto parameters = node->getParams();
         std::string type = node->GetTypeName();
-        std::string name = node->GetTreeName();
-        const auto& components = node->GetComponents();
+        std::string name = node->getTreeName();
+        const auto& components = node->getComponents();
         ar(CEREAL_NVP(type));
         ar(CEREAL_NVP(name));
         int control_count = 0;
         for(auto param : parameters)
-            if(param->CheckFlags(mo::Control_e))
+            if(param->checkFlags(mo::Control_e))
                 ++control_count;
         if(control_count)
             ar(CEREAL_NVP(parameters));
         if(components.size())
             ar(CEREAL_NVP(components));
-        auto inputs = node->GetInputs();
+        auto inputs = node->getInputs();
         if(inputs.size())
             ar(CEREAL_NVP(inputs));
-        auto parent_nodes = node->GetParents();
+        auto parent_nodes = node->getParents();
         std::vector<std::string> parents;
         for(auto& node : parent_nodes)
         {
-            parents.emplace_back(node->GetTreeName());
+            parents.emplace_back(node->getTreeName());
         }
         if(parents.size())
             ar(CEREAL_NVP(parents));
@@ -1028,7 +1028,7 @@ namespace cereal
     {
         if(stream == nullptr)
         {
-            stream = aq::IDataStream::Create();
+            stream = aq::IDataStream::create();
         }
         std::vector<rcc::shared_ptr<aq::Nodes::Node>> nodes;
         ar(CEREAL_NVP(nodes));
@@ -1037,28 +1037,28 @@ namespace cereal
         {
             if(nodes[0] == nullptr)
                 continue;
-            nodes[i]->SetDataStream(stream.Get());
-            nodes[i]->PostSerializeInit();
-            auto& parents = ar_.parent_mappings[nodes[i]->GetTreeName()];
+            nodes[i]->setDataStream(stream.Get());
+            nodes[i]->postSerializeInit();
+            auto& parents = ar_.parent_mappings[nodes[i]->getTreeName()];
             for (auto& parent : parents)
             {
                 for(int j = 0; j < nodes.size(); ++j)
                 {
                     if(i != j)
                     {
-                        if(nodes[j]->GetTreeName() == parent)
+                        if(nodes[j]->getTreeName() == parent)
                         {
-                            nodes[j]->AddChild(nodes[i]);
+                            nodes[j]->addChild(nodes[i]);
                         }
                     }
                 }
             }
-            auto& input_mappings = ar_.input_mappings[nodes[i]->GetTreeName()];
-            auto input_params = nodes[i]->GetInputs();
+            auto& input_mappings = ar_.input_mappings[nodes[i]->getTreeName()];
+            auto input_params = nodes[i]->getInputs();
             for(auto& input : input_params)
             {
 
-                auto itr = input_mappings.find(input->GetName());
+                auto itr = input_mappings.find(input->getName());
                 if(itr != input_mappings.end())
                 {
                        auto pos = itr->second.name.find(":");
@@ -1067,53 +1067,53 @@ namespace cereal
                            std::string output_node_name = itr->second.name.substr(0, pos);
                            for(int j = 0; j < nodes.size(); ++j)
                            {
-                                if(nodes[j]->GetTreeName() == output_node_name)
+                                if(nodes[j]->getTreeName() == output_node_name)
                                 {
                                     auto space_pos = itr->second.name.find(' ');
-                                    auto output_param = nodes[j]->GetOutput(itr->second.name.substr(pos + 1, space_pos - (pos + 1)));
+                                    auto output_param = nodes[j]->getOutput(itr->second.name.substr(pos + 1, space_pos - (pos + 1)));
                                     if (!output_param)
                                     {
-                                        LOG(warning) << "Unable to find parameter " << itr->second.name.substr(pos + 1) << " in node " << nodes[j]->GetTreeName();
+                                        LOG(warning) << "Unable to find parameter " << itr->second.name.substr(pos + 1) << " in node " << nodes[j]->getTreeName();
                                         break;
                                     }
 
                                     std::string type = itr->second.type;
                                     if(type != "Direct")
                                     {
-                                          mo::ParameterTypeFlags buffer_type = mo::StringToParameterTypeFlags(type);
-                                          if (!nodes[i]->ConnectInput(nodes[j], output_param, input, mo::ParameterTypeFlags(buffer_type | mo::ForceBufferedConnection_e)))
+                                          mo::ParamType buffer_type = mo::stringToParamType(type);
+                                          if (!nodes[i]->connectInput(nodes[j], output_param, input, mo::ParamType(buffer_type | mo::ForceBufferedConnection_e)))
                                           {
-                                              LOG(warning) << "Unable to connect " << output_param->GetTreeName() << " (" << output_param->GetTypeInfo().name() << ") to "
-                                                  << input->GetTreeName() << " (" << input->GetTypeInfo().name() << ")";
+                                              LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
+                                                  << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
                                           }else
                                           {
                                               if(itr->second.buffer_size > 0)
                                               {
-                                                  mo::IParameter* p = input->GetInputParam();
+                                                  mo::IParam* p = input->getInputParam();
                                                   if(mo::Buffer::IBuffer* b = dynamic_cast<mo::Buffer::IBuffer*>(p))
                                                   {
-                                                      b->SetFrameBufferCapacity(itr->second.buffer_size);
+                                                      b->setFrameBufferCapacity(itr->second.buffer_size);
                                                       if(itr->second.buffer_time)
-                                                        b->SetTimePaddingCapacity(*itr->second.buffer_time);
+                                                        b->setTimePaddingCapacity(*itr->second.buffer_time);
                                                   }
                                               }
                                               if(itr->second.sync)
                                               {
-                                                  nodes[i]->SetSyncInput(input->GetName());
+                                                  nodes[i]->setSyncInput(input->getName());
                                               }
                                           }
                                     }else
                                     {
-                                        if (!nodes[i]->ConnectInput(nodes[j], output_param, input))
+                                        if (!nodes[i]->connectInput(nodes[j], output_param, input))
                                         {
-                                            LOG(warning) << "Unable to connect " << output_param->GetTreeName() << " (" << output_param->GetTypeInfo().name() << ") to "
-                                                << input->GetTreeName() << " (" << input->GetTypeInfo().name() << ")";
+                                            LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
+                                                << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
                                         }else
                                         {
                                            if(itr->second.sync)
                                            {
-                                               nodes[i]->SetSyncInput(input->GetName());
-                                               LOG(info) << "Node (" << nodes[i]->GetTreeName() << ") syncs to " << input->GetName();
+                                               nodes[i]->setSyncInput(input->getName());
+                                               LOG(info) << "Node (" << nodes[i]->getTreeName() << ") syncs to " << input->getName();
                                            }
                                         }
                                     }
@@ -1122,62 +1122,62 @@ namespace cereal
                        }else
                        {
                            if(itr->second.name.size())
-                               LOG(warning) << "Invalid input format for input [" << itr->second.name << "] of node: " << nodes[i]->GetTreeName();
+                               LOG(warning) << "Invalid input format for input [" << itr->second.name << "] of node: " << nodes[i]->getTreeName();
                        }
                 }else
                 {
-                    if(input->CheckFlags(mo::Optional_e))
+                    if(input->checkFlags(mo::Optional_e))
                     {
-                        LOG(debug) << "Unable to find input setting for " << input->GetName() << " for node " << nodes[i]->GetTreeName();
+                        LOG(debug) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
                     }else
                     {
-                        LOG(warning) << "Unable to find input setting for " << input->GetName() << " for node " << nodes[i]->GetTreeName();
+                        LOG(warning) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
                     }
                 }
             }
         }
         for(int i = 0; i < nodes.size(); ++i)
         {
-            if(nodes[i] != nullptr && nodes[i]->GetParents().size() == 0)
+            if(nodes[i] != nullptr && nodes[i]->getParents().size() == 0)
             {
-                stream->AddNode(nodes[i]);
+                stream->addNode(nodes[i]);
             }
         }
     }
 
-    inline void load(JSONInputArchive& ar, std::vector<mo::IParameter*>& parameters)
+    inline void load(JSONInputArchive& ar, std::vector<mo::IParam*>& parameters)
     {
         for (auto& param : parameters)
         {
-            if (param->CheckFlags(mo::Output_e) || param->CheckFlags(mo::Input_e))
+            if (param->checkFlags(mo::Output_e) || param->checkFlags(mo::Input_e))
                 continue;
-            auto func1 = mo::SerializationFunctionRegistry::Instance()->GetJsonDeSerializationFunction(param->GetTypeInfo());
+            auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
             if (func1)
             {
                 if (!func1(param, ar))
                 {
-                    LOG(debug) << "Unable to deserialize " << param->GetName() << " of type " << param->GetTypeInfo().name();
+                    LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
                 }
             }
             else
             {
-                LOG(debug) << "No deserialization function exists for  " << param->GetName() << " of type " << param->GetTypeInfo().name();
+                LOG(debug) << "No deserialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
             }
         }
     }
 
-    inline void load(JSONInputArchive& ar, std::vector<mo::InputParameter*> & parameters)
+    inline void load(JSONInputArchive& ar, std::vector<mo::InputParam*> & parameters)
     {
         for (auto& param : parameters)
         {
-            std::string name = param->GetName();
+            std::string name = param->getName();
             aq::InputInfo info;
             auto nvp = cereal::make_optional_nvp(name, info, info);
             ar(nvp);
             if(nvp.success == false)
                 return;
             aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
-            ar_.input_mappings[param->GetTreeRoot()][name] = info;
+            ar_.input_mappings[param->getTreeRoot()][name] = info;
         }
     }
    inline void load(JSONInputArchive& ar, rcc::weak_ptr<aq::Algorithm>& obj)
@@ -1186,7 +1186,7 @@ namespace cereal
        ar(CEREAL_NVP(type));
        if(!obj)
        {
-            IObject* ptr =  mo::MetaObjectFactory::Instance()->Create(type.c_str());
+            IObject* ptr =  mo::MetaObjectFactory::instance()->create(type.c_str());
             if(ptr)
             {
                 aq::Algorithm* alg_ptr = dynamic_cast<aq::Algorithm*>(ptr);
@@ -1201,7 +1201,7 @@ namespace cereal
             LOG(warning) << "Unable to create algorithm of type: " << type;
             return;
        }
-       auto parameters = obj->GetParameters();
+       auto parameters = obj->getParams();
        if(parameters.size())
           ar(CEREAL_NVP(parameters));
        std::vector<rcc::weak_ptr<aq::Algorithm>> components;
@@ -1215,7 +1215,7 @@ namespace cereal
 
        if(components.size())
             for(auto component : components)
-                obj->AddComponent(component);
+                obj->addComponent(component);
    }
     inline void load(JSONInputArchive& ar, rcc::shared_ptr<aq::Nodes::Node>& node)
     {
@@ -1223,7 +1223,7 @@ namespace cereal
         std::string name;
         ar(CEREAL_NVP(type));
         if(!node)
-            node = mo::MetaObjectFactory::Instance()->Create(type.c_str());
+            node = mo::MetaObjectFactory::instance()->create(type.c_str());
         ar(CEREAL_NVP(name));
         std::vector<rcc::weak_ptr<aq::Algorithm>> components;
         auto components_nvp = CEREAL_OPTIONAL_NVP(components, components);
@@ -1233,7 +1233,7 @@ namespace cereal
             for(auto component : components)
             {
                 if(component)
-                    node->AddComponent(component);
+                    node->addComponent(component);
             }
         }
 
@@ -1242,11 +1242,11 @@ namespace cereal
             LOG(warning) << "Unable to create node with type: " << type;
             return;
         }
-        node->SetTreeName(name);
-        auto parameters = node->GetParameters();
+        node->setTreeName(name);
+        auto parameters = node->getParams();
         for(auto itr = parameters.begin(); itr != parameters.end(); )
         {
-            if((*itr)->CheckFlags(mo::Input_e))
+            if((*itr)->checkFlags(mo::Input_e))
             {
                 itr = parameters.erase(itr);
             }else
@@ -1256,7 +1256,7 @@ namespace cereal
         }
         if(parameters.size())
             ar(CEREAL_OPTIONAL_NVP(parameters, parameters));
-        auto inputs = node->GetInputs();
+        auto inputs = node->getInputs();
         if(inputs.size())
             ar(CEREAL_OPTIONAL_NVP(inputs, inputs));
         aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);

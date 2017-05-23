@@ -1,4 +1,4 @@
-#include "Aquila/utilities/ogl_allocators.h"
+#include "Aquila/utilities/cuda/ogl_allocators.h"
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 #include "Aquila/rcc/SystemTable.hpp"
 #include <Aquila/rcc/external_includes/cv_core.hpp>
@@ -11,7 +11,7 @@
 
 using namespace aq;
 
-void ogl_allocator::NodeInit(bool firstInit)
+void ogl_allocator::nodeInit(bool firstInit)
 {
     if(!firstInit)
     {
@@ -55,10 +55,10 @@ bool ogl_allocator::allocate(cv::cuda::GpuMat* mat, int rows, int cols, size_t e
     auto scope = std::make_tuple(scope_name, rows, cols, mat->type(), id, false);
     auto itr = std::find_if(buffer_request_locations.begin(), buffer_request_locations.end(), [&scope](std::tuple<std::string, int, int, int, boost::thread::id, bool>& other)->bool
     {
-        return std::get<0>(other) == std::get<0>(scope) && 
-               std::get<1>(other) == std::get<1>(scope) && 
-               std::get<2>(other) == std::get<2>(scope) && 
-               std::get<3>(other) == std::get<3>(scope) && 
+        return std::get<0>(other) == std::get<0>(scope) &&
+               std::get<1>(other) == std::get<1>(scope) &&
+               std::get<2>(other) == std::get<2>(scope) &&
+               std::get<3>(other) == std::get<3>(scope) &&
                std::get<4>(other) == std::get<4>(scope);
     });
 
@@ -85,7 +85,7 @@ bool ogl_allocator::allocate(cv::cuda::GpuMat* mat, int rows, int cols, size_t e
                     ctx->create();
                     ctx->makeCurrent(new QWindow());
                 }*/
-                
+
                 std::lock_guard<std::mutex> pool_lock(aq::pool::ObjectPool<cv::ogl::Buffer>::mtx);
                 for(auto itr = _pool.begin(); itr != _pool.end(); ++itr)
                 {
@@ -195,7 +195,7 @@ aq::pool::Ptr<cv::ogl::Buffer> ogl_allocator::get_ogl_buffer(const cv::Mat& mat)
             }
         }
     }
-    
+
     // Need to create a new opengl buffer
     cv::ogl::Buffer* buf = new cv::ogl::Buffer;
     buf->copyFrom(mat, cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);

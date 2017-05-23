@@ -1,6 +1,6 @@
 #pragma once
 #include <Aquila/core/detail/Export.hpp>
-#include "MetaObject/params/IParameter.hpp"
+#include "MetaObject/params/IParam.hpp"
 #include <opencv2/core/types.hpp>
 #include <Eigen/Geometry>
 #include <string>
@@ -24,7 +24,7 @@ namespace aq
         enum {Dims = 2};
         Classification classification;
         cv::Rect2f boundingBox;
-        boost::optional<mo::time_t> timestamp;
+        boost::optional<mo::Time_t> timestamp;
         size_t framenumber = 0;
         int id = 0;
         template<class AR> void serialize(AR& ar);
@@ -44,7 +44,7 @@ namespace aq
          * \brief size is the centered size of the object
          */
         Eigen::Vector3d size;
-        boost::optional<mo::time_t> timestamp;
+        boost::optional<mo::Time_t> timestamp;
         size_t framenumber = 0;
         int id = 0;
         template<class AR> void serialize(AR& ar);

@@ -1,5 +1,6 @@
-#include <Aquila/Thrust_interop.hpp>
-#include "Aquila/utilities/GPUSortingPriv.hpp"
+#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/utilities/thrust/thrust_interop.hpp>
+#include "Aquila/utilities/cuda/GPUSortingPriv.hpp"
 namespace cv
 {
     namespace cuda

@@ -1,9 +1,9 @@
 #pragma once
-#include "Aquila/utilities/GPUSorting.hpp"
+#include "Aquila/utilities/cuda/GPUSorting.hpp"
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/core/cuda/utility.hpp>
 #include <cuda_runtime_api.h>
-#include <Aquila/Thrust_interop.hpp>
+#include <Aquila/utilities/thrust/thrust_interop.hpp>
 
 #include <thrust/transform.h>
 #include <thrust/sort.h>
@@ -34,14 +34,14 @@ namespace cv
             template<typename T> void sortAscending(cv::cuda::GpuMat& out, cudaStream_t stream)
             {
                 auto view = CreateView<T, 1>(out);
-                thrust::sort(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream), 
+                thrust::sort(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream),
                     view.begin(), view.end(), thrust::less<float>());
             }
 
             template<typename T> void sortDescending(cv::cuda::GpuMat& out, cudaStream_t stream)
             {
                 auto view = CreateView<T, 1>(out);
-                thrust::sort(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream), 
+                thrust::sort(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream),
                     view.begin(), view.end(), thrust::greater<float>());
             }
 
@@ -60,7 +60,7 @@ namespace cv
             {
                 auto view = CreateView<T, 1>(out);
                 auto range = view.rowRange(0, -1);
-                thrust::for_each(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream), 
+                thrust::for_each(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream),
                     range.first, range.second, UnarySortAscending<T>());
             }
 
@@ -68,7 +68,7 @@ namespace cv
             {
                 auto view = CreateView<T, 1>(out);
                 auto range = view.rowRange(0, -1);
-                thrust::for_each(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream), 
+                thrust::for_each(thrust::system::cuda::par(cv::cuda::device::ThrustAllocator::getAllocator()).on(stream),
                     range.first, range.second, UnarySortDescending<T>());
             }
         }

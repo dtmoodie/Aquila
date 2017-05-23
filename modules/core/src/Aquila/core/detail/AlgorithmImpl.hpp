@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/Algorithm.h"
+#include "Aquila/core/Algorithm.hpp"
 #include <queue>
 #include <boost/thread/recursive_mutex.hpp>
 namespace aq
@@ -7,11 +7,11 @@ namespace aq
     struct Algorithm::impl
     {
         size_t fn = -1;
-        boost::optional<mo::time_t> ts;
-        boost::optional<mo::time_t> last_ts;
-        mo::InputParameter* sync_input = nullptr;
+        boost::optional<mo::Time_t> ts;
+        boost::optional<mo::Time_t> last_ts;
+        mo::InputParam* sync_input = nullptr;
         Algorithm::SyncMethod _sync_method;
-        std::queue<mo::time_t> _ts_processing_queue;
+        std::queue<mo::Time_t> _ts_processing_queue;
         std::queue<size_t> _fn_processing_queue;
         boost::recursive_mutex _mtx;
     };

@@ -5,10 +5,10 @@
 #include "MetaObject/Detail/MetaObjectMacros.hpp"
 #include "MetaObject/params/ParameterMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
-#include "MetaObject/MetaObjectFactory.hpp"
+#include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/Detail/IMetaObjectImpl.hpp"
-#include "MetaObject/params/Buffers/StreamBuffer.hpp"
-#include "MetaObject/params/Buffers/BufferPolicy.hpp"
+#include "MetaObject/params/buffers/StreamBuffer.hpp"
+#include "MetaObject/params/buffers/BufferPolicy.hpp"
 #include "MetaObject/Detail/Allocator.hpp"
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaAlgorithm"
@@ -84,7 +84,7 @@ MO_REGISTER_OBJECT(multi_input);
 
 BOOST_AUTO_TEST_CASE(initialize)
 {
-    mo::MetaObjectFactory::Instance()->RegisterTranslationUnit();
+    mo::MetaObjectFactory::instance()->registerTranslationUnit();
 }
 
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(test_no_input)
     auto obj = rcc::shared_ptr<int_output>::Create();
     for(int i = 0; i < 100; ++i)
     {
-        obj->Process();
+        obj->process();
     }
     
     BOOST_REQUIRE_EQUAL(obj->value, 100);
@@ -103,15 +103,15 @@ BOOST_AUTO_TEST_CASE(test_counting_input)
 {
     auto output = rcc::shared_ptr<int_output>::Create();
     auto input = rcc::shared_ptr<int_input>::Create();
-    auto output_param = output->GetOutput<int>("value");
-    auto input_param = input->GetInput<int>("input");
+    auto output_param = output->getOutput<int>("value");
+    auto input_param = input->getInput<int>("input");
     BOOST_REQUIRE(output_param);
     BOOST_REQUIRE(input_param);
     BOOST_REQUIRE(input_param->SetInput(output_param));
     for(int i = 0; i < 100; ++i)
     {
-        output->Process();
-        input->Process();
+        output->process();
+        input->process();
         BOOST_REQUIRE_EQUAL(output->value, *input->input);
     }
 }
@@ -122,12 +122,12 @@ BOOST_AUTO_TEST_CASE(test_synced_input)
     output.UpdateData(10, 0);
     auto input = rcc::shared_ptr<int_input>::Create();
     input->input_param.SetInput(&output);
-    input->SetSyncInput("input");
+    input->setSyncInput("input");
 
     for(int i = 0; i < 100; ++i)
     {
         output.UpdateData(i+ 1, i);
-        BOOST_REQUIRE(input->Process());
+        BOOST_REQUIRE(input->process());
         BOOST_REQUIRE_EQUAL(input->value, output.GetData((long long)i));
     }
 }
@@ -141,17 +141,17 @@ BOOST_AUTO_TEST_CASE(test_threaded_input)
     boost::thread thread([&obj, &output]()->void
     {
         mo::Context _ctx;
-        obj->SetContext(&_ctx);
-        BOOST_REQUIRE(obj->ConnectInput("input", nullptr, &output));
+        obj->setContext(&_ctx);
+        BOOST_REQUIRE(obj->connectInput("input", nullptr, &output));
         int success_count = 0;
         while(success_count < 1000)
         {
-            if(obj->Process())
+            if(obj->process())
             {
                 ++success_count;
             }
         }
-        obj->SetContext(nullptr, true);
+        obj->setContext(nullptr, true);
         boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
     });
 
@@ -180,14 +180,14 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
     boost::thread thread([&obj, &fast_output, &slow_output, &thread1_done, addr1, addr2]()->void
     {
         mo::Context _ctx;
-        obj->SetContext(&_ctx);
-        BOOST_REQUIRE(obj->ConnectInput("input1", nullptr, &fast_output));
-        BOOST_REQUIRE(obj->ConnectInput("input2", nullptr, &slow_output));
+        obj->setContext(&_ctx);
+        BOOST_REQUIRE(obj->connectInput("input1", nullptr, &fast_output));
+        BOOST_REQUIRE(obj->connectInput("input2", nullptr, &slow_output));
 
         int success_count = 0;
         while(success_count < 999)
         {
-            if(obj->Process())
+            if(obj->process())
             {
                 ++success_count;
                 if(boost::this_thread::interruption_requested())
@@ -195,14 +195,14 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
             }
         }
         thread1_done = true;
-        obj->SetContext(nullptr, true);
+        obj->setContext(nullptr, true);
     });
     boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
     boost::thread slow_thread(
         [&slow_output, &thread2_done]()->void
     {
         mo::Context _ctx;
-        slow_output.SetContext(&_ctx);
+        slow_output.setContext(&_ctx);
         for(int i = 1; i < 1000; ++i)
         {
             slow_output.UpdateData(i, i, &_ctx);
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
                 break;
         }
         thread2_done = true;
-        slow_output.SetContext(nullptr);
+        slow_output.setContext(nullptr);
     });
     
 
@@ -234,5 +234,5 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
 
 BOOST_AUTO_TEST_CASE(cleanup)
 {
-    mo::Allocator::CleanupThreadSpecificAllocator();
+    mo::Allocator::cleanupThreadSpecificAllocator();
 }

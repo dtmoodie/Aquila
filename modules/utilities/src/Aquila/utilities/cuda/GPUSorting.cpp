@@ -1,4 +1,4 @@
-#include <Aquila/utilities/GPUSorting.hpp>
+#include <Aquila/utilities/cuda/GPUSorting.hpp>
 #include <opencv2/core/cuda_stream_accessor.hpp>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -46,7 +46,7 @@ void cv::cuda::sort(InputArray src, OutputArray dst, int flags, cv::cuda::Stream
         {
             descendSorts[dst.depth()](dst_, cv::cuda::StreamAccessor::getStream(stream));
         }
-    }else 
+    }else
     {
         if (flags & cv::SORT_EVERY_ROW)
         {

@@ -1,8 +1,8 @@
-#include "Aquila/utilities/CudaCallbacks.hpp"
+#include "Aquila/utilities/cuda/CudaCallbacks.hpp"
 
-#include <MetaObject/Logging/Log.hpp>
-#include <MetaObject/Thread/InterThread.hpp>
-#include <MetaObject/Thread/Cuda.hpp>
+#include <MetaObject/logging/Log.hpp>
+#include <MetaObject/thread/InterThread.hpp>
+#include <MetaObject/thread/Cuda.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/microsec_time_clock.hpp>
@@ -12,10 +12,10 @@ using namespace aq::cuda;
 
 void aq::cuda::ICallback::cb_func_async_event_loop(int status, void* user_data)
 {
-    mo::SetCudaThread();
+    mo::setCudaThread();
     std::shared_ptr<ICallbackEventLoop> cb(static_cast<ICallbackEventLoop*>(user_data));
 
-    mo::ThreadSpecificQueue::Push([cb]()
+    mo::ThreadSpecificQueue::push([cb]()
     {
         cb->run();
     }, cb->event_loop_thread_id);
@@ -24,10 +24,10 @@ void aq::cuda::ICallback::cb_func_async_event_loop(int status, void* user_data)
 void aq::cuda::ICallback::cb_func_async(int status, void* user_data)
 {
 
-    mo::SetCudaThread();
+    mo::setCudaThread();
     std::shared_ptr<ICallbackEventLoop> cb(static_cast<ICallbackEventLoop*>(user_data));
 
-    mo::ThreadSpecificQueue::Push([cb]()
+    mo::ThreadSpecificQueue::push([cb]()
     {
         cb->run();
     }, cb->event_loop_thread_id);
@@ -50,7 +50,7 @@ void aq::cuda::ICallback::cb_func_async(int status, void* user_data)
 }
 void aq::cuda::ICallback::cb_func(int status, void* user_data)
 {
-    mo::SetCudaThread();
+    mo::setCudaThread();
     auto cb = static_cast<ICallback*>(user_data);
     cb->run();
     delete cb;

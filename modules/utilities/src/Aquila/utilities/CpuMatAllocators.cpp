@@ -1,10 +1,10 @@
 #include "Aquila/utilities/CpuMatAllocators.h"
-#include "MetaObject/Detail/MemoryBlock.h"
+#include "MetaObject/core/detail/MemoryBlock.hpp"
 #include <cuda_runtime_api.h>
 
 #include <opencv2/core/cuda/common.hpp>
 #include <opencv2/core/core_c.h>
-#include <MetaObject/Logging/Log.hpp>
+#include <MetaObject/logging/Log.hpp>
 
 
 using namespace aq;

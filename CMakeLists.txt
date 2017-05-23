@@ -30,7 +30,7 @@ if(NOT BUILD_DEPENDENCIES)
 else()
     ADD_SUBDIRECTORY("dependencies/MetaObject")
     ADD_SUBDIRECTORY("dependencies/pplx")
-    set(MetaObject_LIBRARIES MetaObject RuntimeObjectSystem RuntimeCompiler)
+    #set(MetaObject_LIBRARIES MetaObject RuntimeObjectSystem RuntimeCompiler)
     set_target_properties(pplx
         PROPERTIES
             CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
@@ -90,7 +90,7 @@ link_directories(${_cuda_lib_dir})
 find_package(Qt5 QUIET COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
-find_package(Eigen3 REQUIRED)
+
 
 IF(WIN32)
     SET(CUDA_DEVRT ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cudadevrt.lib)
@@ -154,7 +154,7 @@ INCLUDE_DIRECTORIES(
 
 set_target_properties(pplx PROPERTIES FOLDER Dependencies)
 foreach(lib ${MetaObject_LIBRARIES})
-    #set_target_properties(${lib} PROPERTIES FOLDER Dependencies)
+    set_target_properties(${lib} PROPERTIES FOLDER Dependencies)
 endforeach()
 
 IF(NOT WIN32)
@@ -188,19 +188,32 @@ set(Aquila_LIBRARIES "${MetaObject_LIBRARIES}" CACHE STRING "")
 # =====================
 # modules
 set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
+set(aquila_modules "" CACHE INTERNAL "" FORCE)
 
 function(aquila_declare_module)
-    set(oneValueArgs NAME CXX_STANDARD)
-    set(multiValueArgs SRC DEPENDS FLAGS)
+    set(oneValueArgs NAME CXX_STANDARD INCLUDE)
+    set(multiValueArgs SRC DEPENDS FLAGS PRIVATE_DEP_HEADER)
     cmake_parse_arguments(aquila_declare_module "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
     if(${aquila_declare_module_SRC})
-        cuda_add_library(aquila_${aquila_declare_module_NAME} ${${aquila_declare_module_SRC}})
+        cuda_add_library(aquila_${aquila_declare_module_NAME} SHARED ${${aquila_declare_module_SRC}})
     else()
         file(GLOB_RECURSE src "src/*.cpp" "src/*.h" "src/*.cu" "src/*.hpp")
-        cuda_add_library(aquila_${aquila_declare_module_NAME} ${src})
+        cuda_add_library(aquila_${aquila_declare_module_NAME} SHARED ${src})
     endif()
+    set(aquila_modules "${aquila_modules};aquila_${aquila_declare_module_NAME}" CACHE INTERNAL "" FORCE)
     if(aquila_declare_module_DEPENDS)
         rcc_link_lib(aquila_${aquila_declare_module_NAME} ${aquila_declare_module_DEPENDS})
+    endif()
+    if(aquila_declare_module_PRIVATE_DEP_HEADER)
+        foreach(dep ${aquila_declare_module_PRIVATE_DEP_HEADER})
+            get_target_property(inc ${dep} INTERFACE_INCLUDE_DIRECTORIES)
+            if(inc)
+                target_include_directories(aquila_${aquila_declare_module_NAME}
+                    PRIVATE ${inc})
+            else()
+                message("No INTERFACE_INCLUDE_DIRECTORIES for ${dep}")
+            endif()
+        endforeach(dep)
     endif()
     target_include_directories(aquila_${aquila_declare_module_NAME}
         PUBLIC
@@ -251,6 +264,10 @@ SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
 foreach( module ${modules})
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
 endforeach()
+foreach(module ${aquila_modules})
+    print_target_properties(${module})
+endforeach(module)
+
 # ---------------------------------------------------
 # unit tests
 if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
@@ -266,7 +283,7 @@ if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
         else()
             add_executable(${test} ${test_srcs})
         endif()
-        TARGET_LINK_LIBRARIES(${test} MetaParameters ${MetaObject_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+        TARGET_LINK_LIBRARIES(${test} MetaParameters ${MetaObject_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${aquila_modules})
         print_target_properties(${test})
         set_target_properties(${test} PROPERTIES FOLDER Tests/Aquila)
         add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)

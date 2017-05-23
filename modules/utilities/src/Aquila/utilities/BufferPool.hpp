@@ -1,10 +1,9 @@
 #pragma once
 
 // Meant to be a replacement for the shitty buffer implementation that currently exists
-
+#include <Aquila/core/detail/Export.hpp>
+#include "Aquila/utilities/cuda/GpuMatAllocators.h"
 #include <opencv2/core/cuda.hpp>
-#include "Aquila/Detail/Export.hpp"
-#include "GpuMatAllocators.h"
 #include <boost/lockfree/queue.hpp>
 
 namespace aq
@@ -27,6 +26,6 @@ namespace aq
         cv::cuda::GpuMat* data;
         cv::cuda::Stream stream;
         static boost::lockfree::queue<cv::cuda::GpuMat*> deallocateQueue;
-        
+
     };
 }

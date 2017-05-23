@@ -1,4 +1,4 @@
-#include "Aquila/utilities/SyncedMemoryAllocators.hpp"
+#include "Aquila/utilities/cuda/SyncedMemoryAllocators.hpp"
 #include <boost/thread/tss.hpp>
 
 using namespace aq;

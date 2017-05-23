@@ -1,6 +1,6 @@
-#include "Aquila/utilities/GpuMatAllocators.h"
-#include "MetaObject/Detail/MemoryBlock.h"
-#include "Aquila/logger.hpp"
+#include "Aquila/utilities/cuda/GpuMatAllocators.h"
+#include "MetaObject/core/detail/MemoryBlock.hpp"
+#include "Aquila/core/Logger.hpp"
 
 #include <boost/log/trivial.hpp>
 #include <boost/thread.hpp>
@@ -17,7 +17,7 @@ namespace aq
         SetScope("Default");
     }
 
-    void PitchedAllocator::SizeNeeded(int rows, int cols, int elemSize, size_t& sizeNeeded, size_t& stride)
+    void PitchedAllocator::sizeNeeded(int rows, int cols, int elemSize, size_t& sizeNeeded, size_t& stride)
     {
         if (rows == 1 || cols == 1)
         {
@@ -40,7 +40,7 @@ namespace aq
         if (itr == scopedAllocationSize.end())
         {
             scopedAllocationSize[name] = 0;
-            currentScopeName[id] = name; 
+            currentScopeName[id] = name;
         }
         currentScopeName[id] = name;
     }
@@ -57,7 +57,7 @@ namespace aq
         if (itr != scopeOwnership.end())
         {
             scopedAllocationSize[itr->second] -= size;
-        }        
+        }
     }
 
     // =====================================================================
@@ -79,12 +79,12 @@ namespace aq
     bool BlockMemoryAllocator::allocate(cv::cuda::GpuMat* mat, int rows, int cols, size_t elemSize)
     {
 
-        size_t sizeNeeded, stride;
-        SizeNeeded(rows, cols, elemSize, sizeNeeded, stride);
+        size_t size_needed, stride;
+        sizeNeeded(rows, cols, elemSize, size_needed, stride);
         unsigned char* ptr;
         for (auto itr : blocks)
         {
-            ptr = itr->allocate(sizeNeeded, elemSize);
+            ptr = itr->allocate(size_needed, elemSize);
             if (ptr)
             {
                 mat->data = ptr;
@@ -97,9 +97,9 @@ namespace aq
             }
         }
         // If we get to this point, then no memory was found, need to allocate new memory
-        blocks.push_back(std::shared_ptr<GpuMemoryBlock>(new GpuMemoryBlock(std::max(initialBlockSize_ / 2, sizeNeeded))));
-        LOG(trace) << "[GPU] Expanding memory pool by " <<  std::max(initialBlockSize_ / 2, sizeNeeded) / (1024 * 1024) << " MB";
-        if (unsigned char* ptr = (*blocks.rbegin())->allocate(sizeNeeded, elemSize))
+        blocks.push_back(std::shared_ptr<GpuMemoryBlock>(new GpuMemoryBlock(std::max(initialBlockSize_ / 2, size_needed))));
+        LOG(trace) << "[GPU] Expanding memory pool by " <<  std::max(initialBlockSize_ / 2, size_needed) / (1024 * 1024) << " MB";
+        if (unsigned char* ptr = (*blocks.rbegin())->allocate(size_needed, elemSize))
         {
             mat->data = ptr;
             mat->step = stride;
@@ -111,27 +111,25 @@ namespace aq
         }
         return false;
     }
-    unsigned char* BlockMemoryAllocator::allocate(size_t sizeNeeded)
-    {
-
+    unsigned char* BlockMemoryAllocator::allocate(size_t size_needed){
         unsigned char* ptr;
         for (auto itr : blocks)
         {
-            ptr = itr->allocate(sizeNeeded, 1);
+            ptr = itr->allocate(size_needed, 1);
             if (ptr)
             {
-                memoryUsage += sizeNeeded;
-                Increment(ptr, sizeNeeded);
+                memoryUsage += size_needed;
+                Increment(ptr, size_needed);
                 return ptr;
             }
         }
         // If we get to this point, then no memory was found, need to allocate new memory
-        blocks.push_back(std::shared_ptr<GpuMemoryBlock>(new GpuMemoryBlock(std::max(initialBlockSize_ / 2, sizeNeeded))));
-        LOG(trace) << "[GPU] Expanding memory pool by " << std::max(initialBlockSize_ / 2, sizeNeeded) / (1024 * 1024) << " MB";
-        if (unsigned char* ptr = (*blocks.rbegin())->allocate(sizeNeeded, 1))
+        blocks.push_back(std::shared_ptr<GpuMemoryBlock>(new GpuMemoryBlock(std::max(initialBlockSize_ / 2, size_needed))));
+        LOG(trace) << "[GPU] Expanding memory pool by " << std::max(initialBlockSize_ / 2, size_needed) / (1024 * 1024) << " MB";
+        if (unsigned char* ptr = (*blocks.rbegin())->allocate(size_needed, 1))
         {
-            memoryUsage += sizeNeeded;
-            Increment(ptr, sizeNeeded);
+            memoryUsage += size_needed;
+            Increment(ptr, size_needed);
             return ptr;
         }
         return nullptr;
@@ -185,16 +183,16 @@ namespace aq
     {
         deallocateDelay = 5000;
     }
-    
+
     bool DelayedDeallocator::allocate(cv::cuda::GpuMat* mat, int rows, int cols, size_t elemSize)
     {
         // First check for anything of the correct size
 
-        size_t sizeNeeded, stride;
-        SizeNeeded(rows, cols, elemSize, sizeNeeded, stride);
+        size_t size_needed, stride;
+        sizeNeeded(rows, cols, elemSize, size_needed, stride);
         for (auto itr = deallocateList.begin(); itr != deallocateList.end(); ++itr)
         {
-            if(std::get<2>(*itr) == sizeNeeded)
+            if(std::get<2>(*itr) == size_needed)
             {
                 mat->data = std::get<0>(*itr);
                 mat->step = stride;
@@ -224,25 +222,25 @@ namespace aq
         mat->refcount = (int*)cv::fastMalloc(sizeof(int));
         return true;
     }
-    unsigned char* DelayedDeallocator::allocate(size_t sizeNeeded)
+    unsigned char* DelayedDeallocator::allocate(size_t size_needed)
     {
         unsigned char* ptr = nullptr;
         for (auto itr = deallocateList.begin(); itr != deallocateList.end(); ++itr)
         {
-            if (std::get<2>(*itr) == sizeNeeded)
+            if (std::get<2>(*itr) == size_needed)
             {
                 ptr = std::get<0>(*itr);
                 deallocateList.erase(itr);
-                memoryUsage += sizeNeeded;
-                Increment(ptr, sizeNeeded);
-                current_allocations[ptr] = sizeNeeded;
+                memoryUsage += size_needed;
+                Increment(ptr, size_needed);
+                current_allocations[ptr] = size_needed;
                 return ptr;
             }
         }
-        CV_CUDEV_SAFE_CALL(cudaMalloc(&ptr, sizeNeeded));
-        memoryUsage += sizeNeeded;
-        Increment(ptr, sizeNeeded);
-        current_allocations[ptr] = sizeNeeded;
+        CV_CUDEV_SAFE_CALL(cudaMalloc(&ptr, size_needed));
+        memoryUsage += size_needed;
+        Increment(ptr, size_needed);
+        current_allocations[ptr] = size_needed;
         return ptr;
     }
     void DelayedDeallocator::free(unsigned char* ptr)
@@ -257,8 +255,8 @@ namespace aq
         {
             current_allocations.erase(itr);
             deallocateList.push_back(std::make_tuple(ptr, clock(), current_allocations[ptr]));
-        }      
-        
+        }
+
         clear();
     }
     void DelayedDeallocator::free(cv::cuda::GpuMat* mat)
@@ -306,12 +304,11 @@ namespace aq
     {
         if (rows*cols*elemSize < _threshold_level)
         {
-
-            size_t sizeNeeded, stride;
-            SizeNeeded(rows, cols, elemSize, sizeNeeded, stride);
+            size_t size_needed, stride;
+            sizeNeeded(rows, cols, elemSize, size_needed, stride);
             return BlockMemoryAllocator::allocate(mat, rows, cols, elemSize);
         }
-        
+
         return DelayedDeallocator::allocate(mat, rows, cols, elemSize);
     }
     unsigned char* CombinedAllocator::allocate(size_t num_bytes)
@@ -327,7 +324,7 @@ namespace aq
 
         if(!BlockMemoryAllocator::free_impl(mat))
             DelayedDeallocator::free(mat);
-        
+
     }
 }
 

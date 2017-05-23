@@ -1,6 +1,6 @@
 #pragma once
 #include <opencv2/core.hpp>
-#include <Aquila/Detail/Export.hpp>
+#include <Aquila/core/detail/Export.hpp>
 namespace cv
 {
 namespace cuda

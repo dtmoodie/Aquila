@@ -1,24 +1,24 @@
-#include "Aquila/IDataStream.hpp"
-#include "Aquila/DataStream.hpp"
+#include "Aquila/core/IDataStream.hpp"
+#include "Aquila/core/DataStream.hpp"
 #include "Aquila/rcc/SystemTable.hpp"
-#include "Aquila/utilities/sorting.hpp"
-#include "Aquila/Logging.h"
+#include "Aquila/core/Logging.hpp"
+#include "Aquila/core/ParameterBuffer.hpp"
 
-#include "Aquila/ParameterBuffer.h"
-#include "Aquila/IVariableSink.h"
-#include "Aquila/rendering/RenderingEngine.h"
-#include "Aquila/Nodes/IFrameGrabber.hpp"
-#include "Aquila/Nodes/Node.h"
-#include "Aquila/Nodes/NodeFactory.h"
+#include "Aquila/framegrabbers/IFrameGrabber.hpp"
+#include "Aquila/nodes/Node.hpp"
+#include "Aquila/nodes/NodeFactory.hpp"
+#include <Aquila/gui/UiCallbackHandlers.h>
+#include <Aquila/utilities/cuda/sorting.hpp>
+#include "MetaObject/signals/TSlot.hpp"
+#include "MetaObject/object/RelayManager.hpp"
+#include "MetaObject/params/VariableManager.hpp"
+#include "MetaObject/thread/InterThread.hpp"
+#include "MetaObject/object/MetaObjectFactory.hpp"
+#include <MetaObject/logging/Profiling.hpp>
+#include "MetaObject/serialization/memory.hpp"
+#include "MetaObject/thread/ThreadPool.hpp"
 
-#include "MetaObject/Signals/TypedSlot.hpp"
-#include "MetaObject/Signals/RelayManager.hpp"
-#include "MetaObject/params/VariableManager.h"
-#include "MetaObject/Thread/InterThread.hpp"
-#include "MetaObject/MetaObjectFactory.hpp"
-#include <MetaObject/Logging/Profiling.hpp>
-#include "MetaObject/IO/memory.hpp"
-#include "MetaObject/Thread/ThreadPool.hpp"
+#include <RuntimeObjectSystem/shared_ptr.hpp>
 
 #include <opencv2/core.hpp>
 #include <boost/chrono.hpp>
@@ -30,9 +30,12 @@
 
 using namespace aq;
 using namespace aq::Nodes;
-#include "MetaObject/params/detail/MetaParametersDetail.hpp"
-INSTANTIATE_META_PARAMETER(rcc::shared_ptr<IDataStream>);
-INSTANTIATE_META_PARAMETER(rcc::weak_ptr<IDataStream>);
+#include "MetaObject/params/detail/MetaParamImpl.hpp"
+#include "MetaObject/params/traits/MemoryTraits.hpp"
+
+INSTANTIATE_META_PARAM(rcc::shared_ptr<IDataStream>);
+INSTANTIATE_META_PARAM(rcc::weak_ptr<IDataStream>);
+
 #define CATCH_MACRO                                                         \
     catch (boost::thread_resource_error& err)                               \
 {                                                                           \
@@ -76,27 +79,27 @@ catch (...)                                                                 \
 // **********************************************************************
 DataStream::DataStream()
 {
-    _sig_manager = GetRelayManager();
+    _sig_manager = getRelayManager();
     auto table = PerModuleInterface::GetInstance()->GetSystemTable();
     if (table)
     {
-        mo::RelayManager* global_signal_manager = table->GetSingleton<mo::RelayManager>();
+        mo::RelayManager* global_signal_manager = table->getSingleton<mo::RelayManager>();
         if (!global_signal_manager)
         {
             global_signal_manager  = mo::RelayManager::Instance();
             table->SetSingleton<mo::RelayManager>(global_signal_manager);
         }
-        global_signal_manager->ConnectSlots(this);
-        global_signal_manager->ConnectSignals(this);
+        global_signal_manager->connectSlots(this);
+        global_signal_manager->connectSignals(this);
     }
-    GetRelayManager()->ConnectSlots(this);
-    GetRelayManager()->ConnectSignals(this);
+    getRelayManager()->connectSlots(this);
+    getRelayManager()->connectSignals(this);
     stream_id = 0;
     _thread_id = 0;
     _processing_thread = mo::ThreadPool::Instance()->RequestThread();
-    _processing_thread.SetInnerLoop(GetSlot_process<int(void)>());
-    _processing_thread.SetThreadName("DataStreamThread");
-    this->_ctx = this->_processing_thread.GetContext();
+    _processing_thread.setInnerLoop(getSlot_process<int(void)>());
+    _processing_thread.setThreadName("DataStreamThread");
+    this->_ctx = this->_processing_thread.getContext();
 }
 
 void DataStream::node_updated(Nodes::Node* node)
@@ -108,17 +111,17 @@ void DataStream::update()
 {
     dirty_flag = true;
 }
-void DataStream::input_changed(Nodes::Node* node, mo::InputParameter* param)
+void DataStream::input_changed(Nodes::Node* node, mo::InputParam* param)
 {
     dirty_flag = true;
 }
-void DataStream::parameter_updated(mo::IMetaObject* obj, mo::IParameter* param)
+void DataStream::parameter_updated(mo::IMetaObject* obj, mo::IParam* param)
 {
-    if(param->CheckFlags(mo::Control_e) || param->CheckFlags(mo::Source_e))
+    if(param->checkFlags(mo::Control_e) || param->checkFlags(mo::Source_e))
         dirty_flag = true;
 }
 
-void DataStream::parameter_added(mo::IMetaObject* obj, mo::IParameter* param)
+void DataStream::parameter_added(mo::IMetaObject* obj, mo::IParam* param)
 {
     dirty_flag = true;
 }
@@ -128,18 +131,15 @@ void DataStream::run_continuously(bool value)
 
 }
 
-void DataStream::InitCustom(bool firstInit)
-{
-    if(firstInit)
-    {
-        this->SetupSignals(GetRelayManager());
-        //_processing_thread.Start();
+void DataStream::initCustom(bool firstInit){
+    if(firstInit){
+        this->setupSignals(getRelayManager());
     }
 }
 
 DataStream::~DataStream()
 {
-    StopThread();
+    stopThread();
     top_level_nodes.clear();
     relay_manager.reset();
     _sig_manager = nullptr;
@@ -150,12 +150,12 @@ DataStream::~DataStream()
     }
 }
 
-mo::Context* DataStream::GetContext() const
+mo::Context* DataStream::getContext() const
 {
-    return IDataStream::GetContext();
+    return IDataStream::getContext();
 }
 
-std::vector<rcc::weak_ptr<aq::Nodes::Node>> DataStream::GetTopLevelNodes()
+std::vector<rcc::weak_ptr<aq::Nodes::Node>> DataStream::getTopLevelNodes()
 {
     std::vector<rcc::weak_ptr<aq::Nodes::Node>> output;
     for(auto& itr : top_level_nodes)
@@ -165,38 +165,38 @@ std::vector<rcc::weak_ptr<aq::Nodes::Node>> DataStream::GetTopLevelNodes()
     return output;
 }
 
-mo::RelayManager* DataStream::GetRelayManager()
+mo::RelayManager* DataStream::getRelayManager()
 {
     if (relay_manager == nullptr)
         relay_manager.reset(new mo::RelayManager());
     return relay_manager.get();
 }
 
-IParameterBuffer* DataStream::GetParameterBuffer()
+IParameterBuffer* DataStream::getParameterBuffer()
 {
     if (_parameter_buffer == nullptr)
         _parameter_buffer.reset(new ParameterBuffer(10));
     return _parameter_buffer.get();
 
 }
-rcc::weak_ptr<WindowCallbackHandler> DataStream::GetWindowCallbackManager()
+rcc::weak_ptr<WindowCallbackHandler> DataStream::getWindowCallbackManager()
 {
     if(!_window_callback_handler)
     {
-        _window_callback_handler = WindowCallbackHandler::Create();
-        _window_callback_handler->SetupSignals(this->GetRelayManager());
+        _window_callback_handler = WindowCallbackHandler::create();
+        _window_callback_handler->setupSignals(this->getRelayManager());
     }
     return _window_callback_handler;
 }
 
-std::shared_ptr<mo::IVariableManager> DataStream::GetVariableManager()
+std::shared_ptr<mo::IVariableManager> DataStream::getVariableManager()
 {
     if(variable_manager == nullptr)
         variable_manager.reset(new mo::VariableManager());
     return variable_manager;
 }
 
-bool DataStream::LoadDocument(const std::string& document, const std::string& prefered_loader)
+bool DataStream::loadDocument(const std::string& document, const std::string& prefered_loader)
 {
     std::string file_to_load = document;
     if(file_to_load.size() == 0)
@@ -207,7 +207,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
     }
     std::lock_guard<std::mutex> lock(nodes_mtx);
 
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
     std::vector<IObjectConstructor*> valid_frame_grabbers;
     std::vector<int> frame_grabber_priorities;
     if(constructors.empty())
@@ -223,7 +223,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
             auto fg_info = dynamic_cast<Nodes::FrameGrabberInfo*>(info);
             if(fg_info)
             {
-                int priority = fg_info->CanLoadPath(file_to_load);
+                int priority = fg_info->canLoadPath(file_to_load);
                 if(priority != 0)
                 {
                     valid_frame_grabbers.push_back(constructor);
@@ -240,7 +240,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
             std::stringstream ss;
             for(auto& constructor : constructors)
             {
-                ss << constructor->GetName() << ", ";
+                ss << constructor->getName() << ", ";
             }
             return ss.str();
         };
@@ -256,7 +256,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
     {
         for(int i = 0; i < valid_frame_grabbers.size(); ++i)
         {
-            if(prefered_loader == valid_frame_grabbers[i]->GetName())
+            if(prefered_loader == valid_frame_grabbers[i]->getName())
             {
                 idx.insert(idx.begin(), i);
                 break;
@@ -269,7 +269,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
         auto fg = rcc::shared_ptr<IFrameGrabber>(valid_frame_grabbers[idx[i]]->Construct());
         auto fg_info = dynamic_cast<FrameGrabberInfo*>(valid_frame_grabbers[idx[i]]->GetObjectInfo());
         fg->Init(true);
-        fg->SetDataStream(this);
+        fg->setDataStream(this);
         struct thread_load_object
         {
             std::promise<bool> promise;
@@ -277,7 +277,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
             std::string document;
             void load()
             {
-                promise.set_value(fg->Load(document));
+                promise.set_value(fg->load(document));
             }
         };
         auto obj = new thread_load_object();
@@ -295,7 +295,7 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
 
             delete obj;
         });
-        if(connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->LoadTimeout())))
+        if(connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->loadTimeout())))
         {
             if(future.get())
             {
@@ -305,18 +305,18 @@ bool DataStream::LoadDocument(const std::string& document, const std::string& pr
                 return true; // successful load
             }else // unsuccessful load
             {
-                LOG(warning) << "Unable to load " << file_to_load << " with " << fg_info->GetObjectName();
+                LOG(warning) << "Unable to load " << file_to_load << " with " << fg_info->getObjectName();
             }
         }
         else // timeout
         {
-            LOG(warning) << "Timeout while loading " << file_to_load << " with " << fg_info->GetObjectName() << " after waiting " << fg_info->LoadTimeout() << " ms";
+            LOG(warning) << "Timeout while loading " << file_to_load << " with " << fg_info->getObjectName() << " after waiting " << fg_info->loadTimeout() << " ms";
             connection_threads.push_back(connection_thread);
         }
     }
     return false;
 }
-bool IDataStream::CanLoadDocument(const std::string& document)
+bool IDataStream::canLoadDocument(const std::string& document)
 {
     std::string doc_to_load = document;
     if(doc_to_load.size() == 0)
@@ -326,7 +326,7 @@ bool IDataStream::CanLoadDocument(const std::string& document)
         doc_to_load = doc_to_load.substr(1, doc_to_load.size() - 2);
     }
 
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
     std::vector<IObjectConstructor*> valid_frame_grabbers;
     std::vector<int> frame_grabber_priorities;
     if (constructors.empty())
@@ -342,10 +342,10 @@ bool IDataStream::CanLoadDocument(const std::string& document)
             auto fg_info = dynamic_cast<FrameGrabberInfo*>(info);
             if (fg_info)
             {
-                int priority = fg_info->CanLoadPath(doc_to_load);
+                int priority = fg_info->canLoadPath(doc_to_load);
                 if (priority != 0)
                 {
-                    LOG(debug) << fg_info->GetObjectName() << " can load document";
+                    LOG(debug) << fg_info->getObjectName() << " can load document";
                     valid_frame_grabbers.push_back(constructor);
                     frame_grabber_priorities.push_back(priority);
                 }
@@ -355,11 +355,11 @@ bool IDataStream::CanLoadDocument(const std::string& document)
     return !valid_frame_grabbers.empty();
 }
 
-std::vector<rcc::shared_ptr<Nodes::Node>> DataStream::GetNodes() const
+std::vector<rcc::shared_ptr<Nodes::Node>> DataStream::getNodes() const
 {
     return top_level_nodes;
 }
-std::vector<rcc::shared_ptr<Nodes::Node>> DataStream::GetAllNodes() const
+std::vector<rcc::shared_ptr<Nodes::Node>> DataStream::getAllNodes() const
 {
     std::vector<rcc::shared_ptr<Nodes::Node>> output;
     for(auto& child : child_nodes)
@@ -368,19 +368,19 @@ std::vector<rcc::shared_ptr<Nodes::Node>> DataStream::GetAllNodes() const
     }
     return output;
 }
-std::vector<rcc::shared_ptr<Nodes::Node>> DataStream::AddNode(const std::string& nodeName)
+std::vector<rcc::shared_ptr<Nodes::Node>> DataStream::addNode(const std::string& nodeName)
 {
-    return aq::NodeFactory::Instance()->AddNode(nodeName, this);
+    return aq::NodeFactory::Instance()->addNode(nodeName, this);
 }
-void DataStream::AddNode(rcc::shared_ptr<Nodes::Node> node)
+void DataStream::addNode(rcc::shared_ptr<Nodes::Node> node)
 {
-    node->SetDataStream(this);
-    if(!_processing_thread.IsOnThread() && _processing_thread.GetIsRunning())
+    node->setDataStream(this);
+    if(!_processing_thread.isOnThread() && _processing_thread.getIsRunning())
     {
         std::promise<void> promise;
         std::future<void> future = promise.get_future();
 
-        _processing_thread.PushEventQueue(std::bind([&promise, node, this]()
+        _processing_thread.pushEventQueue(std::bind([&promise, node, this]()
         {
             rcc::shared_ptr<Node> node_ = node;
             if (std::find(top_level_nodes.begin(), top_level_nodes.end(), node) != top_level_nodes.end())
@@ -394,9 +394,9 @@ void DataStream::AddNode(rcc::shared_ptr<Nodes::Node> node)
                     if (top_level_nodes[i] && top_level_nodes[i]->GetTypeName() == node_name)
                         ++count;
                 }
-                node_->SetUniqueId(count);
+                node_->setUniqueId(count);
             }
-            node_->SetParameterRoot(node_->GetTreeName());
+            node_->setParamRoot(node_->getTreeName());
             top_level_nodes.push_back(node);
             dirty_flag = true;
             promise.set_value();
@@ -415,13 +415,13 @@ void DataStream::AddNode(rcc::shared_ptr<Nodes::Node> node)
             if (top_level_nodes[i] && top_level_nodes[i]->GetTypeName() == node_name)
                 ++count;
         }
-        node->SetUniqueId(count);
+        node->setUniqueId(count);
     }
-    node->SetParameterRoot(node->GetTreeName());
+    node->setParamRoot(node->getTreeName());
     top_level_nodes.push_back(node);
     dirty_flag = true;
 }
-void DataStream::AddChildNode(rcc::shared_ptr<Nodes::Node> node)
+void DataStream::addChildNode(rcc::shared_ptr<Nodes::Node> node)
 {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     if(std::find(child_nodes.begin(), child_nodes.end(), node.Get()) != child_nodes.end())
@@ -432,36 +432,36 @@ void DataStream::AddChildNode(rcc::shared_ptr<Nodes::Node> node)
         if(child && child != node && child->GetTypeName() == node->GetTypeName())
             ++type_count;
     }
-    node->SetUniqueId(type_count);
+    node->setUniqueId(type_count);
     child_nodes.emplace_back(node);
 }
-void DataStream::RemoveChildNode(rcc::shared_ptr<Nodes::Node> node)
+void DataStream::removeChildNode(rcc::shared_ptr<Nodes::Node> node)
 {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     std::remove(child_nodes.begin(), child_nodes.end(), node);
 }
-void DataStream::AddNodeNoInit(rcc::shared_ptr<Nodes::Node> node)
+void DataStream::addNodeNoInit(rcc::shared_ptr<Nodes::Node> node)
 {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     top_level_nodes.push_back(node);
     dirty_flag = true;
 }
-void DataStream::AddNodes(std::vector<rcc::shared_ptr<Nodes::Node>> nodes)
+void DataStream::addNodes(std::vector<rcc::shared_ptr<Nodes::Node>> nodes)
 {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     for (auto& node : nodes)
     {
-        node->SetDataStream(this);
+        node->setDataStream(this);
     }
-    if(!_processing_thread.IsOnThread())
+    if(!_processing_thread.isOnThread())
     {
         std::promise<void> promise;
         std::future<void> future = promise.get_future();
-        _processing_thread.PushEventQueue(std::bind([&nodes, this, &promise]()
+        _processing_thread.pushEventQueue(std::bind([&nodes, this, &promise]()
         {
             for (auto& node : nodes)
             {
-                AddNode(node);
+                addNode(node);
             }
             dirty_flag = true;
             promise.set_value();
@@ -474,34 +474,34 @@ void DataStream::AddNodes(std::vector<rcc::shared_ptr<Nodes::Node>> nodes)
     }
     dirty_flag = true;
 }
-void DataStream::RemoveNode(Nodes::Node* node)
+
+void DataStream::removeNode(Nodes::Node* node)
 {
     {
         std::lock_guard<std::mutex> lock(nodes_mtx);
         std::remove(top_level_nodes.begin(), top_level_nodes.end(), node);
     }
 
-    RemoveChildNode(node);
+    removeChildNode(node);
 }
 
-void DataStream::RemoveNode(rcc::shared_ptr<Nodes::Node> node)
+void DataStream::removeNode(rcc::shared_ptr<Nodes::Node> node)
 {
     {
         std::lock_guard<std::mutex> lock(nodes_mtx);
         std::remove(top_level_nodes.begin(), top_level_nodes.end(), node);
     }
-    RemoveChildNode(node);
+    removeChildNode(node);
 }
 
-Nodes::Node* DataStream::GetNode(const std::string& nodeName)
+Nodes::Node* DataStream::getNode(const std::string& nodeName)
 {
-
     std::lock_guard<std::mutex> lock(nodes_mtx);
     for(auto& node : top_level_nodes)
     {
         if(node) // during serialization top_level_nodes is resized thus allowing for nullptr nodes until they are serialized
         {
-            auto found_node = node->GetNodeInScope(nodeName);
+            auto found_node = node->getNodeInScope(nodeName);
             if(found_node)
             {
                 return found_node;
@@ -512,82 +512,76 @@ Nodes::Node* DataStream::GetNode(const std::string& nodeName)
     return nullptr;
 }
 
-void DataStream::AddVariableSink(IVariableSink* sink)
+void DataStream::addVariableSink(IVariableSink* sink)
 {
     variable_sinks.push_back(sink);
 }
 
-void DataStream::RemoveVariableSink(IVariableSink* sink)
+void DataStream::removeVariableSink(IVariableSink* sink)
 {
     std::remove_if(variable_sinks.begin(), variable_sinks.end(), [sink](IVariableSink* other)->bool{return other == sink;});
 }
-void DataStream::StartThread()
+void DataStream::startThread()
 {
-//    StopThread();
+//    stopThread();
     sig_StartThreads();
-    _processing_thread.Start();
+    _processing_thread.start();
 }
 
-void DataStream::StopThread()
+void DataStream::stopThread()
 {
-    _processing_thread.Stop();
+    _processing_thread.stop();
     sig_StopThreads();
 }
 
 
-void DataStream::PauseThread()
+void DataStream::pauseThread()
 {
     sig_StopThreads();
-    _processing_thread.Stop();
+    _processing_thread.stop();
 }
 
-void DataStream::ResumeThread()
+void DataStream::resumeThread()
 {
-    _processing_thread.Start();
+    _processing_thread.start();
     sig_StartThreads();
 }
 
-int DataStream::process()
-{
-    if (dirty_flag/* || run_continuously == true*/)
-    {
+int DataStream::process(){
+    if (dirty_flag/* || run_continuously == true*/){
         dirty_flag = false;
-        mo::scoped_profile profile_nodes("Processing nodes", &_rmt_hash, &_rmt_cuda_hash, &GetContext()->GetStream());
-        for (auto& node : top_level_nodes)
-        {
-            node->Process();
+        mo::scoped_profile profile_nodes("Processing nodes", nullptr, nullptr, getContext()->getCudaStream());
+        for (auto& node : top_level_nodes){
+            node->process();
         }
-        if (dirty_flag)
-        {
+        if (dirty_flag){
             return 1;
         }
-    }else
-    {
+    }else{
         return 10;
     }
     return 10;
 }
 
-IDataStream::Ptr IDataStream::Create(const std::string& document, const std::string& preferred_frame_grabber)
+IDataStream::Ptr IDataStream::create(const std::string& document, const std::string& preferred_frame_grabber)
 {
-    //auto stream = mo::MetaObjectFactory::Instance()->Create<IDataStream>("DataStream");
-    auto stream = DataStream::Create();
+    auto stream = DataStream::create();
     if(document.size() || preferred_frame_grabber.size())
     {
-        auto fg = IFrameGrabber::Create(document, preferred_frame_grabber);
+        auto fg = IFrameGrabber::create(document, preferred_frame_grabber);
         if(fg)
         {
-            stream->AddNode(fg);
+            stream->addNode(fg);
             return stream;
         }
     }
     return stream;
 }
-std::unique_ptr<ISingleton>& DataStream::GetSingleton(mo::TypeInfo type)
+std::unique_ptr<ISingleton>& DataStream::getSingleton(mo::TypeInfo type)
 {
     return _singletons[type];
 }
-std::unique_ptr<ISingleton>& DataStream::GetIObjectSingleton(mo::TypeInfo type)
+std::unique_ptr<ISingleton>& DataStream::getIObjectSingleton(mo::TypeInfo type)
 {
     return _iobject_singletons[type];
 }

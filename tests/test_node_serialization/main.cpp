@@ -1,11 +1,11 @@
 #define BOOST_TEST_MAIN
-#include <Aquila/IDataStream.hpp>
+#include <Aquila/core/IDataStream.hpp>
 #include <Aquila/IO/JsonArchive.hpp>
-#include <Aquila/DataStream.hpp>
+#include <Aquila/core/DataStream.hpp>
 
-#include <MetaObject/Thread/ThreadPool.hpp>
-#include <MetaObject/MetaObject.hpp>
-#include <MetaObject/params/IO/SerializationFunctionRegistry.hpp>
+#include <MetaObject/thread/ThreadPool.hpp>
+#include <MetaObject/object/MetaObject.hpp>
+#include <MetaObject/params/IO/SerializationFactory.hpp>
 
 #ifdef _MSC_VER
 #include <boost/test/unit_test.hpp>
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(initialize)
 #endif
                 {
                     std::string file = itr->path().string();
-                    mo::MetaObjectFactory::Instance()->LoadPlugin(file);
+                    mo::MetaObjectFactory::instance()->LoadPlugin(file);
                 }
             }
         }
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(synced_mem_to_json)
     mo::TypedParameterPtr<aq::SyncedMemory> param;
     param.SetName("Matrix");
     param.UpdatePtr(&synced_mem);
-    auto func = mo::SerializationFunctionRegistry::Instance()->GetJsonSerializationFunction(param.GetTypeInfo());
+    auto func = mo::SerializationFactory::instance()->getJsonSerializationFunction(param.getTypeInfo());
     BOOST_REQUIRE(func);
     std::ofstream ofs("synced_memory_json.json");
     BOOST_REQUIRE(ofs.is_open());
@@ -77,10 +77,10 @@ BOOST_AUTO_TEST_CASE(datastream)
     std::ofstream ofs("datastream.json");
     BOOST_REQUIRE(ofs.is_open());
     aq::JSONOutputArchive ar(ofs);
-    ds->AddNode("QtImageDisplay");
-    auto disp = ds->GetNode("QtImageDisplay0");
-    auto fg = ds->GetNode("TestFrameGrabber0");
-    disp->ConnectInput(fg, "current_frame", "image");
+    ds->addNode("QtImageDisplay");
+    auto disp = ds->getNode("QtImageDisplay0");
+    auto fg = ds->getNode("TestFrameGrabber0");
+    disp->connectInput(fg, "current_frame", "image");
     ar(ds);
 }
 

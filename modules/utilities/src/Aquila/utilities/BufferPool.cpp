@@ -2,7 +2,7 @@
 #include <time.h>
 #include <iostream>
 
-#include "MetaObject/Thread/InterThread.hpp"
+#include "MetaObject/thread/InterThread.hpp"
 
 using namespace aq;
 
@@ -29,7 +29,7 @@ boost::lockfree::queue<cv::cuda::GpuMat*> scoped_buffer::deallocateQueue(500);
 
 scoped_buffer::GarbageCollector::GarbageCollector()
 {
-    
+
 }
 void scoped_buffer::GarbageCollector::Run()
 {

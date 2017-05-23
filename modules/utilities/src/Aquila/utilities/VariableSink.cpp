@@ -1,7 +1,7 @@
-#include "Aquila/VariableSink.h"
-#include <MetaObject/Parameters/IVariableManager.h>
+#include "VariableSink.h"
+#include <MetaObject/params/IVariableManager.hpp>
 #include <sstream>
-//#include <MetaObject/Parameters/IO/TextSerializer.hpp>
+//#include <MetaObject/params/IO/TextSerializer.hpp>
 using namespace aq;
 
 CSV_VariableSink::CSV_VariableSink(const std::string& output_file)
@@ -13,7 +13,7 @@ CSV_VariableSink::~CSV_VariableSink()
 {
     _ofs.close();
 }
-        
+
 void CSV_VariableSink::SerializeVariables(unsigned long long frame_number, mo::IVariableManager* manager)
 {
     if(_serialization_layout.size())
@@ -23,7 +23,7 @@ void CSV_VariableSink::SerializeVariables(unsigned long long frame_number, mo::I
         /*for(auto& var_name : _serialization_layout)
         {
             auto param = manager->GetOutputParameter(var_name);
-            if(param && Parameters::Persistence::Text::InterpreterRegistry::Exists(param->GetTypeInfo()))
+            if(param && Parameters::Persistence::Text::InterpreterRegistry::Exists(param->getTypeInfo()))
             {
                 ss << ", ";
                 Parameters::Persistence::Text::SerializeValue(&ss, param);
@@ -41,11 +41,11 @@ std::string CSV_VariableSink::SerializeExample(unsigned long long frame_number, 
         example << frame_number;
         for(auto& var_name : _serialization_layout)
         {
-            auto param = manager->GetOutputParameter(var_name);
+            auto param = manager->getOutputParam(var_name);
             if(param)
             {
                 // #TODO move to new implementation
-                /*if(Parameters::Persistence::Text::InterpreterRegistry::Exists(param->GetTypeInfo()))
+                /*if(Parameters::Persistence::Text::InterpreterRegistry::Exists(param->getTypeInfo()))
                 {
                     example << ", ";
                     Parameters::Persistence::Text::SerializeValue(&example, param);
@@ -58,13 +58,13 @@ std::string CSV_VariableSink::SerializeExample(unsigned long long frame_number, 
 
 std::vector<std::string> CSV_VariableSink::ListSerializableVariables(mo::IVariableManager* manager)
 {
-    auto params = manager->GetAllParmaeters();
+    auto params = manager->getAllParms();
     std::vector<std::string> output;
     /*for(auto param : params)
     {
         // #TODO new implementation
-        if(Parameters::Persistence::Text::InterpreterRegistry::Exists(param->GetTypeInfo());
-            output.push_back(param->GetTreeName());
+        if(Parameters::Persistence::Text::InterpreterRegistry::Exists(param->getTypeInfo());
+            output.push_back(param->getTreeName());
     }*/
     return output;
 }

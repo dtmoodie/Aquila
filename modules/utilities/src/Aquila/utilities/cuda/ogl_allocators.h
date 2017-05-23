@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/Detail/Export.hpp"
+#include "Aquila/core/detail/Export.hpp"
 
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/core/opengl.hpp>
@@ -45,7 +45,7 @@ namespace aq
         bool is_default_allocator;
     public:
 
-        virtual void NodeInit(bool firstInit);
+        virtual void nodeInit(bool firstInit);
         virtual void Serialize(ISimpleSerializer* pSerializer);
 
         

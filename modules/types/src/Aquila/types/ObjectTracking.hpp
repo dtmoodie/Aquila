@@ -110,7 +110,7 @@ struct AQUILA_EXPORTS TrackedObject2d
         }
     }
 
-    virtual float Track(const aq::SyncedMemory& img, mo::time_t ts, cv::cuda::Stream& stream)
+    virtual float Track(const aq::SyncedMemory& img, mo::Time_t ts, cv::cuda::Stream& stream)
     {
         // No tracking is done in base class
         return 0.0f;
@@ -131,7 +131,7 @@ struct AQUILA_EXPORTS TrackedObject2d
     /*!
      * \brief initial_detection_timestamp is the timestamp of first detection
      */
-    boost::optional<mo::time_t> initial_detection_timestamp;
+    boost::optional<mo::Time_t> initial_detection_timestamp;
     /*!
      * \brief detection_history past N detections
      */
@@ -195,7 +195,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
             kf.measurementMatrix.at<float>(i + T::Dims, i + 2*T::Dims) = 1;
         }
 
-        // Process Noise Covariance Matrix Q 2d
+        // process Noise Covariance Matrix Q 2d
         // [ Ex 0  0    0 0    0 ]
         // [ 0  Ey 0    0 0    0 ]
         // [ 0  0  Ev_x 0 0    0 ]
@@ -255,7 +255,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
      * \brief When no detection is present in this frame, drift the track
      * \param timestamp timestamp of current frame
      */
-    void Track(const aq::SyncedMemory& img, mo::time_t ts)
+    void Track(const aq::SyncedMemory& img, mo::Time_t ts)
     {
         // Can't drift a track to the past
         if(ts < current_state_timestamp)
@@ -324,7 +324,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
     }
 
     // TODO probably need to do some timestamp adjustment here for non constant frame rate
-    cv::Mat Predict(mo::time_t ts)
+    cv::Mat Predict(mo::Time_t ts)
     {
         CV_Assert(initialized);
         if(ts == current_state_timestamp)
@@ -418,8 +418,8 @@ protected:
 
     cv::KalmanFilter kf;
     bool initialized;
-    mo::time_t current_state_timestamp;
-    mo::time_t predicted_timestamp;
+    mo::Time_t current_state_timestamp;
+    mo::Time_t predicted_timestamp;
     cv::Mat predicted_state;
 };
 

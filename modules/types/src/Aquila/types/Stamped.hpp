@@ -1,5 +1,5 @@
 #pragma once
-#include "MetaObject/params/IParameter.hpp"
+
 namespace aq{
 
 template<typename T> struct FN : public T
@@ -27,7 +27,7 @@ template<typename T> struct TS: public T
         timestamp = 0.0 * mo::second;
         frame_number = 0;
     }
-    template<class...U> TS(mo::time_t ts, size_t fn, U...args) : T(args...)
+    template<class...U> TS(mo::Time_t ts, size_t fn, U...args) : T(args...)
     {
         timestamp = ts;
         this->frame_number = fn;
@@ -39,7 +39,7 @@ template<typename T> struct TS: public T
         ar(*static_cast<T*>(this));
     }
 
-    mo::time_t timestamp;
+    mo::Time_t timestamp;
     size_t frame_number;
 };
 

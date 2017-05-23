@@ -1,10 +1,10 @@
-#include "Aquila/DataStream.hpp"
-#include "Aquila/Nodes/Node.h"
-#include "Aquila/IO/JsonArchive.hpp"
-#include <Aquila/IO/memory.hpp>
-#include "MetaObject/IO/Serializer.hpp"
-#include "MetaObject/IO/Policy.hpp"
-#include "MetaObject/params/IO/SerializationFunctionRegistry.hpp"
+#include "Aquila/core/DataStream.hpp"
+#include "Aquila/nodes/Node.hpp"
+#include "Aquila/serialization/cereal/JsonArchive.hpp"
+#include <Aquila/serialization/cereal/memory.hpp>
+#include "MetaObject/serialization/Serializer.hpp"
+#include "MetaObject/serialization/Policy.hpp"
+#include "MetaObject/serialization/SerializationFactory.hpp"
 
 #include <cereal/types/map.hpp>
 #include <cereal/types/vector.hpp>
@@ -19,10 +19,10 @@ using namespace aq;
 template<typename AR>
 void DataStream::load(AR& ar)
 {
-    this->_load_parameters<AR>(ar, mo::_counter_<_DS_N_ - 1>());
+    this->_load_params<AR>(ar, mo::_counter_<_DS_N_ - 1>());
     for(auto & node : top_level_nodes)
     {
-        node->SetDataStream(this);
+        node->setDataStream(this);
     }
     this->_load_parent<AR>(ar);
 }
@@ -35,17 +35,17 @@ void DataStream::save(AR& ar) const
     ar(cereal::make_nvp("TypeId", id.m_ConstructorId));
     ar(cereal::make_nvp("InstanceId", id.m_PerTypeId));
     ar(cereal::make_nvp("TypeName", type));
-    this->_save_parameters<AR>(ar, mo::_counter_<_DS_N_ - 1>());
+    this->_save_params<AR>(ar, mo::_counter_<_DS_N_ - 1>());
     this->_save_parent<AR>(ar);
 }
 
-std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file)
+std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file)
 {
     VariableMap vm, sm;
-    return Load(config_file, vm, sm);
+    return load(config_file, vm, sm);
 }
 
-std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, VariableMap& vm, VariableMap& sm)
+std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm)
 {
     /*rcc::shared_ptr<DataStream> stream_ = rcc::shared_ptr<DataStream>::Create();
     if(!stream_)
@@ -53,7 +53,7 @@ std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, 
         LOG(error) << "Unable to create data stream";
         return Ptr();
     }
-    stream_->StopThread();
+    stream_->stopThread();
     stream_->top_level_nodes.clear();*/
     std::vector<rcc::shared_ptr<IDataStream>> streams; //(stream_);
     if (!boost::filesystem::exists(config_file))
@@ -134,22 +134,22 @@ std::vector<IDataStream::Ptr> IDataStream::Load(const std::string& config_file, 
     return streams;
 }
 
-void IDataStream::Save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream)
+void IDataStream::save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream)
 {
     std::vector<rcc::shared_ptr<IDataStream>> streams;
     streams.push_back(stream);
-    Save(config_file, streams);
+    save(config_file, streams);
 }
-void IDataStream::Save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams)
+void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams)
 {
-    Save(config_file, streams, VariableMap(), VariableMap());
+    save(config_file, streams, VariableMap(), VariableMap());
 }
 
-void IDataStream::Save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams,
+void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams,
                        const VariableMap& vm, const VariableMap& sm)
 {
     for(auto& stream : streams)
-        stream->StopThread();
+        stream->stopThread();
     if (boost::filesystem::exists(config_file))
     {
         LOG(info) << "Stream config file exists, overwiting: " << config_file;
@@ -195,24 +195,24 @@ void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<Nodes::Node>& node
     ar(CEREAL_NVP(name));
     ar(CEREAL_NVP(type));
     ar.startNode();
-    node = mo::MetaObjectFactory::Instance()->Create(type.c_str());
+    node = mo::MetaObjectFactory::instance()->create(type.c_str());
     if(!node)
     {
         LOG(warning) << "Unable to create node with type: " << type;
         return;
     }
-    node->SetTreeName(name);
-    auto parameters = node->GetParameters();
+    node->setTreeName(name);
+    auto parameters = node->getParams();
     for(auto param : parameters)
     {
-        if(param->CheckFlags(mo::Output_e) || param->CheckFlags(mo::Input_e))
+        if(param->checkFlags(mo::Output_e) || param->checkFlags(mo::Input_e))
             continue;
-        auto func1 = mo::SerializationFunctionRegistry::Instance()->GetJsonDeSerializationFunction(param->GetTypeInfo());
+        auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
         if (func1)
         {
             if(!func1(param, ar))
             {
-                LOG(info) << "Unable to deserialize " << param->GetName();
+                LOG(info) << "Unable to deserialize " << param->getName();
             }
         }
     }
@@ -229,10 +229,7 @@ void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<Nodes::Node>& node
     ar.finishNode();
 }
 
-bool DataStream::LoadStream(const std::string& filename)
-{
-
-
+bool DataStream::loadStream(const std::string& filename){
     return false;
 }
 
@@ -241,7 +238,7 @@ struct NodeSerializationInfo
 {
     std::string name;
     std::string type;
-    std::vector<mo::IParameter*> parameters;
+    std::vector<mo::IParam*> parameters;
     std::vector<std::pair<std::string, std::string>> inputs;
     void save(cereal::JSONOutputArchive& ar) const
     {
@@ -251,12 +248,12 @@ struct NodeSerializationInfo
         ar.startNode();
         for(int i = 0; i < parameters.size(); ++i)
         {
-            auto func1 = mo::SerializationFunctionRegistry::Instance()->GetJsonSerializationFunction(parameters[i]->GetTypeInfo());
+            auto func1 = mo::SerializationFactory::instance()->getJsonSerializationFunction(parameters[i]->getTypeInfo());
             if (func1)
             {
                 if (!func1(parameters[i], ar))
                 {
-                    LOG(debug) << "Unable to serialize " << parameters[i]->GetTreeName();
+                    LOG(debug) << "Unable to serialize " << parameters[i]->getTreeName();
                 }
             }
         }
@@ -272,51 +269,51 @@ void PopulateSerializationInfo(Nodes::Node* node, std::vector<NodeSerializationI
     bool found = false;
     for(int i = 0; i < info.size(); ++i)
     {
-        if(node->GetTreeName() == info[i].name)
+        if(node->getTreeName() == info[i].name)
             found = true;
     }
     if(!found)
     {
         NodeSerializationInfo node_info;
-        node_info.name = node->GetTreeName();
+        node_info.name = node->getTreeName();
         node_info.type = node->GetTypeName();
-        auto all_params = node->GetParameters();
+        auto all_params = node->getParams();
         for(auto& param : all_params)
         {
-            if(param->GetName() == "_dataStream" ||
-                    param->GetName() == "_children" ||
-                    param->GetName() == "_parents" ||
-                    param->GetName() == "_unique_id")
+            if(param->getName() == "_dataStream" ||
+                    param->getName() == "_children" ||
+                    param->getName() == "_parents" ||
+                    param->getName() == "_unique_id")
                 continue;
-            if(param->CheckFlags(mo::Control_e))
+            if(param->checkFlags(mo::Control_e))
             {
                 node_info.parameters.push_back(param);
             }
-            if(param->CheckFlags(mo::Input_e))
+            if(param->checkFlags(mo::Input_e))
             {
                 std::string input_name;
-                mo::InputParameter* input_param = dynamic_cast<mo::InputParameter*>(param);
+                mo::InputParam* input_param = dynamic_cast<mo::InputParam*>(param);
                 if(input_param)
                 {
-                    mo::IParameter* _input_param = input_param->GetInputParam();
+                    mo::IParam* _input_param = input_param->getInputParam();
                     if(_input_param)
                     {
-                        input_name = _input_param->GetTreeName();
+                        input_name = _input_param->getTreeName();
                     }
                 }
-                node_info.inputs.emplace_back(param->GetName(), input_name);
+                node_info.inputs.emplace_back(param->getName(), input_name);
             }
         }
         info.push_back(node_info);
     }
-    auto children = node->GetChildren();
+    auto children = node->getChildren();
     for(auto child : children)
     {
         PopulateSerializationInfo(child.Get(), info);
     }
 }
 
-bool DataStream::SaveStream(const std::string& filename)
+bool DataStream::saveStream(const std::string& filename)
 {
     if (boost::filesystem::exists(filename))
     {

@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/Detail/Export.hpp"
+#include "Aquila/core/detail/Export.hpp"
 #include <cuda.h>
 #include <cuda_runtime.h>
 
