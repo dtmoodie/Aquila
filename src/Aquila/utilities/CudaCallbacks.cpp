@@ -52,7 +52,11 @@ void aq::cuda::ICallback::cb_func(int status, void* user_data)
 {
     mo::SetCudaThread();
     auto cb = static_cast<ICallback*>(user_data);
-    cb->run();
+    try{
+        cb->run();
+    }catch(...){
+
+    }
     delete cb;
 }
 ICallback::~ICallback()
