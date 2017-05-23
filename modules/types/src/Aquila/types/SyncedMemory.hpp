@@ -1,11 +1,19 @@
 #pragma once
 #include "Aquila/core/detail/Export.hpp"
 #include "Aquila/rcc/external_includes/cv_core.hpp"
+#include <MetaObject/params/traits/TypeTraits.hpp>
 #include <opencv2/core/cuda.hpp>
+#include <boost/optional.hpp>
 #include <memory>
-namespace mo
-{
+
+namespace aq{ class SyncedMemory; }
+namespace mo{
     class Context;
+    class SyncedMemoryTrait;
+
+    template<> struct TraitSelector<aq::SyncedMemory, 2>{
+        typedef SyncedMemoryTrait TraitType;
+    };
 }
 
 namespace aq
@@ -85,4 +93,66 @@ namespace aq
     };
 }
 
+namespace mo{
+class SyncedMemoryTrait{
+public:
+    enum {
+        REQUIRES_GPU_SYNC = 1,
+        HAS_TRIVIAL_MOVE = 0
+    };
+    typedef aq::SyncedMemory Raw_t;
+    typedef aq::SyncedMemory Storage_t; // Used in output wrapping parameters
+    // Used by output parameters where the member is really just a reference to what
+    // is owned as a Storage_t by the parameter
+    typedef aq::SyncedMemory& TypeRef_t;
+    typedef const aq::SyncedMemory& ConstTypeRef_t;
 
+    // Pointer to typed stored by storage
+    typedef aq::SyncedMemory* StoragePtr_t;
+    typedef const aq::SyncedMemory* ConstStoragePtr_t;
+
+    // Used when passing data around within a thread
+    typedef const aq::SyncedMemory& ConstStorageRef_t;
+
+    // Used for input parameters
+    // Wrapping param storage
+    typedef boost::optional<const aq::SyncedMemory> InputStorage_t;
+    // User space input pointer, used in TInputParamPtr
+    typedef const aq::SyncedMemory* Input_t;
+
+    static inline Storage_t copy(const aq::SyncedMemory& value){
+        return value;
+    }
+    static inline Storage_t clone(const aq::SyncedMemory& value){
+        // TODO use built in stream or current threads stream
+        return value.clone(cv::cuda::Stream());
+    }
+
+    template<class...Args>
+    static aq::SyncedMemory& reset(Storage_t& input_storage, Args&&...args) {
+        input_storage = aq::SyncedMemory(std::forward<Args>(args)...);
+        return input_storage;
+    }
+
+    template<class...Args>
+    static void reset(InputStorage_t& input_storage, Args&&...args) {
+        input_storage = aq::SyncedMemory(std::forward<Args>(args)...);
+    }
+    template<class...Args>
+    static void nullify(InputStorage_t& input_storage) {
+        input_storage.reset();
+    }
+    static inline aq::SyncedMemory& get(Storage_t& value){
+        return value;
+    }
+    static inline const aq::SyncedMemory& get(const Storage_t& value){
+        return value;
+    }
+    static inline aq::SyncedMemory* ptr(aq::SyncedMemory& value){
+        return &value;
+    }
+    static inline const aq::SyncedMemory* ptr(const aq::SyncedMemory& value){
+        return &value;
+    }
+};
+}

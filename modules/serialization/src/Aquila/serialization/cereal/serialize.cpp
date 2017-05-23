@@ -6,16 +6,13 @@
 #include "MetaObject/serialization/Serializer.hpp"
 #include "MetaObject/serialization/SerializationFactory.hpp"
 #include "MetaObject/serialization/Policy.hpp"
-//#include "MetaObject/params/IO/CerealPolicy.hpp"
+#include "MetaObject/params/traits/MemoryTraits.hpp"
 
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
 
 using namespace aq;
 using namespace aq::Nodes;
-
-
-
 
 bool aq::Serialize(cereal::BinaryOutputArchive& ar, const Node* obj)
 {
@@ -98,7 +95,7 @@ bool aq::DeSerialize(cereal::XMLInputArchive& ar, Node* obj)
 
 bool aq::Serialize(cereal::JSONOutputArchive& ar, const Node* obj)
 {
-    if (auto func = mo::SerializerFactory::GetSerializationFunctionJSON(obj->GetTypeName()))
+    /*if (auto func = mo::SerializerFactory::GetSerializationFunctionJSON(obj->GetTypeName()))
     {
         func(obj, ar);
         return true;
@@ -151,12 +148,12 @@ bool aq::Serialize(cereal::JSONOutputArchive& ar, const Node* obj)
             }
         }
         return true;
-    }
+    }*/
 }
 
 bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
 {
-    if (obj == nullptr)
+    /*if (obj == nullptr)
         return false;
     if (auto func = mo::SerializerFactory::GetDeSerializationFunctionJSON(obj->GetTypeName()))
     {
@@ -190,7 +187,7 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
                 auto typed = dynamic_cast<mo::ITParam<rcc::weak_ptr<IDataStream>>*>(param);
                 if (typed)
                 {
-                    mo::ParamTraits<rcc::weak_ptr<IDataStream>>::Storage_t data;
+                    mo::ParamTraits<rcc::weak_ptr<IDataStream>>::InputStorage_t data;
                     if(typed->getData(data)){
                         obj->setDataStream(data.Get());
                     }
@@ -242,5 +239,5 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
             }
         }
         return true;
-    }
+    }*/
 }

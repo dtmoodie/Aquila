@@ -1,14 +1,16 @@
 #include "SyncedMemoryMetaParams.hpp"
 #include "Aquila/serialization/cereal/SyncedMemory.hpp"
 #include "MetaObject/params/MetaParam.hpp"
+#ifdef HAVE_QT
 #include "MetaObject/params/UI/Qt/OpenCV.hpp"
 #include "MetaObject/params/UI/Qt/Containers.hpp"
 #include "MetaObject/params/UI/Qt/TParameterProxy.hpp"
+#endif
 #include "MetaObject/params/buffers/CircularBuffer.hpp"
 #include "MetaObject/params/buffers/StreamBuffer.hpp"
 #include "MetaObject/params/buffers/Map.hpp"
 #include "MetaObject/params/buffers/NNStreamBuffer.hpp"
-#include "MetaObject/params/IO/CerealPolicy.hpp"
+#include "MetaObject/serialization/CerealPolicy.hpp"
 
 #ifdef MO_EXPORTS
 #undef MO_EXPORTS
@@ -20,7 +22,7 @@
 #else
 #  define MO_EXPORTS
 #endif
-#include "MetaObject/params/detail/MetaParametersDetail.hpp"
+#include "MetaObject/params/detail/MetaParamImpl.hpp"
 INSTANTIATE_META_PARAM(aq::SyncedMemory);
 INSTANTIATE_META_PARAM(std::vector<aq::SyncedMemory>);
 INSTANTIATE_META_PARAM(cv::Mat);
@@ -28,16 +30,31 @@ INSTANTIATE_META_PARAM(std::vector<cv::Mat>);
 
 using namespace mo;
 using namespace aq;
-TypedInputParameterPtr<SyncedMemory>::TypedInputParameterPtr(const std::string& name,
+TInputParamPtr<SyncedMemory>::TInputParamPtr(const std::string& name,
                                                              const SyncedMemory** userVar_, Context* ctx) :
         userVar(userVar_),
-        ITypedInputParameter<SyncedMemory>(name, ctx),
-        IParameter(name, Input_e, {}, ctx),
+        ITInputParam<SyncedMemory>(name, ctx),
+        IParam(name, Input_e, {}, ctx),
         ITParam<SyncedMemory>(name, Input_e, {}, ctx)
 {
 }
 
-bool TypedInputParameterPtr<SyncedMemory>::SetInput(std::shared_ptr<IParameter> param)
+bool TInputParamPtr<SyncedMemory>::setInput(std::shared_ptr<IParam> param)
+{
+    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    if(ITInputParam<SyncedMemory>::setInput(param)){
+        if(userVar){
+            if(this->input)
+                *userVar = this->input->GetDataPtr();
+            if(this->shared_input)
+                *userVar = this->shared_input->GetDataPtr();
+        }
+        return true;
+    }
+    return false;
+}
+
+bool TInputParamPtr<SyncedMemory>::setInput(IParam* param)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
     if(ITypedInputParameter<SyncedMemory>::SetInput(param))
@@ -54,30 +71,13 @@ bool TypedInputParameterPtr<SyncedMemory>::SetInput(std::shared_ptr<IParameter> 
     return false;
 }
 
-bool TypedInputParameterPtr<SyncedMemory>::SetInput(IParameter* param)
-{
-    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
-    if(ITypedInputParameter<SyncedMemory>::SetInput(param))
-    {
-        if(userVar)
-        {
-            if(this->input)
-                *userVar = this->input->GetDataPtr();
-            if(this->shared_input)
-                *userVar = this->shared_input->GetDataPtr();
-        }
-        return true;
-    }
-    return false;
-}
-
-void TypedInputParameterPtr<SyncedMemory>::SetUserDataPtr(const SyncedMemory** user_var_)
+void TInputParamPtr<SyncedMemory>::setUserDataPtr(const SyncedMemory** user_var_)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
     userVar = user_var_;
 }
 
-void TypedInputParameterPtr<SyncedMemory>::onInputUpdate(Context* ctx, IParameter* param)
+void TInputParamPtr<SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IParam* param, Context* ctx, OptionalTime_t ts, size_t fn, ICoordinateSystem* cs, UpdateFlags fg)
 {
     (void)param;
     if(this->input)
@@ -104,7 +104,7 @@ void TypedInputParameterPtr<SyncedMemory>::onInputUpdate(Context* ctx, IParamete
 }
 
 
-bool TypedInputParameterPtr<SyncedMemory>::getInput(boost::optional<mo::Time_t> ts, size_t* fn_)
+bool TInputParamPtr<SyncedMemory>::getInput(boost::optional<mo::Time_t> ts, size_t* fn_)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
     if(userVar)
@@ -149,7 +149,7 @@ bool TypedInputParameterPtr<SyncedMemory>::getInput(boost::optional<mo::Time_t> 
     return false;
 }
 
-bool TypedInputParameterPtr<SyncedMemory>::getInput(size_t fn, boost::optional<mo::Time_t>* ts_)
+bool TInputParamPtr<SyncedMemory>::getInput(size_t fn, boost::optional<mo::Time_t>* ts_)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
     boost::optional<mo::Time_t> ts;
@@ -183,7 +183,7 @@ bool TypedInputParameterPtr<SyncedMemory>::getInput(size_t fn, boost::optional<m
     return false;
 }
 
-void TypedInputParameterPtr<SyncedMemory>::onInputDelete(IParameter const* param)
+void TInputParamPtr<SyncedMemory>::onInputDelete(IParameter const* param)
 {
     boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
     if(param == this->input || param == this->shared_input.get())

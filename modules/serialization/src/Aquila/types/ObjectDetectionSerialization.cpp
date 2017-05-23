@@ -23,10 +23,10 @@
 
 using namespace aq;
 
-INSTANTIATE_META_PARAM(DetectedObject)
-INSTANTIATE_META_PARAM(Classification)
-INSTANTIATE_META_PARAM(std::vector<DetectedObject>)
-INSTANTIATE_META_PARAM(std::vector<DetectedObject3d>)
+INSTANTIATE_META_PARAM(DetectedObject);
+INSTANTIATE_META_PARAM(Classification);
+INSTANTIATE_META_PARAM(std::vector<DetectedObject>);
+INSTANTIATE_META_PARAM(std::vector<DetectedObject3d>);
 
 template AQUILA_EXPORTS void DetectedObject::serialize<cereal::JSONInputArchive>(cereal::JSONInputArchive& ar);
 template AQUILA_EXPORTS void DetectedObject::serialize<cereal::JSONOutputArchive>(cereal::JSONOutputArchive& ar);

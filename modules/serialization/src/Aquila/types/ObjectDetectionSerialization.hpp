@@ -1,11 +1,12 @@
 #pragma once
 #include <Aquila/serialization/cereal/eigen.hpp>
+#include "Aquila/types/ObjectDetection.hpp"
 
 #include <cereal/types/vector.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/boost/optional.hpp>
-#include "ObjectDetection.hpp"
+
 template<class AR>
 void aq::Classification::serialize(AR& ar)
 {
