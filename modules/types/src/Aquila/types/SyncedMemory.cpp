@@ -84,7 +84,7 @@ SyncedMemory::SyncedMemory(cv::MatAllocator* cpu_allocator, cv::cuda::GpuMat::Al
 }
 
 const cv::Mat&
-SyncedMemory::GetMat(cv::cuda::Stream& stream, int index) const
+SyncedMemory::getMat(cv::cuda::Stream& stream, int index) const
 {
     if(index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
         THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
@@ -99,7 +99,7 @@ SyncedMemory::GetMat(cv::cuda::Stream& stream, int index) const
 }
 
 cv::Mat&
-SyncedMemory::GetMatMutable(cv::cuda::Stream& stream, int index)
+SyncedMemory::getMatMutable(cv::cuda::Stream& stream, int index)
 {
     if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
         THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
@@ -112,7 +112,7 @@ SyncedMemory::GetMatMutable(cv::cuda::Stream& stream, int index)
 }
 
 const cv::Mat&
-SyncedMemory::GetMatNoSync(int idx) const
+SyncedMemory::getMatNoSync(int idx) const
 {
     if(idx < 0 || idx>= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
         THROW(debug) << "Index (" << idx<< ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
@@ -120,7 +120,7 @@ SyncedMemory::GetMatNoSync(int idx) const
 }
 
 const cv::cuda::GpuMat&
-SyncedMemory::GetGpuMat(cv::cuda::Stream& stream, int index) const
+SyncedMemory::getGpuMat(cv::cuda::Stream& stream, int index) const
 {
     if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
         THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
@@ -142,7 +142,7 @@ SyncedMemory::GetGpuMat(cv::cuda::Stream& stream, int index) const
 }
 
 cv::cuda::GpuMat&
-SyncedMemory::GetGpuMatMutable(cv::cuda::Stream& stream, int index)
+SyncedMemory::getGpuMatMutable(cv::cuda::Stream& stream, int index)
 {
     if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
         THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
@@ -155,7 +155,7 @@ SyncedMemory::GetGpuMatMutable(cv::cuda::Stream& stream, int index)
 }
 
 const cv::cuda::GpuMat&
-SyncedMemory::GetGpuMatNoSync(int index) const
+SyncedMemory::getGpuMatNoSync(int index) const
 {
     if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
         THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
@@ -163,7 +163,7 @@ SyncedMemory::GetGpuMatNoSync(int index) const
 }
 
 const std::vector<cv::Mat>&
-SyncedMemory::GetMatVec(cv::cuda::Stream& stream) const
+SyncedMemory::getMatVec(cv::cuda::Stream& stream) const
 {
     if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
         return _pimpl->h_data;
@@ -176,7 +176,7 @@ SyncedMemory::GetMatVec(cv::cuda::Stream& stream) const
 }
 
 std::vector<cv::Mat>&
-SyncedMemory::GetMatVecMutable(cv::cuda::Stream& stream)
+SyncedMemory::getMatVecMutable(cv::cuda::Stream& stream)
 {
     if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
         return _pimpl->h_data;
@@ -191,7 +191,7 @@ SyncedMemory::GetMatVecMutable(cv::cuda::Stream& stream)
 }
 
 const std::vector<cv::cuda::GpuMat>&
-SyncedMemory::GetGpuMatVec(cv::cuda::Stream& stream) const
+SyncedMemory::getGpuMatVec(cv::cuda::Stream& stream) const
 {
     if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
         return _pimpl->d_data;
@@ -204,7 +204,7 @@ SyncedMemory::GetGpuMatVec(cv::cuda::Stream& stream) const
 }
 
 std::vector<cv::cuda::GpuMat>&
-SyncedMemory::GetGpuMatVecMutable(cv::cuda::Stream& stream)
+SyncedMemory::getGpuMatVecMutable(cv::cuda::Stream& stream)
 {
     if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
         return _pimpl->d_data;
@@ -216,14 +216,14 @@ SyncedMemory::GetGpuMatVecMutable(cv::cuda::Stream& stream)
     }
     return _pimpl->d_data;
 }
-void SyncedMemory::ResizeNumMats(int new_size)
+void SyncedMemory::resizeNumMats(int new_size)
 {
     _pimpl->h_data.resize(new_size);
     _pimpl->d_data.resize(new_size);
     _pimpl->sync_flags.resize(new_size);
 }
 
-SyncedMemory SyncedMemory::clone(cv::cuda::Stream& stream)
+SyncedMemory SyncedMemory::clone(cv::cuda::Stream& stream) const
 {
     SyncedMemory output;
     output._pimpl->h_data.resize(_pimpl->h_data.size());
@@ -236,7 +236,7 @@ SyncedMemory SyncedMemory::clone(cv::cuda::Stream& stream)
     output._pimpl->sync_flags = _pimpl->sync_flags;
     return output;
 }
-int SyncedMemory::GetNumMats() const
+int SyncedMemory::getNumMats() const
 {
     if(_pimpl->h_data.size() == 0)
         return _pimpl->d_data.size();
@@ -253,7 +253,7 @@ bool SyncedMemory::empty() const
     return true;
 }
 
-bool SyncedMemory::Clone(cv::Mat& dest, cv::cuda::Stream& stream, int idx) const
+bool SyncedMemory::clone(cv::Mat& dest, cv::cuda::Stream& stream, int idx) const
 {
     CV_Assert(_pimpl->sync_flags.size() > idx);
     if(_pimpl->sync_flags[idx] < DEVICE_UPDATED || _pimpl->sync_flags[idx] == DO_NOT_SYNC)
@@ -267,7 +267,7 @@ bool SyncedMemory::Clone(cv::Mat& dest, cv::cuda::Stream& stream, int idx) const
     }
 }
 
-bool SyncedMemory::Clone(cv::cuda::GpuMat& dest, cv::cuda::Stream& stream, int idx) const
+bool SyncedMemory::clone(cv::cuda::GpuMat& dest, cv::cuda::Stream& stream, int idx) const
 {
     CV_Assert(_pimpl->sync_flags.size() > idx);
     if(_pimpl->sync_flags[idx] < DEVICE_UPDATED || _pimpl->sync_flags[idx] == DO_NOT_SYNC)
@@ -286,7 +286,7 @@ bool SyncedMemory::Clone(cv::cuda::GpuMat& dest, cv::cuda::Stream& stream, int i
     }
 }
 
-void SyncedMemory::Synchronize(cv::cuda::Stream& stream) const
+void SyncedMemory::synchronize(cv::cuda::Stream& stream) const
 {
     for(int i = 0; i < _pimpl->h_data.size(); ++i)
     {
@@ -301,7 +301,7 @@ void SyncedMemory::Synchronize(cv::cuda::Stream& stream) const
 }
 
 
-void SyncedMemory::ReleaseGpu(cv::cuda::Stream& stream)
+void SyncedMemory::releaseGpu(cv::cuda::Stream& stream)
 {
     for(int i = 0; i < _pimpl->d_data.size(); ++i)
     {
@@ -330,7 +330,7 @@ void SyncedMemory::ReleaseGpu(cv::cuda::Stream& stream)
     }
 }
 
-cv::Size SyncedMemory::GetSize() const
+cv::Size SyncedMemory::getSize() const
 {
     if(_pimpl->d_data.empty() || _pimpl->h_data.empty())
         return cv::Size();
@@ -342,7 +342,7 @@ cv::Size SyncedMemory::GetSize() const
     return output;
 }
 
-int SyncedMemory::GetChannels() const
+int SyncedMemory::getChannels() const
 {
     if(_pimpl->d_data.empty() && _pimpl->h_data.empty())
         return 0;
@@ -357,7 +357,7 @@ int SyncedMemory::GetChannels() const
     return 0;
 }
 
-std::vector<int> SyncedMemory::GetShape() const
+std::vector<int> SyncedMemory::getShape() const
 {
     std::vector<int> output;
     output.push_back(std::max(_pimpl->d_data.size(), _pimpl->h_data.size()));
@@ -384,7 +384,7 @@ std::vector<int> SyncedMemory::GetShape() const
     }
     return output;
 }
-int SyncedMemory::GetDepth() const
+int SyncedMemory::getDepth() const
 {
     CV_Assert(_pimpl->d_data.size() || _pimpl->h_data.size());
     if(_pimpl->d_data.size())
@@ -392,7 +392,7 @@ int SyncedMemory::GetDepth() const
     return _pimpl->h_data[0].depth();
 }
 
-int SyncedMemory::GetType() const
+int SyncedMemory::getType() const
 {
     CV_Assert(_pimpl->d_data.size() || _pimpl->h_data.size());
     if (_pimpl->d_data.size())
@@ -400,7 +400,7 @@ int SyncedMemory::GetType() const
     return _pimpl->h_data[0].type();
 }
 
-int SyncedMemory::GetElemSize() const
+int SyncedMemory::getElemSize() const
 {
     CV_Assert(_pimpl->d_data.size() || _pimpl->h_data.size());
     if (_pimpl->d_data.size())
@@ -408,7 +408,7 @@ int SyncedMemory::GetElemSize() const
     return _pimpl->h_data[0].elemSize();
 }
 
-int SyncedMemory::GetDim(int dim) const
+int SyncedMemory::getDim(int dim) const
 {
     if(dim == 0)
         return _pimpl->d_data.size();
@@ -420,7 +420,7 @@ int SyncedMemory::GetDim(int dim) const
         return _pimpl->d_data[0].channels();
     return 0;
 }
-SyncedMemory::SYNC_STATE SyncedMemory::GetSyncState(int index) const
+SyncedMemory::SYNC_STATE SyncedMemory::getSyncState(int index) const
 {
     CV_Assert(index < _pimpl->sync_flags.size() && index >= 0);
     return _pimpl->sync_flags[index];

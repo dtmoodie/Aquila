@@ -17,7 +17,7 @@ void LinearColorMapper::Apply(cv::InputArray input, cv::OutputArray output, cv::
     CV_Assert(false && "Not implemented yet");
 }
 
-cv::Mat_<float> LinearColorMapper::GetMat(float min, float max, int resolution)
+cv::Mat_<float> LinearColorMapper::getMat(float min, float max, int resolution)
 {
     cv::Mat_<float> output(resolution, 4);
     int idx = 0;

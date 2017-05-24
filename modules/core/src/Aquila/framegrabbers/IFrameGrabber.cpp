@@ -113,7 +113,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri,
             std::stringstream ss;
             for(auto& constructor : constructors)
             {
-                ss << constructor->getName() << ", ";
+                ss << constructor->GetName() << ", ";
             }
             return ss.str();
         };
@@ -128,7 +128,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri,
     {
         for (int i = 0; i < valid_constructors.size(); ++i)
         {
-            if (preferred_loader == valid_constructors[i]->getName())
+            if (preferred_loader == valid_constructors[i]->GetName())
             {
                 idx.insert(idx.begin(), i);
                 break;
@@ -253,7 +253,7 @@ bool FrameGrabber::load(std::string path)
         GrabberInfo* ptr = dynamic_cast<GrabberInfo*>(grabber->GetConstructor()->GetObjectInfo());
         if (ptr->canLoad(path) > 0)
         {
-            grabber->load(path);
+            grabber->loadData(path);
             return true;
         }
     }
@@ -280,7 +280,7 @@ bool FrameGrabber::load(std::string path)
             typed->Init(true);
             if (typed)
             {
-                if (typed->load(path))
+                if (typed->loadData(path))
                 {
                     addComponent(typed);
                     return true;

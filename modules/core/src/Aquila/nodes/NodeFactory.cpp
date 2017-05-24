@@ -127,7 +127,7 @@ std::vector<rcc::shared_ptr<Nodes::Node>> NodeFactory::addNode(const std::string
             {
                 if (parent_node)
                 {
-                    auto parent_nodes = addNode(parent_dep[0], parent_node.Get());
+                    auto parent_nodes = addNode(parent_dep[0], parent_node.get());
                     constructed_nodes.insert(constructed_nodes.end(), parent_nodes.begin(), parent_nodes.end());
                     parent_node = parent_nodes.back();
                 }
@@ -224,7 +224,7 @@ std::vector<rcc::shared_ptr<Nodes::Node>> NodeFactory::addNode(const std::string
                 {
                     if (parent_node)
                     {
-                        auto parent_nodes = addNode(parent_dep[0], parent_node.Get());
+                        auto parent_nodes = addNode(parent_dep[0], parent_node.get());
                         constructed_nodes.insert(constructed_nodes.end(), parent_nodes.begin(), parent_nodes.end());
                     }
                     else
@@ -359,7 +359,7 @@ Nodes::Node* NodeFactory::getNode(const std::string &treeName)
         {
             if (nodes[i]->getTreeName() == treeName)
             {
-                return nodes[i].Get();
+                return nodes[i].get();
             }
         }
     }
@@ -389,7 +389,7 @@ void NodeFactory::printTreeHelper(std::stringstream& tree, int level, Nodes::Nod
     auto children = node->getChildren();
     for (size_t i = 0; i < children.size(); ++i)
     {
-        printTreeHelper(tree, level + 1, children[i].Get());
+        printTreeHelper(tree, level + 1, children[i].get());
     }
 }
 
@@ -408,7 +408,7 @@ void NodeFactory::PrintNodeTree(std::string* ret)
     }
     for (size_t i = 0; i < parentNodes.size(); ++i)
     {
-        printTreeHelper(tree, 0, parentNodes[i].Get());
+        printTreeHelper(tree, 0, parentNodes[i].get());
     }
     if (ret)
     {
@@ -446,7 +446,7 @@ std::vector<std::string> NodeFactory::GetConstructableNodes()
         if (constructors[i])
         {
             if (constructors[i]->GetInterfaceId() == Nodes::Node::s_interfaceID)
-                output.push_back(constructors[i]->getName());
+                output.push_back(constructors[i]->GetName());
         }
         else
         {

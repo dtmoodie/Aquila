@@ -71,7 +71,7 @@ struct img_node: public Node
     bool ProcessImpl()
     {
         BOOST_REQUIRE(input);
-        auto mat = input->GetMat(Stream());
+        auto mat = input->getMat(Stream());
         BOOST_REQUIRE_EQUAL(mat.at<uchar>(0), (*input_param.GetTimestamp()).value());
         return true;
     }
@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
     BOOST_REQUIRE(fg_info);
     std::cout << fg_info->Print();
     
-    auto fg = rcc::shared_ptr<test_framegrabber>::Create();
-    auto node = rcc::shared_ptr<img_node>::Create();
+    auto fg = rcc::shared_ptr<test_framegrabber>::create();
+    auto node = rcc::shared_ptr<img_node>::create();
     BOOST_REQUIRE(node->connectInput(fg, "input", "current_frame"));
     for(int i = 0; i < 100; ++i)
     {

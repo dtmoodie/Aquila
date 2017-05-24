@@ -58,11 +58,11 @@ struct Serializer<aq::SyncedMemory>{
     inline static void write(Stream& stream, const aq::SyncedMemory& mem){
         auto ctx = mem.getContext();
         if(ctx){
-            const cv::Mat& mat = mem.GetMat(ctx->getStream());
+            const cv::Mat& mat = mem.getMat(ctx->getStream());
             ctx->getStream().waitForCompletion();
             Serializer<cv::Mat>::write(stream, mat);
         }else{
-            const cv::Mat& mat = mem.GetMat(cv::cuda::Stream::Null());
+            const cv::Mat& mat = mem.getMat(cv::cuda::Stream::Null());
             Serializer<cv::Mat>::write(stream, mat);
         }
     }
@@ -77,10 +77,10 @@ struct Serializer<aq::SyncedMemory>{
     inline static uint32_t serializedLength(const aq::SyncedMemory& mem){
         auto ctx = mem.getContext();
         if(ctx){
-            const cv::Mat& mat = mem.GetMat(ctx->getStream());
+            const cv::Mat& mat = mem.getMat(ctx->getStream());
             return Serializer<cv::Mat>::serializedLength(mat);
         }
-        const cv::Mat& mat = mem.GetMat(cv::cuda::Stream::Null()); // this could be made async if we add a GetMatNoSync call
+        const cv::Mat& mat = mem.getMat(cv::cuda::Stream::Null()); // this could be made async if we add a getMatNoSync call
         return Serializer<cv::Mat>::serializedLength(mat);
     }
 };
@@ -92,10 +92,10 @@ struct Serializer<aq::Stamped<aq::SyncedMemory>>{
         auto ctx = mem.data.getContext();
         cv::Mat mat;
         if(ctx){
-            mat = mem.data.GetMat(ctx->getStream());
+            mat = mem.data.getMat(ctx->getStream());
             ctx->getStream().waitForCompletion();
         }else{
-            mat = mem.data.GetMat(cv::cuda::Stream::Null());
+            mat = mem.data.getMat(cv::cuda::Stream::Null());
         }
         stream.next(mem.header);
         stream.next((uint32_t)mat.rows); // height
@@ -131,7 +131,7 @@ struct Serializer<aq::Stamped<aq::SyncedMemory>>{
     }
 
     inline static uint32_t serializedLength(const aq::Stamped<aq::SyncedMemory>& mem){
-        const cv::Mat& mat = mem.data.GetMatNoSync();
+        const cv::Mat& mat = mem.data.getMatNoSync();
         size_t data_size = mat.step * mat.rows;
         return serializationLength(mem.header) + serializationLength(std::string("bgr8")) + 17 + data_size;
     }
@@ -210,7 +210,7 @@ template<> struct Printer<aq::SyncedMemory>
   static void stream(Stream& s, const std::string& indent, const aq::SyncedMemory& m)
   {
     /// @todo Replicate printing for sensor_msgs::Image
-    s << indent << m.GetSize() << " " << m.GetType();
+    s << indent << m.getSize() << " " << m.getType();
   }
 };
 
@@ -220,7 +220,7 @@ template<> struct Printer<aq::Stamped<aq::SyncedMemory>>
   static void stream(Stream& s, const std::string& indent, const aq::Stamped<aq::SyncedMemory>& m)
   {
     /// @todo Replicate printing for sensor_msgs::Image
-    s << indent << m.header << m.data.GetSize() << " " << m.data.GetType();
+    s << indent << m.header << m.data.getSize() << " " << m.data.getType();
   }
 };
 

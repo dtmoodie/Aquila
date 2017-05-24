@@ -1,1 +1,3 @@
-aquila_declare_module(NAME utilities DEPENDS opencv_core aquila_core CXX_STANDARD 14)
+set(CUDA_PROPAGATE_HOST_FLAGS ON)
+aquila_declare_module(NAME utilities DEPENDS opencv_core aquila_core CXX_STANDARD 11)
+set_target_properties(aquila_utilities PROPERTIES CXX_STANDARD_REQUIRED ON)

@@ -25,6 +25,6 @@ namespace aq
         // input min is the min x location
         // input max is the max x location
         // resolution is the number of samples to estimate
-        virtual cv::Mat_<float> GetMat(float min, float max, int resolution) = 0;
+        virtual cv::Mat_<float> getMat(float min, float max, int resolution) = 0;
     };
 }

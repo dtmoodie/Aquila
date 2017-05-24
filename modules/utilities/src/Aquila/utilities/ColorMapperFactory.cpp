@@ -21,7 +21,7 @@ ColorMapperFactory* ColorMapperFactory::Instance()
     return &inst;
 }
 
-IColorMapper* ColorMapperFactory::Create(std::string color_mapping_scheme_, float alpha, float beta)
+IColorMapper* ColorMapperFactory::create(std::string color_mapping_scheme_, float alpha, float beta)
 {
     auto itr = _registered_functions.find(color_mapping_scheme_);
     if(itr != _registered_functions.end())

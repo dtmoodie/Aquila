@@ -91,8 +91,8 @@ void WindowCallbackHandler::imshow(const std::string& name, const SyncedMemory& 
         handler->_image_size = mat.GetSize();
     }
 
-    auto state = mat.GetSyncState();
-    const cv::Mat& h_mat = mat.GetMat(stream);
+    auto state = mat.getSyncState();
+    const cv::Mat& h_mat = mat.getMat(stream);
 
     size_t gui_thread_id = mo::ThreadRegistry::Instance()->GetThread(mo::ThreadRegistry::GUI);
     std::function<void(void)> func = std::bind(&WindowCallbackHandler::guiThreadFuncCpu, name, h_mat, handler.get());

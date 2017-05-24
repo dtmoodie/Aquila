@@ -28,7 +28,7 @@ void LUTColorMapper::Apply(cv::InputArray input, cv::OutputArray output, cv::Inp
     CV_Assert(false && "Not implemented yet");
 }
 
-cv::Mat_<float> LUTColorMapper::GetMat(float min, float max, int resolution)
+cv::Mat_<float> LUTColorMapper::getMat(float min, float max, int resolution)
 {
     cv::Mat_<float> output(resolution, 4);
     int idx = 0;

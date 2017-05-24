@@ -20,7 +20,7 @@ namespace aq
         };
         scoped_buffer(cv::cuda::Stream stream);
         ~scoped_buffer();
-        cv::cuda::GpuMat& GetMat();
+        cv::cuda::GpuMat& getMat();
     private:
         friend void scoped_buffer_dallocator_callback(int status, void* user_data);
         cv::cuda::GpuMat* data;

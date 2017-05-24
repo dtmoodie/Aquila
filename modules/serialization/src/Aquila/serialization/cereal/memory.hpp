@@ -29,11 +29,11 @@ namespace cereal
             }
             if (std::is_base_of<aq::Nodes::Node, T>::value)
             {
-                aq::Serialize(ar, m.Get());
+                aq::Serialize(ar, m.get());
             }
             else
             {
-                mo::Serialize(ar, m.Get());
+                mo::Serialize(ar, m.get());
             }
             mo::SetHasBeenSerialized(m->GetObjectId());
         }
@@ -61,10 +61,10 @@ namespace cereal
             return;
         if (std::is_base_of<aq::Nodes::Node, T>::value)
         {
-            aq::DeSerialize(ar, m.Get());
+            aq::DeSerialize(ar, m.get());
         }else
         {
-            mo::DeSerialize(ar, m.Get());
+            mo::DeSerialize(ar, m.get());
         }
         mo::SetHasBeenSerialized(m->GetObjectId());
     }

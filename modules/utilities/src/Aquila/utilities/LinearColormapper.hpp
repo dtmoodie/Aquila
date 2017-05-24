@@ -10,7 +10,7 @@ namespace aq
         LinearColorMapper();
         LinearColorMapper(const ColorScale& red, const ColorScale& green, const ColorScale& blue);
         virtual void Apply(cv::InputArray input, cv::OutputArray output, cv::InputArray mask = cv::noArray(), cv::cuda::Stream& stream = cv::cuda::Stream::Null());
-        virtual cv::Mat_<float> GetMat(float min, float max, int resolution);
+        virtual cv::Mat_<float> getMat(float min, float max, int resolution);
         virtual void Rescale(float, float);
         template<typename A> void serialize(A& ar)
         {

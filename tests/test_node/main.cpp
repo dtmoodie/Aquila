@@ -113,12 +113,12 @@ BOOST_AUTO_TEST_CASE(test_node_reflection)
 
 BOOST_AUTO_TEST_CASE(test_node_single_input_output_direct)
 {
-	auto ds = aq::IDataStream::Create();
-	auto output_node = test_output_node::Create();
-	auto input_node = test_input_node::Create();	
+	auto ds = aq::IDataStream::create();
+	auto output_node = test_output_node::create();
+	auto input_node = test_input_node::create();	
 
 	BOOST_REQUIRE(input_node->connectInput(output_node, "value", "value"));
-	output_node->setDataStream(ds.Get());
+	output_node->setDataStream(ds.get());
 	for (int i = 0; i < 10; ++i)
 	{
 		output_node->process();
@@ -129,11 +129,11 @@ BOOST_AUTO_TEST_CASE(test_node_single_input_output_direct)
 
 BOOST_AUTO_TEST_CASE(test_node_single_input_output_buffered)
 {
-	auto ds = aq::IDataStream::Create();
-	auto output_node = test_output_node::Create();
-	auto input_node = test_input_node::Create();
-	output_node->setDataStream(ds.Get());
-	input_node->setDataStream(ds.Get());
+	auto ds = aq::IDataStream::create();
+	auto output_node = test_output_node::create();
+	auto input_node = test_input_node::create();
+	output_node->setDataStream(ds.get());
+	input_node->setDataStream(ds.get());
     static const mo::ParamType test_cases[] = { mo::CircularBuffer_e, mo::ConstMap_e, mo::Map_e, mo::StreamBuffer_e, mo::BlockingStreamBuffer_e, mo::NNStreamBuffer_e };
 	for (int i = 0; i < sizeof(test_cases); ++i)
 	{

@@ -59,7 +59,7 @@ namespace aq{
             PARAM(std::string, loaded_document, "")
         MO_END;
 
-        virtual bool load(const std::string& path) = 0;
+        virtual bool loadData(const std::string& path) = 0;
         virtual bool grab() = 0;
     protected:
         bool processImpl();

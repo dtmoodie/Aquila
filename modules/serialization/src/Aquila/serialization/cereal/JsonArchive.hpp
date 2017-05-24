@@ -1037,7 +1037,7 @@ namespace cereal
         {
             if(nodes[0] == nullptr)
                 continue;
-            nodes[i]->setDataStream(stream.Get());
+            nodes[i]->setDataStream(stream.get());
             nodes[i]->postSerializeInit();
             auto& parents = ar_.parent_mappings[nodes[i]->getTreeName()];
             for (auto& parent : parents)

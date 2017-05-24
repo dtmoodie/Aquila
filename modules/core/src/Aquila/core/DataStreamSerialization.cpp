@@ -47,7 +47,7 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file)
 
 std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm)
 {
-    /*rcc::shared_ptr<DataStream> stream_ = rcc::shared_ptr<DataStream>::Create();
+    /*rcc::shared_ptr<DataStream> stream_ = rcc::shared_ptr<DataStream>::create();
     if(!stream_)
     {
         LOG(error) << "Unable to create data stream";
@@ -309,7 +309,7 @@ void PopulateSerializationInfo(Nodes::Node* node, std::vector<NodeSerializationI
     auto children = node->getChildren();
     for(auto child : children)
     {
-        PopulateSerializationInfo(child.Get(), info);
+        PopulateSerializationInfo(child.get(), info);
     }
 }
 
@@ -338,7 +338,7 @@ bool DataStream::saveStream(const std::string& filename)
         std::vector<NodeSerializationInfo> serializationInfo;
         for(auto& node : top_level_nodes)
         {
-            PopulateSerializationInfo(node.Get(), serializationInfo);
+            PopulateSerializationInfo(node.get(), serializationInfo);
         }
         ar(cereal::make_nvp("nodes",serializationInfo));
         //ar(*this);

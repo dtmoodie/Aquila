@@ -18,7 +18,9 @@ IF(WIN32)
 ELSE(WIN32)
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-reorder -Wno-sign-compare -Wl,--no-as-needed -O0")
   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -g")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -g")
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_STANDARD 11)
   SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}" CACHE PATH "Library output path" FORCE)
   SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Executable output path" FORCE)
 ENDIF(WIN32)
@@ -178,13 +180,6 @@ file(GLOB children RELATIVE ${PROJECT_SOURCE_DIR}/${curdir} ${PROJECT_SOURCE_DIR
    endforeach()
 endmacro()
 
-# This is needed becaus cuda + cmake does not properly support target_include_directories https://gitlab.kitware.com/cmake/cmake/issues/16571
-# in the version of cmake that is include with ubuntu 16.04.  Thus to make everything happy we also propagate up the needed build include dirs
-# using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
-set(Aquila_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS};${PPLX_INCLUDE_DIRS}" CACHE PATH "")
-set(Aquila_LIBRARIES "${MetaObject_LIBRARIES}" CACHE STRING "")
-
-
 # =====================
 # modules
 set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
@@ -264,9 +259,12 @@ SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
 foreach( module ${modules})
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
 endforeach()
-foreach(module ${aquila_modules})
-    print_target_properties(${module})
-endforeach(module)
+
+# This is needed becaus cuda + cmake does not properly support target_include_directories https://gitlab.kitware.com/cmake/cmake/issues/16571
+# in the version of cmake that is include with ubuntu 16.04.  Thus to make everything happy we also propagate up the needed build include dirs
+# using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
+set(Aquila_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS};${PPLX_INCLUDE_DIRS}" CACHE PATH "")
+set(Aquila_LIBRARIES "${aquila_modules};${MetaObject_LIBRARIES}" CACHE INTERNAL "" FORCE)
 
 # ---------------------------------------------------
 # unit tests

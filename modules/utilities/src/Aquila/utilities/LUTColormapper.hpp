@@ -11,7 +11,7 @@ namespace aq
         LUTColorMapper(cv::Mat LUT_);
         virtual void Apply(cv::InputArray input, cv::OutputArray output, cv::InputArray mask = cv::noArray(), cv::cuda::Stream& stream = cv::cuda::Stream::Null());
         virtual void Rescale(float alpha, float beta);
-        virtual cv::Mat_<float> GetMat(float min, float max, int resolution);
+        virtual cv::Mat_<float> getMat(float min, float max, int resolution);
         template<typename A> void serialize(A& ar)
         {
 

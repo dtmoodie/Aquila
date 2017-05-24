@@ -9,7 +9,7 @@
 #include "MetaObject/params/ParameterMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
-#include "MetaObject/detail/MetaObjectMacros.hpp"
+#include "MetaObject/object/detail/MetaObjectMacros.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/thread/ThreadPool.hpp"
 #include "MetaObject/Detail/Allocator.hpp"
@@ -200,12 +200,12 @@ struct GlobalFixture
     #endif
                     {
                         std::string file = itr->path().string();
-                        mo::MetaObjectFactory::instance()->LoadPlugin(file);
+                        mo::MetaObjectFactory::instance()->loadPlugin(file);
                     }
                 }
             }
         }
-        g_allocator = mo::Allocator::GetThreadSafeAllocator();
+        g_allocator = mo::Allocator::getThreadSafeAllocator();
         cv::cuda::GpuMat::setDefaultAllocator(g_allocator);
         cv::Mat::setDefaultAllocator(g_allocator);
         g_allocator->SetName("Global Allocator");
@@ -216,7 +216,7 @@ struct GlobalFixture
     ~GlobalFixture()
     {
         mo::ThreadPool::Instance()->Cleanup();
-        mo::ThreadSpecificQueue::Cleanup();
+        mo::ThreadSpecificQueue::cleanup();
         mo::Allocator::cleanupThreadSpecificAllocator();
         delete g_allocator;
     }
@@ -230,12 +230,12 @@ struct BranchingFixture
 {
     BranchingFixture()
     {
-        ds = ds.Create();
+        ds = ds.create();
         ds->stopThread();
-        a = a.Create();
-        b = b.Create();
-        c = c.Create();
-        a->setDataStream(ds.Get());
+        a = a.create();
+        b = b.create();
+        c = c.create();
+        a->setDataStream(ds.get());
     }
 
     rcc::shared_ptr<node_a> a;
@@ -338,7 +338,7 @@ BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, settings, settings + num_settings
 BOOST_AUTO_TEST_CASE(merging_direct_ts)
 {
     timestamp_mode = true;
-    b->setDataStream(ds.Get());
+    b->setDataStream(ds.get());
     BOOST_REQUIRE(c->connectInput(a, "out_a", "in_a"));
     BOOST_REQUIRE(c->connectInput(b, "out_b", "in_b"));
     for (int i = 0; i < 100; ++i)
@@ -357,7 +357,7 @@ BOOST_AUTO_TEST_CASE(merging_direct_ts)
 BOOST_AUTO_TEST_CASE(merging_direct_fn)
 {
     timestamp_mode = false;
-    b->setDataStream(ds.Get());
+    b->setDataStream(ds.get());
     BOOST_REQUIRE(c->connectInput(a, "out_a", "in_a"));
     BOOST_REQUIRE(c->connectInput(b, "out_b", "in_b"));
     for (int i = 0; i < 100; ++i)
@@ -406,14 +406,14 @@ BOOST_AUTO_TEST_CASE(merging_direct_desynced_ts)
     rcc::shared_ptr<node_e> e;
     rcc::shared_ptr<node_c> c;
     rcc::shared_ptr<aq::IDataStream> ds;
-    ds = ds.Create();
+    ds = ds.create();
     ds->stopThread();
-    a = a.Create();
-    e = e.Create();
-    c = c.Create();
-    a->setDataStream(ds.Get());
+    a = a.create();
+    e = e.create();
+    c = c.create();
+    a->setDataStream(ds.get());
 
-    e->setDataStream(ds.Get());
+    e->setDataStream(ds.get());
     BOOST_REQUIRE(c->connectInput(a, "out_a", "in_a", mo::ParamType(mo::ForceBufferedConnection_e | mo::CircularBuffer_e)));
     BOOST_REQUIRE(c->connectInput(e, "out", "in_b"));
     int e_iters = 0;
@@ -440,14 +440,14 @@ BOOST_AUTO_TEST_CASE(merging_direct_desynced_fn)
     rcc::shared_ptr<node_e> e;
     rcc::shared_ptr<node_c> c;
     rcc::shared_ptr<aq::IDataStream> ds;
-    ds = ds.Create();
+    ds = ds.create();
     ds->stopThread();
-    a = a.Create();
-    e = e.Create();
-    c = c.Create();
-    a->setDataStream(ds.Get());
+    a = a.create();
+    e = e.create();
+    c = c.create();
+    a->setDataStream(ds.get());
 
-    e->setDataStream(ds.Get());
+    e->setDataStream(ds.get());
     BOOST_REQUIRE(c->connectInput(a, "out_a", "in_a", mo::ParamType(mo::ForceBufferedConnection_e | mo::CircularBuffer_e)));
     BOOST_REQUIRE(c->connectInput(e, "out", "in_b"));
     int e_iters = 0;
@@ -472,13 +472,13 @@ struct DiamondFixture
 {
     DiamondFixture()
     {
-        ds = ds.Create();
+        ds = ds.create();
         ds->stopThread();
-        a = a.Create();
-        d1 = d1.Create();
-        d2 = d1.Create();
-        c = c.Create();
-        a->setDataStream(ds.Get());
+        a = a.create();
+        d1 = d1.create();
+        d2 = d1.create();
+        c = c.create();
+        a->setDataStream(ds.get());
     }
 
     rcc::shared_ptr<node_a> a;
@@ -669,9 +669,9 @@ struct ThreadedFixture
 {
     ThreadedFixture()
     {
-        a = a.Create();
-        d = d.Create();
-        ds = ds.Create();
+        a = a.create();
+        d = d.create();
+        ds = ds.create();
         ds->addNode(a);
         while(!a->producer_ready)
         {
@@ -692,10 +692,10 @@ BOOST_FIXTURE_TEST_SUITE(ThreadedSuite, ThreadedFixture)
 // This case represents a producer (a) and a consumer (c) on different threads
 BOOST_AUTO_TEST_CASE(linear_threaded)
 {
-    d->setContext(mo::Context::GetDefaultThreadContext());
+    d->setContext(mo::Context::getDefaultThreadContext());
     BOOST_REQUIRE(d->connectInput(a, "out_a", "in_d"));
     a->consumer_ready = true;
-    Nodes::Node* ptr = a.Get();
+    Nodes::Node* ptr = a.get();
     a->sig_node_updated(ptr);
     for(int i = 0; i < 1000; ++i)
     {
@@ -709,7 +709,7 @@ BOOST_AUTO_TEST_SUITE_END() // ThreadedSuite
 
 BOOST_AUTO_TEST_CASE(finish)
 {
-    mo::ThreadSpecificQueue::Cleanup();
+    mo::ThreadSpecificQueue::cleanup();
     mo::ThreadPool::Instance()->Cleanup();
     mo::Allocator::cleanupThreadSpecificAllocator();
 }

@@ -154,13 +154,13 @@ std::vector<std::string> Node::listConstructableNodes(const std::string& filter)
     {
         if(filter.size())
         {
-            if(std::string(constructor->getName()).find(filter) != std::string::npos)
+            if(std::string(constructor->GetName()).find(filter) != std::string::npos)
             {
-                output.emplace_back(constructor->getName());
+                output.emplace_back(constructor->GetName());
             }
         }else
         {
-            output.emplace_back(constructor->getName());
+            output.emplace_back(constructor->GetName());
         }
     }
     return output;
@@ -179,9 +179,9 @@ bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_na
     auto input = this->getInput(input_name);
     if(output && input)
     {
-        if(this->IMetaObject::connectInput(input, node.Get(), output, type))
+        if(this->IMetaObject::connectInput(input, node.get(), output, type))
         {
-            addParent(node.Get());
+            addParent(node.get());
             return true;
         }else
         {
@@ -220,9 +220,9 @@ bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_na
 }
 bool Node::connectInput(rcc::shared_ptr<Node> output_node,    mo::IParam* output_param,    mo::InputParam* input_param,    mo::ParamType type)
 {
-    if (this->IMetaObject::connectInput(input_param, output_node.Get(), output_param, type))
+    if (this->IMetaObject::connectInput(input_param, output_node.get(), output_param, type))
     {
-        addParent(output_node.Get());
+        addParent(output_node.get());
         Node* This = this;
         sig_input_changed(This, input_param);
         return true;
@@ -479,7 +479,7 @@ void Node::getNodesInScope(std::vector<Node*> &nodes)
         Node* node = this;
         while(node->_parents.size())
         {
-            node = node->_parents[0].Get();
+            node = node->_parents[0].get();
         }
         nodes.push_back(node);
         node->getNodesInScope(nodes);
@@ -534,7 +534,7 @@ void Node::removeChild(Node* node)
 
 void Node::removeChild(rcc::weak_ptr<Node> node)
 {
-    auto itr = std::find(_children.begin(), _children.end(), node.Get());
+    auto itr = std::find(_children.begin(), _children.end(), node.get());
     if(itr != _children.end())
     {
         _children.erase(itr);
@@ -558,7 +558,7 @@ void Node::setDataStream(IDataStream* stream_)
     _data_stream->addChildNode(this);
     for (auto& child : _children)
     {
-        child->setDataStream(_data_stream.Get());
+        child->setDataStream(_data_stream.get());
     }
 }
 
@@ -574,7 +574,7 @@ IDataStream* Node::getDataStream()
         _data_stream = IDataStream::create();
         _data_stream->addNode(this);
     }
-    return _data_stream.Get();
+    return _data_stream.get();
 }
 std::shared_ptr<mo::IVariableManager>     Node::getVariableManager()
 {

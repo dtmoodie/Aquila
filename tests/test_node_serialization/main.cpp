@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(initialize)
 #endif
                 {
                     std::string file = itr->path().string();
-                    mo::MetaObjectFactory::instance()->LoadPlugin(file);
+                    mo::MetaObjectFactory::instance()->loadPlugin(file);
                 }
             }
         }
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(synced_mem_to_json)
 
 BOOST_AUTO_TEST_CASE(datastream)
 {
-    auto ds = aq::IDataStream::Create("", "TestFrameGrabber");
+    auto ds = aq::IDataStream::create("", "TestFrameGrabber");
     std::ofstream ofs("datastream.json");
     BOOST_REQUIRE(ofs.is_open());
     aq::JSONOutputArchive ar(ofs);
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(datastream)
 
 BOOST_AUTO_TEST_CASE(read_datastream)
 {
-    rcc::shared_ptr<aq::IDataStream> stream = rcc::shared_ptr<aq::DataStream>::Create();
+    rcc::shared_ptr<aq::IDataStream> stream = rcc::shared_ptr<aq::DataStream>::create();
     std::ifstream ifs("datastream.json");
     BOOST_REQUIRE(ifs.is_open());
     std::map<std::string, std::string> dummy;

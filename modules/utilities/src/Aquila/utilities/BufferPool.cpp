@@ -20,7 +20,7 @@ scoped_buffer::~scoped_buffer()
 {
     stream.enqueueHostCallback(aq::scoped_buffer_dallocator_callback, data);
 }
-cv::cuda::GpuMat& scoped_buffer::GetMat()
+cv::cuda::GpuMat& scoped_buffer::getMat()
 {
     return *data;
 }

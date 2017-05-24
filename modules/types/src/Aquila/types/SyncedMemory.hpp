@@ -37,43 +37,44 @@ namespace aq
         SyncedMemory(cv::MatAllocator* cpu_allocator, cv::cuda::GpuMat::Allocator* gpu_allocator);
         SyncedMemory(const std::vector<cv::Mat>& h_mat, const std::vector<cv::cuda::GpuMat>& d_mat, SYNC_STATE state = SYNCED);
         SyncedMemory(const std::vector<cv::Mat>& h_mat, const std::vector<cv::cuda::GpuMat>& d_mat, const std::vector<SYNC_STATE> state);
-        SyncedMemory clone(cv::cuda::Stream& stream);
 
-        const cv::Mat&                         GetMat(cv::cuda::Stream& stream, int idx = 0) const;
-        cv::Mat&                               GetMatMutable(cv::cuda::Stream& stream, int idx = 0);
-        const cv::Mat&                         GetMatNoSync(int idx = 0) const;
+        SyncedMemory clone(cv::cuda::Stream& stream) const;
 
-        const cv::cuda::GpuMat&                GetGpuMat(cv::cuda::Stream& stream, int idx = 0) const;
-        cv::cuda::GpuMat&                      GetGpuMatMutable(cv::cuda::Stream& stream, int idx = 0);
-        const cv::cuda::GpuMat&                GetGpuMatNoSync(int idx = 0) const;
+        const cv::Mat&                         getMat(cv::cuda::Stream& stream, int idx = 0) const;
+        cv::Mat&                               getMatMutable(cv::cuda::Stream& stream, int idx = 0);
+        const cv::Mat&                         getMatNoSync(int idx = 0) const;
 
-        const std::vector<cv::Mat>&            GetMatVec(cv::cuda::Stream& stream) const;
-        std::vector<cv::Mat>&                  GetMatVecMutable(cv::cuda::Stream& stream);
+        const cv::cuda::GpuMat&                getGpuMat(cv::cuda::Stream& stream, int idx = 0) const;
+        cv::cuda::GpuMat&                      getGpuMatMutable(cv::cuda::Stream& stream, int idx = 0);
+        const cv::cuda::GpuMat&                getGpuMatNoSync(int idx = 0) const;
 
-        const std::vector<cv::cuda::GpuMat>&   GetGpuMatVec(cv::cuda::Stream& stream) const;
-        std::vector<cv::cuda::GpuMat>&         GetGpuMatVecMutable(cv::cuda::Stream& stream);
+        const std::vector<cv::Mat>&            getMatVec(cv::cuda::Stream& stream) const;
+        std::vector<cv::Mat>&                  getMatVecMutable(cv::cuda::Stream& stream);
 
-        SYNC_STATE                             GetSyncState(int index = 0) const;
+        const std::vector<cv::cuda::GpuMat>&   getGpuMatVec(cv::cuda::Stream& stream) const;
+        std::vector<cv::cuda::GpuMat>&         getGpuMatVecMutable(cv::cuda::Stream& stream);
+
+        SYNC_STATE                             getSyncState(int index = 0) const;
 
         mo::Context*                           getContext() const;
         void                                   setContext(mo::Context* ctx);
 
-        bool Clone(cv::Mat& dest, cv::cuda::Stream& stream, int idx = 0) const;
-        bool Clone(cv::cuda::GpuMat& dest, cv::cuda::Stream& stream, int idx = 0) const;
+        bool clone(cv::Mat& dest, cv::cuda::Stream& stream, int idx = 0) const;
+        bool clone(cv::cuda::GpuMat& dest, cv::cuda::Stream& stream, int idx = 0) const;
 
-        void Synchronize(cv::cuda::Stream& stream = cv::cuda::Stream::Null()) const;
-        void ResizeNumMats(int new_size = 1);
-        void ReleaseGpu(cv::cuda::Stream& stream = cv::cuda::Stream::Null());
+        void synchronize(cv::cuda::Stream& stream = cv::cuda::Stream::Null()) const;
+        void resizeNumMats(int new_size = 1);
+        void releaseGpu(cv::cuda::Stream& stream = cv::cuda::Stream::Null());
 
-        int GetNumMats() const;
+        int getNumMats() const;
         bool empty() const;
-        cv::Size GetSize() const;
-        int GetChannels() const;
-        std::vector<int> GetShape() const;
-        int GetDim(int dim) const;
-        int GetDepth() const;
-        int GetType() const;
-        int GetElemSize() const;
+        cv::Size getSize() const;
+        int getChannels() const;
+        std::vector<int> getShape() const;
+        int getDim(int dim) const;
+        int getDepth() const;
+        int getType() const;
+        int getElemSize() const;
         template<typename A> void load(A& ar);
         template<typename A> void save(A & ar) const;
     private:
@@ -125,7 +126,7 @@ public:
     }
     static inline Storage_t clone(const aq::SyncedMemory& value){
         // TODO use built in stream or current threads stream
-        return value.clone(cv::cuda::Stream());
+        return value.clone(cv::cuda::Stream::Null());
     }
 
     template<class...Args>

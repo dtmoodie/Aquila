@@ -15,7 +15,7 @@ namespace aq
     }
     template<typename A> void SyncedMemory::save(A & ar) const
     {
-        this->Synchronize();
+        this->synchronize();
         ar(cereal::make_nvp("matrices", _pimpl->h_data));
     }
 }

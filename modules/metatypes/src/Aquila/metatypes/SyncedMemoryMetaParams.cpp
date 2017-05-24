@@ -41,7 +41,7 @@ TInputParamPtr<SyncedMemory>::TInputParamPtr(const std::string& name,
 
 bool TInputParamPtr<SyncedMemory>::setInput(std::shared_ptr<IParam> param)
 {
-    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
     if(ITInputParam<SyncedMemory>::setInput(param)){
         if(userVar){
             if(this->input)
@@ -56,7 +56,7 @@ bool TInputParamPtr<SyncedMemory>::setInput(std::shared_ptr<IParam> param)
 
 bool TInputParamPtr<SyncedMemory>::setInput(IParam* param)
 {
-    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
     if(ITypedInputParameter<SyncedMemory>::SetInput(param))
     {
         if(userVar)
@@ -73,7 +73,7 @@ bool TInputParamPtr<SyncedMemory>::setInput(IParam* param)
 
 void TInputParamPtr<SyncedMemory>::setUserDataPtr(const SyncedMemory** user_var_)
 {
-    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
     userVar = user_var_;
 }
 
@@ -106,7 +106,7 @@ void TInputParamPtr<SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IParam*
 
 bool TInputParamPtr<SyncedMemory>::getInput(boost::optional<mo::Time_t> ts, size_t* fn_)
 {
-    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
     if(userVar)
     {
         if(this->shared_input)
@@ -151,7 +151,7 @@ bool TInputParamPtr<SyncedMemory>::getInput(boost::optional<mo::Time_t> ts, size
 
 bool TInputParamPtr<SyncedMemory>::getInput(size_t fn, boost::optional<mo::Time_t>* ts_)
 {
-    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
     boost::optional<mo::Time_t> ts;
     if(userVar)
     {
@@ -183,9 +183,9 @@ bool TInputParamPtr<SyncedMemory>::getInput(size_t fn, boost::optional<mo::Time_
     return false;
 }
 
-void TInputParamPtr<SyncedMemory>::onInputDelete(IParameter const* param)
+void TInputParamPtr<SyncedMemory>::onInputDelete(IParam const* param)
 {
-    boost::recursive_mutex::scoped_lock lock(IParameter::mtx());
+    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
     if(param == this->input || param == this->shared_input.get())
     {
         this->shared_input.reset();

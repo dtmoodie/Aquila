@@ -240,7 +240,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
             std::stringstream ss;
             for(auto& constructor : constructors)
             {
-                ss << constructor->getName() << ", ";
+                ss << constructor->GetName() << ", ";
             }
             return ss.str();
         };
@@ -256,7 +256,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
     {
         for(int i = 0; i < valid_frame_grabbers.size(); ++i)
         {
-            if(prefered_loader == valid_frame_grabbers[i]->getName())
+            if(prefered_loader == valid_frame_grabbers[i]->GetName())
             {
                 idx.insert(idx.begin(), i);
                 break;
@@ -424,7 +424,7 @@ void DataStream::addNode(rcc::shared_ptr<Nodes::Node> node)
 void DataStream::addChildNode(rcc::shared_ptr<Nodes::Node> node)
 {
     std::lock_guard<std::mutex> lock(nodes_mtx);
-    if(std::find(child_nodes.begin(), child_nodes.end(), node.Get()) != child_nodes.end())
+    if(std::find(child_nodes.begin(), child_nodes.end(), node.get()) != child_nodes.end())
         return;
     int type_count = 0;
     for(auto& child : child_nodes)

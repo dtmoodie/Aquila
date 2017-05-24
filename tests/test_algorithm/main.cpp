@@ -1,6 +1,6 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
-#include <Aquila/Algorithm.h>
+#include <Aquila/core/Algorithm.hpp>
 
 #include "MetaObject/Detail/MetaObjectMacros.hpp"
 #include "MetaObject/params/ParameterMacros.hpp"
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(initialize)
 
 BOOST_AUTO_TEST_CASE(test_no_input)
 {
-    auto obj = rcc::shared_ptr<int_output>::Create();
+    auto obj = rcc::shared_ptr<int_output>::create();
     for(int i = 0; i < 100; ++i)
     {
         obj->process();
@@ -101,8 +101,8 @@ BOOST_AUTO_TEST_CASE(test_no_input)
 
 BOOST_AUTO_TEST_CASE(test_counting_input)
 {
-    auto output = rcc::shared_ptr<int_output>::Create();
-    auto input = rcc::shared_ptr<int_input>::Create();
+    auto output = rcc::shared_ptr<int_output>::create();
+    auto input = rcc::shared_ptr<int_input>::create();
     auto output_param = output->getOutput<int>("value");
     auto input_param = input->getInput<int>("input");
     BOOST_REQUIRE(output_param);
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(test_synced_input)
 {
     mo::TypedParameter<int> output;
     output.UpdateData(10, 0);
-    auto input = rcc::shared_ptr<int_input>::Create();
+    auto input = rcc::shared_ptr<int_input>::create();
     input->input_param.SetInput(&output);
     input->setSyncInput("input");
 
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(test_threaded_input)
     mo::Context ctx;
     mo::TypedParameter<int> output("test", 0, mo::Control_e, 0, &ctx);
 
-    auto obj = rcc::shared_ptr<int_input>::Create();
+    auto obj = rcc::shared_ptr<int_input>::create();
     boost::thread thread([&obj, &output]()->void
     {
         mo::Context _ctx;
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
     int* addr1 = fast_output.GetDataPtr();
     int* addr2 = slow_output.GetDataPtr();
 
-    auto obj = rcc::shared_ptr<multi_input>::Create();
+    auto obj = rcc::shared_ptr<multi_input>::create();
 
     bool thread1_done = false;
     bool thread2_done = false;

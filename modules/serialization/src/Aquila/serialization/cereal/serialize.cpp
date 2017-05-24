@@ -189,7 +189,7 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
                 {
                     mo::ParamTraits<rcc::weak_ptr<IDataStream>>::InputStorage_t data;
                     if(typed->getData(data)){
-                        obj->setDataStream(data.Get());
+                        obj->setDataStream(data.get());
                     }
                 }
             }

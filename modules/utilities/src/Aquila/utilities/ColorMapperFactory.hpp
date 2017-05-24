@@ -14,7 +14,7 @@ namespace aq
     public:
         // Give the name of a scheme as well as an alpha and beta value
         // each colormap is defined in the range 0,1.  Alpha will first be used to scale the range and then beta offsets
-        IColorMapper* Create(std::string color_mapping_scheme_, float alpha, float beta);
+        IColorMapper* create(std::string color_mapping_scheme_, float alpha, float beta);
         void Register(std::string colorMappingScheme, std::function<IColorMapper*(float, float)> creation_function_);
         void Load(std::string definition_file_xml);
         void Save(std::string definition_file_xml);
