@@ -60,9 +60,9 @@ BOOST_AUTO_TEST_CASE(synced_mem_to_json)
 {
     aq::SyncedMemory synced_mem(cv::Mat(320,240, CV_32FC3));
     
-    mo::TypedParameterPtr<aq::SyncedMemory> param;
-    param.SetName("Matrix");
-    param.UpdatePtr(&synced_mem);
+    mo::TParamPtr<aq::SyncedMemory> param;
+    param.setName("Matrix");
+    param.updatePtr(&synced_mem);
     auto func = mo::SerializationFactory::instance()->getJsonSerializationFunction(param.getTypeInfo());
     BOOST_REQUIRE(func);
     std::ofstream ofs("synced_memory_json.json");

@@ -22,7 +22,7 @@ void CSV_VariableSink::SerializeVariables(unsigned long long frame_number, mo::I
         std::stringstream ss;
         /*for(auto& var_name : _serialization_layout)
         {
-            auto param = manager->GetOutputParameter(var_name);
+            auto param = manager->getOutputParameter(var_name);
             if(param && Parameters::Persistence::Text::InterpreterRegistry::Exists(param->getTypeInfo()))
             {
                 ss << ", ";

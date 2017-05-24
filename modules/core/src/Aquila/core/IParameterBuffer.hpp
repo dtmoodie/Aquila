@@ -27,7 +27,7 @@ namespace aq
             }
             return false;
         }
-        template<typename T> bool setParameter(T& param, const std::string& name, int frameNumber)
+        template<typename T> bool setParam(T& param, const std::string& name, int frameNumber)
         {
             auto& parameter = getParameter(mo::TypeInfo(typeid(T)), name, frameNumber);
             parameter = param;

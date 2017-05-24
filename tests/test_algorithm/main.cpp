@@ -2,11 +2,11 @@
 #define BOOST_TEST_MAIN
 #include <Aquila/core/Algorithm.hpp>
 
-#include "MetaObject/Detail/MetaObjectMacros.hpp"
+#include "MetaObject/object/detail/MetaObjectMacros.hpp"
 #include "MetaObject/params/ParameterMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
-#include "MetaObject/Detail/IMetaObjectImpl.hpp"
+#include "MetaObject/object/detail/IMetaObjectImpl.hpp"
 #include "MetaObject/params/buffers/StreamBuffer.hpp"
 #include "MetaObject/params/buffers/BufferPolicy.hpp"
 #include "MetaObject/Detail/Allocator.hpp"
@@ -22,7 +22,7 @@ using namespace aq;
 class int_output: public Algorithm
 {
 public:
-    bool ProcessImpl()
+    bool processImpl()
     {
         ++value;
         return true;
@@ -35,7 +35,7 @@ public:
 class int_input: public Algorithm
 {
 public:
-    bool ProcessImpl()
+    bool processImpl()
     {
         if(input)
             value = *input;
@@ -51,9 +51,9 @@ public:
 class synced_input: public Algorithm
 {
 public:
-    bool ProcessImpl()
+    bool processImpl()
     {
-        BOOST_REQUIRE_EQUAL(timestamp, (*input_param.GetTimestamp()).value());
+        BOOST_REQUIRE_EQUAL(timestamp, (*input_param.getTimestamp()).value());
         return true;
     }
     MO_BEGIN(synced_input);
@@ -65,7 +65,7 @@ public:
 class multi_input: public Algorithm
 {
 public:
-    bool ProcessImpl()
+    bool processImpl()
     {
         BOOST_REQUIRE_EQUAL(*input1, *input2);
         return true;
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(test_counting_input)
     auto input_param = input->getInput<int>("input");
     BOOST_REQUIRE(output_param);
     BOOST_REQUIRE(input_param);
-    BOOST_REQUIRE(input_param->SetInput(output_param));
+    BOOST_REQUIRE(input_param->setInput(output_param));
     for(int i = 0; i < 100; ++i)
     {
         output->process();
@@ -119,14 +119,14 @@ BOOST_AUTO_TEST_CASE(test_counting_input)
 BOOST_AUTO_TEST_CASE(test_synced_input)
 {
     mo::TypedParameter<int> output;
-    output.UpdateData(10, 0);
+    output.updateData(10, 0);
     auto input = rcc::shared_ptr<int_input>::create();
-    input->input_param.SetInput(&output);
+    input->input_param.setInput(&output);
     input->setSyncInput("input");
 
     for(int i = 0; i < 100; ++i)
     {
-        output.UpdateData(i+ 1, i);
+        output.updateData(i+ 1, i);
         BOOST_REQUIRE(input->process());
         BOOST_REQUIRE_EQUAL(input->value, output.GetData((long long)i));
     }
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(test_threaded_input)
 
     for(int i = 0; i < 1000; ++i)
     {
-        output.UpdateData(i, i, &ctx);
+        output.updateData(i, i, &ctx);
         boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
     }
 
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
         slow_output.setContext(&_ctx);
         for(int i = 1; i < 1000; ++i)
         {
-            slow_output.UpdateData(i, i, &_ctx);
+            slow_output.updateData(i, i, &_ctx);
             boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
             if(boost::this_thread::interruption_requested())
                 break;
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
     boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
     for(int i = 1; i < 1000; ++i)
     {
-        fast_output.UpdateData(i, i, &ctx);
+        fast_output.updateData(i, i, &ctx);
         boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
     }
     while(thread2_done == false)

@@ -1,6 +1,6 @@
 #include "Aquila/types/SyncedMemory.hpp"
 //#include <Aquila/utilities/GpuMatAllocators.h>
-//#include <Aquila/utilities/CudaCallbacks.hpp>
+//#include <Aquila/utilities/cuda/CudaCallbacks.hpp>
 
 #include <MetaObject/logging/Log.hpp>
 #include <boost/lexical_cast.hpp>

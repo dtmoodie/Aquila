@@ -194,7 +194,7 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
                 }
             }
         }
-        obj->setParameterRoot(obj->getTreeName());
+        obj->setParamRoot(obj->getTreeName());
         for (auto& param : params)
         {
             if (param->checkFlags(mo::Input_e))

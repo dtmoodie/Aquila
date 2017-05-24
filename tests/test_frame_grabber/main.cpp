@@ -10,7 +10,7 @@
 #include "MetaObject/params/ParameterMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
-#include "MetaObject/Detail/MetaObjectMacros.hpp"
+#include "MetaObject/object/detail/MetaObjectMacros.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 
 #define BOOST_TEST_DYN_LINK
@@ -25,12 +25,12 @@ using namespace aq::Nodes;
 
 struct test_framegrabber: public IFrameGrabber
 {
-    bool ProcessImpl()
+    bool processImpl()
     {
         current.create(128,128, CV_8U);
         ++ts;
         current.setTo(ts);
-        current_frame_param.UpdateData(current.clone(), ts, _ctx);
+        current_frame_param.updateData(current.clone(), ts, _ctx);
         return true;
     }
     bool LoadFile(const std::string&)
@@ -68,11 +68,11 @@ struct img_node: public Node
         INPUT(SyncedMemory, input, nullptr)
     MO_END;
 
-    bool ProcessImpl()
+    bool processImpl()
     {
         BOOST_REQUIRE(input);
-        auto mat = input->getMat(Stream());
-        BOOST_REQUIRE_EQUAL(mat.at<uchar>(0), (*input_param.GetTimestamp()).value());
+        auto mat = input->getMat(stream());
+        BOOST_REQUIRE_EQUAL(mat.at<uchar>(0), (*input_param.getTimestamp()).value());
         return true;
     }
 };

@@ -281,7 +281,7 @@ bool NodeFactory::removeNode(const std::string& nodeName)
     return false;
 }
 
-std::string NodeFactory::GetNodeFile(const ObjectId& id)
+std::string NodeFactory::getNodeFile(const ObjectId& id)
 {
     auto constructors = mo::MetaObjectFactory::instance()->getConstructors();
     if (constructors.size() > id.m_ConstructorId)
@@ -301,7 +301,7 @@ void NodeFactory::RegisterNodeInfo(const char* nodeName, std::vector<char const*
     m_nodeInfoMap[nodeName] = nodeInfo;
 }
 
-Nodes::NodeInfo* NodeFactory::GetNodeInfo(std::string& nodeName)
+Nodes::NodeInfo* NodeFactory::getNodeInfo(std::string& nodeName)
 {
     auto constructor = mo::MetaObjectFactory::instance()->getConstructor(nodeName.c_str());
     if (constructor)

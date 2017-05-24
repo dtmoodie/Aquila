@@ -33,7 +33,7 @@ namespace aq
     }
 }
 
-template<class T> struct GetNodeCategoryHelper
+template<class T> struct getNodeCategoryHelper
 {
     DEFINE_HAS_STATIC_FUNCTION(HasNodeCategory, getNodeCategory, std::vector<std::string>(*)(void));
     template<class U>
@@ -122,7 +122,7 @@ namespace mo
     {
         std::vector<std::string> getNodeCategory() const
         {
-            return GetNodeCategoryHelper<Type>::get();
+            return getNodeCategoryHelper<Type>::get();
         }
 
         // List of nodes that need to be in the direct parental tree of this node, in required order

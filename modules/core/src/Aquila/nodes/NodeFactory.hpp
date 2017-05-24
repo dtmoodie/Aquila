@@ -25,7 +25,7 @@ namespace aq
 
         void RegisterNodeInfo(const char* nodeName, std::vector<char const*>& nodeInfo);
 
-        Nodes::NodeInfo* GetNodeInfo(std::string& nodeName);
+        Nodes::NodeInfo* getNodeInfo(std::string& nodeName);
 
         rcc::shared_ptr<Nodes::Node> addNode(const std::string& nodeName);
 
@@ -35,7 +35,7 @@ namespace aq
 
         void PrintNodeTree(std::string* ret = nullptr);
         void SaveTree(const std::string& fileName);
-        std::string GetNodeFile(const ObjectId& id);
+        std::string getNodeFile(const ObjectId& id);
 
         Nodes::Node* getNode(const ObjectId& id);
         Nodes::Node* getNode(const std::string& treeName);

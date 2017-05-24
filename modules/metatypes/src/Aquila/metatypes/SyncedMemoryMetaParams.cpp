@@ -30,165 +30,140 @@ INSTANTIATE_META_PARAM(std::vector<cv::Mat>);
 
 using namespace mo;
 using namespace aq;
-TInputParamPtr<SyncedMemory>::TInputParamPtr(const std::string& name,
-                                                             const SyncedMemory** userVar_, Context* ctx) :
-        userVar(userVar_),
-        ITInputParam<SyncedMemory>(name, ctx),
-        IParam(name, Input_e, {}, ctx),
-        ITParam<SyncedMemory>(name, Input_e, {}, ctx)
+namespace mo
 {
-}
+    typedef aq::SyncedMemory T;
 
-bool TInputParamPtr<SyncedMemory>::setInput(std::shared_ptr<IParam> param)
-{
-    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
-    if(ITInputParam<SyncedMemory>::setInput(param)){
-        if(userVar){
-            if(this->input)
-                *userVar = this->input->GetDataPtr();
-            if(this->shared_input)
-                *userVar = this->shared_input->GetDataPtr();
-        }
-        return true;
+    TInputParamPtr<aq::SyncedMemory>::TInputParamPtr(const std::string& name, Input_t* user_var_, Context* ctx) :
+        _user_var(user_var_),
+            ITInputParam<T>(name, ctx),
+            IParam(name, mo::Input_e)
+    {
     }
-    return false;
-}
 
-bool TInputParamPtr<SyncedMemory>::setInput(IParam* param)
-{
-    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
-    if(ITypedInputParameter<SyncedMemory>::SetInput(param))
-    {
-        if(userVar)
-        {
-            if(this->input)
-                *userVar = this->input->GetDataPtr();
-            if(this->shared_input)
-                *userVar = this->shared_input->GetDataPtr();
+
+    bool TInputParamPtr<T>::setInput(std::shared_ptr<IParam> param){
+        mo::Mutex_t::scoped_lock lock(IParam::mtx());
+        if(ITInputParam<T>::setInput(param)){
+            if(_user_var){
+                InputStorage_t data;
+                if(this->_input)
+                     if(this->_input->getData(data)){
+                         _current_data = data;
+                         *_user_var = &(*_current_data);
+                         return true;
+                     }
+                if(this->_shared_input)
+                    if(this->_shared_input->getData(data)){
+                        _current_data = data;
+                        *_user_var = &(*_current_data);
+                        return true;
+                    }
+            }
+            return true;
         }
-        return true;
+        return false;
     }
-    return false;
-}
 
-void TInputParamPtr<SyncedMemory>::setUserDataPtr(const SyncedMemory** user_var_)
-{
-    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
-    userVar = user_var_;
-}
-
-void TInputParamPtr<SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IParam* param, Context* ctx, OptionalTime_t ts, size_t fn, ICoordinateSystem* cs, UpdateFlags fg)
-{
-    (void)param;
-    if(this->input)
-    {
-        boost::recursive_mutex::scoped_lock lock(this->input->mtx());
-        //this->Commit(this->input->GetTimestamp(), ctx, this->input->GetFrameNumber(), this->input->GetCoordinateSystem());
-        this->_update_signal(ctx, this);
-        if((ctx && this->_ctx && ctx->thread_id == this->_ctx->thread_id) || (ctx == nullptr &&  this->_ctx == nullptr))
-        {
-            if(userVar)
-                *userVar = this->input->GetDataPtr();
+    bool TInputParamPtr<T>::setInput(IParam* param){
+        mo::Mutex_t::scoped_lock lock(IParam::mtx());
+        if(ITInputParam<T>::setInput(param)){
+            if(_user_var){
+                InputStorage_t data;
+                if(ITInputParam<T>::_input)
+                    if(ITInputParam<T>::_input->getData(data)){
+                        _current_data = data;
+                        *_user_var = &(*_current_data);
+                    }
+                if(ITInputParam<T>::_shared_input)
+                    if(ITInputParam<T>::_shared_input->getData(data)){
+                        _current_data = data;
+                        *_user_var = &(*_current_data);
+                    }
+            }
+            return true;
         }
-    }else if(this->shared_input)
-    {
-        boost::recursive_mutex::scoped_lock lock(this->shared_input->mtx());
-        //this->Commit(this->shared_input->GetTimestamp(), ctx, this->shared_input->GetFrameNumber(), this->shared_input->GetCoordinateSystem());
-        this->_update_signal(ctx, this);
-        if((ctx && this->_ctx && ctx->thread_id == this->_ctx->thread_id) || ((ctx == nullptr) &&  (this->_ctx == nullptr)))
-        {
-            if(userVar)
-                *userVar = this->shared_input->GetDataPtr();
+        return false;
+    }
+
+
+    void TInputParamPtr<T>::setUserDataPtr(Input_t* user_var_){
+        mo::Mutex_t::scoped_lock lock(IParam::mtx());
+        _user_var = user_var_;
+    }
+
+    void TInputParamPtr<T>::onInputUpdate(ConstStorageRef_t data, IParam* param, Context* ctx, OptionalTime_t ts, size_t fn, ICoordinateSystem* cs, UpdateFlags fg){
+        if(fg == mo::BufferUpdated_e && param->checkFlags(mo::Buffer_e)){
+            ITParam<T>::_typed_update_signal(data, this, ctx, ts, fn, cs, mo::BufferUpdated_e);
+            IParam::emitUpdate(ts, ctx, fn, cs, fg);
+            return;
+        }
+        if(ctx && this->_ctx && ctx->thread_id == this->_ctx->thread_id){
+            _current_data = data;
+            this->_ts = ts;
+            this->_fn = fn;
+            if(_user_var){
+                *_user_var = &(*_current_data);
+            }
         }
     }
-}
 
-
-bool TInputParamPtr<SyncedMemory>::getInput(boost::optional<mo::Time_t> ts, size_t* fn_)
-{
-    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
-    if(userVar)
-    {
-        if(this->shared_input)
-        {
+    bool TInputParamPtr<T>::getInput(OptionalTime_t ts, size_t* fn_){
+        mo::Mutex_t::scoped_lock lock(IParam::mtx());
+        if(_user_var){
             size_t fn;
-            auto ptr = this->shared_input->GetDataPtr(ts, this->_ctx, &fn);
-            if(ptr)
+            InputStorage_t data;
+            if(ITInputParam<T>::_shared_input){
+                if(!ITInputParam<T>::_shared_input->getData(data, ts, this->_ctx, &fn)){
+                    return false;
+                }
+            }
+            if(ITInputParam<T>::_input)
             {
-                this->current = *ptr;
-                *userVar = &current;
-                if (!current.empty())
-                {
+                if (!ITInputParam<T>::_input->getData(data, ts, this->_ctx, &fn)) {
+                    return false;
+                }
+            }
+            _current_data = data;
+            *_user_var = &(*_current_data);
+            if (fn_)
+                *fn_ = fn;
+            return true;
+        }
+        return false;
+    }
+
+
+    bool TInputParamPtr<T>::getInput(size_t fn, OptionalTime_t* ts_){
+        mo::Mutex_t::scoped_lock lock(IParam::mtx());
+        OptionalTime_t ts;
+        if(_user_var){
+            if(ITInputParam<T>::_shared_input){
+                InputStorage_t data;
+                if(ITInputParam<T>::_shared_input->getData(data, fn, this->_ctx, &ts)){
+                    _current_data = data;
+
+                    *_user_var = &(*_current_data);
+                    if (ts_)
+                        *ts_ = ts;
                     this->_ts = ts;
-                    if (fn_)
-                        *fn_ = fn;
+                    this->_fn = fn;
+                    return true;
+                }
+            }
+            if(ITInputParam<T>::_input){
+                InputStorage_t data;
+                if(this->_input->getData(data, fn, this->_ctx, &ts)){
+                    _current_data = data;
+                    *_user_var = &(*_current_data);
+                    if (ts_)
+                        *ts_ = ts;
+                    this->_ts = ts;
                     this->_fn = fn;
                     return true;
                 }
             }
         }
-        if(this->input)
-        {
-            size_t fn;
-            auto ptr = this->input->GetDataPtr(ts, this->_ctx, &fn);
-            if(ptr)
-            {
-                this->current = *ptr;
-                *userVar = &current;
-                if (!current.empty())
-                {
-                    this->_ts = ts;
-                    if (fn_)
-                        *fn_ = fn;
-                    this->_fn = fn;
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-bool TInputParamPtr<SyncedMemory>::getInput(size_t fn, boost::optional<mo::Time_t>* ts_)
-{
-    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
-    boost::optional<mo::Time_t> ts;
-    if(userVar)
-    {
-        if(this->shared_input)
-        {
-            *userVar = this->shared_input->GetDataPtr(fn, this->_ctx, &ts);
-            if(*userVar != nullptr && !(*userVar)->empty())
-            {
-                if(ts_)
-                    *ts_ = ts;
-                this->_ts = ts;
-                this->_fn = fn;
-                return true;
-            }
-        }
-        if(this->input)
-        {
-            *userVar = this->input->GetDataPtr(fn, this->_ctx, &ts);
-            if(*userVar != nullptr && !(*userVar)->empty())
-            {
-                if(ts_)
-                    *ts_ = ts;
-                this->_ts = ts;
-                this->_fn = fn;
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-void TInputParamPtr<SyncedMemory>::onInputDelete(IParam const* param)
-{
-    boost::recursive_mutex::scoped_lock lock(IParam::mtx());
-    if(param == this->input || param == this->shared_input.get())
-    {
-        this->shared_input.reset();
-        this->input = nullptr;
+        return false;
     }
 }

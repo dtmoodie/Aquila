@@ -33,7 +33,7 @@
 #include "Aquila/core/detail/Export.hpp"
 #include "Aquila/core/Algorithm.hpp"
 //#include "Aquila/core/IDataStream.hpp"
-//#include "Aquila/utilities/CudaUtils.hpp"
+//#include "Aquila/utilities/cuda/CudaUtils.hpp"
 //#include <Aquila/IO/serialize.hpp>
 
 // RCC includes

@@ -86,7 +86,7 @@ namespace mo
 
         std::vector<std::string> getNodeCategory() const
         {
-            return GetNodeCategoryHelper<Type>::get();
+            return getNodeCategoryHelper<Type>::get();
         }
 
         // List of nodes that need to be in the direct parental tree of this node, in required order

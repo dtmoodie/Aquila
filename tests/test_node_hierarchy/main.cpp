@@ -78,14 +78,14 @@ struct node_a: public Nodes::Node
         OUTPUT(int, out_a, 0)
     MO_END;
 
-    bool ProcessImpl()
+    bool processImpl()
     {
         if(timestamp_mode == true)
         {
-            out_a_param.UpdateData(iterations, mo::Time_t(mo::ms * iterations));
+            out_a_param.updateData(iterations, mo::Time_t(mo::ms * iterations));
         }else
         {
-            out_a_param.UpdateData(iterations, mo::tag::_frame_number = iterations);
+            out_a_param.updateData(iterations, mo::tag::_frame_number = iterations);
         }
 
         _modified = true;
@@ -101,14 +101,14 @@ struct node_b: public Nodes::Node
         OUTPUT(int, out_b, 0)
     MO_END;
 
-    bool ProcessImpl()
+    bool processImpl()
     {
         if(timestamp_mode == true)
         {
-            out_b_param.UpdateData(iterations, mo::Time_t(mo::ms * iterations));
+            out_b_param.updateData(iterations, mo::Time_t(mo::ms * iterations));
         }else
         {
-            out_b_param.UpdateData(iterations, mo::tag::_frame_number = iterations);
+            out_b_param.updateData(iterations, mo::tag::_frame_number = iterations);
         }
 
         _modified = true;
@@ -126,7 +126,7 @@ struct node_c: public Nodes::Node
         INPUT(int, in_b, nullptr)
     MO_END;
 
-    bool ProcessImpl()
+    bool processImpl()
     {
         BOOST_REQUIRE_EQUAL(*in_a, *in_b);
 
@@ -149,16 +149,16 @@ struct node_d : public Nodes::Node
         INPUT(int, in_d, nullptr)
         OUTPUT(int, out_d, 0)
     MO_END;
-    bool ProcessImpl()
+    bool processImpl()
     {
         if(timestamp_mode == true)
         {
-            BOOST_REQUIRE_EQUAL(mo::Time_t(*in_d * mo::ms), *in_d_param.GetTimestamp());
-            out_d_param.UpdateData(*in_d, *in_d_param.GetTimestamp());
+            BOOST_REQUIRE_EQUAL(mo::Time_t(*in_d * mo::ms), *in_d_param.getTimestamp());
+            out_d_param.updateData(*in_d, *in_d_param.getTimestamp());
         }else
         {
             BOOST_REQUIRE_EQUAL(*in_d, in_d_param.GetFrameNumber());
-            out_d_param.UpdateData(*in_d, in_d_param.GetFrameNumber());
+            out_d_param.updateData(*in_d, in_d_param.GetFrameNumber());
         }
 
         ++iterations;
@@ -208,7 +208,7 @@ struct GlobalFixture
         g_allocator = mo::Allocator::getThreadSafeAllocator();
         cv::cuda::GpuMat::setDefaultAllocator(g_allocator);
         cv::Mat::setDefaultAllocator(g_allocator);
-        g_allocator->SetName("Global Allocator");
+        g_allocator->setName("Global Allocator");
         mo::GpuThreadAllocatorSetter<cv::cuda::GpuMat>::Set(g_allocator);
         mo::CpuThreadAllocatorSetter<cv::Mat>::Set(g_allocator);
         //boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::trace);
@@ -382,14 +382,14 @@ struct node_e: public Nodes::Node
     MO_DERIVE(node_e, Nodes::Node)
         OUTPUT(int, out, 0)
     MO_END;
-    bool ProcessImpl()
+    bool processImpl()
     {
         if(timestamp_mode)
         {
-            out_param.UpdateData(iterations*2, mo::Time_t(mo::ms * iterations*2));
+            out_param.updateData(iterations*2, mo::Time_t(mo::ms * iterations*2));
         }else
         {
-            out_param.UpdateData(iterations* 2, mo::tag::_frame_number = iterations*2);
+            out_param.updateData(iterations* 2, mo::tag::_frame_number = iterations*2);
         }
         _modified = true;
         ++iterations;
@@ -638,7 +638,7 @@ struct mt_a: public aq::Nodes::Node
         APPEND_FLAGS(out_a, mo::Source_e)
     MO_END;
 
-    bool ProcessImpl()
+    bool processImpl()
     {
         producer_ready = true;
         if(!consumer_ready)
@@ -647,10 +647,10 @@ struct mt_a: public aq::Nodes::Node
         }
         if(timestamp_mode == true)
         {
-            out_a_param.UpdateData(iterations, mo::Time_t(mo::ms * iterations));
+            out_a_param.updateData(iterations, mo::Time_t(mo::ms * iterations));
         }else
         {
-            out_a_param.UpdateData(iterations, mo::tag::_frame_number = iterations);
+            out_a_param.updateData(iterations, mo::tag::_frame_number = iterations);
         }
         boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
         _modified = true;

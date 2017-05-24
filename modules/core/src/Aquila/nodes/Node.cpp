@@ -586,7 +586,7 @@ std::string Node::getTreeName()
     if(name.size() == 0)
     {
         name = std::string(GetTypeName()) + boost::lexical_cast<std::string>(_unique_id);
-        //name_param.Commit();
+        //name_param.emitUpdate();
     }
     return name;
 }
@@ -598,7 +598,7 @@ std::string Node::getTreeName() const
 void Node::setTreeName(const std::string& name)
 {
     this->name = name;
-    //name_param.Commit();
+    //name_param.emitUpdate();
     setParamRoot(name);
 }
 

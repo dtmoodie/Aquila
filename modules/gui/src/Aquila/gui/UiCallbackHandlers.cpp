@@ -12,7 +12,7 @@
 using namespace aq;
 WindowCallbackHandler::EventLoop::EventLoop()
 {
-    //size_t gui_thread_id = mo::ThreadRegistry::Instance()->GetThread(mo::ThreadRegistry::GUI);
+    //size_t gui_thread_id = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
 
     //mo::ThreadSpecificQueue::push(, gui_thread_id, this)
 }

@@ -10,7 +10,7 @@
 #include "MetaObject/params/ParameterMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
-#include "MetaObject/Detail/MetaObjectMacros.hpp"
+#include "MetaObject/object/detail/MetaObjectMacros.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 
 
@@ -25,12 +25,12 @@ using namespace aq::Nodes;
 
 struct test_node: public Node
 {
-    static std::vector<std::string> GetNodeCategory()
+    static std::vector<std::string> getNodeCategory()
     {
         return {"test1", "test2"};
     }
 
-    bool ProcessImpl()
+    bool processImpl()
     {
         return true;
     }
@@ -51,10 +51,10 @@ struct test_output_node : public Node
 	MO_DERIVE(test_output_node, Node)
 		OUTPUT(int, value, 0)
 	MO_END;
-	bool ProcessImpl()
+	bool processImpl()
 	{
 		++timestamp;
-        value_param.UpdateData(timestamp * 10, mo::ms * timestamp, _ctx);
+        value_param.updateData(timestamp * 10, mo::ms * timestamp, _ctx);
 		++process_count;
 		_modified = true;
 		return true;
@@ -69,9 +69,9 @@ struct test_input_node : public Node
 	MO_DERIVE(test_input_node, Node)
 		INPUT(int, value, nullptr)
 	MO_END;
-	bool ProcessImpl()
+	bool processImpl()
 	{
-        auto ts = (*value_param.GetTimestamp()).value();
+        auto ts = (*value_param.getTimestamp()).value();
         BOOST_REQUIRE_EQUAL((*value), ts * 10);
 		++process_count;
 		return true;
@@ -85,11 +85,11 @@ struct test_multi_input_node : public Node
 		INPUT(int, value1, nullptr)
 		INPUT(int, value2, nullptr)
 	MO_END;
-	bool ProcessImpl()
+	bool processImpl()
 	{
 		BOOST_REQUIRE_EQUAL((*value1), (*value2));
-        BOOST_REQUIRE_EQUAL((*value1) * 10, (*value1_param.GetTimestamp()).value());
-        BOOST_REQUIRE_EQUAL(value1_param.GetTimestamp(), value2_param.GetTimestamp());
+        BOOST_REQUIRE_EQUAL((*value1) * 10, (*value1_param.getTimestamp()).value());
+        BOOST_REQUIRE_EQUAL(value1_param.getTimestamp(), value2_param.getTimestamp());
 		return true;
 	}
 };
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(test_node_reflection)
     auto info = mo::MetaObjectFactory::instance()->GetObjectInfo("test_node");
     auto node_info = dynamic_cast<NodeInfo*>(info);
     BOOST_REQUIRE(node_info);
-    BOOST_REQUIRE_EQUAL(node_info->GetNodeCategory().size(), 2);
+    BOOST_REQUIRE_EQUAL(node_info->getNodeCategory().size(), 2);
     BOOST_REQUIRE_EQUAL(node_info->GetParameterInfo().size(), 1);
     BOOST_REQUIRE_EQUAL(node_info->GetSignalInfo().size(), 2);
     BOOST_REQUIRE_EQUAL(node_info->GetSlotInfo().size(), 2);

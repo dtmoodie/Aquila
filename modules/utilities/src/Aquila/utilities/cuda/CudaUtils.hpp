@@ -21,7 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <queue>
 #include <boost/thread.hpp>
 #ifndef __CUDA_ARCH__
-#include <MetaObject/Logging/Log.hpp>
+#include <MetaObject/logging/Log.hpp>
 #endif
 namespace aq
 {
@@ -230,7 +230,7 @@ template<typename Data>
             return false;
         }
     };
-    
+
     template<typename...> struct Buffer;
 
     template<typename T>
@@ -391,7 +391,7 @@ template<typename Data>
                 LOG(warning) << "Buffer not ready, increasing size of buffer pool";
 #endif
                 resize(buffer.size() + 1);
-            }            
+            }
             return &buffer[itr];
         }
         Buffer<T, P1>* waitBack()
