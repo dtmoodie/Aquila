@@ -315,9 +315,9 @@ bool Node::process()
 
     for(rcc::shared_ptr<Node>& child : _children)
     {
-        if(child->_ctx && this->_ctx)
+        if(child->_ctx.get() && this->_ctx.get())
         {
-            if(child->_ctx->thread_id == this->_ctx->thread_id)
+            if(child->_ctx.get()->thread_id == this->_ctx.get()->thread_id)
             {
                 child->process();
             }
@@ -341,7 +341,7 @@ Node::Ptr Node::addChild(Node* child)
 
 Node::Ptr Node::addChild(Node::Ptr child)
 {
-    if(_ctx && mo::getThisThread() != _ctx->thread_id)
+    if(_ctx.get() && mo::getThisThread() != _ctx.get()->thread_id)
     {
         std::future<Ptr> result;
         std::promise<Ptr> promise;
@@ -350,7 +350,7 @@ Node::Ptr Node::addChild(Node::Ptr child)
         [this, &promise, child]()
         {
             promise.set_value(this->addChild(child));
-        }), _ctx->thread_id, this);
+        }), _ctx.get()->thread_id, this);
         result = promise.get_future();
         result.wait();
         return result.get();
@@ -370,7 +370,7 @@ Node::Ptr Node::addChild(Node::Ptr child)
     _children.push_back(child);
     child->setDataStream(getDataStream());
     child->addParent(this);
-    child->setContext(this->_ctx, false);
+    child->setContext(this->_ctx.get(), false);
     std::string node_name = child->GetTypeName();
     child->setUniqueId(count);
     child->setParamRoot(child->getTreeName());

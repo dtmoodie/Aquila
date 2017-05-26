@@ -8,9 +8,9 @@
 #include <memory>
 #include <map>
 
-class ISingleton;
-template<class T> class Singleton;
-template<class T> class IObjectSingleton;
+struct ISingleton;
+template<class T> struct Singleton;
+template<class T> struct IObjectSingleton;
 
 namespace aq
 {

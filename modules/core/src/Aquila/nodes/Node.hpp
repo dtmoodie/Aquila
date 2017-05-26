@@ -73,8 +73,8 @@ namespace Nodes{
 class IDataStream;
 class DataStream;
 class NodeFactory;
-bool DeSerialize(cereal::JSONInputArchive& ar, aq::Nodes::Node* obj);
-bool Serialize(cereal::JSONOutputArchive& ar, const aq::Nodes::Node* obj);
+AQUILA_EXPORTS bool DeSerialize(cereal::JSONInputArchive& ar, aq::Nodes::Node* obj);
+AQUILA_EXPORTS bool Serialize(cereal::JSONOutputArchive& ar, const aq::Nodes::Node* obj);
 namespace Nodes{
 
     struct NodeInfo;
@@ -135,8 +135,8 @@ namespace Nodes{
         virtual void                    postSerializeInit();
 
         virtual void                    Serialize(ISimpleSerializer *pSerializer);
-        inline cv::cuda::Stream&        stream(){ CV_Assert(_ctx); return _ctx->getStream();}
-        inline cudaStream_t             cudaStream(){CV_Assert(_ctx); return _ctx->getCudaStream();}
+        inline cv::cuda::Stream&        stream(){ CV_Assert(_ctx.get()); return _ctx.get()->getStream();}
+        inline cudaStream_t             cudaStream(){CV_Assert(_ctx.get()); return _ctx.get()->getCudaStream();}
 
         InputState                      checkInputs();
 

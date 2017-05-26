@@ -10,7 +10,7 @@
 #include "MetaObject/core/detail/MemoryBlock.hpp"
 namespace aq
 {
-    cv::cuda::GpuMat::Allocator* GetDefaultBlockMemoryAllocator();
+    /*cv::cuda::GpuMat::Allocator* GetDefaultBlockMemoryAllocator();
     cv::cuda::GpuMat::Allocator* GetDefaultDelayedDeallocator();
     cv::cuda::GpuMat::Allocator* CreateBlockMemoryAllocator();
 
@@ -90,8 +90,8 @@ namespace aq
     class AQUILA_EXPORTS CombinedAllocator : public DelayedDeallocator, public BlockMemoryAllocator
     {
     public:
-        /* Initial memory pool of 10MB */
-        /* Anything over 1MB is allocated by DelayedDeallocator */
+        // Initial memory pool of 10MB
+        // Anything over 1MB is allocated by DelayedDeallocator
         static CombinedAllocator* Instance(size_t initial_pool_size = 10*1024*1024,
                                            size_t threshold_level = 1*1024*1024);
         CombinedAllocator(size_t initial_pool_size = 10*1024*1024 ,
@@ -104,5 +104,5 @@ namespace aq
         size_t initialBlockSize_;
     protected:
         std::list<std::shared_ptr<mo::GpuMemoryBlock>> blocks;
-    };
+    };*/
 }

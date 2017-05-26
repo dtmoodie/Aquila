@@ -54,7 +54,7 @@ struct test_output_node : public Node
 	bool processImpl()
 	{
 		++timestamp;
-        value_param.updateData(timestamp * 10, mo::ms * timestamp, _ctx);
+        value_param.updateData(timestamp * 10, mo::ms * timestamp, _ctx.get());
 		++process_count;
 		_modified = true;
 		return true;

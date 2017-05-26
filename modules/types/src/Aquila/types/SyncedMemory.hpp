@@ -81,13 +81,13 @@ namespace aq
         struct impl
         {
             impl():
-                _ctx(nullptr)
+                _ctx.get()(nullptr)
             {
             }
             std::vector<cv::Mat> h_data;
             std::vector<cv::cuda::GpuMat> d_data;
             std::vector<SyncedMemory::SYNC_STATE> sync_flags;
-            mo::Context* _ctx;
+            mo::Context* _ctx.get();
         };
 
         std::shared_ptr<impl> _pimpl;

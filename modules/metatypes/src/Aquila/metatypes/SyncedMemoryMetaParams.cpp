@@ -98,7 +98,7 @@ namespace mo
             IParam::emitUpdate(ts, ctx, fn, cs, fg);
             return;
         }
-        if(ctx && this->_ctx && ctx->thread_id == this->_ctx->thread_id){
+        if(ctx && this->_ctx.get() && ctx->thread_id == this->_ctx.get()->thread_id){
             _current_data = data;
             this->_ts = ts;
             this->_fn = fn;
@@ -114,13 +114,13 @@ namespace mo
             size_t fn;
             InputStorage_t data;
             if(ITInputParam<T>::_shared_input){
-                if(!ITInputParam<T>::_shared_input->getData(data, ts, this->_ctx, &fn)){
+                if(!ITInputParam<T>::_shared_input->getData(data, ts, this->_ctx.get(), &fn)){
                     return false;
                 }
             }
             if(ITInputParam<T>::_input)
             {
-                if (!ITInputParam<T>::_input->getData(data, ts, this->_ctx, &fn)) {
+                if (!ITInputParam<T>::_input->getData(data, ts, this->_ctx.get(), &fn)) {
                     return false;
                 }
             }
@@ -140,7 +140,7 @@ namespace mo
         if(_user_var){
             if(ITInputParam<T>::_shared_input){
                 InputStorage_t data;
-                if(ITInputParam<T>::_shared_input->getData(data, fn, this->_ctx, &ts)){
+                if(ITInputParam<T>::_shared_input->getData(data, fn, this->_ctx.get(), &ts)){
                     _current_data = data;
 
                     *_user_var = &(*_current_data);
@@ -153,7 +153,7 @@ namespace mo
             }
             if(ITInputParam<T>::_input){
                 InputStorage_t data;
-                if(this->_input->getData(data, fn, this->_ctx, &ts)){
+                if(this->_input->getData(data, fn, this->_ctx.get(), &ts)){
                     _current_data = data;
                     *_user_var = &(*_current_data);
                     if (ts_)

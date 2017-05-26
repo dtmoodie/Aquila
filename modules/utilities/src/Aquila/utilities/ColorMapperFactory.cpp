@@ -8,7 +8,7 @@
 #include <cereal/archives/xml.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/tuple.hpp>
-#include <MetaObject/params/IO/CerealPolicy.hpp>
+#include <MetaObject/serialization/CerealPolicy.hpp>
 #include <MetaObject/params/IO/TextPolicy.hpp>
 #endif
 

@@ -328,7 +328,7 @@ void  Algorithm::setContext(mo::Context* ctx, bool overwrite){
 
 void Algorithm::postSerializeInit(){
     for(auto& child : _algorithm_components){
-        child->setContext(this->_ctx);
+        child->setContext(this->_ctx.get());
         child->postSerializeInit();
     }
 }

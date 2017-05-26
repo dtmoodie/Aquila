@@ -3,13 +3,13 @@
 #include <Aquila/core/Algorithm.hpp>
 
 #include "MetaObject/object/detail/MetaObjectMacros.hpp"
-#include "MetaObject/params/ParameterMacros.hpp"
+#include "MetaObject/params/ParamMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/object/detail/IMetaObjectImpl.hpp"
 #include "MetaObject/params/buffers/StreamBuffer.hpp"
 #include "MetaObject/params/buffers/BufferPolicy.hpp"
-#include "MetaObject/Detail/Allocator.hpp"
+#include "MetaObject/core/detail/Allocator.hpp"
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaAlgorithm"
 
@@ -140,8 +140,8 @@ BOOST_AUTO_TEST_CASE(test_threaded_input)
     auto obj = rcc::shared_ptr<int_input>::create();
     boost::thread thread([&obj, &output]()->void
     {
-        mo::Context _ctx;
-        obj->setContext(&_ctx);
+        mo::Context _ctx.get();
+        obj->setContext(&_ctx.get());
         BOOST_REQUIRE(obj->connectInput("input", nullptr, &output));
         int success_count = 0;
         while(success_count < 1000)
@@ -166,11 +166,13 @@ BOOST_AUTO_TEST_CASE(test_threaded_input)
 
 BOOST_AUTO_TEST_CASE(test_desynced_nput)
 {
-    mo::Context ctx;
-    mo::TypedParameter<int> fast_output("test", 0, mo::Control_e, 0, &ctx);
-    mo::TypedParameter<int> slow_output("test2", 0, mo::Control_e, 0, &ctx);
-    int* addr1 = fast_output.GetDataPtr();
-    int* addr2 = slow_output.GetDataPtr();
+    auto ctx = mo::Context::create();
+    mo::TParam<int> fast_output("test", 0, mo::Control_e, 0, ctx.get());
+    mo::TParam<int> slow_output("test2", 0, mo::Control_e, 0, ctx.get());
+    int addr1, addr2;
+    fast_output.getData(addr1);
+    slow_output.getData(addr2);
+    
 
     auto obj = rcc::shared_ptr<multi_input>::create();
 
@@ -179,8 +181,9 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
 
     boost::thread thread([&obj, &fast_output, &slow_output, &thread1_done, addr1, addr2]()->void
     {
-        mo::Context _ctx;
-        obj->setContext(&_ctx);
+        //mo::Context _ctx.get();
+        auto _ctx.get() = mo::Context::create();
+        obj->setContext(&_ctx.get());
         BOOST_REQUIRE(obj->connectInput("input1", nullptr, &fast_output));
         BOOST_REQUIRE(obj->connectInput("input2", nullptr, &slow_output));
 
@@ -201,11 +204,11 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
     boost::thread slow_thread(
         [&slow_output, &thread2_done]()->void
     {
-        mo::Context _ctx;
-        slow_output.setContext(&_ctx);
+        mo::Context _ctx.get();
+        slow_output.setContext(&_ctx.get());
         for(int i = 1; i < 1000; ++i)
         {
-            slow_output.updateData(i, i, &_ctx);
+            slow_output.updateData(i, i, &_ctx.get());
             boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
             if(boost::this_thread::interruption_requested())
                 break;

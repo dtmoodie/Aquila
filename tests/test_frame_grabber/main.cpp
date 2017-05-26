@@ -30,7 +30,7 @@ struct test_framegrabber: public IFrameGrabber
         current.create(128,128, CV_8U);
         ++ts;
         current.setTo(ts);
-        current_frame_param.updateData(current.clone(), ts, _ctx);
+        current_frame_param.updateData(current.clone(), ts, _ctx.get());
         return true;
     }
     bool LoadFile(const std::string&)

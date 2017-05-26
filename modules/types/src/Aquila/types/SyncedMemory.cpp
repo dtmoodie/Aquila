@@ -427,12 +427,12 @@ SyncedMemory::SYNC_STATE SyncedMemory::getSyncState(int index) const
 }
 mo::Context* SyncedMemory::getContext() const
 {
-    return _pimpl->_ctx;
+    return _pimpl->_ctx.get();
 }
 
 void SyncedMemory::setContext(mo::Context* ctx)
 {
-    _pimpl->_ctx = ctx;
+    _pimpl->_ctx.get() = ctx;
 }
 
 

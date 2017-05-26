@@ -99,7 +99,7 @@ DataStream::DataStream()
     _processing_thread = mo::ThreadPool::Instance()->RequestThread();
     _processing_thread.setInnerLoop(getSlot_process<int(void)>());
     _processing_thread.setThreadName("DataStreamThread");
-    this->_ctx = this->_processing_thread.getContext();
+    this->_ctx.get() = this->_processing_thread.getContext();
 }
 
 void DataStream::node_updated(Nodes::Node* node)

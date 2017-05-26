@@ -10,7 +10,7 @@
 using namespace mo;
 namespace aq
 {
-    PitchedAllocator::PitchedAllocator()
+    /*PitchedAllocator::PitchedAllocator()
     {
         textureAlignment = cv::cuda::DeviceInfo(cv::cuda::getDevice()).textureAlignment();
         memoryUsage = 0;
@@ -325,6 +325,6 @@ namespace aq
         if(!BlockMemoryAllocator::free_impl(mat))
             DelayedDeallocator::free(mat);
 
-    }
+    }*/
 }
 
