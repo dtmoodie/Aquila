@@ -11,22 +11,23 @@
   #define TEMPLATE_EXTERN 
 #endif
 
-#ifdef _MSC_VER
+// TODO figure out new comment(lib for modularized aquila and metaobject.
+/*#ifdef _MSC_VER
   #ifndef Aquila_EXPORTS
     #ifdef _DEBUG
-      #pragma comment(lib, "Aquilad.lib")
+      #pragma comment(lib, "aquilad.lib")
     #else
       #pragma comment(lib, "Aquila.lib")
     #endif
   #endif
-#endif
+#endif*/
 
 #ifndef _MSC_VER
   #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
   #ifdef NDEBUG
-    RUNTIME_COMPILER_LINKLIBRARY("-lAquila")
+    //RUNTIME_COMPILER_LINKLIBRARY("-lAquila")
   #else
-    RUNTIME_COMPILER_LINKLIBRARY("-lAquilad")
+    //RUNTIME_COMPILER_LINKLIBRARY("-lAquilad")
   #endif
 #endif
 

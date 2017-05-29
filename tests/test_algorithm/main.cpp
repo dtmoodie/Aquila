@@ -118,30 +118,31 @@ BOOST_AUTO_TEST_CASE(test_counting_input)
 
 BOOST_AUTO_TEST_CASE(test_synced_input)
 {
-    mo::TypedParameter<int> output;
+    mo::TParam<int> output;
     output.updateData(10, 0);
     auto input = rcc::shared_ptr<int_input>::create();
     input->input_param.setInput(&output);
     input->setSyncInput("input");
-
+    int data;
     for(int i = 0; i < 100; ++i)
     {
         output.updateData(i+ 1, i);
         BOOST_REQUIRE(input->process());
-        BOOST_REQUIRE_EQUAL(input->value, output.GetData((long long)i));
+        BOOST_REQUIRE(output.getData(data, (long long)i));
+        BOOST_REQUIRE_EQUAL(input->value, data);
     }
 }
 
 BOOST_AUTO_TEST_CASE(test_threaded_input)
 {
-    mo::Context ctx;
-    mo::TypedParameter<int> output("test", 0, mo::Control_e, 0, &ctx);
+    auto ctx = mo::Context::create();
+    mo::TParam<int> output("test", 0, mo::Control_e, 0, &ctx);
 
     auto obj = rcc::shared_ptr<int_input>::create();
     boost::thread thread([&obj, &output]()->void
     {
-        mo::Context _ctx.get();
-        obj->setContext(&_ctx.get());
+        auto _ctx = mo::Context::create();
+        obj->setContext(_ctx);
         BOOST_REQUIRE(obj->connectInput("input", nullptr, &output));
         int success_count = 0;
         while(success_count < 1000)
@@ -182,7 +183,7 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
     boost::thread thread([&obj, &fast_output, &slow_output, &thread1_done, addr1, addr2]()->void
     {
         //mo::Context _ctx.get();
-        auto _ctx.get() = mo::Context::create();
+        auto _ctx = mo::Context::create();
         obj->setContext(&_ctx.get());
         BOOST_REQUIRE(obj->connectInput("input1", nullptr, &fast_output));
         BOOST_REQUIRE(obj->connectInput("input2", nullptr, &slow_output));
@@ -204,11 +205,11 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
     boost::thread slow_thread(
         [&slow_output, &thread2_done]()->void
     {
-        mo::Context _ctx.get();
+        auto _ctx = mo::Context::create();
         slow_output.setContext(&_ctx.get());
         for(int i = 1; i < 1000; ++i)
         {
-            slow_output.updateData(i, i, &_ctx.get());
+            slow_output.updateData(i, i, _ctx.get());
             boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
             if(boost::this_thread::interruption_requested())
                 break;

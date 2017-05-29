@@ -420,19 +420,17 @@ int SyncedMemory::getDim(int dim) const
         return _pimpl->d_data[0].channels();
     return 0;
 }
-SyncedMemory::SYNC_STATE SyncedMemory::getSyncState(int index) const
-{
+SyncedMemory::SYNC_STATE SyncedMemory::getSyncState(int index) const{
     CV_Assert(index < _pimpl->sync_flags.size() && index >= 0);
     return _pimpl->sync_flags[index];
 }
-mo::Context* SyncedMemory::getContext() const
-{
-    return _pimpl->_ctx.get();
+
+mo::Context* SyncedMemory::getContext() const{
+    return _pimpl->_ctx;
 }
 
-void SyncedMemory::setContext(mo::Context* ctx)
-{
-    _pimpl->_ctx.get() = ctx;
+void SyncedMemory::setContext(mo::Context* ctx){
+    _pimpl->_ctx = ctx;
 }
 
 

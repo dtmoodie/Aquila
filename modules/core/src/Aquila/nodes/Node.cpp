@@ -5,7 +5,7 @@
 #include "Aquila/core/IDataStream.hpp"
 #include <Aquila/rcc/external_includes/cv_videoio.hpp>
 #include <Aquila/rcc/SystemTable.hpp>
-#include <Aquila/utilities/cuda/GpuMatAllocators.h>
+//#include <Aquila/utilities/cuda/GpuMatAllocators.h>
 #include "Aquila/core/detail/AlgorithmImpl.hpp"
 #include <Aquila/serialization/cereal/memory.hpp>
 
@@ -370,7 +370,7 @@ Node::Ptr Node::addChild(Node::Ptr child)
     _children.push_back(child);
     child->setDataStream(getDataStream());
     child->addParent(this);
-    child->setContext(this->_ctx.get(), false);
+    child->setContext(this->_ctx, false);
     std::string node_name = child->GetTypeName();
     child->setUniqueId(count);
     child->setParamRoot(child->getTreeName());

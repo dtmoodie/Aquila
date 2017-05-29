@@ -53,7 +53,7 @@ namespace aq
         DS_END_(__COUNTER__);
 
         std::vector<rcc::weak_ptr<aq::Nodes::Node>>         getTopLevelNodes();
-        virtual mo::Context*                                getContext() const;
+        virtual mo::ContextPtr_t                            getContext() const;
         virtual void                                        initCustom(bool firstInit);
         virtual std::shared_ptr<mo::IVariableManager>       getVariableManager();
         virtual mo::RelayManager*                           getRelayManager();

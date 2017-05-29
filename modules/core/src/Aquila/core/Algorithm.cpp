@@ -319,7 +319,7 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
     }
 }
 
-void  Algorithm::setContext(mo::Context* ctx, bool overwrite){
+void  Algorithm::setContext(const mo::ContextPtr_t& ctx, bool overwrite){
     mo::IMetaObject::setContext(ctx, overwrite);
     for(auto& child : _algorithm_components){
         child->setContext(ctx, overwrite);
@@ -328,7 +328,7 @@ void  Algorithm::setContext(mo::Context* ctx, bool overwrite){
 
 void Algorithm::postSerializeInit(){
     for(auto& child : _algorithm_components){
-        child->setContext(this->_ctx.get());
+        child->setContext(this->_ctx);
         child->postSerializeInit();
     }
 }

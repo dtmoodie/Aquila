@@ -156,7 +156,7 @@ INCLUDE_DIRECTORIES(
 
 set_target_properties(pplx PROPERTIES FOLDER Dependencies)
 foreach(lib ${MetaObject_LIBRARIES})
-    set_target_properties(${lib} PROPERTIES FOLDER Dependencies)
+    set_target_properties(${lib} PROPERTIES FOLDER MetaObject)
 endforeach()
 
 IF(NOT WIN32)
@@ -252,7 +252,8 @@ function(aquila_declare_module)
         DESTINATION include
         FILES_MATCHING PATTERN "*.hpp"
     )
-install(EXPORT aquila_${aquila_declare_module_NAME}Targets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
+	install(EXPORT aquila_${aquila_declare_module_NAME}Targets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
+	set_target_properties(aquila_${aquila_declare_module_NAME} PROPERTIES FOLDER Aquila)
 endfunction()
 
 SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
@@ -281,7 +282,7 @@ if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
         else()
             add_executable(${test} ${test_srcs})
         endif()
-        TARGET_LINK_LIBRARIES(${test} MetaParameters ${MetaObject_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${aquila_modules})
+        TARGET_LINK_LIBRARIES(${test} ${MetaObject_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${aquila_modules})
         set_target_properties(${test} PROPERTIES FOLDER Tests/Aquila)
         add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
         if(MSVC)

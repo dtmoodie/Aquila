@@ -27,7 +27,7 @@ namespace aq
             bool processImpl(){ return true; }
         private:
             void processingFunction();
-            std::unique_ptr<mo::Context> _thread_ctx;
+            mo::ContextPtr_t _thread_ctx;
             boost::thread _processing_thread;
             bool _run;
         };

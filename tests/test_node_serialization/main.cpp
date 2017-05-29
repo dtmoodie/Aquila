@@ -1,6 +1,6 @@
 #define BOOST_TEST_MAIN
 #include <Aquila/core/IDataStream.hpp>
-#include <Aquila/IO/JsonArchive.hpp>
+#include <Aquila/serialization/JsonArchive.hpp>
 #include <Aquila/core/DataStream.hpp>
 
 #include <MetaObject/thread/ThreadPool.hpp>

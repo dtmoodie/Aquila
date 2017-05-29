@@ -45,7 +45,7 @@ ogl_allocator::ogl_allocator():
 {
     auto table = PerModuleInterface::GetInstance()->GetSystemTable();
     if(table)
-        table->SetSingleton<ogl_allocator>(this);
+        table->setSingleton<ogl_allocator>(this);
 }
 bool ogl_allocator::allocate(cv::cuda::GpuMat* mat, int rows, int cols, size_t elemSize)
 {

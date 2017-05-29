@@ -3,7 +3,7 @@
 #include "MetaObject/params/buffers/StreamBuffer.hpp"
 #include <Aquila/core/IDataStream.hpp>
 #include "Aquila/nodes/Node.hpp"
-#include "Aquila/nodes/ThreadedNode.h"
+#include "Aquila/nodes/ThreadedNode.hpp"
 #include "Aquila/nodes/NodeInfo.hpp"
 
 #include "MetaObject/params/ParameterMacros.hpp"
@@ -157,8 +157,8 @@ struct node_d : public Nodes::Node
             out_d_param.updateData(*in_d, *in_d_param.getTimestamp());
         }else
         {
-            BOOST_REQUIRE_EQUAL(*in_d, in_d_param.GetFrameNumber());
-            out_d_param.updateData(*in_d, in_d_param.GetFrameNumber());
+            BOOST_REQUIRE_EQUAL(*in_d, in_d_param.getFrameNumber());
+            out_d_param.updateData(*in_d, in_d_param.getFrameNumber());
         }
 
         ++iterations;

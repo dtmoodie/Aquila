@@ -4,10 +4,10 @@
 #include "Aquila/nodes/Node.hpp"
 
 
-#include "Aquila/Logging.h"
+#include "Aquila/core/Logging.h"
 #include "Aquila/nodes/NodeInfo.hpp"
 
-#include "MetaObject/params/ParameterMacros.hpp"
+#include "MetaObject/params/ParamMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/object/detail/MetaObjectMacros.hpp"
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(test_node_reflection)
     BOOST_REQUIRE(node_info);
     BOOST_REQUIRE_EQUAL(node_info->getNodeCategory().size(), 2);
     BOOST_REQUIRE_EQUAL(node_info->GetParameterInfo().size(), 1);
-    BOOST_REQUIRE_EQUAL(node_info->GetSignalInfo().size(), 2);
+    BOOST_REQUIRE_EQUAL(node_info->getSignalInfo().size(), 2);
     BOOST_REQUIRE_EQUAL(node_info->GetSlotInfo().size(), 2);
 }
 

@@ -4,11 +4,11 @@ SystemTable::SystemTable()
 {
 
 }
-void SystemTable::DeleteSingleton(mo::TypeInfo type)
+void SystemTable::deleteSingleton(mo::TypeInfo type)
 {
     g_singletons.erase(type);
 }
-void SystemTable::CleanUp()
+void SystemTable::cleanUp()
 {
     g_singletons.clear();
 }

@@ -1,9 +1,14 @@
-file(GLOB_RECURSE src "src/*.cpp" "src/*.hpp")
+file(GLOB_RECURSE src "src/*.cpp" "src/*.cu" "src/*.hpp")
 
 aquila_declare_module(NAME core SRC src
     DEPENDS
-        metaobject_core metaobject_object metaobject_serialization
-        metaobject_params aquila_rcc aquila_gui
+        metaobject_core 
+		metaobject_object 
+		metaobject_serialization
+        metaobject_params 
+		aquila_rcc 
+		aquila_gui
+		metaobject_metaparams
 )
 
 # privately need headers from these modules

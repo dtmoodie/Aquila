@@ -48,20 +48,20 @@ bool ThreadedNode::process()
 Node::Ptr ThreadedNode::addChild(Node* child)
 {
     auto ptr = Node::addChild(child);
-    child->setContext(_thread_ctx.get(), true);
+    child->setContext(_thread_ctx, true);
     return ptr;
 }
 
 Node::Ptr ThreadedNode::addChild(Node::Ptr child)
 {
     auto ptr = Node::addChild(child);
-    child->setContext(_thread_ctx.get());
+    child->setContext(_thread_ctx);
     return ptr;
 }
 
 void ThreadedNode::processingFunction()
 {
-    _thread_ctx.reset(mo::Context::create("ThreadedNodeContext"));
+    _thread_ctx = mo::Context::create("ThreadedNodeContext");
     while(!boost::this_thread::interruption_requested())
     {
         if(_run)

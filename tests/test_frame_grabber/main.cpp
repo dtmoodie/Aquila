@@ -2,7 +2,7 @@
 #define BOOST_TEST_MAIN
 #include "MetaObject/params/buffers/StreamBuffer.hpp"
 #include "Aquila/nodes/Node.hpp"
-#include "Aquila/nodes/ThreadedNode.h"
+#include "Aquila/nodes/ThreadedNode.hpp"
 #include "Aquila/nodes/IFrameGrabber.hpp"
 #include "Aquila/Logging.h"
 #include "Aquila/nodes/FrameGrabberInfo.hpp"
@@ -37,7 +37,7 @@ struct test_framegrabber: public IFrameGrabber
     {
         return true;
     }
-    long long GetFrameNumber()
+    long long getFrameNumber()
     {
         return ts;
     }

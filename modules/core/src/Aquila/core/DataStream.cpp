@@ -87,7 +87,7 @@ DataStream::DataStream()
         if (!global_signal_manager)
         {
             global_signal_manager  = mo::RelayManager::Instance();
-            table->SetSingleton<mo::RelayManager>(global_signal_manager);
+            table->setSingleton<mo::RelayManager>(global_signal_manager);
         }
         global_signal_manager->connectSlots(this);
         global_signal_manager->connectSignals(this);
@@ -99,7 +99,7 @@ DataStream::DataStream()
     _processing_thread = mo::ThreadPool::Instance()->RequestThread();
     _processing_thread.setInnerLoop(getSlot_process<int(void)>());
     _processing_thread.setThreadName("DataStreamThread");
-    this->_ctx.get() = this->_processing_thread.getContext();
+    this->_ctx = this->_processing_thread.getContext();
 }
 
 void DataStream::node_updated(Nodes::Node* node)
@@ -150,7 +150,7 @@ DataStream::~DataStream()
     }
 }
 
-mo::Context* DataStream::getContext() const
+mo::ContextPtr_t DataStream::getContext() const
 {
     return IDataStream::getContext();
 }

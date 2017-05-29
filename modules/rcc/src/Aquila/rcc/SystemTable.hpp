@@ -31,7 +31,7 @@ template<typename T> struct IObjectSingleton: public ISingleton
 struct AQUILA_EXPORTS SystemTable
 {
     SystemTable();
-    void CleanUp();
+    void cleanUp();
     // These are per stream singletons
     template<typename T> T* getSingleton()
     {
@@ -44,18 +44,18 @@ struct AQUILA_EXPORTS SystemTable
     }
 
     template<typename T>
-    T* SetSingleton(T* singleton, int stream_id = -1)
+    T* setSingleton(T* singleton, int stream_id = -1)
     {
         g_singletons[mo::TypeInfo(typeid(T))] = std::shared_ptr<ISingleton>(new Singleton<T>(singleton));
         return singleton;
     }
 
-    void DeleteSingleton(mo::TypeInfo type);
+    void deleteSingleton(mo::TypeInfo type);
 
     template<typename T>
-    void DeleteSingleton()
+    void deleteSingleton()
     {
-        DeleteSingleton(mo::TypeInfo(typeid(T)));
+        deleteSingleton(mo::TypeInfo(typeid(T)));
     }
 private:
     std::map<mo::TypeInfo, std::shared_ptr<ISingleton>> g_singletons;

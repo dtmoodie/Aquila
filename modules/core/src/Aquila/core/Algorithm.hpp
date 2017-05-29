@@ -43,7 +43,7 @@ namespace aq{
         {
             return mo::IMetaObject::getOutput<T>(name);
         }
-        void  setContext(mo::Context* ctx, bool overwrite = false);
+        void  setContext(const mo::ContextPtr_t& ctx, bool overwrite = false);
         const std::vector<rcc::weak_ptr<Algorithm>>& getComponents() const
         {
             return _algorithm_components;

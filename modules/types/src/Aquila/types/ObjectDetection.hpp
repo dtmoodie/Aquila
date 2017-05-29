@@ -49,6 +49,4 @@ namespace aq
         int id = 0;
         template<class AR> void serialize(AR& ar);
     };
-
-    void AQUILA_EXPORTS CreateColormap(cv::Mat& lut, int num_classes, int ignore_class = -1);
 }

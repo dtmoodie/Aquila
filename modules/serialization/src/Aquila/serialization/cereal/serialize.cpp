@@ -149,10 +149,12 @@ bool aq::Serialize(cereal::JSONOutputArchive& ar, const Node* obj)
         }
         return true;
     }*/
+    return true;
 }
 
 bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
 {
+    // TODO reimplment
     /*if (obj == nullptr)
         return false;
     if (auto func = mo::SerializerFactory::GetDeSerializationFunctionJSON(obj->GetTypeName()))
@@ -240,4 +242,5 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
         }
         return true;
     }*/
+    return true;
 }

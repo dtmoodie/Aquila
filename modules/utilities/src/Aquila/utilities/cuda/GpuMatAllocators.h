@@ -10,9 +10,9 @@
 #include "MetaObject/core/detail/MemoryBlock.hpp"
 namespace aq
 {
-    /*cv::cuda::GpuMat::Allocator* GetDefaultBlockMemoryAllocator();
-    cv::cuda::GpuMat::Allocator* GetDefaultDelayedDeallocator();
-    cv::cuda::GpuMat::Allocator* CreateBlockMemoryAllocator();
+    AQUILA_EXPORTS cv::cuda::GpuMat::Allocator* GetDefaultBlockMemoryAllocator();
+    AQUILA_EXPORTS cv::cuda::GpuMat::Allocator* GetDefaultDelayedDeallocator();
+    AQUILA_EXPORTS cv::cuda::GpuMat::Allocator* CreateBlockMemoryAllocator();
 
 
     AQUILA_EXPORTS void SetScopeName(const std::string& name);
@@ -104,5 +104,5 @@ namespace aq
         size_t initialBlockSize_;
     protected:
         std::list<std::shared_ptr<mo::GpuMemoryBlock>> blocks;
-    };*/
+    };
 }
