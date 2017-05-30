@@ -1,10 +1,9 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
-#include "MetaObject/params/buffers/StreamBuffer.hpp"
+
+#include <Aquila/core/IDataStream.hpp>
+#include "Aquila/core/Logging.hpp"
 #include "Aquila/nodes/Node.hpp"
-
-
-#include "Aquila/core/Logging.h"
 #include "Aquila/nodes/NodeInfo.hpp"
 
 #include "MetaObject/params/ParamMacros.hpp"
@@ -12,7 +11,7 @@
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/object/detail/MetaObjectMacros.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
-
+#include "MetaObject/params/buffers/StreamBuffer.hpp"
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaFrameGrabbers"
@@ -102,13 +101,13 @@ MO_REGISTER_CLASS(test_multi_input_node)
 BOOST_AUTO_TEST_CASE(test_node_reflection)
 {
     mo::MetaObjectFactory::instance()->registerTranslationUnit();
-    auto info = mo::MetaObjectFactory::instance()->GetObjectInfo("test_node");
+    auto info = mo::MetaObjectFactory::instance()->getObjectInfo("test_node");
     auto node_info = dynamic_cast<NodeInfo*>(info);
     BOOST_REQUIRE(node_info);
     BOOST_REQUIRE_EQUAL(node_info->getNodeCategory().size(), 2);
-    BOOST_REQUIRE_EQUAL(node_info->GetParameterInfo().size(), 1);
+    BOOST_REQUIRE_EQUAL(node_info->getParamInfo().size(), 1);
     BOOST_REQUIRE_EQUAL(node_info->getSignalInfo().size(), 2);
-    BOOST_REQUIRE_EQUAL(node_info->GetSlotInfo().size(), 2);
+    BOOST_REQUIRE_EQUAL(node_info->getSlotInfo().size(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_node_single_input_output_direct)
@@ -137,7 +136,7 @@ BOOST_AUTO_TEST_CASE(test_node_single_input_output_buffered)
     static const mo::ParamType test_cases[] = { mo::CircularBuffer_e, mo::ConstMap_e, mo::Map_e, mo::StreamBuffer_e, mo::BlockingStreamBuffer_e, mo::NNStreamBuffer_e };
 	for (int i = 0; i < sizeof(test_cases); ++i)
 	{
-		std::cout << "Buffer type: " << mo::ParameterTypeFlagsToString(test_cases[i]) << std::endl;
+        std::cout << "Buffer type: " << mo::paramTypeToString(test_cases[i]) << std::endl;
 		output_node->process_count = 0;
 		input_node->process_count = 0;
 		output_node->timestamp = 0;

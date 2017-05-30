@@ -1,11 +1,11 @@
 #define BOOST_TEST_MAIN
 #include <Aquila/core/IDataStream.hpp>
-#include <Aquila/serialization/JsonArchive.hpp>
+#include <Aquila/serialization/cereal/JsonArchive.hpp>
 #include <Aquila/core/DataStream.hpp>
 
 #include <MetaObject/thread/ThreadPool.hpp>
 #include <MetaObject/object/MetaObject.hpp>
-#include <MetaObject/params/IO/SerializationFactory.hpp>
+#include <MetaObject/serialization/SerializationFactory.hpp>
 
 #ifdef _MSC_VER
 #include <boost/test/unit_test.hpp>

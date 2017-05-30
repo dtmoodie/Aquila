@@ -2,9 +2,9 @@
 #include "Aquila/serialization/cereal/SyncedMemory.hpp"
 #include "MetaObject/params/MetaParam.hpp"
 #ifdef HAVE_QT
-#include "MetaObject/params/UI/Qt/OpenCV.hpp"
-#include "MetaObject/params/UI/Qt/Containers.hpp"
-#include "MetaObject/params/UI/Qt/TParamProxy.hpp"
+#include "MetaObject/params/ui/Qt/OpenCV.hpp"
+#include "MetaObject/params/ui/Qt/Containers.hpp"
+#include "MetaObject/params/ui/Qt/TParamProxy.hpp"
 #endif
 #include "MetaObject/params/buffers/CircularBuffer.hpp"
 #include "MetaObject/params/buffers/StreamBuffer.hpp"

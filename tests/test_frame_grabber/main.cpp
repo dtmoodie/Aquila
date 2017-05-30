@@ -2,12 +2,13 @@
 #define BOOST_TEST_MAIN
 #include "MetaObject/params/buffers/StreamBuffer.hpp"
 #include "Aquila/nodes/Node.hpp"
+#include <Aquila/types/SyncedMemory.hpp>
 #include "Aquila/nodes/ThreadedNode.hpp"
-#include "Aquila/nodes/IFrameGrabber.hpp"
-#include "Aquila/Logging.h"
-#include "Aquila/nodes/FrameGrabberInfo.hpp"
+#include "Aquila/framegrabbers/IFrameGrabber.hpp"
+#include "Aquila/framegrabbers/FrameGrabberInfo.hpp"
+#include "Aquila/core/Logging.hpp"
 
-#include "MetaObject/params/ParameterMacros.hpp"
+#include "MetaObject/params/ParamMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/object/detail/MetaObjectMacros.hpp"
@@ -84,12 +85,12 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
 {
     aq::SetupLogging();
     mo::MetaObjectFactory::instance()->registerTranslationUnit();
-    mo::MetaObjectFactory::instance()->LoadPlugins("");
-    auto info = mo::MetaObjectFactory::instance()->GetObjectInfo("test_framegrabber");
+    mo::MetaObjectFactory::instance()->loadPlugins("");
+    auto info = mo::MetaObjectFactory::instance()->getObjectInfo("test_framegrabber");
     BOOST_REQUIRE(info);
     auto fg_info = dynamic_cast<aq::Nodes::FrameGrabberInfo*>(info);
     BOOST_REQUIRE(fg_info);
-    std::cout << fg_info->Print();
+    std::cout << fg_info->print();
     
     auto fg = rcc::shared_ptr<test_framegrabber>::create();
     auto node = rcc::shared_ptr<img_node>::create();
@@ -102,5 +103,5 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
 BOOST_AUTO_TEST_CASE(test_enumeration)
 {
     //auto all_docs = aq::Nodes::IFrameGrabber::ListAllLoadableDocuments();
-    std::cout << mo::MetaObjectFactory::instance()->PrintAllObjectInfo();
+    std::cout << mo::MetaObjectFactory::instance()->printAllObjectInfo();
 }

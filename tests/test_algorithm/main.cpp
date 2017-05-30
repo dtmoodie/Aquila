@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(test_synced_input)
 BOOST_AUTO_TEST_CASE(test_threaded_input)
 {
     auto ctx = mo::Context::create();
-    mo::TParam<int> output("test", 0, mo::Control_e, 0, &ctx);
+    mo::TParam<int> output("test", 0);
 
     auto obj = rcc::shared_ptr<int_input>::create();
     boost::thread thread([&obj, &output]()->void
@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE(test_threaded_input)
 BOOST_AUTO_TEST_CASE(test_desynced_nput)
 {
     auto ctx = mo::Context::create();
-    mo::TParam<int> fast_output("test", 0, mo::Control_e, 0, ctx.get());
-    mo::TParam<int> slow_output("test2", 0, mo::Control_e, 0, ctx.get());
+    mo::TParam<int> fast_output("test", 0);
+    mo::TParam<int> slow_output("test2", 0);
     int addr1, addr2;
     fast_output.getData(addr1);
     slow_output.getData(addr2);
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
     {
         //mo::Context _ctx.get();
         auto _ctx = mo::Context::create();
-        obj->setContext(&_ctx.get());
+        obj->setContext(_ctx);
         BOOST_REQUIRE(obj->connectInput("input1", nullptr, &fast_output));
         BOOST_REQUIRE(obj->connectInput("input2", nullptr, &slow_output));
 
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(test_desynced_nput)
         [&slow_output, &thread2_done]()->void
     {
         auto _ctx = mo::Context::create();
-        slow_output.setContext(&_ctx.get());
+        slow_output.setContext(_ctx.get());
         for(int i = 1; i < 1000; ++i)
         {
             slow_output.updateData(i, i, _ctx.get());

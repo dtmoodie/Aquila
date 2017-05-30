@@ -6,16 +6,16 @@
 #include "Aquila/nodes/ThreadedNode.hpp"
 #include "Aquila/nodes/NodeInfo.hpp"
 
-#include "MetaObject/params/ParameterMacros.hpp"
+#include "MetaObject/params/ParamMacros.hpp"
 #include "MetaObject/params/TInputParam.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/object/detail/MetaObjectMacros.hpp"
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/thread/ThreadPool.hpp"
-#include "MetaObject/Detail/Allocator.hpp"
+#include "MetaObject/core/detail/Allocator.hpp"
 
-#include "Aquila/Detail/AlgorithmImpl.hpp"
-#include "Aquila/Logging.h"
+#include "Aquila/core/detail/AlgorithmImpl.hpp"
+#include "Aquila/core/Logging.hpp"
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "AquilaNodes"
 #include <boost/test/unit_test_suite.hpp>
@@ -313,7 +313,7 @@ BOOST_AUTO_PARAM_TEST_CASE(branching_buffered, settings, settings + num_settings
 {
     timestamp_mode = param.second;
     a->addChild(b);
-    std::cout << "Buffer: " << mo::ParameterTypeFlagsToString(param.first) << " ts: " << (timestamp_mode ? "on" : "off" )<< std::endl;
+    std::cout << "Buffer: " << mo::paramTypeToString(param.first) << " ts: " << (timestamp_mode ? "on" : "off" )<< std::endl;
     BOOST_REQUIRE(c->connectInput(a, "out_a", "in_a", mo::ParamType(mo::ForceBufferedConnection_e | param.first)));
     BOOST_REQUIRE(c->connectInput(b, "out_b", "in_b", mo::ParamType(mo::ForceBufferedConnection_e | param.first)));
     for (int i = 0; i < 1000; ++i)
@@ -561,7 +561,7 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_top, settings, settings + num_settin
 BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_bottom, settings, settings + num_settings)
 {
     timestamp_mode = param.second;
-    std::cout << "Buffer: " << mo::ParameterTypeFlagsToString(param.first)
+    std::cout << "Buffer: " << mo::paramTypeToString(param.first)
               << " sync: " << (timestamp_mode ? "timestamp" : "framenumber") << std::endl;
     BOOST_REQUIRE(d1->connectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(d2->connectInput(a, "out_a", "in_d"));
@@ -587,7 +587,7 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_left, settings, settings + num_setti
     timestamp_mode = param.second;
     //std::cout << "Setting timestamp mode to " << (timestamp_mode ? "on\n" : "off\n");
     //std::cout << "Using buffer " << mo::ParameterTypeFlagsToString(param.first) << std::endl;
-    std::cout << "Buffer: " << mo::ParameterTypeFlagsToString(param.first) << " ts: " << (timestamp_mode ? "on" : "off") << std::endl;
+    std::cout << "Buffer: " << mo::paramTypeToString(param.first) << " ts: " << (timestamp_mode ? "on" : "off") << std::endl;
     BOOST_REQUIRE(d1->connectInput(a, "out_a", "in_d", mo::ParamType(mo::ForceBufferedConnection_e | param.first)));
     BOOST_REQUIRE(d2->connectInput(a, "out_a", "in_d"));
     BOOST_REQUIRE(c->connectInput(d1, "out_d", "in_a", mo::ParamType(mo::ForceBufferedConnection_e | param.first)));
