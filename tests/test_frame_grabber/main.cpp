@@ -52,8 +52,8 @@ struct test_framegrabber: public IFrameGrabber
     MO_END;
     int ts = 0;
     cv::Mat current;
-    
-    static int canLoadDocument(const std::string& doc)
+
+    static int canLoadPath(const std::string& doc)
     {
         return 1;
     }
@@ -65,7 +65,7 @@ struct test_framegrabber: public IFrameGrabber
 
 struct img_node: public Node
 {
-    MO_DERIVE(img_node, Node);
+    MO_DERIVE(img_node, Node)
         INPUT(SyncedMemory, input, nullptr)
     MO_END;
 
@@ -90,8 +90,8 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
     BOOST_REQUIRE(info);
     auto fg_info = dynamic_cast<aq::Nodes::FrameGrabberInfo*>(info);
     BOOST_REQUIRE(fg_info);
-    std::cout << fg_info->print();
-    
+    std::cout << fg_info->Print();
+
     auto fg = rcc::shared_ptr<test_framegrabber>::create();
     auto node = rcc::shared_ptr<img_node>::create();
     BOOST_REQUIRE(node->connectInput(fg, "input", "current_frame"));

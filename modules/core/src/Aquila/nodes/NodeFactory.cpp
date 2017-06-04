@@ -309,7 +309,7 @@ Nodes::NodeInfo* NodeFactory::getNodeInfo(std::string& nodeName)
         auto obj_info = constructor->GetObjectInfo();
         if (obj_info)
         {
-            if (obj_info->getInterfaceId() == Nodes::Node::s_interfaceID)
+            if (obj_info->GetInterfaceId() == Nodes::Node::s_interfaceID)
             {
                 auto node_info = dynamic_cast<aq::Nodes::NodeInfo*>(obj_info);
                 if (node_info)

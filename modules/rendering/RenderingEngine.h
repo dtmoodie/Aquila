@@ -19,13 +19,13 @@ namespace aq
     class IRenderObjectConstructor : public TInterface<IRenderObjectConstructor, mo::IMetaObject>
     {
     public:
-        virtual std::shared_ptr<IRenderObject> Construct(std::shared_ptr<mo::IParameter> param) = 0;
+        virtual std::shared_ptr<IRenderObject> Construct(std::shared_ptr<mo::IParam> param) = 0;
     };
 
     class IRenderObjectFactory : public TInterface<IRenderObjectFactory, mo::IMetaObject>
     {
     public:
-        virtual std::shared_ptr<IRenderObject> Create(std::shared_ptr<mo::IParameter> param) = 0;
+        virtual std::shared_ptr<IRenderObject> Create(std::shared_ptr<mo::IParam> param) = 0;
         static void RegisterConstructorStatic(std::shared_ptr<IRenderObjectConstructor> constructor);
 
         virtual void RegisterConstructor(std::shared_ptr<IRenderObjectConstructor> constructor) = 0;

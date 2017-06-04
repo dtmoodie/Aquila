@@ -4,6 +4,9 @@
 #include <MetaObject/params/InputParam.hpp>
 #include <MetaObject/serialization/CerealPolicy.hpp>
 #include <MetaObject/serialization/CerealMemory.hpp>
+#include <MetaObject/params/IParam.hpp>
+#include <MetaObject/params/buffers/IBuffer.hpp>
+
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/rolling_window.hpp>
@@ -108,8 +111,8 @@ Algorithm::InputState Algorithm::checkInputs(){
     // First check to see if we have a sync input, if we do then use its synchronizatio method
     // TODO: Handle processing queue
 #ifdef _DEBUG
-    struct InputState{
-        InputState(const std::string& name_,
+    struct DbgInputState{
+        DbgInputState(const std::string& name_,
                    const boost::optional<mo::Time_t>& ts_,
                    size_t fn_): name(name_), ts(ts_), fn(fn_){}
         std::string name;
@@ -117,8 +120,9 @@ Algorithm::InputState Algorithm::checkInputs(){
         size_t fn;
     };
 
-    std::vector<InputState> input_states;
+    std::vector<DbgInputState> input_states;
 #endif
+    bool buffered = false;
     if(_pimpl->sync_input){
         ts = _pimpl->sync_input->getInputTimestamp();
         if(!ts)
@@ -126,8 +130,61 @@ Algorithm::InputState Algorithm::checkInputs(){
         if(_pimpl->_sync_method == SyncEvery){
         }
     }else{
-        // Check all inputs to see if any are timestamped.
+        // first look for any direct connections, if so use the timestamp from them
         for(auto input : inputs){
+            IParam* input_param = input->getInputParam();
+            if(input_param){
+                if(!input_param->checkFlags(mo::Buffer_e)){
+                    auto in_ts = input_param->getTimestamp();
+#ifdef _DEBUG
+                    input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
+#endif
+                    if(in_ts){
+                        if(!ts){ ts = in_ts; continue; }
+                        else ts = std::min<mo::Time_t>(*ts, *in_ts);
+                    }
+                }else{
+                    buffered = true;
+                }
+            }
+        }
+        if(!ts && buffered && _pimpl->_buffer_timing_data.size()){
+            // Search for the smallest timestamp common to all buffers
+            std::vector<mo::Time_t> tss;
+            for(const auto& itr : _pimpl->_buffer_timing_data){
+                if(itr.second.size()){
+                    if(itr.second.front().ts)
+                        tss.push_back(*(itr.second.front().ts));
+                }
+            }
+            // assuming time only moves forward, pick the largest of the min timestamps
+            if(tss.size()){
+                auto max_elem = std::max_element(tss.begin(), tss.end());
+                bool all_found = true;
+                // Check if the value is in the other timing buffers
+                for(const auto& itr : _pimpl->_buffer_timing_data){
+                    bool found = false;
+                    for(const auto& itr2 : itr.second){
+                        if(itr2.ts && *(itr2.ts) == *max_elem){
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found){
+                        all_found = false;
+                        break;
+                    }
+                }
+                if(all_found){
+                    ts = *max_elem;
+                }
+
+            }
+        }
+
+
+        // Check all inputs to see if any are timestamped.
+        /*for(auto input : inputs){
             if(input->isInputSet()){
                 if (input->checkFlags(mo::Desynced_e))
                     continue;
@@ -146,7 +203,7 @@ Algorithm::InputState Algorithm::checkInputs(){
                     }
                 }
             }
-        }
+        }*/
         if(!ts){
             fn = -1;
             for(int i = 0; i < inputs.size(); ++i){
@@ -193,6 +250,14 @@ Algorithm::InputState Algorithm::checkInputs(){
         }
         if(_pimpl->ts == ts)
             return NotUpdated;
+        if(buffered && ts){
+            for(auto& itr : _pimpl->_buffer_timing_data){
+                auto itr2 = std::find_if(itr.second.begin(), itr.second.end(), [ts](const impl::SyncData& st){ if(st.ts) return *st.ts == *ts; return false;});
+                if(itr2 != itr.second.end()){
+                    itr.second.erase(itr2);
+                }
+            }
+        }
         _pimpl->ts = ts;
         _pimpl->fn = fn;
         return AllValid;
@@ -316,6 +381,20 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
         if(param == _pimpl->sync_input){
             _pimpl->ts = param->getTimestamp();
         }
+    } if(fg == mo::BufferUpdated_e){
+        boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
+        mo::InputParam* in_param = dynamic_cast<mo::InputParam*>(param);
+        auto itr = _pimpl->_buffer_timing_data.find(in_param);
+        if(itr == _pimpl->_buffer_timing_data.end()){
+            mo::Buffer::IBuffer* buf = dynamic_cast<mo::Buffer::IBuffer*>(in_param->getInputParam());
+            _pimpl->_buffer_timing_data[in_param].set_capacity(100);
+            if(buf){
+                auto capacity = buf->getFrameBufferCapacity();
+                if(capacity)
+                    _pimpl->_buffer_timing_data[in_param].set_capacity(*capacity);
+            }
+        }
+        _pimpl->_buffer_timing_data[in_param].push_back(impl::SyncData(ts, fn));
     }
 }
 

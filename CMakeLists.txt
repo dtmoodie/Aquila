@@ -184,7 +184,7 @@ endmacro()
 # modules
 set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
 set(aquila_modules "" CACHE INTERNAL "" FORCE)
-
+set(aquila_module_includes "" CACHE INTERNAL "" FORCE)
 function(aquila_declare_module)
     set(oneValueArgs NAME CXX_STANDARD INCLUDE)
     set(multiValueArgs SRC DEPENDS FLAGS PRIVATE_DEP_HEADER)
@@ -196,6 +196,7 @@ function(aquila_declare_module)
         cuda_add_library(aquila_${aquila_declare_module_NAME} SHARED ${src})
     endif()
     set(aquila_modules "${aquila_modules};aquila_${aquila_declare_module_NAME}" CACHE INTERNAL "" FORCE)
+    set(aquila_module_includes "${aquila_module_includes};${CMAKE_CURRENT_LIST_DIR}/src" CACHE INTERNAL "" FORCE)
     if(aquila_declare_module_DEPENDS)
         rcc_link_lib(aquila_${aquila_declare_module_NAME} ${aquila_declare_module_DEPENDS})
     endif()
@@ -252,8 +253,8 @@ function(aquila_declare_module)
         DESTINATION include
         FILES_MATCHING PATTERN "*.hpp"
     )
-	install(EXPORT aquila_${aquila_declare_module_NAME}Targets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
-	set_target_properties(aquila_${aquila_declare_module_NAME} PROPERTIES FOLDER Aquila)
+    install(EXPORT aquila_${aquila_declare_module_NAME}Targets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
+    set_target_properties(aquila_${aquila_declare_module_NAME} PROPERTIES FOLDER Aquila)
 endfunction()
 
 SUBDIRLIST(modules "${CMAKE_CURRENT_LIST_DIR}/modules")
@@ -264,7 +265,7 @@ endforeach()
 # This is needed becaus cuda + cmake does not properly support target_include_directories https://gitlab.kitware.com/cmake/cmake/issues/16571
 # in the version of cmake that is include with ubuntu 16.04.  Thus to make everything happy we also propagate up the needed build include dirs
 # using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
-set(Aquila_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS};${PPLX_INCLUDE_DIRS}" CACHE PATH "")
+set(Aquila_INCLUDE_DIRS "${aquila_module_includes};${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS};${PPLX_INCLUDE_DIRS}" CACHE PATH "" FORCE)
 set(Aquila_LIBRARIES "${aquila_modules};${MetaObject_LIBRARIES}" CACHE INTERNAL "" FORCE)
 
 # ---------------------------------------------------

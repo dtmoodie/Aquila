@@ -1,20 +1,19 @@
 #pragma once
-#include "serialize.hpp"
 #include "Aquila/nodes/Node.hpp"
 #include "RuntimeObjectSystem/shared_ptr.hpp"
+#include "serialize.hpp"
 #include <MetaObject/logging/Log.hpp>
 #include <MetaObject/serialization/Serializer.hpp>
 
-#include <cereal/cereal.hpp>
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/xml.hpp>
+#include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
 
-namespace cereal
-{
+namespace cereal {
 
-    template<class AR, class T> void save(AR& ar, rcc::shared_ptr<T> const & m)
+/*template<class AR, class T> void save(AR& ar, rcc::shared_ptr<T> const & m)
     {
         if(m)
         {
@@ -88,5 +87,5 @@ namespace cereal
         ar(cereal::make_nvp("InstanceId", id.m_PerTypeId));
         ar(make_nvp("TypeName", type));
         m.reset(mo::MetaObjectFactory::instance()->get(id, type.c_str()));
-    }
+    }*/
 }

@@ -1,17 +1,17 @@
 #pragma once
 #include "ObjectDetection.hpp"
+#include <Aquila/types/SyncedMemory.hpp>
 #include <boost/circular_buffer.hpp>
 #include <opencv2/video.hpp>
+namespace aq {
 
-namespace aq
+template <class T, class U>
+cv::Vec<T, 2> center(const cv::Rect_<U>& rect)
 {
-
-template<class T, class U> cv::Vec<T, 2> center(const cv::Rect_<U>& rect)
-{
-    return cv::Vec<T, 2>(rect.x + rect.width / 2, rect.y + rect.height/2);
+    return cv::Vec<T, 2>(rect.x + rect.width / 2, rect.y + rect.height / 2);
 }
 
-template<class T, class U>
+template <class T, class U>
 float iou(const cv::Rect_<T>& r1, const cv::Rect_<U>& r2)
 {
     float intersection = (r1 & r2).area();
@@ -26,16 +26,15 @@ float iou(const cv::Rect_<T>& r1, const cv::Rect_<U>& r2)
  * \param dims
  * \return
  */
-template<int N>
+template <int N>
 float extentDistance(const cv::Mat& measurement, const cv::Mat& state)
 {
     float value = 0.0f;
     // Position state, size state, position measurement, size measurement
     cv::Vec<float, N> Ps, Ss, Pm, Sm;
-    for(int i = 0; i < N; ++i)
-    {
+    for (int i = 0; i < N; ++i) {
         Ps[i] = state.at<float>(i);
-        Ss[i] = state.at<float>(i + N*2);
+        Ss[i] = state.at<float>(i + N * 2);
         Pm[i] = measurement.at<float>(i);
         Sm[i] = measurement.at<float>(i + N);
     }
@@ -58,13 +57,11 @@ float extentDistance(const cv::Mat& measurement, const cv::Mat& state)
     //                   |              |
     //                   |_______________
     //  The score should be 0 if Ps and Ss lie ontop of each other
-    for(int i = 0; i < N; ++i)
-    {
+    for (int i = 0; i < N; ++i) {
         value += abs(Ps[i] - Pm[i]) / (Ss[i] / 2);
     }
     // Calculate a score based on the % change in size of the object
-    for(int i = 0; i < N; ++i)
-    {
+    for (int i = 0; i < N; ++i) {
         value += abs(Ss[i] - Sm[i]) / (Ss[i]);
     }
     // Normalize value by the number of dimensions
@@ -72,15 +69,12 @@ float extentDistance(const cv::Mat& measurement, const cv::Mat& state)
     return value;
 }
 
-
-struct AQUILA_EXPORTS TrackedObject2d
-{
-    enum TrackingState
-    {
+struct AQUILA_EXPORTS TrackedObject2d {
+    enum TrackingState {
 
     };
 
-    enum {Dims = 2};
+    enum { Dims = 2 };
     typedef DetectedObject2d DetectionType;
     typedef std::shared_ptr<TrackedObject2d> Ptr;
     typedef std::vector<Ptr> TrackSet;
@@ -102,8 +96,7 @@ struct AQUILA_EXPORTS TrackedObject2d
     {
         detection_history.push_back(obj);
         last_bb = obj.boundingBox;
-        if(detection_history.size())
-        {
+        if (detection_history.size()) {
             cv::Vec2f pos0 = center<float>(detection_history.back().boundingBox);
             cv::Vec2f pos1 = center<float>(obj.boundingBox);
             velocity = pos1 - pos0;
@@ -140,9 +133,8 @@ struct AQUILA_EXPORTS TrackedObject2d
 };
 typedef TrackedObject2d::TrackSet TrackSet2d;
 
-struct AQUILA_EXPORTS TrackedObject3d
-{
-    enum {Dims = 3};
+struct AQUILA_EXPORTS TrackedObject3d {
+    enum { Dims = 3 };
     typedef DetectedObject3d DetectionType;
     boost::circular_buffer<DetectedObject3d> detection_history;
 };
@@ -152,14 +144,13 @@ struct AQUILA_EXPORTS TrackedObject3d
  *        This object will track a detected objects centroid and extent
  *  http://www.robot-home.it/blog/en/software/ball-tracker-con-filtro-di-kalman/
  */
-template<class T>
-struct AQUILA_EXPORTS KalmanTrackedObject: public T
-{
-    KalmanTrackedObject(cv::Vec<float, T::Dims> Ep = cv::Vec<float,T::Dims>::all(1e-2),
-                        cv::Vec<float, T::Dims> Ev = cv::Vec<float,T::Dims>::all(1),
-                        cv::Vec<float, T::Dims> Es = cv::Vec<float,T::Dims>::all(1e-2)):
-        initialized(false),
-        T()
+template <class T>
+struct AQUILA_EXPORTS KalmanTrackedObject : public T {
+    KalmanTrackedObject(cv::Vec<float, T::Dims> Ep = cv::Vec<float, T::Dims>::all(1e-2),
+        cv::Vec<float, T::Dims> Ev = cv::Vec<float, T::Dims>::all(1),
+        cv::Vec<float, T::Dims> Es = cv::Vec<float, T::Dims>::all(1e-2))
+        : initialized(false)
+        , T()
     {
         // The state of a 2d object is the centroid (x,y), velocity (x,y) and size (x,y) (6)
         // The state of a 3d object is the centroid (x,y, z), velocity (x,y,z) and size (x,y,z) (9)
@@ -189,10 +180,9 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
         // [ 0 0 0 0 0 0 1 0 0]
         // [ 0 0 0 0 0 0 0 1 0]
         // [ 0 0 0 0 0 0 0 0 1]
-        for(int i = 0; i < T::Dims; ++i)
-        {
-            kf.measurementMatrix.at<float>(i,i) = 1;
-            kf.measurementMatrix.at<float>(i + T::Dims, i + 2*T::Dims) = 1;
+        for (int i = 0; i < T::Dims; ++i) {
+            kf.measurementMatrix.at<float>(i, i) = 1;
+            kf.measurementMatrix.at<float>(i + T::Dims, i + 2 * T::Dims) = 1;
         }
 
         // process Noise Covariance Matrix Q 2d
@@ -202,9 +192,8 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
         // [ 0  0  0    1 Ev_y 0 ]
         // [ 0  0  0    0 1    Ew ]
         // [ 0  0  0    0 0    Eh ]
-        for(int i = 0; i < T::Dims; ++i)
-        {
-            kf.processNoiseCov.at<float>(i,i) = Ep[i];
+        for (int i = 0; i < T::Dims; ++i) {
+            kf.processNoiseCov.at<float>(i, i) = Ep[i];
             kf.processNoiseCov.at<float>(T::Dims + i, T::Dims + i) = Ev[i];
             kf.processNoiseCov.at<float>(2 * T::Dims + i, 2 * T::Dims + i) = Es[i];
         }
@@ -215,15 +204,12 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
     {
         cv::Mat meas = measure(obj);
         float score = 0.0;
-        if(obj.timestamp > predicted_timestamp)
-        {
+        if (obj.timestamp > predicted_timestamp) {
             Predict(*obj.timestamp);
-        }else if(obj.timestamp < predicted_timestamp && obj.timestamp < current_state_timestamp)
-        {
+        } else if (obj.timestamp < predicted_timestamp && obj.timestamp < current_state_timestamp) {
             return T::Score(obj);
         }
-        if(obj.timestamp == predicted_timestamp)
-        {
+        if (obj.timestamp == predicted_timestamp) {
             // Score against predicted state
             // Position
             score = extentDistance<T::Dims>(meas, predicted_state);
@@ -235,8 +221,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
                                predicted_state.rowRange(T::Dims * 2, T::Dims* 3),
                                cv::NORM_L2) / cv::norm(predicted_state.rowRange(T::Dims, T::Dims * 2));*/
         }
-        if(obj.timestamp == current_state_timestamp)
-        {
+        if (obj.timestamp == current_state_timestamp) {
             score = extentDistance<T::Dims>(meas, kf.statePost);
             // Position
             /*score += cv::norm(meas.rowRange(0, T::Dims),
@@ -258,11 +243,10 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
     void Track(const aq::SyncedMemory& img, mo::Time_t ts)
     {
         // Can't drift a track to the past
-        if(ts < current_state_timestamp)
+        if (ts < current_state_timestamp)
             return;
         auto dt = ts - current_state_timestamp;
-        for(int i = 0; i < T::Dims; ++i)
-        {
+        for (int i = 0; i < T::Dims; ++i) {
             kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
         }
         cv::Mat state = kf.predict();
@@ -276,30 +260,24 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
     {
         cv::Mat meas = measure(obj);
         cv::Mat state(T::Dims * 3, 1, CV_32F);
-        if(initialized)
-        {
+        if (initialized) {
             auto dt = *obj.timestamp - current_state_timestamp;
-            for(int i = 0; i < T::Dims; ++i)
-            {
+            for (int i = 0; i < T::Dims; ++i) {
                 kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
             }
         }
         current_state_timestamp = *obj.timestamp;
-        if(!initialized)
-        {
-            if(this->detection_history.size() > 0)
-            {
+        if (!initialized) {
+            if (this->detection_history.size() > 0) {
 
                 // Initialize the internal kf state
-                for(int i = 0; i < T::Dims; ++i)
-                {
-                    kf.errorCovPre.at<float>(i,i) = 1; // px
+                for (int i = 0; i < T::Dims; ++i) {
+                    kf.errorCovPre.at<float>(i, i) = 1; // px
                     kf.errorCovPre.at<float>(T::Dims + i, T::Dims + i) = 1;
                     kf.errorCovPre.at<float>(2 * T::Dims + i, 2 * T::Dims + i) = 1; //px
                 }
                 cv::Mat prev_meas = measure(this->detection_history.back());
-                for(int i = 0; i < T::Dims; ++i)
-                {
+                for (int i = 0; i < T::Dims; ++i) {
                     // Position is set to current position
                     state.at<float>(i) = meas.at<float>(i);
                     // Velocity wrt previous detection
@@ -311,13 +289,11 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
                 initialized = true;
                 update(*this, state);
             }
-        }else
-        {
+        } else {
             // kf correct returns the corrected state
             update(*this, kf.correct(meas));
         }
-        if(this->detection_history.size() == 0)
-        {
+        if (this->detection_history.size() == 0) {
             this->initial_detection_timestamp = obj.timestamp;
         }
         this->detection_history.push_back(obj);
@@ -327,14 +303,13 @@ struct AQUILA_EXPORTS KalmanTrackedObject: public T
     cv::Mat Predict(mo::Time_t ts)
     {
         CV_Assert(initialized);
-        if(ts == current_state_timestamp)
+        if (ts == current_state_timestamp)
             return kf.statePost;
-        if(ts == predicted_timestamp)
+        if (ts == predicted_timestamp)
             return predicted_state;
 
         auto dt = ts - current_state_timestamp;
-        for(int i = 0; i < T::Dims; ++i)
-        {
+        for (int i = 0; i < T::Dims; ++i) {
             kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
         }
 
@@ -355,7 +330,7 @@ protected:
         return meas;
     }
 
-    cv::Mat measure(const DetectedObject3d &obj)
+    cv::Mat measure(const DetectedObject3d& obj)
     {
         cv::Mat meas(6, 1, CV_32F);
         auto t = obj.pose.translation();
@@ -371,8 +346,7 @@ protected:
     cv::Vec<float, T::Dims> velocity(const cv::Mat& state)
     {
         cv::Vec<float, T::Dims> output;
-        for(int i = 0; i < T::Dims; ++i)
-        {
+        for (int i = 0; i < T::Dims; ++i) {
             output.val[i] = state.at<float>(T::Dims + i);
         }
         return output;
@@ -380,8 +354,7 @@ protected:
     cv::Vec<float, T::Dims> position(const cv::Mat& state)
     {
         cv::Vec<float, T::Dims> output;
-        for(int i = 0; i < T::Dims; ++i)
-        {
+        for (int i = 0; i < T::Dims; ++i) {
             output.val[i] = state.at<float>(i);
         }
         return output;
@@ -389,17 +362,14 @@ protected:
     cv::Vec<float, T::Dims> size(const cv::Mat& state)
     {
         cv::Vec<float, T::Dims> output;
-        for(int i = 0; i < T::Dims; ++i)
-        {
+        for (int i = 0; i < T::Dims; ++i) {
             output.val[i] = state.at<float>(2 * T::Dims + i);
         }
         return output;
     }
 
-
     void update(TrackedObject3d& obj, const cv::Mat& state)
     {
-
     }
 
     void update(TrackedObject2d& obj, const cv::Mat& state)
@@ -425,5 +395,4 @@ protected:
 
 typedef KalmanTrackedObject<TrackedObject2d> KalmanTracked2d;
 typedef KalmanTrackedObject<TrackedObject3d> KalmanTracked3d;
-
 }

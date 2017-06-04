@@ -10,6 +10,7 @@ namespace Grabbers
     }
     template<class U> int HasLoadHelper(const std::string& path, typename std::enable_if<!HasCanLoad<U>::value, void>::type* = 0)
     {
+        (void)path;
         return 0;
     }
     DEFINE_HAS_STATIC_FUNCTION(HasListPaths, ListPaths, void(*)(std::vector<std::string>&));
@@ -19,7 +20,7 @@ namespace Grabbers
     }
     template<class U> void HasListHelper(std::vector<std::string>& path, typename std::enable_if<!HasListPaths<U>::value, void>::type* = 0)
     {
-
+        (void)path;
     }
     DEFINE_HAS_STATIC_FUNCTION(HasTimeout, Timeout, int(*)(void));
     template<class U> int HasTimeoutHelper(typename std::enable_if<HasTimeout<U>::value, void>::type* = 0)

@@ -17,7 +17,7 @@ namespace aq
     {
         struct AQUILA_EXPORTS NodeInfo : virtual public mo::IMetaObjectInfo
         {
-            std::string print() const;
+            std::string Print(IObjectInfo::Verbosity verbosity = IObjectInfo::INFO) const;
             // Get the organizational hierarchy of this node, ie Image -> Processing -> ConvertToGrey
             virtual std::vector<std::string> getNodeCategory() const = 0;
 

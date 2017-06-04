@@ -12,7 +12,7 @@ namespace aq
         static PlotManager* Instance();
         rcc::shared_ptr<Plotter> GetPlot(const std::string& plotName);
         std::vector<std::string> GetAvailablePlots();
-        std::vector<std::string> GetAcceptablePlotters(mo::IParameter* param);
-        bool CanPlotParameter(mo::IParameter* param);
+        std::vector<std::string> GetAcceptablePlotters(mo::IParam* param);
+        bool CanPlotParameter(mo::IParam* param);
     };
 }

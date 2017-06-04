@@ -3,7 +3,7 @@
 #include <MetaObject/object/IMetaObject.hpp>
 #include <MetaObject/Detail/MetaObjectMacros.hpp>
 #include <MetaObject/Signals/detail/SlotMacros.hpp>
-#include <MetaObject/Parameters/ParameterMacros.hpp>
+#include <MetaObject/params/ParameterMacros.hpp>
 #include <IObjectInfo.h>
 #include <list>
 
@@ -38,13 +38,13 @@ namespace aq
 
         virtual void Init(bool firstInit);
         virtual void PlotInit(bool firstInit);
-        virtual void SetInput(mo::IParameter* param_ = nullptr);
-        virtual bool AcceptsParameter(mo::IParameter* param) = 0;
+        virtual void SetInput(mo::IParam* param_ = nullptr);
+        virtual bool AcceptsParameter(mo::IParam* param) = 0;
 
         MO_BEGIN(Plotter)
-            MO_SLOT(void, on_parameter_update, mo::Context*, mo::IParameter*);
-            MO_SLOT(void, on_parameter_delete, mo::IParameter const*);
-            PROPERTY(mo::IParameter*, parameter, nullptr);
+            MO_SLOT(void, on_parameter_update, mo::Context*, mo::IParam*);
+            MO_SLOT(void, on_parameter_delete, mo::IParam const*);
+            PROPERTY(mo::IParam*, parameter, nullptr);
         MO_END;
     protected:
     };
@@ -52,8 +52,8 @@ namespace aq
     class AQUILA_EXPORTS QtPlotter : public Plotter
     {
     public:
-        virtual mo::IParameter* addParameter(mo::IParameter* param);
-        virtual mo::IParameter* addParameter(std::shared_ptr<mo::IParameter> param);
+        virtual mo::IParam* addParameter(mo::IParam* param);
+        virtual mo::IParam* addParameter(std::shared_ptr<mo::IParam> param);
         virtual void AddPlot(QWidget* plot_) = 0;
 
         virtual QWidget* CreatePlot(QWidget* parent) = 0;

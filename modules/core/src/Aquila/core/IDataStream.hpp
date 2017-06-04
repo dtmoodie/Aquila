@@ -43,7 +43,7 @@ namespace aq
         static void save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams);
         static void save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams,
                          const VariableMap& vm, const VariableMap& sm);
-        static bool canLoadDocument(const std::string& document);
+        static bool canLoadPath(const std::string& document);
 
         virtual std::vector<rcc::weak_ptr<Nodes::Node>> getTopLevelNodes() = 0;
 
