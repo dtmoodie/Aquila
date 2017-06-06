@@ -42,89 +42,77 @@ RUNTIME_MODIFIABLE_INCLUDE
 #define EXCEPTION_TRY_COUNT 10
 
 #define CATCH_MACRO                                                            \
-    catch (mo::ExceptionWithCallStack<cv::Exception> & e)                      \
-    {                                                                          \
+    catch (mo::ExceptionWithCallStack<cv::Exception> & e) {                    \
         LOG_NODE(error) << e.what() << "\n"                                    \
                         << e.CallStack();                                      \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (thrust::system_error & e)                                           \
-    {                                                                          \
+    catch (thrust::system_error & e) {                                         \
         LOG_NODE(error) << e.what();                                           \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (mo::ExceptionWithCallStack<std::string> & e)                        \
-    {                                                                          \
+    catch (mo::ExceptionWithCallStack<std::string> & e) {                      \
         LOG_NODE(error) << std::string(e) << "\n"                              \
                         << e.CallStack();                                      \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (mo::IExceptionWithCallStackBase & e)                                \
-    {                                                                          \
+    catch (mo::IExceptionWithCallStackBase & e) {                              \
         LOG_NODE(error) << "Exception thrown with callstack: \n"               \
                         << e.CallStack();                                      \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (boost::thread_resource_error & err)                                 \
-    {                                                                          \
+    catch (boost::thread_resource_error & err) {                               \
         LOG_NODE(error) << err.what();                                         \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (boost::thread_interrupted & err)                                    \
-    {                                                                          \
+    catch (boost::thread_interrupted & err) {                                  \
         LOG_NODE(error) << "Thread interrupted";                               \
         /* Needs to pass this back up to the chain to the processing thread.*/ \
         /* That way it knowns it needs to exit this thread */                  \
         throw err;                                                             \
     }                                                                          \
-    catch (boost::thread_exception & err)                                      \
-    {                                                                          \
+    catch (boost::thread_exception & err) {                                    \
         LOG_NODE(error) << err.what();                                         \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (cv::Exception & err)                                                \
-    {                                                                          \
+    catch (cv::Exception & err) {                                              \
         LOG_NODE(error) << err.what();                                         \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (boost::exception & err)                                             \
-    {                                                                          \
+    catch (boost::exception & err) {                                           \
         LOG_NODE(error) << "Boost error";                                      \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (std::exception & err)                                               \
-    {                                                                          \
+    catch (std::exception & err) {                                             \
         LOG_NODE(error) << err.what();                                         \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
-    catch (...)                                                                \
-    {                                                                          \
+    catch (...) {                                                              \
         LOG_NODE(error) << "Unknown exception";                                \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }
 
-std::string NodeInfo::Print(IObjectInfo::Verbosity verbosity) const
-{
+std::string NodeInfo::Print(IObjectInfo::Verbosity verbosity) const {
     return mo::IMetaObjectInfo::Print(verbosity);
 }
 
@@ -132,10 +120,10 @@ namespace aq {
 namespace Nodes {
     class NodeImpl {
     public:
-        long long throw_count = 0;
-        bool disable_due_to_errors = false;
+        long long   throw_count           = 0;
+        bool        disable_due_to_errors = false;
         std::string tree_name;
-        long long iterations_since_execution = 0;
+        long long   iterations_since_execution    = 0;
         const char* last_execution_failure_reason = 0;
 #ifdef _DEBUG
         std::vector<long long> timestamps;
@@ -144,9 +132,8 @@ namespace Nodes {
 }
 }
 
-std::vector<std::string> Node::listConstructableNodes(const std::string& filter)
-{
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(s_interfaceID);
+std::vector<std::string> Node::listConstructableNodes(const std::string& filter) {
+    auto                     constructors = mo::MetaObjectFactory::instance()->getConstructors(s_interfaceID);
     std::vector<std::string> output;
     for (IObjectConstructor* constructor : constructors) {
         if (filter.size()) {
@@ -160,16 +147,14 @@ std::vector<std::string> Node::listConstructableNodes(const std::string& filter)
     return output;
 }
 
-Node::Node()
-{
+Node::Node() {
     _modified = true;
     _pimpl_node.reset(new NodeImpl());
 }
 
-bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_name, const std::string& input_name, mo::ParamType type)
-{
+bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_name, const std::string& input_name, mo::ParamType type) {
     auto output = node->getOutput(output_name);
-    auto input = this->getInput(input_name);
+    auto input  = this->getInput(input_name);
     if (output && input) {
         if (this->IMetaObject::connectInput(input, node.get(), output, type)) {
             addParent(node.get());
@@ -180,7 +165,7 @@ bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_na
     }
     if (output == nullptr) {
         auto outputs = node->getOutputs();
-        auto f = [&outputs]() -> std::string {
+        auto f       = [&outputs]() -> std::string {
             std::stringstream ss;
             for (auto& output : outputs) {
                 ss << output->getName() << " ";
@@ -192,7 +177,7 @@ bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_na
     }
     if (input == nullptr) {
         auto outputs = node->getInputs();
-        auto f = [&outputs]() -> std::string {
+        auto f       = [&outputs]() -> std::string {
             std::stringstream ss;
             for (auto& output : outputs) {
                 ss << output->getName() << " ";
@@ -203,8 +188,7 @@ bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_na
     }
     return false;
 }
-bool Node::connectInput(rcc::shared_ptr<Node> output_node, mo::IParam* output_param, mo::InputParam* input_param, mo::ParamType type)
-{
+bool Node::connectInput(rcc::shared_ptr<Node> output_node, mo::IParam* output_param, mo::InputParam* input_param, mo::ParamType type) {
     if (this->IMetaObject::connectInput(input_param, output_node.get(), output_param, type)) {
         addParent(output_node.get());
         Node* This = this;
@@ -215,8 +199,7 @@ bool Node::connectInput(rcc::shared_ptr<Node> output_node, mo::IParam* output_pa
     }
 }
 
-Algorithm::InputState Node::checkInputs()
-{
+Algorithm::InputState Node::checkInputs() {
     if (_pimpl->_sync_method == Algorithm::SyncEvery && _pimpl->_ts_processing_queue.size() != 0)
         _modified = true;
     /*if(_modified == false)
@@ -228,8 +211,7 @@ Algorithm::InputState Node::checkInputs()
     return Algorithm::checkInputs();
 }
 
-void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, mo::ICoordinateSystem* cs, mo::UpdateFlags fg)
-{
+void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, mo::ICoordinateSystem* cs, mo::UpdateFlags fg) {
     Algorithm::onParamUpdate(param, ctx, ts, fn, cs, fg);
     if (param->checkFlags(mo::Control_e)) {
         _modified = true;
@@ -240,28 +222,16 @@ void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t
     }
 }
 
-bool Node::process()
-{
+bool Node::process() {
     ++_pimpl_node->iterations_since_execution;
     if (_pimpl_node->iterations_since_execution % 100 == 0) {
         LOG(warning) << this->getTreeName() << " has not executed in " << _pimpl_node->iterations_since_execution << " iterations due to "
                      << (_pimpl_node->last_execution_failure_reason ? _pimpl_node->last_execution_failure_reason : "");
     }
     if (_enabled == true && _pimpl_node->disable_due_to_errors == false) {
-        mo::scoped_profile profiler(this->getTreeName().c_str(), nullptr, nullptr, cudaStream());
+        mo::scoped_profile       profiler(this->getTreeName().c_str(), nullptr, nullptr, cudaStream());
         mo::Mutex_t::scoped_lock lock(*_mtx);
-        boost::posix_time::ptime start = boost::posix_time::microsec_clock::universal_time();
-        if (!lock) {
-            while ((boost::posix_time::microsec_clock::universal_time() - start).total_milliseconds() < 2 && !lock) {
-                lock.lock();
-            }
-            if (!lock) {
-                return false;
-            }
-        }
-
         {
-            mo::scoped_profile profiler("checkInputs", nullptr, nullptr, cudaStream());
             auto input_state = checkInputs();
             if (input_state == Algorithm::NoneValid) {
                 _pimpl_node->last_execution_failure_reason = "No valid inputs";
@@ -282,35 +252,34 @@ bool Node::process()
         }
         CATCH_MACRO
         _pimpl_node->last_execution_failure_reason = 0;
-        _pimpl_node->iterations_since_execution = 0;
+        _pimpl_node->iterations_since_execution    = 0;
     }
 
     for (rcc::shared_ptr<Node>& child : _children) {
-        if (child->_ctx.get() && this->_ctx.get()) {
-            if (child->_ctx.get()->thread_id == this->_ctx.get()->thread_id) {
+        if (child) {
+            if (child && child->_ctx.get() && this->_ctx.get()) {
+                if (child->_ctx.get()->thread_id == this->_ctx.get()->thread_id) {
+                    child->process();
+                }
+            } else {
                 child->process();
             }
-        } else {
-            child->process();
         }
     }
     return true;
 }
 
-void Node::reset()
-{
+void Node::reset() {
     Init(false);
 }
 
-Node::Ptr Node::addChild(Node* child)
-{
+Node::Ptr Node::addChild(Node* child) {
     return addChild(Node::Ptr(child));
 }
 
-Node::Ptr Node::addChild(Node::Ptr child)
-{
+Node::Ptr Node::addChild(Node::Ptr child) {
     if (_ctx.get() && mo::getThisThread() != _ctx.get()->thread_id) {
-        std::future<Ptr> result;
+        std::future<Ptr>  result;
         std::promise<Ptr> promise;
         mo::ThreadSpecificQueue::push(
             std::bind(
@@ -345,8 +314,7 @@ Node::Ptr Node::addChild(Node::Ptr child)
     return child;
 }
 
-Node::Ptr Node::getChild(const std::string& treeName)
-{
+Node::Ptr Node::getChild(const std::string& treeName) {
     mo::Mutex_t::scoped_lock lock(*_mtx);
     for (size_t i = 0; i < _children.size(); ++i) {
         if (_children[i]->getTreeName() == treeName)
@@ -359,23 +327,19 @@ Node::Ptr Node::getChild(const std::string& treeName)
     return Node::Ptr();
 }
 
-Node::Ptr Node::getChild(const int& index)
-{
+Node::Ptr Node::getChild(const int& index) {
     return _children[index];
 }
-std::vector<Node::Ptr> Node::getChildren()
-{
+std::vector<Node::Ptr> Node::getChildren() {
     return _children;
 }
 
-void Node::swapChildren(int idx1, int idx2)
-{
+void Node::swapChildren(int idx1, int idx2) {
 
     std::iter_swap(_children.begin() + idx1, _children.begin() + idx2);
 }
 
-void Node::swapChildren(const std::string& name1, const std::string& name2)
-{
+void Node::swapChildren(const std::string& name1, const std::string& name2) {
 
     auto itr1 = _children.begin();
     auto itr2 = _children.begin();
@@ -391,8 +355,7 @@ void Node::swapChildren(const std::string& name1, const std::string& name2)
         std::iter_swap(itr1, itr2);
 }
 
-void Node::swapChildren(Node::Ptr child1, Node::Ptr child2)
-{
+void Node::swapChildren(Node::Ptr child1, Node::Ptr child2) {
 
     auto itr1 = std::find(_children.begin(), _children.end(), child1);
     if (itr1 == _children.end())
@@ -403,17 +366,15 @@ void Node::swapChildren(Node::Ptr child1, Node::Ptr child2)
     std::iter_swap(itr1, itr2);
 }
 
-std::vector<Node*> Node::getNodesInScope()
-{
+std::vector<Node*> Node::getNodesInScope() {
     mo::Mutex_t::scoped_lock lock(*_mtx);
-    std::vector<Node*> nodes;
+    std::vector<Node*>       nodes;
     if (_parents.size())
         _parents[0]->getNodesInScope(nodes);
     return nodes;
 }
 
-Node* Node::getNodeInScope(const std::string& name)
-{
+Node* Node::getNodeInScope(const std::string& name) {
     mo::Mutex_t::scoped_lock lock(*_mtx);
     if (name == getTreeName())
         return this;
@@ -428,8 +389,7 @@ Node* Node::getNodeInScope(const std::string& name)
     return nullptr;
 }
 
-void Node::getNodesInScope(std::vector<Node*>& nodes)
-{
+void Node::getNodesInScope(std::vector<Node*>& nodes) {
     // Perhaps not thread safe?
 
     // First travel to the root node
@@ -450,8 +410,7 @@ void Node::getNodesInScope(std::vector<Node*>& nodes)
     }
 }
 
-void Node::removeChild(Node::Ptr node)
-{
+void Node::removeChild(Node::Ptr node) {
     mo::Mutex_t::scoped_lock lock(*_mtx);
     for (auto itr = _children.begin(); itr != _children.end(); ++itr) {
         if (*itr == node) {
@@ -460,13 +419,11 @@ void Node::removeChild(Node::Ptr node)
         }
     }
 }
-void Node::removeChild(int idx)
-{
+void Node::removeChild(int idx) {
     _children.erase(_children.begin() + idx);
 }
 
-void Node::removeChild(const std::string& name)
-{
+void Node::removeChild(const std::string& name) {
     for (auto itr = _children.begin(); itr != _children.end(); ++itr) {
         if ((*itr)->getTreeName() == name) {
             _children.erase(itr);
@@ -475,24 +432,21 @@ void Node::removeChild(const std::string& name)
     }
 }
 
-void Node::removeChild(Node* node)
-{
+void Node::removeChild(Node* node) {
     auto itr = std::find(_children.begin(), _children.end(), node);
     if (itr != _children.end()) {
         _children.erase(itr);
     }
 }
 
-void Node::removeChild(rcc::weak_ptr<Node> node)
-{
+void Node::removeChild(rcc::weak_ptr<Node> node) {
     auto itr = std::find(_children.begin(), _children.end(), node.get());
     if (itr != _children.end()) {
         _children.erase(itr);
     }
 }
 
-void Node::setDataStream(IDataStream* stream_)
-{
+void Node::setDataStream(IDataStream* stream_) {
     if (stream_ == nullptr)
         return;
     mo::Mutex_t::scoped_lock lock(*_mtx);
@@ -509,8 +463,7 @@ void Node::setDataStream(IDataStream* stream_)
     }
 }
 
-IDataStream* Node::getDataStream()
-{
+IDataStream* Node::getDataStream() {
     if (_parents.size() && _data_stream == nullptr) {
         LOG(debug) << "Setting data stream from parent";
         setDataStream(_parents[0]->getDataStream());
@@ -521,38 +474,32 @@ IDataStream* Node::getDataStream()
     }
     return _data_stream.get();
 }
-std::shared_ptr<mo::IVariableManager> Node::getVariableManager()
-{
+std::shared_ptr<mo::IVariableManager> Node::getVariableManager() {
     return getDataStream()->getVariableManager();
 }
 
-std::string Node::getTreeName()
-{
+std::string Node::getTreeName() {
     if (name.size() == 0) {
         name = std::string(GetTypeName()) + boost::lexical_cast<std::string>(_unique_id);
         //name_param.emitUpdate();
     }
     return name;
 }
-std::string Node::getTreeName() const
-{
+std::string Node::getTreeName() const {
     return name;
 }
 
-void Node::setTreeName(const std::string& name)
-{
+void Node::setTreeName(const std::string& name) {
     this->name = name;
     //name_param.emitUpdate();
     setParamRoot(name);
 }
 
-std::vector<rcc::weak_ptr<Node> > Node::getParents() const
-{
+std::vector<rcc::weak_ptr<Node> > Node::getParents() const {
     return _parents;
 }
 
-void Node::Init(bool firstInit)
-{
+void Node::Init(bool firstInit) {
     //ui_collector::set_node_name(getFullTreeName());
     // Node init should be called first because it is where implicit parameters should be setup
     // Then in ParmaeteredIObject, the implicit parameters will be added back to the _parameter vector
@@ -568,12 +515,10 @@ void Node::Init(bool firstInit)
     }
 }
 
-void Node::nodeInit(bool firstInit)
-{
+void Node::nodeInit(bool firstInit) {
 }
 
-void Node::postSerializeInit()
-{
+void Node::postSerializeInit() {
     Algorithm::postSerializeInit();
     std::string name = getTreeName();
     for (auto& child : _algorithm_components) {
@@ -585,8 +530,7 @@ void Node::postSerializeInit()
     }
 }
 
-void Node::Serialize(ISimpleSerializer* pSerializer)
-{
+void Node::Serialize(ISimpleSerializer* pSerializer) {
     LOG(info) << "RCC serializing " << getTreeName();
     Algorithm::Serialize(pSerializer);
     SERIALIZE(_children);
@@ -597,8 +541,7 @@ void Node::Serialize(ISimpleSerializer* pSerializer)
     SERIALIZE(_unique_id)
 }
 
-void Node::addParent(Node* parent_)
-{
+void Node::addParent(Node* parent_) {
     mo::Mutex_t::scoped_lock lock(*_mtx);
     if (std::find(_parents.begin(), _parents.end(), parent_) != _parents.end())
         return;
@@ -607,14 +550,12 @@ void Node::addParent(Node* parent_)
     parent_->addChild(this);
 }
 
-void Node::setUniqueId(int id)
-{
+void Node::setUniqueId(int id) {
     _unique_id = id;
     setParamRoot(getTreeName());
 }
 
-mo::IParam* Node::addParameter(std::shared_ptr<mo::IParam> param)
-{
+mo::IParam* Node::addParameter(std::shared_ptr<mo::IParam> param) {
     auto result = mo::IMetaObject::addParam(param);
     if (result) {
         result->setTreeRoot(this->getTreeName());
@@ -622,8 +563,7 @@ mo::IParam* Node::addParameter(std::shared_ptr<mo::IParam> param)
     return result;
 }
 
-mo::IParam* Node::addParameter(mo::IParam* param)
-{
+mo::IParam* Node::addParameter(mo::IParam* param) {
     auto result = mo::IMetaObject::addParam(param);
     if (result) {
         result->setTreeRoot(this->getTreeName());
