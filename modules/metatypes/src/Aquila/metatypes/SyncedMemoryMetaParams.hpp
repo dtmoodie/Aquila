@@ -1,25 +1,34 @@
 #pragma once
-#include "Aquila/Detail/Export.hpp"
+#include "Aquila/core/detail/Export.hpp"
 #include "Aquila/types/SyncedMemory.hpp"
-#include <MetaObject/Parameters/TypedInputParameter.hpp>
+#include <MetaObject/params/TInputParam.hpp>
 
 namespace mo
 {
 template<>
-class AQUILA_EXPORTS TypedInputParameterPtr<aq::SyncedMemory> : public ITypedInputParameter<aq::SyncedMemory>
-{
+class AQUILA_EXPORTS TInputParamPtr<aq::SyncedMemory> : virtual public ITInputParam<aq::SyncedMemory> {
 public:
-    TypedInputParameterPtr(const std::string& name = "", const aq::SyncedMemory** userVar_ = nullptr, Context* ctx = nullptr);
-    bool SetInput(std::shared_ptr<IParameter> input);
-    bool SetInput(IParameter* input);
-    void SetUserDataPtr(const aq::SyncedMemory** user_var_);
-    bool GetInput(boost::optional<mo::time_t> ts, size_t* fn = nullptr);
-    bool GetInput(size_t fn, boost::optional<mo::time_t>* ts = nullptr);
+    typedef typename ParamTraits<aq::SyncedMemory>::Storage_t Storage_t;
+    typedef typename ParamTraits<aq::SyncedMemory>::ConstStorageRef_t ConstStorageRef_t;
+    typedef typename ParamTraits<aq::SyncedMemory>::InputStorage_t InputStorage_t;
+    typedef typename ParamTraits<aq::SyncedMemory>::Input_t Input_t;
+    typedef void(TUpdateSig_t)(ConstStorageRef_t, IParam*, Context*, OptionalTime_t, size_t, ICoordinateSystem*, UpdateFlags);
+    typedef TSignal<TUpdateSig_t> TUpdateSignal_t;
+    typedef TSlot<TUpdateSig_t> TUpdateSlot_t;
+
+    TInputParamPtr(const std::string& name = "", Input_t* userVar_ = nullptr, Context* ctx = nullptr);
+    bool setInput(std::shared_ptr<IParam> input);
+    bool setInput(IParam* input);
+    void setUserDataPtr(Input_t* user_var_);
+    bool getInput(OptionalTime_t ts, size_t* fn = nullptr);
+    bool getInput(size_t fn, OptionalTime_t* ts = nullptr);
+
 protected:
-    const aq::SyncedMemory** userVar; // Pointer to the user space pointer variable of type T
-    void updateUserVar();
-    virtual void onInputUpdate(Context* ctx, IParameter* param);
-    virtual void onInputDelete(IParameter const* param);
-    aq::SyncedMemory current;
+    virtual bool updateDataImpl(const Storage_t&, OptionalTime_t, Context*, size_t, ICoordinateSystem*) {
+        return true;
+    }
+    Input_t* _user_var; // Pointer to the user space pointer variable of type T
+    InputStorage_t _current_data;
+    virtual void onInputUpdate(ConstStorageRef_t, IParam*, Context*, OptionalTime_t, size_t, ICoordinateSystem*, UpdateFlags);
 };
 }

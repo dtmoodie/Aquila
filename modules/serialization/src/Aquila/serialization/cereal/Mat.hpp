@@ -19,12 +19,12 @@ namespace cereal
         ar & rows & cols & type & continuous;
 
         if (continuous) {
-            const int data_size = rows * cols * mat.elemSize();
+            const size_t data_size = rows * cols * mat.elemSize();
             auto mat_data = cereal::binary_data(mat.ptr(), data_size);
             ar & mat_data;
         }
         else {
-            const int row_size = cols * mat.elemSize();
+            const size_t row_size = cols * mat.elemSize();
             for (int i = 0; i < rows; i++) {
                 auto row_data = cereal::binary_data(mat.ptr(i), row_size);
                 ar & row_data;
@@ -41,13 +41,13 @@ namespace cereal
 
         if (continuous) {
             mat.create(rows, cols, type);
-            const int data_size = rows * cols * mat.elemSize();
+            const size_t data_size = rows * cols * mat.elemSize();
             auto mat_data = cereal::binary_data(mat.ptr(), data_size);
             ar & mat_data;
         }
         else {
             mat.create(rows, cols, type);
-            const int row_size = cols * mat.elemSize();
+            const size_t row_size = cols * mat.elemSize();
             for (int i = 0; i < rows; i++) {
                 auto row_data = cereal::binary_data(mat.ptr(i), row_size);
                 ar & row_data;
@@ -77,11 +77,11 @@ namespace cereal
         }else
         {
             if (continuous) {
-                const int data_size = rows * cols * mat.elemSize();
+                const size_t data_size = rows * cols * mat.elemSize();
                 ar.saveBinaryValue(mat.ptr(), data_size, "data");
             }
             else {
-                const int row_size = cols * mat.elemSize();
+                const size_t row_size = cols * mat.elemSize();
                 for (int i = 0; i < rows; i++) {
                     ar.saveBinaryValue(mat.ptr(i), row_size, (std::string("data") + boost::lexical_cast<std::string>(i)).c_str());
                 }
@@ -109,12 +109,12 @@ namespace cereal
         {
             if (continuous) {
                 mat.create(rows, cols, type);
-                const int data_size = rows * cols * mat.elemSize();
+                const size_t data_size = rows * cols * mat.elemSize();
                 ar.loadBinaryValue(mat.ptr(), data_size, "data");
             }
             else {
                 mat.create(rows, cols, type);
-                const int row_size = cols * mat.elemSize();
+                const size_t row_size = cols * mat.elemSize();
                 for (int i = 0; i < rows; i++) {
                     ar.loadBinaryValue(mat.ptr(i), row_size, (std::string("data") + boost::lexical_cast<std::string>(i)).c_str());
                 }
