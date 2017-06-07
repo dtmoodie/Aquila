@@ -18,7 +18,7 @@ target_include_directories(aquila_core
 target_include_directories(aquila_core
     PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../serialization/src
 )
-RCC_TARGET_CONFIG(aquila_core libraries)
+RCC_TARGET_CONFIG(aquila_core libraries_deb libraries_rel)
 if(UNIX)
     # This is needed so that the objects inside of core are loaded into the object factory
     IF(CMAKE_BUILD_TYPE MATCHES Debug)
