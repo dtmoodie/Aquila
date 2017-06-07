@@ -1,11 +1,11 @@
 #define BOOST_TEST_MAIN
-#include <Aquila/IDataStream.hpp>
-#include <Aquila/IO/JsonArchive.hpp>
-#include <Aquila/DataStream.hpp>
+#include <Aquila/core/IDataStream.hpp>
+#include <Aquila/serialization/cereal/JsonArchive.hpp>
+#include <Aquila/core/DataStream.hpp>
 
-#include <MetaObject/Thread/ThreadPool.hpp>
-#include <MetaObject/MetaObject.hpp>
-#include <MetaObject/Parameters/IO/SerializationFunctionRegistry.hpp>
+#include <MetaObject/thread/ThreadPool.hpp>
+#include <MetaObject/object/MetaObject.hpp>
+#include <MetaObject/serialization/SerializationFactory.hpp>
 
 #ifdef _MSC_VER
 #include <boost/test/unit_test.hpp>
@@ -13,7 +13,7 @@
 #define BOOST_TEST_MODULE __FILE__
 #include <boost/test/included/unit_test.hpp>
 #endif
-#include <Aquila/SyncedMemory.h>
+#include <Aquila/types/SyncedMemory.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(initialize)
 #endif
                 {
                     std::string file = itr->path().string();
-                    mo::MetaObjectFactory::Instance()->LoadPlugin(file);
+                    mo::MetaObjectFactory::instance()->loadPlugin(file);
                 }
             }
         }
@@ -60,10 +60,10 @@ BOOST_AUTO_TEST_CASE(synced_mem_to_json)
 {
     aq::SyncedMemory synced_mem(cv::Mat(320,240, CV_32FC3));
     
-    mo::TypedParameterPtr<aq::SyncedMemory> param;
-    param.SetName("Matrix");
-    param.UpdatePtr(&synced_mem);
-    auto func = mo::SerializationFunctionRegistry::Instance()->GetJsonSerializationFunction(param.GetTypeInfo());
+    mo::TParamPtr<aq::SyncedMemory> param;
+    param.setName("Matrix");
+    param.updatePtr(&synced_mem);
+    auto func = mo::SerializationFactory::instance()->getJsonSerializationFunction(param.getTypeInfo());
     BOOST_REQUIRE(func);
     std::ofstream ofs("synced_memory_json.json");
     BOOST_REQUIRE(ofs.is_open());
@@ -73,20 +73,20 @@ BOOST_AUTO_TEST_CASE(synced_mem_to_json)
 
 BOOST_AUTO_TEST_CASE(datastream)
 {
-    auto ds = aq::IDataStream::Create("", "TestFrameGrabber");
+    auto ds = aq::IDataStream::create("", "TestFrameGrabber");
     std::ofstream ofs("datastream.json");
     BOOST_REQUIRE(ofs.is_open());
     aq::JSONOutputArchive ar(ofs);
-    ds->AddNode("QtImageDisplay");
-    auto disp = ds->GetNode("QtImageDisplay0");
-    auto fg = ds->GetNode("TestFrameGrabber0");
-    disp->ConnectInput(fg, "current_frame", "image");
+    ds->addNode("QtImageDisplay");
+    auto disp = ds->getNode("QtImageDisplay0");
+    auto fg = ds->getNode("TestFrameGrabber0");
+    disp->connectInput(fg, "current_frame", "image");
     ar(ds);
 }
 
 BOOST_AUTO_TEST_CASE(read_datastream)
 {
-    rcc::shared_ptr<aq::IDataStream> stream = rcc::shared_ptr<aq::DataStream>::Create();
+    rcc::shared_ptr<aq::IDataStream> stream = rcc::shared_ptr<aq::DataStream>::create();
     std::ifstream ifs("datastream.json");
     BOOST_REQUIRE(ifs.is_open());
     std::map<std::string, std::string> dummy;

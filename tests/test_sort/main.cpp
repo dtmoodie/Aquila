@@ -9,8 +9,7 @@
 #include <boost/test/included/unit_test.hpp>
 #endif
 
-
-#include <Aquila/utilities/GPUSorting.hpp>
+#include <Aquila/utilities/cuda/GPUSorting.hpp>
 
 BOOST_AUTO_TEST_CASE(gpu_sort_accuracy)
 {

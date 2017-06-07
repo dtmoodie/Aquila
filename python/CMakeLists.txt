@@ -40,6 +40,12 @@ if(Boost_PYTHON_FOUND AND PythonLibs_FOUND)
     file(GLOB_RECURSE _hdr "include/*.h" "include/*.hpp")
     list(APPEND src "${_src}")
     list(APPEND hdr "${_hdr}")
+	get_filename_component(python_lib_dir_ "${PYTHON_LIBRARY}" DIRECTORY)
+	foreach(dir ${_python_lib_dirs})
+		if(NOT ${dir} STREQUAL debug AND NOT ${dir} STREQUAL optimized)
+		  link_directories(${dir})
+		endif()
+    endforeach()
 
     # ----------------------- Build library ---------------------
     include_directories(${Aquila_INCLUDE_DIRS} ${INCLUDE_DIRS})

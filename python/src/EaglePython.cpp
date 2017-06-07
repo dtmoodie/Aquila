@@ -22,7 +22,7 @@ std::vector<std::string> ListConstructableNodes1()
 {
     return aq::Nodes::Node::ListConstructableNodes("");
 }
-std::vector<std::string> ListDevices()
+std::vector<std::pair<std::string, std::string>> ListDevices()
 {
     return aq::Nodes::IFrameGrabber::ListAllLoadableDocuments();
 }
@@ -68,22 +68,23 @@ namespace boost
             typedef T type;
         };
     }
+    
+    const volatile mo::IParameter* get_pointer(const volatile mo::IParameter* param)
+    {
+        return param;
+    }
 }
-namespace rcc
+template <typename T> T* get_pointer(rcc::shared_ptr<T>& p) {
+    //notice the const_cast<> at this point
+    //for some unknown reason, bp likes to have it like that
+    return const_cast<T*>(p.Get());
+}
+
+template<typename T> const T* get_pointer(const rcc::shared_ptr<T> & p)
 {
-    template<typename T> T* get_pointer(rcc::shared_ptr<T> & p)
-    {
-        return p.Get();
-    }
-    template<typename T> const T* get_pointer(const rcc::shared_ptr<T> & p)
-    {
-        return p.Get();
-    }
-    template<typename T> T* get_pointer(rcc::weak_ptr<T> & p)
-    {
-        return p.Get();
-    }
+    return const_cast<T*>(p.Get());
 }
+
 
 
 BOOST_PYTHON_MODULE(EaglePython)

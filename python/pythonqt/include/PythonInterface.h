@@ -66,7 +66,7 @@ namespace EagleLib
 			void EaglePython::SetLogLevel(QString level);
 			bool EaglePython::CheckRecompile();
 			void EaglePython::AbortRecompile();
-			DataStream* GetDataStream(int index);
+			DataStream* getDataStream(int index);
 			void ReleaseDataStream(int index);
 			QStringList ListDataStreams();
 			DataStream* OpenDataSource(QString source);
