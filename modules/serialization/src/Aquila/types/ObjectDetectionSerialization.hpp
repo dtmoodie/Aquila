@@ -16,7 +16,7 @@ void aq::Classification::serialize(AR& ar)
 template<class AR>
 void aq::DetectedObject2d::serialize(AR& ar)
 {
-    ar(CEREAL_NVP(boundingBox), CEREAL_NVP(classification), CEREAL_NVP(timestamp), CEREAL_NVP(id));
+    ar(CEREAL_NVP(boundingBox), CEREAL_NVP(classification), CEREAL_NVP(timestamp), CEREAL_NVP(id), CEREAL_NVP(framenumber));
 }
 
 template<class AR>

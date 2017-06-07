@@ -1035,8 +1035,7 @@ namespace cereal
         aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
         for(int i = 0; i < nodes.size(); ++i)
         {
-            if(nodes[0] == nullptr)
-                continue;
+            MO_ASSERT(nodes[i]) << "Unable to deserialize node at index: " << i;
             nodes[i]->setDataStream(stream.get());
             nodes[i]->postSerializeInit();
             auto& parents = ar_.parent_mappings[nodes[i]->getTreeName()];
@@ -1044,6 +1043,7 @@ namespace cereal
             {
                 for(int j = 0; j < nodes.size(); ++j)
                 {
+                    MO_ASSERT(nodes[j]) << "Unable to deserialize node at index: " << j;
                     if(i != j)
                     {
                         if(nodes[j]->getTreeName() == parent)
