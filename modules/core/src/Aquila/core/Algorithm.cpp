@@ -148,7 +148,9 @@ Algorithm::InputState Algorithm::checkInputs() {
                 }
             }
         }
-        if (!ts && buffered && _pimpl->_buffer_timing_data.size()) {
+        if(!ts && buffered){
+            boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
+            if (_pimpl->_buffer_timing_data.size()) {
             // Search for the smallest timestamp common to all buffers
             std::vector<mo::Time_t> tss;
             for (const auto& itr : _pimpl->_buffer_timing_data) {
@@ -180,7 +182,7 @@ Algorithm::InputState Algorithm::checkInputs() {
                 }
             }
         }
-
+        }
         // Check all inputs to see if any are timestamped.
         /*for(auto input : inputs){
             if(input->isInputSet()){

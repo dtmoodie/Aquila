@@ -104,7 +104,7 @@ void TInputParamPtr<aq::SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IPa
 
 bool TInputParamPtr<aq::SyncedMemory>::getInput(OptionalTime_t ts, size_t* fn_) {
     mo::Mutex_t::scoped_lock lock(IParam::mtx());
-    if (_user_var) {
+    if (_user_var && (ITInputParam<aq::SyncedMemory>::_input || ITInputParam<aq::SyncedMemory>::_shared_input)) {
         size_t             fn;
         InputStorage_t     data;
         ICoordinateSystem* cs = nullptr;
@@ -133,13 +133,11 @@ bool TInputParamPtr<aq::SyncedMemory>::getInput(OptionalTime_t ts, size_t* fn_) 
 bool TInputParamPtr<aq::SyncedMemory>::getInput(size_t fn, OptionalTime_t* ts_) {
     mo::Mutex_t::scoped_lock lock(IParam::mtx());
     OptionalTime_t           ts;
-
     if (_user_var) {
         if (ITInputParam<aq::SyncedMemory>::_shared_input) {
             InputStorage_t data;
             if (ITInputParam<aq::SyncedMemory>::_shared_input->getData(data, fn, this->_ctx, &ts)) {
                 _current_data = data;
-
                 *_user_var = ParamTraits<aq::SyncedMemory>::ptr(_current_data);
                 if (ts_)
                     *ts_  = ts;
