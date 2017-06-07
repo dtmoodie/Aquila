@@ -982,6 +982,7 @@ namespace cereal
         std::string name = node->getTreeName();
         ar(CEREAL_NVP(name));
     }
+
     inline void save(JSONOutputArchive& ar, rcc::weak_ptr<aq::Algorithm> const& obj)
     {
         auto parameters = obj->getParams();
@@ -1035,15 +1036,23 @@ namespace cereal
         aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
         for(int i = 0; i < nodes.size(); ++i)
         {
+<<<<<<< HEAD:include/Aquila/IO/JsonArchive.hpp
+            MO_ASSERT(nodes[i]) << "Unable to deserialize all nodes";
+            nodes[i]->SetDataStream(stream.Get());
+            nodes[i]->PostSerializeInit();
+            auto& parents = ar_.parent_mappings[nodes[i]->GetTreeName()];
+=======
             if(nodes[0] == nullptr)
                 continue;
             nodes[i]->setDataStream(stream.get());
             nodes[i]->postSerializeInit();
             auto& parents = ar_.parent_mappings[nodes[i]->getTreeName()];
+>>>>>>> e2561ded8e48f4b82f21365217f99ae5e8918374:modules/serialization/src/Aquila/serialization/cereal/JsonArchive.hpp
             for (auto& parent : parents)
             {
                 for(int j = 0; j < nodes.size(); ++j)
                 {
+                    MO_ASSERT(nodes[j]) << "Unable to deserialize all nodes";
                     if(i != j)
                     {
                         if(nodes[j]->getTreeName() == parent)
