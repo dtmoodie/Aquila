@@ -140,7 +140,7 @@ namespace Nodes{
 
         InputState                      checkInputs();
 
-        MO_BEGIN(Node)
+        MO_DERIVE(Node, Algorithm)
             MO_SLOT(void, reset)
             MO_SIGNAL(void, node_updated, Node*)
             MO_SIGNAL(void, input_changed, Node*, mo::InputParam*)

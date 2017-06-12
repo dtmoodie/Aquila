@@ -7,6 +7,9 @@ namespace aq{
     class AQUILA_EXPORTS Algorithm :
             public TInterface<Algorithm, mo::IMetaObject>{
     public:
+        MO_BEGIN(Algorithm)
+            MO_SIGNAL(void, componentAdded, Algorithm*)
+        MO_END
         enum SyncMethod{
             SyncEvery = 0, // Require every timestamp to be processed
             SyncNewest     // process data according to the newest timestamp
@@ -43,6 +46,8 @@ namespace aq{
         {
             return mo::IMetaObject::getOutput<T>(name);
         }
+        virtual std::vector<mo::IParam*> getOutputs(const std::string& name_filter = "") const;
+        virtual std::vector<mo::IParam*> getOutputs(const mo::TypeInfo& type_filter, const std::string& name_filter = "") const;
         void  setContext(const mo::ContextPtr_t& ctx, bool overwrite = false);
         const std::vector<rcc::weak_ptr<Algorithm>>& getComponents() const
         {

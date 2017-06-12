@@ -90,6 +90,22 @@ mo::IParam* Algorithm::getOutput(const std::string& name) const {
     return nullptr;
 }
 
+std::vector<mo::IParam*> Algorithm::getOutputs(const std::string& name_filter) const{
+    auto outputs = mo::IMetaObject::getOutputs(name_filter);
+    for(auto& component : _algorithm_components){
+        auto comp_outputs = component->getOutputs(name_filter);
+        outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
+    }
+    return outputs;
+}
+std::vector<mo::IParam*> Algorithm::getOutputs(const mo::TypeInfo& type_filter, const std::string& name_filter) const{
+    auto outputs = mo::IMetaObject::getOutputs(type_filter, name_filter);
+    for (auto& component : _algorithm_components) {
+        auto comp_outputs = component->getOutputs(type_filter, name_filter);
+        outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
+    }
+    return outputs;
+}
 Algorithm::InputState Algorithm::checkInputs() {
     auto inputs = this->getInputs();
     if (inputs.size() == 0)
@@ -389,6 +405,7 @@ void Algorithm::postSerializeInit() {
 }
 
 void Algorithm::addComponent(rcc::weak_ptr<Algorithm> component) {
+    auto ptr = component.get();
     _algorithm_components.push_back(component);
     mo::ISlot* slot = this->getSlot("parameter_updated", mo::TypeInfo(typeid(void(IParam*, Context*, OptionalTime_t, size_t, ICoordinateSystem*, UpdateFlags))));
     if (slot) {
@@ -397,6 +414,7 @@ void Algorithm::addComponent(rcc::weak_ptr<Algorithm> component) {
             param->registerUpdateNotifier(slot);
         }
     }
+    sig_componentAdded(ptr);
 }
 
 void Algorithm::Serialize(ISimpleSerializer* pSerializer) {
