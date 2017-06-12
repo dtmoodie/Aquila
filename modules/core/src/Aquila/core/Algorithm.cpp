@@ -407,13 +407,15 @@ void Algorithm::postSerializeInit() {
 void Algorithm::addComponent(rcc::weak_ptr<Algorithm> component) {
     auto ptr = component.get();
     _algorithm_components.push_back(component);
-    mo::ISlot* slot = this->getSlot("parameter_updated", mo::TypeInfo(typeid(void(IParam*, Context*, OptionalTime_t, size_t, ICoordinateSystem*, UpdateFlags))));
+    mo::ISlot* slot = this->getSlot("param_updated", mo::TypeInfo(typeid(void(IParam*, Context*, OptionalTime_t, size_t, ICoordinateSystem*, UpdateFlags))));
     if (slot) {
         auto params = component->getParams();
         for (auto param : params) {
             param->registerUpdateNotifier(slot);
         }
     }
+    if(this->_sig_manager)
+        component->setupSignals(this->_sig_manager);
     sig_componentAdded(ptr);
 }
 
