@@ -102,7 +102,7 @@ void TInputParamPtr<aq::SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IPa
     }
 }
 
-bool TInputParamPtr<aq::SyncedMemory>::getInput(OptionalTime_t ts, size_t* fn_) {
+bool TInputParamPtr<aq::SyncedMemory>::getInput(const OptionalTime_t& ts, size_t* fn_) {
     mo::Mutex_t::scoped_lock lock(IParam::mtx());
     if (_user_var && (ITInputParam<aq::SyncedMemory>::_input || ITInputParam<aq::SyncedMemory>::_shared_input)) {
         size_t             fn;

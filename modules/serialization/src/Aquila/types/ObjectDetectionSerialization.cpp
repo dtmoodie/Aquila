@@ -31,6 +31,7 @@ namespace IO {
             bool Serialize_imp(std::ostream& os, DetectedObject const& obj, mo::_counter_<10> dummy) {
                 (void)dummy;
                 os << obj.classification.confidence << " ";
+                os << obj.id << " ";
                 if (obj.classification.label.size())
                     os << obj.classification.label;
                 else
@@ -48,13 +49,13 @@ namespace IO {
             inline size_t textSize(int value);
             template <class T>
             size_t textSize(const cv::Rect_<T>& bb) {
-                size_t out = 10;
+                size_t out = 20;
 
                 return out;
             }
 
             size_t textSize(const DetectedObject2d& obj) {
-                size_t out = 4;
+                size_t out = 8;
 
                 if (obj.classification.label.size())
                     out += obj.classification.label.size();
@@ -70,6 +71,8 @@ namespace IO {
 #include "MetaObject/serialization/TextPolicy.hpp"
 std::ostream& operator<<(std::ostream& os, const DetectedObject& obj) {
     os << std::setprecision(3) << obj.classification.confidence << " ";
+    os << obj.id << " ";
+
     if (obj.classification.label.size())
         os << obj.classification.label;
     else

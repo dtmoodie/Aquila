@@ -20,11 +20,11 @@ public:
     bool setInput(std::shared_ptr<IParam> input);
     bool setInput(IParam* input);
     void setUserDataPtr(Input_t* user_var_);
-    bool getInput(OptionalTime_t ts, size_t* fn = nullptr);
+    bool getInput(const OptionalTime_t& ts, size_t* fn = nullptr);
     bool getInput(size_t fn, OptionalTime_t* ts = nullptr);
 
 protected:
-    virtual bool updateDataImpl(const Storage_t&, OptionalTime_t, Context*, size_t, ICoordinateSystem*) {
+    virtual bool updateDataImpl(const Storage_t&, const OptionalTime_t&, Context*, size_t, ICoordinateSystem*) {
         return true;
     }
     Input_t* _user_var; // Pointer to the user space pointer variable of type T
