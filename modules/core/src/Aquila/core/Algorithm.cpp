@@ -137,10 +137,22 @@ Algorithm::InputState Algorithm::checkInputs() {
 #endif
     bool buffered = false;
     if (_pimpl->sync_input) {
-        ts = _pimpl->sync_input->getInputTimestamp();
-        if (!ts)
-            fn = _pimpl->sync_input->getInputFrameNumber();
-        if (_pimpl->_sync_method == SyncEvery) {
+        boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
+        auto input_param = _pimpl->sync_input->getInputParam();
+        if(input_param && input_param->checkFlags(mo::Buffer_e)){
+            if(_pimpl->_ts_processing_queue.size()){
+                if(_pimpl->_sync_method == SyncEvery){
+                    ts = _pimpl->_ts_processing_queue.front();
+                }else{
+                    ts = _pimpl->_ts_processing_queue.back();
+                }
+                _pimpl->_ts_processing_queue.pop();
+            }
+
+        }else{
+            ts = _pimpl->sync_input->getInputTimestamp();
+            if (!ts)
+                fn = _pimpl->sync_input->getInputFrameNumber();
         }
     } else {
         // first look for any direct connections, if so use the timestamp from them
@@ -167,59 +179,38 @@ Algorithm::InputState Algorithm::checkInputs() {
         if(!ts && buffered){
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
             if (_pimpl->_buffer_timing_data.size()) {
-            // Search for the smallest timestamp common to all buffers
-            std::vector<mo::Time_t> tss;
-            for (const auto& itr : _pimpl->_buffer_timing_data) {
-                if (itr.second.size()) {
-                    if (itr.second.front().ts)
-                        tss.push_back(*(itr.second.front().ts));
-                }
-            }
-            // assuming time only moves forward, pick the largest of the min timestamps
-            if (tss.size()) {
-                auto max_elem  = std::max_element(tss.begin(), tss.end());
-                bool all_found = true;
-                // Check if the value is in the other timing buffers
+                // Search for the smallest timestamp common to all buffers
+                std::vector<mo::Time_t> tss;
                 for (const auto& itr : _pimpl->_buffer_timing_data) {
-                    bool found = false;
-                    for (const auto& itr2 : itr.second) {
-                        if (itr2.ts && *(itr2.ts) == *max_elem) {
-                            found = true;
+                    if (itr.second.size()) {
+                        if (itr.second.front().ts)
+                            tss.push_back(*(itr.second.front().ts));
+                    }
+                }
+                // assuming time only moves forward, pick the largest of the min timestamps
+                if (tss.size()) {
+                    auto max_elem  = std::max_element(tss.begin(), tss.end());
+                    bool all_found = true;
+                    // Check if the value is in the other timing buffers
+                    for (const auto& itr : _pimpl->_buffer_timing_data) {
+                        bool found = false;
+                        for (const auto& itr2 : itr.second) {
+                            if (itr2.ts && *(itr2.ts) == *max_elem) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            all_found = false;
                             break;
                         }
                     }
-                    if (!found) {
-                        all_found = false;
-                        break;
-                    }
-                }
-                if (all_found) {
-                    ts = *max_elem;
-                }
-            }
-        }
-        }
-        // Check all inputs to see if any are timestamped.
-        /*for(auto input : inputs){
-            if(input->isInputSet()){
-                if (input->checkFlags(mo::Desynced_e))
-                    continue;
-                auto in_ts = input->getInputTimestamp();
-#ifdef _DEBUG
-                input_states.emplace_back(input->getTreeName(), in_ts, 0);
-#endif
-                if(!in_ts)
-                    continue;
-                if(in_ts){
-                    if(!ts){
-                        ts = in_ts;
-                        continue;
-                    }else{
-                        ts = std::min<mo::Time_t>(*ts, *in_ts);
+                    if (all_found) {
+                        ts = *max_elem;
                     }
                 }
             }
-        }*/
+        }
         if (!ts) {
             fn = -1;
             for (int i = 0; i < inputs.size(); ++i) {
@@ -347,7 +338,6 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
     mo::IMetaObject::onParamUpdate(param, ctx, ts, fn, cs, fg);
     if (_pimpl->_sync_method == SyncEvery) {
         if (param == _pimpl->sync_input) {
-            auto                                ts = _pimpl->sync_input->getInputTimestamp();
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -360,7 +350,8 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
             }*/
 #endif
 #endif
-            if (_pimpl->sync_input->checkFlags(mo::Buffer_e)) {
+            auto input_param = _pimpl->sync_input->getInputParam();
+            if (input_param && input_param->checkFlags(mo::Buffer_e)) {
                 if (ts) {
                     _pimpl->_ts_processing_queue.push(*ts);
                 } else {
