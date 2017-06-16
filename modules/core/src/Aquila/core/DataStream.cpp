@@ -444,8 +444,8 @@ void DataStream::startThread() {
 }
 
 void DataStream::stopThread() {
-    _processing_thread.stop();
     sig_StopThreads();
+    _processing_thread.stop();
 }
 
 void DataStream::pauseThread() {

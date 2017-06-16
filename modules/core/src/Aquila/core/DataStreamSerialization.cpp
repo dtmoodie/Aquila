@@ -1,10 +1,10 @@
 #include "Aquila/core/DataStream.hpp"
 #include "Aquila/nodes/Node.hpp"
 #include "Aquila/serialization/cereal/JsonArchive.hpp"
-//#include <Aquila/serialization/cereal/memory.hpp>
 #include "MetaObject/serialization/Policy.hpp"
 #include "MetaObject/serialization/SerializationFactory.hpp"
 #include "MetaObject/serialization/Serializer.hpp"
+#include "MetaObject/serialization/cereal_map.hpp"
 
 #include <cereal/archives/json.hpp>
 #include <cereal/types/map.hpp>
@@ -46,14 +46,6 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file)
 
 std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm)
 {
-    /*rcc::shared_ptr<DataStream> stream_ = rcc::shared_ptr<DataStream>::create();
-    if(!stream_)
-    {
-        LOG(error) << "Unable to create data stream";
-        return Ptr();
-    }
-    stream_->stopThread();
-    stream_->top_level_nodes.clear();*/
     std::vector<rcc::shared_ptr<IDataStream> > streams; //(stream_);
     if (!boost::filesystem::exists(config_file)) {
         LOG(warning) << "Stream config file doesn't exist: " << config_file;
