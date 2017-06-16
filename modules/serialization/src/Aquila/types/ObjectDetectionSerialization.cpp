@@ -77,7 +77,7 @@ std::ostream& operator<<(std::ostream& os, const DetectedObject& obj) {
         os << obj.classification.label;
     else
         os << obj.classification.classNumber;
-    os << obj.boundingBox;
+    os << std::fixed << obj.boundingBox;
     return os;
 }
 
