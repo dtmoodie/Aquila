@@ -54,7 +54,7 @@ namespace cereal
             }
         }
     };
-
+    
     void save(cereal::JSONOutputArchive& ar, const cv::Mat & mat)
     {
         int rows, cols, type;

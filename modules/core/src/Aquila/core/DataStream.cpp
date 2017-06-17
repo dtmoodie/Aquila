@@ -321,8 +321,11 @@ void DataStream::addNode(rcc::shared_ptr<Nodes::Node> node) {
 
         _processing_thread.pushEventQueue(std::bind([&promise, node, this]() {
             rcc::shared_ptr<Node> node_ = node;
-            if (std::find(top_level_nodes.begin(), top_level_nodes.end(), node) != top_level_nodes.end())
+            if (std::find(top_level_nodes.begin(), top_level_nodes.end(), node) != top_level_nodes.end()){
+                promise.set_value();
                 return;
+            }
+            
             if (node->name.size() == 0) {
                 std::string node_name = node->GetTypeName();
                 int         count     = 0;

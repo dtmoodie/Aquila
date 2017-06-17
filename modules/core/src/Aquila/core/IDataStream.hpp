@@ -14,6 +14,8 @@ template<class T> struct IObjectSingleton;
 
 namespace aq
 {
+    class JSONInputArchive;
+    class JSONOutputArchive;
     namespace Nodes
     {
         class Node;
@@ -39,10 +41,12 @@ namespace aq
          */
         static std::vector<Ptr> load(const std::string& config_file, VariableMap& vm, VariableMap& sm);
         static std::vector<Ptr> load(const std::string& config_file);
+        static std::vector<Ptr> load(JSONInputArchive& ar);
         static void save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream);
         static void save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams);
         static void save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams,
                          const VariableMap& vm, const VariableMap& sm);
+        static void save(JSONOutputArchive& ar, std::vector<rcc::shared_ptr<IDataStream>>& streams);
         static bool canLoadPath(const std::string& document);
 
         virtual std::vector<rcc::weak_ptr<Nodes::Node>> getTopLevelNodes() = 0;

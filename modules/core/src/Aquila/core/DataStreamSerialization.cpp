@@ -43,10 +43,23 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file)
     VariableMap vm, sm;
     return load(config_file, vm, sm);
 }
-
-std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm)
-{
+std::vector<IDataStream::Ptr> IDataStream::load(JSONInputArchive& ar){
     std::vector<rcc::shared_ptr<IDataStream> > streams; //(stream_);
+    auto dsnvp = cereal::make_optional_nvp("DataStreams", streams);
+    ar(dsnvp);
+    if (!dsnvp.success) {
+        LOG(warning) << "Attempting to load old config file format";
+        rcc::shared_ptr<IDataStream> stream;
+        ar(cereal::make_optional_nvp("value0", stream));
+        if (stream) {
+            streams.push_back(stream);
+        }
+    }
+    return streams;
+}
+
+std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm){
+    std::vector<rcc::shared_ptr<IDataStream> > streams;
     if (!boost::filesystem::exists(config_file)) {
         LOG(warning) << "Stream config file doesn't exist: " << config_file;
         return {};
@@ -87,17 +100,7 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, 
                        << pair.first << " = " << pair.second;
                 LOG(debug) << "Used variable replacements: " << ss.str();
             }
-
-            auto dsnvp = cereal::make_optional_nvp("DataStreams", streams);
-            ar(dsnvp);
-            if (!dsnvp.success) {
-                LOG(warning) << "Attempting to load old config file format";
-                rcc::shared_ptr<IDataStream> stream;
-                ar(cereal::make_optional_nvp("value0", stream));
-                if (stream) {
-                    streams.push_back(stream);
-                }
-            }
+            streams = load(ar);
         } catch (cereal::RapidJSONException& e) {
             LOG(warning) << "Unable to parse " << config_file << " due to " << e.what();
             return {};
@@ -106,7 +109,6 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, 
     } else if (ext == ".xml") {
         std::ifstream ifs(config_file, std::ios::binary);
         cereal::XMLInputArchive ar(ifs);
-        //ar(stream);
         return streams;
     }
     return streams;
@@ -122,9 +124,11 @@ void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_p
 {
     save(config_file, streams, VariableMap(), VariableMap());
 }
-
+void IDataStream::save(JSONOutputArchive& ar, std::vector<rcc::shared_ptr<IDataStream>>& streams){
+    ar(cereal::make_nvp("DataStreams", streams));
+}
 void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream> >& streams,
-    const VariableMap& vm, const VariableMap& sm)
+                       const VariableMap& vm, const VariableMap& sm)
 {
     for (auto& stream : streams)
         stream->stopThread();
@@ -140,14 +144,11 @@ void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_p
                 for (const auto& pair : sm) {
                     write_sm[pair.first.substr(2, pair.first.size() - 3)] = pair.second;
                 }
-                //ar(cereal::make_nvp("DefaultStrings", write_sm));
             }
             aq::JSONOutputArchive ar(ofs, aq::JSONOutputArchive::Options(), vm, write_sm);
             if (vm.size()) {
-                //ar(cereal::make_nvp("DefaultVariables", vm));
             }
-
-            ar(cereal::make_nvp("DataStreams", streams));
+            save(ar, streams);
         } catch (cereal::RapidJSONException& e) {
             LOG(warning) << "Unable to save " << config_file << " due to " << e.what();
         }
