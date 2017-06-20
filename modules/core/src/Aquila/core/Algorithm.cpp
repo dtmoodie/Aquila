@@ -159,7 +159,7 @@ Algorithm::InputState Algorithm::checkInputs() {
         for (auto input : inputs) {
             IParam* input_param = input->getInputParam();
             if (input_param) {
-                if (!input_param->checkFlags(mo::Buffer_e)) {
+                if (!input_param->checkFlags(mo::Buffer_e) && !input_param->checkFlags(mo::Unstamped_e)) {
                     auto in_ts = input_param->getTimestamp();
 #ifdef _DEBUG
                     input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
