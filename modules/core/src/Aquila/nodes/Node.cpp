@@ -225,7 +225,7 @@ void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t
 bool Node::process() {
     ++_pimpl_node->iterations_since_execution;
     if (_pimpl_node->iterations_since_execution % 100 == 0) {
-        LOG(warning) << this->getTreeName() << " has not executed in " << _pimpl_node->iterations_since_execution << " iterations due to "
+        LOG(debug) << this->getTreeName() << " has not executed in " << _pimpl_node->iterations_since_execution << " iterations due to "
                      << (_pimpl_node->last_execution_failure_reason ? _pimpl_node->last_execution_failure_reason : "");
     }
     if (_enabled == true && _pimpl_node->disable_due_to_errors == false) {
