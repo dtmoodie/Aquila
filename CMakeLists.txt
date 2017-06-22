@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
-project(Aquila)
+CMAKE_POLICY(SET CMP0048 NEW)
+project(Aquila
+    VERSION 0.1)
 CMAKE_POLICY(SET CMP0020 NEW)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_DEBUG_POSTFIX d)
