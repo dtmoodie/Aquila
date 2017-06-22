@@ -339,23 +339,15 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
     if (_pimpl->_sync_method == SyncEvery) {
         if (param == _pimpl->sync_input) {
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
-#ifdef _MSC_VER
-#ifdef _DEBUG
-/*if(_pimpl->_ts_processing_queue.size() && ts != (_pimpl->_ts_processing_queue.back() + 1))
-                LOG(debug) << "Timestamp not monotonically incrementing.  Current: " << ts << " previous: " << _pimpl->_ts_processing_queue.back();
-            auto itr = std::find(_pimpl->_ts_processing_queue._Get_container().begin(), _pimpl->_ts_processing_queue._Get_container().end(), ts);
-            if(itr != _pimpl->_ts_processing_queue._Get_container().end())
-            {
-                LOG(debug) << "Timestamp (" << ts << ") exists in processing queue.";
-            }*/
-#endif
-#endif
             auto input_param = _pimpl->sync_input->getInputParam();
             if (input_param && input_param->checkFlags(mo::Buffer_e)) {
                 if (ts) {
-                    _pimpl->_ts_processing_queue.push(*ts);
+                    if(_pimpl->_ts_processing_queue.back() != *ts)
+                        _pimpl->_ts_processing_queue.push(*ts);
                 } else {
-                    _pimpl->_fn_processing_queue.push(_pimpl->sync_input->getInputFrameNumber());
+                    auto fn = _pimpl->sync_input->getInputFrameNumber();
+                    if(_pimpl->_fn_processing_queue.back() != fn)
+                        _pimpl->_fn_processing_queue.push(fn);
                 }
             }
         }
@@ -377,7 +369,8 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
                     _pimpl->_buffer_timing_data[in_param].set_capacity(*capacity);
             }
         }
-        _pimpl->_buffer_timing_data[in_param].push_back(impl::SyncData(ts, fn));
+        if(_pimpl->_buffer_timing_data[in_param].size() == 0 || _pimpl->_buffer_timing_data[in_param].back() != impl::SyncData(ts, fn))
+            _pimpl->_buffer_timing_data[in_param].push_back(impl::SyncData(ts, fn));
     }
 }
 
