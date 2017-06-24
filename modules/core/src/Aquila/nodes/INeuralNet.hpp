@@ -1,8 +1,9 @@
 #include "IClassifier.hpp"
 #include <Aquila/types/ObjectDetection.hpp>
+#include <Aquila/types/SyncedMemory.hpp>
 namespace aq{
 namespace nodes{
-class INeuralNet: public IClassifier{
+class INeuralNet: virtual public  IClassifier{
 public:
     MO_DERIVE(INeuralNet, IClassifier)
         OPTIONAL_INPUT(std::vector<cv::Rect2f>, bounding_boxes, nullptr)
@@ -10,7 +11,7 @@ public:
         INPUT(SyncedMemory, input, nullptr)
 
         PARAM(mo::ReadFile, model_file, mo::ReadFile())
-        TOOLTIP(model_file "File containing description of neural net")
+        TOOLTIP(model_file, "File containing description of neural net")
         PARAM(mo::ReadFile, weight_file, mo::ReadFile())
         TOOLTIP(weight_file, "File containing weights for neural net")
         PARAM(cv::Scalar, channel_mean, cv::Scalar(104, 117, 123))

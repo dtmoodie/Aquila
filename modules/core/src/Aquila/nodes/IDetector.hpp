@@ -2,10 +2,10 @@
 #include <Aquila/types/ObjectDetection.hpp>
 namespace aq{
 namespace nodes{
-    class IImageDetector: IClassifier{
+    class IImageDetector: virtual public IClassifier{
     public:
-        MO_DERIVE(IDetector, IClassifier)
-            OUTPUT(std::vector<DetectedObject2d>)
+        MO_DERIVE(IImageDetector, IClassifier)
+            OUTPUT(std::vector<DetectedObject2d>, detections, {})
         MO_END;
     };
 }
