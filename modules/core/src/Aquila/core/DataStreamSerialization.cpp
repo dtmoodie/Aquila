@@ -155,7 +155,7 @@ void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_p
     }
 }
 
-void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<Nodes::Node>& node,
+void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<nodes::Node>& node,
     std::vector<std::pair<std::string, std::string> >& inputs)
 {
     ar.startNode();
@@ -224,7 +224,7 @@ struct NodeSerializationInfo {
     void load(AR& ar) {}
 };
 
-void PopulateSerializationInfo(Nodes::Node* node, std::vector<NodeSerializationInfo>& info)
+void PopulateSerializationInfo(nodes::Node* node, std::vector<NodeSerializationInfo>& info)
 {
     bool found = false;
     for (int i = 0; i < info.size(); ++i) {

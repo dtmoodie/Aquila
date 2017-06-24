@@ -139,6 +139,15 @@ Algorithm::InputState Algorithm::checkInputs() {
     if (_pimpl->sync_input) {
         boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
         auto input_param = _pimpl->sync_input->getInputParam();
+#ifdef _DEBUG
+        for (auto input : inputs) {
+            IParam* input_param = input->getInputParam();
+            if(input_param){
+                auto in_ts = input_param->getTimestamp();
+                input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
+            }
+        }
+#endif
         if(input_param && input_param->checkFlags(mo::Buffer_e)){
             if(_pimpl->_ts_processing_queue.size()){
                 if(_pimpl->_sync_method == SyncEvery){
@@ -235,9 +244,16 @@ Algorithm::InputState Algorithm::checkInputs() {
                         continue;
                 if (input->checkFlags(mo::Optional_e)) {
                     // If the input isn't set and it's optional then this is ok
-                    if (input->getInputParam()) {
+                    if (auto input_param = input->getInputParam()) {
                         // Input is optional and set, but couldn't get the right timestamp, error
-                        LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts;
+                        if(auto buf_ptr = dynamic_cast<mo::Buffer::IBuffer*>(input_param)){
+                            mo::Time_t start, end;
+                            buf_ptr->getTimestampRange(start, end);
+                            LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts << " buffer range [" << start << ", " << end << "]";
+                        }else{
+                            LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts;
+                        }
+                        
                     } else {
                         LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
                     }

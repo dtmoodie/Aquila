@@ -26,7 +26,7 @@ namespace cereal {
                 ar(make_nvp("TypeName", type));
                 return;
             }
-            if (std::is_base_of<aq::Nodes::Node, T>::value)
+            if (std::is_base_of<aq::nodes::Node, T>::value)
             {
                 aq::Serialize(ar, m.get());
             }
@@ -58,7 +58,7 @@ namespace cereal {
         }
         if (mo::CheckHasBeenSerialized(m->GetObjectId()))
             return;
-        if (std::is_base_of<aq::Nodes::Node, T>::value)
+        if (std::is_base_of<aq::nodes::Node, T>::value)
         {
             aq::DeSerialize(ar, m.get());
         }else

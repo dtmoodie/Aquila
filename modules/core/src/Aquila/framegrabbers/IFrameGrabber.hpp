@@ -28,7 +28,7 @@ RUNTIME_MODIFIABLE_INCLUDE
 RUNTIME_COMPILER_SOURCEDEPENDENCY
 
 namespace aq {
-namespace Nodes {
+namespace nodes {
     class IFrameGrabber;
     class FrameGrabberInfo;
     class Grabber;
@@ -38,7 +38,7 @@ namespace Nodes {
 
 namespace aq {
 class IDataStream;
-namespace Nodes {
+namespace nodes {
 
     class AQUILA_EXPORTS GrabberInfo : virtual public mo::IMetaObjectInfo {
     public:

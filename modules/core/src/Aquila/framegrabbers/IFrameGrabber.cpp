@@ -12,7 +12,7 @@
 #include <cereal/types/vector.hpp>
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 
 int GrabberInfo::canLoad(const std::string& path) const
 {
@@ -66,7 +66,7 @@ std::string FrameGrabberInfo::Print(IObjectInfo::Verbosity verbosity) const
 std::vector<std::pair<std::string, std::string> > IFrameGrabber::listAllLoadableDocuments()
 {
     std::vector<std::pair<std::string, std::string> > output;
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::s_interfaceID);
     for (auto constructor : constructors) {
         auto info = constructor->GetObjectInfo();
         if (auto fg_info = dynamic_cast<FrameGrabberInfo*>(info)) {
@@ -83,7 +83,7 @@ std::vector<std::pair<std::string, std::string> > IFrameGrabber::listAllLoadable
 rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri,
     const std::string& preferred_loader)
 {
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::s_interfaceID);
     std::vector<IObjectConstructor*> valid_constructors;
     std::vector<int> valid_constructor_priority;
     for (auto constructor : constructors) {

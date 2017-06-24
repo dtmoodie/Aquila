@@ -29,8 +29,8 @@ NodeFactory::~NodeFactory()
 
 void NodeFactory::onConstructorsAdded()
 {
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::Nodes::Node::s_interfaceID);
-    std::vector<Nodes::Node*> newNodes;
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::Node::s_interfaceID);
+    std::vector<nodes::Node*> newNodes;
     for (size_t i = 0; i < constructors.size(); ++i)
     {
         size_t numObjects = constructors[i]->GetNumberConstructedObjects();
@@ -39,10 +39,10 @@ void NodeFactory::onConstructorsAdded()
             auto ptr = constructors[i]->GetConstructedObject(j);
             if (ptr)
             {
-                ptr = ptr->GetInterface(aq::Nodes::Node::s_interfaceID);
+                ptr = ptr->GetInterface(aq::nodes::Node::s_interfaceID);
                 if (ptr)
                 {
-                    auto nodePtr = static_cast<Nodes::Node*>(ptr);
+                    auto nodePtr = static_cast<nodes::Node*>(ptr);
                     newNodes.push_back(nodePtr);
                 }
             }
@@ -63,18 +63,18 @@ void NodeFactory::onConstructorsAdded()
     }
 }
 
-rcc::shared_ptr<Nodes::Node> NodeFactory::addNode(const std::string &nodeName)
+rcc::shared_ptr<nodes::Node> NodeFactory::addNode(const std::string &nodeName)
 {
     auto pConstructor = mo::MetaObjectFactory::instance()->getConstructor(nodeName.c_str());
 
-    if (pConstructor && pConstructor->GetInterfaceId() == Nodes::Node::s_interfaceID)
+    if (pConstructor && pConstructor->GetInterfaceId() == nodes::Node::s_interfaceID)
     {
         IObject* pObj = pConstructor->Construct();
-        IObject* interface = pObj->GetInterface(Nodes::Node::s_interfaceID);
+        IObject* interface = pObj->GetInterface(nodes::Node::s_interfaceID);
 
         if (interface)
         {
-            Nodes::Node* node = static_cast<Nodes::Node*>(interface);
+            nodes::Node* node = static_cast<nodes::Node*>(interface);
             try
             {
                 node->Init(true);
@@ -82,45 +82,45 @@ rcc::shared_ptr<Nodes::Node> NodeFactory::addNode(const std::string &nodeName)
             catch (cv::Exception &e)
             {
                 LOG(error) << "Failed to initialize node " << nodeName << " due to: " << e.what();
-                return rcc::shared_ptr<Nodes::Node>();
+                return rcc::shared_ptr<nodes::Node>();
             }
             catch (...)
             {
                 LOG(error) << "Failed to initialize node " << nodeName;
-                return rcc::shared_ptr<Nodes::Node>();
+                return rcc::shared_ptr<nodes::Node>();
             }
 
-            nodes.push_back(rcc::weak_ptr<Nodes::Node>(node));
-            return Nodes::Node::Ptr(node);
+            nodes.push_back(rcc::weak_ptr<nodes::Node>(node));
+            return nodes::Node::Ptr(node);
         }
         else
         {
             LOG(warning) << "[ NodeManager ] " << nodeName << " not a node";
             // Input nodename is a compatible object but it is not a node
-            return rcc::shared_ptr<Nodes::Node>();
+            return rcc::shared_ptr<nodes::Node>();
         }
     }
     else
     {
         LOG(warning) << "[ NodeManager ] " << nodeName << " not a valid node name";
-        return rcc::shared_ptr<Nodes::Node>();
+        return rcc::shared_ptr<nodes::Node>();
     }
 
-    return rcc::shared_ptr<Nodes::Node>();
+    return rcc::shared_ptr<nodes::Node>();
 }
 // WIP needs to be tested for complex dependency trees
-std::vector<rcc::shared_ptr<Nodes::Node>> NodeFactory::addNode(const std::string& nodeName, IDataStream* parentStream)
+std::vector<rcc::shared_ptr<nodes::Node>> NodeFactory::addNode(const std::string& nodeName, IDataStream* parentStream)
 {
     IObjectConstructor* pConstructor = mo::MetaObjectFactory::instance()->getConstructor(nodeName.c_str());
-    std::vector<rcc::shared_ptr<Nodes::Node>> constructed_nodes;
-    if (pConstructor && pConstructor->GetInterfaceId() == Nodes::Node::s_interfaceID)
+    std::vector<rcc::shared_ptr<nodes::Node>> constructed_nodes;
+    if (pConstructor && pConstructor->GetInterfaceId() == nodes::Node::s_interfaceID)
     {
         auto obj_info = pConstructor->GetObjectInfo();
-        auto node_info = dynamic_cast<Nodes::NodeInfo*>(obj_info);
+        auto node_info = dynamic_cast<nodes::NodeInfo*>(obj_info);
         auto parental_deps = node_info->getParentalDependencies();
         // Since a data stream is selected and by definition a parental dependency must be in the direct parental path,
         // we build all parent dependencies
-        rcc::shared_ptr<Nodes::Node> parent_node;
+        rcc::shared_ptr<nodes::Node> parent_node;
         for (auto& parent_dep : parental_deps)
         {
             if (parent_dep.size())
@@ -169,10 +169,10 @@ std::vector<rcc::shared_ptr<Nodes::Node>> NodeFactory::addNode(const std::string
             constructed_nodes.insert(constructed_nodes.end(), added_nodes.begin(), added_nodes.end());
         }
         // All dependencies have been handled, construct node
-        auto pNode = static_cast<aq::Nodes::Node*>(pConstructor->Construct());
+        auto pNode = static_cast<aq::nodes::Node*>(pConstructor->Construct());
         pNode->Init(true);
-        nodes.push_back(rcc::weak_ptr<Nodes::Node>(pNode));
-        rcc::shared_ptr<Nodes::Node> node(pNode);
+        nodes.push_back(rcc::weak_ptr<nodes::Node>(pNode));
+        rcc::shared_ptr<nodes::Node> node(pNode);
         constructed_nodes.push_back(node);
         if (parent_node)
         {
@@ -187,7 +187,7 @@ std::vector<rcc::shared_ptr<Nodes::Node>> NodeFactory::addNode(const std::string
 }
 
 // recursively checks if a node exists in the parent hierarchy
-bool check_parent_exists(Nodes::Node* node, const std::string& name)
+bool check_parent_exists(nodes::Node* node, const std::string& name)
 {
     if (node->GetTypeName() == name)
         return true;
@@ -196,16 +196,16 @@ bool check_parent_exists(Nodes::Node* node, const std::string& name)
     return false;
 }
 
-std::vector<rcc::shared_ptr<Nodes::Node>> NodeFactory::addNode(const std::string& nodeName, Nodes::Node* parentNode)
+std::vector<rcc::shared_ptr<nodes::Node>> NodeFactory::addNode(const std::string& nodeName, nodes::Node* parentNode)
 {
     IObjectConstructor* pConstructor = mo::MetaObjectFactory::instance()->getConstructor(nodeName.c_str());
-    std::vector<rcc::shared_ptr<Nodes::Node>> constructed_nodes;
-    if (pConstructor && pConstructor->GetInterfaceId() == Nodes::Node::s_interfaceID)
+    std::vector<rcc::shared_ptr<nodes::Node>> constructed_nodes;
+    if (pConstructor && pConstructor->GetInterfaceId() == nodes::Node::s_interfaceID)
     {
         auto obj_info = pConstructor->GetObjectInfo();
-        auto node_info = dynamic_cast<Nodes::NodeInfo*>(obj_info);
+        auto node_info = dynamic_cast<nodes::NodeInfo*>(obj_info);
         auto parental_deps = node_info->getParentalDependencies();
-        rcc::shared_ptr<Nodes::Node> parent_node;
+        rcc::shared_ptr<nodes::Node> parent_node;
         for (auto& parent_dep : parental_deps)
         {
             if (parent_dep.size())
@@ -266,7 +266,7 @@ std::vector<rcc::shared_ptr<Nodes::Node>> NodeFactory::addNode(const std::string
             constructed_nodes.insert(constructed_nodes.end(), added_nodes.begin(), added_nodes.end());
         }
 
-        rcc::shared_ptr<Nodes::Node> node(pConstructor->Construct());
+        rcc::shared_ptr<nodes::Node> node(pConstructor->Construct());
         node->Init(true);
         parentNode->addChild(node);
         constructed_nodes.push_back(node);
@@ -301,7 +301,7 @@ void NodeFactory::RegisterNodeInfo(const char* nodeName, std::vector<char const*
     m_nodeInfoMap[nodeName] = nodeInfo;
 }
 
-Nodes::NodeInfo* NodeFactory::getNodeInfo(std::string& nodeName)
+nodes::NodeInfo* NodeFactory::getNodeInfo(std::string& nodeName)
 {
     auto constructor = mo::MetaObjectFactory::instance()->getConstructor(nodeName.c_str());
     if (constructor)
@@ -309,9 +309,9 @@ Nodes::NodeInfo* NodeFactory::getNodeInfo(std::string& nodeName)
         auto obj_info = constructor->GetObjectInfo();
         if (obj_info)
         {
-            if (obj_info->GetInterfaceId() == Nodes::Node::s_interfaceID)
+            if (obj_info->GetInterfaceId() == nodes::Node::s_interfaceID)
             {
-                auto node_info = dynamic_cast<aq::Nodes::NodeInfo*>(obj_info);
+                auto node_info = dynamic_cast<aq::nodes::NodeInfo*>(obj_info);
                 if (node_info)
                 {
                     return node_info;
@@ -329,11 +329,11 @@ void NodeFactory::SaveTree(const std::string &fileName)
 }
 
 void
-NodeFactory::onNodeRecompile(Nodes::Node *node)
+NodeFactory::onNodeRecompile(nodes::Node *node)
 {
 }
 
-Nodes::Node* NodeFactory::getNode(const ObjectId& id)
+nodes::Node* NodeFactory::getNode(const ObjectId& id)
 {
     auto constructors = mo::MetaObjectFactory::instance()->getConstructors();
     if (!id.IsValid())
@@ -345,13 +345,13 @@ Nodes::Node* NodeFactory::getNode(const ObjectId& id)
     IObject* pObj = constructors[id.m_ConstructorId]->GetConstructedObject(id.m_PerTypeId);
     if (!pObj)
         return nullptr;
-    pObj = pObj->GetInterface(Nodes::Node::s_interfaceID);
+    pObj = pObj->GetInterface(nodes::Node::s_interfaceID);
     if (!pObj)
         return nullptr;
-    return static_cast<Nodes::Node*>(pObj);
+    return static_cast<nodes::Node*>(pObj);
 }
 
-Nodes::Node* NodeFactory::getNode(const std::string &treeName)
+nodes::Node* NodeFactory::getNode(const std::string &treeName)
 {
     for (size_t i = 0; i < nodes.size(); ++i)
     {
@@ -366,19 +366,19 @@ Nodes::Node* NodeFactory::getNode(const std::string &treeName)
     return nullptr;
 }
 
-void NodeFactory::UpdateTreeName(Nodes::Node* node, const std::string& prevTreeName)
+void NodeFactory::UpdateTreeName(nodes::Node* node, const std::string& prevTreeName)
 {
 
 
 }
 
 
-void NodeFactory::GetSiblingNodes(const std::string& sourceNode, std::vector<Nodes::Node*>& output)
+void NodeFactory::GetSiblingNodes(const std::string& sourceNode, std::vector<nodes::Node*>& output)
 {
 
 }
 
-void NodeFactory::printTreeHelper(std::stringstream& tree, int level, Nodes::Node* node)
+void NodeFactory::printTreeHelper(std::stringstream& tree, int level, nodes::Node* node)
 {
 
     for (int i = 0; i < level; ++i)
@@ -396,7 +396,7 @@ void NodeFactory::printTreeHelper(std::stringstream& tree, int level, Nodes::Nod
 void NodeFactory::PrintNodeTree(std::string* ret)
 {
     std::stringstream tree;
-    std::vector<rcc::weak_ptr<Nodes::Node>> parentNodes;
+    std::vector<rcc::weak_ptr<nodes::Node>> parentNodes;
     // First get the top level nodes for the tree
     for (size_t i = 0; i < nodes.size(); ++i)
     {
@@ -420,17 +420,17 @@ void NodeFactory::PrintNodeTree(std::string* ret)
     }
 }
 
-Nodes::Node* NodeFactory::GetParent(const std::string& sourceNode)
+nodes::Node* NodeFactory::GetParent(const std::string& sourceNode)
 {
 
     return nullptr;
 }
-void NodeFactory::GetParentNodes(const std::string& sourceNode, std::vector<Nodes::Node*>& output)
+void NodeFactory::GetParentNodes(const std::string& sourceNode, std::vector<nodes::Node*>& output)
 {
 
 }
 
-void NodeFactory::GetAccessibleNodes(const std::string& sourceNode, std::vector<Nodes::Node*>& output)
+void NodeFactory::GetAccessibleNodes(const std::string& sourceNode, std::vector<nodes::Node*>& output)
 {
 
     GetSiblingNodes(sourceNode, output);
@@ -445,7 +445,7 @@ std::vector<std::string> NodeFactory::GetConstructableNodes()
     {
         if (constructors[i])
         {
-            if (constructors[i]->GetInterfaceId() == Nodes::Node::s_interfaceID)
+            if (constructors[i]->GetInterfaceId() == nodes::Node::s_interfaceID)
                 output.push_back(constructors[i]->GetName());
         }
         else

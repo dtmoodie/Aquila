@@ -12,7 +12,7 @@
 #include <cereal/types/string.hpp>
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 
 bool aq::Serialize(cereal::BinaryOutputArchive& ar, const Node* obj)
 {

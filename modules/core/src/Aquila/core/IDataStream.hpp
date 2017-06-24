@@ -16,7 +16,7 @@ namespace aq
 {
     class JSONInputArchive;
     class JSONOutputArchive;
-    namespace Nodes
+    namespace nodes
     {
         class Node;
         class IFrameGrabber;
@@ -49,23 +49,23 @@ namespace aq
         static void save(JSONOutputArchive& ar, std::vector<rcc::shared_ptr<IDataStream>>& streams);
         static bool canLoadPath(const std::string& document);
 
-        virtual std::vector<rcc::weak_ptr<Nodes::Node>> getTopLevelNodes() = 0;
+        virtual std::vector<rcc::weak_ptr<nodes::Node>> getTopLevelNodes() = 0;
 
         // Handles actual rendering of data.  Use for adding extra objects to the scene
         virtual mo::RelayManager*                           getRelayManager() = 0;
         virtual std::shared_ptr<mo::IVariableManager>       getVariableManager() = 0;
         virtual rcc::weak_ptr<WindowCallbackHandler>        getWindowCallbackManager() = 0;
         virtual IParameterBuffer*                           getParameterBuffer() = 0;
-        virtual std::vector<rcc::shared_ptr<Nodes::Node>>   getNodes() const = 0;
-        virtual std::vector<rcc::shared_ptr<Nodes::Node>>   getAllNodes() const = 0;
+        virtual std::vector<rcc::shared_ptr<nodes::Node>>   getNodes() const = 0;
+        virtual std::vector<rcc::shared_ptr<nodes::Node>>   getAllNodes() const = 0;
         virtual bool loadDocument(const std::string& document, const std::string& prefered_loader = "") = 0;
 
-        virtual std::vector<rcc::shared_ptr<Nodes::Node>> addNode(const std::string& nodeName) = 0;
-        virtual void addNode(rcc::shared_ptr<Nodes::Node> node) = 0;
-        virtual void addNodes(std::vector<rcc::shared_ptr<Nodes::Node>> node) = 0;
-        virtual void removeNode(rcc::shared_ptr<Nodes::Node> node) = 0;
-        virtual void removeNode(Nodes::Node* node) = 0;
-        virtual Nodes::Node* getNode(const std::string& nodeName) = 0;
+        virtual std::vector<rcc::shared_ptr<nodes::Node>> addNode(const std::string& nodeName) = 0;
+        virtual void addNode(rcc::shared_ptr<nodes::Node> node) = 0;
+        virtual void addNodes(std::vector<rcc::shared_ptr<nodes::Node>> node) = 0;
+        virtual void removeNode(rcc::shared_ptr<nodes::Node> node) = 0;
+        virtual void removeNode(nodes::Node* node) = 0;
+        virtual nodes::Node* getNode(const std::string& nodeName) = 0;
 
         virtual void startThread() = 0;
         virtual void stopThread() = 0;
@@ -113,9 +113,9 @@ namespace aq
             return sig_ptr->ptr;;
         }
     protected:
-        friend class Nodes::Node;
-        virtual void addChildNode(rcc::shared_ptr<Nodes::Node> node) = 0;
-        virtual void removeChildNode(rcc::shared_ptr<Nodes::Node> node) = 0;
+        friend class nodes::Node;
+        virtual void addChildNode(rcc::shared_ptr<nodes::Node> node) = 0;
+        virtual void removeChildNode(rcc::shared_ptr<nodes::Node> node) = 0;
         virtual std::unique_ptr<ISingleton>& getSingleton(mo::TypeInfo type) = 0;
         virtual std::unique_ptr<ISingleton>& getIObjectSingleton(mo::TypeInfo type) = 0;
     };

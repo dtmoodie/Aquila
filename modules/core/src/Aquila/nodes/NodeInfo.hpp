@@ -13,7 +13,7 @@ namespace mo
 }
 namespace aq
 {
-    namespace Nodes
+    namespace nodes
     {
         struct AQUILA_EXPORTS NodeInfo : virtual public mo::IMetaObjectInfo
         {
@@ -118,7 +118,7 @@ namespace mo
 {
     // Specialization for FrameGrabber derived classes to pickup extra fields that are needed
     template<class Type>
-    struct MetaObjectInfoImpl<Type, aq::Nodes::NodeInfo>: public aq::Nodes::NodeInfo
+    struct MetaObjectInfoImpl<Type, aq::nodes::NodeInfo>: public aq::nodes::NodeInfo
     {
         std::vector<std::string> getNodeCategory() const
         {

@@ -977,7 +977,7 @@ namespace cereal
             ar(cereal::make_nvp(param->getName(), info));
         }
     }
-    inline void save(JSONOutputArchive& ar, rcc::weak_ptr<aq::Nodes::Node> const& node)
+    inline void save(JSONOutputArchive& ar, rcc::weak_ptr<aq::nodes::Node> const& node)
     {
         std::string name = node->getTreeName();
         ar(CEREAL_NVP(name));
@@ -994,7 +994,7 @@ namespace cereal
             ar(CEREAL_NVP(components));
     }
 
-    inline void save(JSONOutputArchive& ar, rcc::shared_ptr<aq::Nodes::Node> const& node)
+    inline void save(JSONOutputArchive& ar, rcc::shared_ptr<aq::nodes::Node> const& node)
     {
         auto parameters = node->getParams();
         std::string type = node->GetTypeName();
@@ -1030,7 +1030,7 @@ namespace cereal
         {
             stream = aq::IDataStream::create();
         }
-        std::vector<rcc::shared_ptr<aq::Nodes::Node>> nodes;
+        std::vector<rcc::shared_ptr<aq::nodes::Node>> nodes;
         ar(CEREAL_NVP(nodes));
         aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
         for(int i = 0; i < nodes.size(); ++i)
@@ -1217,7 +1217,7 @@ namespace cereal
             for(auto component : components)
                 obj->addComponent(component);
    }
-    inline void load(JSONInputArchive& ar, rcc::shared_ptr<aq::Nodes::Node>& node)
+    inline void load(JSONInputArchive& ar, rcc::shared_ptr<aq::nodes::Node>& node)
     {
         std::string type;
         std::string name;

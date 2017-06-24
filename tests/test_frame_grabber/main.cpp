@@ -22,7 +22,7 @@
 
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 
 struct test_framegrabber: public IFrameGrabber
 {
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
     mo::MetaObjectFactory::instance()->loadPlugins("");
     auto info = mo::MetaObjectFactory::instance()->getObjectInfo("test_framegrabber");
     BOOST_REQUIRE(info);
-    auto fg_info = dynamic_cast<aq::Nodes::FrameGrabberInfo*>(info);
+    auto fg_info = dynamic_cast<aq::nodes::FrameGrabberInfo*>(info);
     BOOST_REQUIRE(fg_info);
     std::cout << fg_info->Print();
 
@@ -102,6 +102,6 @@ BOOST_AUTO_TEST_CASE(test_dummy_output)
 }
 BOOST_AUTO_TEST_CASE(test_enumeration)
 {
-    //auto all_docs = aq::Nodes::IFrameGrabber::ListAllLoadableDocuments();
+    //auto all_docs = aq::nodes::IFrameGrabber::ListAllLoadableDocuments();
     std::cout << mo::MetaObjectFactory::instance()->printAllObjectInfo();
 }

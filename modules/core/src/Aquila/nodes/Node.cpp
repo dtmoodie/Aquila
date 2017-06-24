@@ -35,7 +35,7 @@
 #include <regex>
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 RUNTIME_COMPILER_SOURCEDEPENDENCY
 RUNTIME_MODIFIABLE_INCLUDE
 
@@ -117,7 +117,7 @@ std::string NodeInfo::Print(IObjectInfo::Verbosity verbosity) const {
 }
 
 namespace aq {
-namespace Nodes {
+namespace nodes {
     class NodeImpl {
     public:
         long long   throw_count           = 0;
