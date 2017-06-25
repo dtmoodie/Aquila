@@ -172,25 +172,21 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri,
     return rcc::shared_ptr<IFrameGrabber>();
 }
 
-void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, mo::ICoordinateSystem*, mo::UpdateFlags)
-{
+void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, mo::ICoordinateSystem*, mo::UpdateFlags){
     loadData(loaded_document);
 }
 
-void IFrameGrabber::Restart()
-{
+void IFrameGrabber::Restart(){
     auto docs = loaded_document;
     Init(true);
     loadData(docs);
 }
 
-bool IFrameGrabber::loadData(std::string path)
-{
+bool IFrameGrabber::loadData(std::string path){
     return false;
 }
 
-bool IFrameGrabber::loadData(std::vector<std::string> path)
-{
+bool IFrameGrabber::loadData(std::vector<std::string> path){
     for (const auto& p : path) {
         loadData(p);
     }
@@ -201,6 +197,7 @@ bool IFrameGrabber::loadData(std::vector<std::string> path)
 class FrameGrabber : public IFrameGrabber {
 public:
     static std::vector<std::string> listLoadablePaths();
+    static int loadTimeout();
     MO_DERIVE(FrameGrabber, IFrameGrabber)
     MO_SLOT(bool, loadData, std::string)
     MO_END;
@@ -225,8 +222,7 @@ bool FrameGrabber::loadData(std::string path)
     for (auto& grabber : _grabbers) {
         GrabberInfo* ptr = dynamic_cast<GrabberInfo*>(grabber->GetConstructor()->GetObjectInfo());
         if (ptr->canLoad(path) > 0) {
-            grabber->loadData(path);
-            return true;
+            return grabber->loadData(path);
         }
     }
     // find a new grabber to load this
@@ -276,6 +272,17 @@ std::vector<std::string> FrameGrabber::listLoadablePaths()
         }
     }
     return output;
+}
+int FrameGrabber::loadTimeout(){
+    auto ctrs = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::s_interfaceID);
+    int max = 0;
+    for (auto ctr : ctrs) {
+        auto ptr = dynamic_cast<IGrabber::InterfaceInfo*>(ctr->GetObjectInfo());
+        if (ptr) {
+            max = std::max<int>(max, ptr->timeout());
+        }
+    }
+    return max;
 }
 
 MO_REGISTER_CLASS(FrameGrabber)

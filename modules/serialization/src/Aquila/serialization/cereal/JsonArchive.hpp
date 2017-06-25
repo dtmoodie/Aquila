@@ -1029,89 +1029,74 @@ namespace cereal
         if(stream == nullptr)
         {
             stream = aq::IDataStream::create();
+            MO_ASSERT(stream) << "Unable to create datastream.  Was aquila_core loaded correctly?";
         }
         std::vector<rcc::shared_ptr<aq::nodes::Node>> nodes;
         ar(CEREAL_NVP(nodes));
         aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
-        for(int i = 0; i < nodes.size(); ++i)
-        {
+        for(int i = 0; i < nodes.size(); ++i){
             MO_ASSERT(nodes[i]) << "Unable to deserialize node at index: " << i;
             nodes[i]->setDataStream(stream.get());
             nodes[i]->postSerializeInit();
             auto& parents = ar_.parent_mappings[nodes[i]->getTreeName()];
-            for (auto& parent : parents)
-            {
-                for(int j = 0; j < nodes.size(); ++j)
-                {
+            for (auto& parent : parents){
+                bool found_parent = false;
+                for(int j = 0; j < nodes.size(); ++j){
                     MO_ASSERT(nodes[j]) << "Unable to deserialize node at index: " << j;
-                    if(i != j)
-                    {
-                        if(nodes[j]->getTreeName() == parent)
-                        {
+                    if(i != j){
+                        if(nodes[j]->getTreeName() == parent){
                             nodes[j]->addChild(nodes[i]);
+                            found_parent = true;
+                            continue;
                         }
                     }
+                }
+                if(!found_parent){
+                    LOG(warning) << "Unable to find parent [" << parent << "] for node [" << nodes[i]->getTreeName() << "]";
                 }
             }
             auto& input_mappings = ar_.input_mappings[nodes[i]->getTreeName()];
             auto input_params = nodes[i]->getInputs();
-            for(auto& input : input_params)
-            {
-
+            for(auto& input : input_params){
                 auto itr = input_mappings.find(input->getName());
-                if(itr != input_mappings.end())
-                {
+                if(itr != input_mappings.end()){
                        auto pos = itr->second.name.find(":");
-                       if(pos != std::string::npos)
-                       {
+                       if(pos != std::string::npos){
                            std::string output_node_name = itr->second.name.substr(0, pos);
-                           for(int j = 0; j < nodes.size(); ++j)
-                           {
-                                if(nodes[j]->getTreeName() == output_node_name)
-                                {
+                           for(int j = 0; j < nodes.size(); ++j){
+                                if(nodes[j]->getTreeName() == output_node_name){
                                     auto space_pos = itr->second.name.find(' ');
                                     auto output_param = nodes[j]->getOutput(itr->second.name.substr(pos + 1, space_pos - (pos + 1)));
-                                    if (!output_param)
-                                    {
+                                    if (!output_param){
                                         LOG(warning) << "Unable to find parameter " << itr->second.name.substr(pos + 1) << " in node " << nodes[j]->getTreeName();
                                         break;
                                     }
 
                                     std::string type = itr->second.type;
-                                    if(type != "Direct")
-                                    {
+                                    if(type != "Direct"){
                                           mo::ParamType buffer_type = mo::stringToParamType(type);
-                                          if (!nodes[i]->connectInput(nodes[j], output_param, input, mo::ParamType(buffer_type | mo::ForceBufferedConnection_e)))
-                                          {
+                                          if (!nodes[i]->connectInput(nodes[j], output_param, input, mo::ParamType(buffer_type | mo::ForceBufferedConnection_e))){
                                               LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
                                                   << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
-                                          }else
-                                          {
-                                              if(itr->second.buffer_size > 0)
-                                              {
+                                          }else{
+                                              if(itr->second.buffer_size > 0){
                                                   mo::IParam* p = input->getInputParam();
-                                                  if(mo::Buffer::IBuffer* b = dynamic_cast<mo::Buffer::IBuffer*>(p))
-                                                  {
+                                                  if(mo::Buffer::IBuffer* b = dynamic_cast<mo::Buffer::IBuffer*>(p)){
                                                       b->setFrameBufferCapacity(itr->second.buffer_size);
                                                       if(itr->second.buffer_time)
                                                         b->setTimePaddingCapacity(*itr->second.buffer_time);
                                                   }
                                               }
-                                              if(itr->second.sync)
-                                              {
+                                              if(itr->second.sync){
                                                   nodes[i]->setSyncInput(input->getName());
                                               }
                                           }
-                                    }else
-                                    {
-                                        if (!nodes[i]->connectInput(nodes[j], output_param, input))
-                                        {
+                                    }else{
+                                        if (!nodes[i]->connectInput(nodes[j], output_param, input)){
                                             LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
                                                 << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
-                                        }else
-                                        {
-                                           if(itr->second.sync)
-                                           {
+                                        }else{
+                                           if(itr->second.sync){
                                                nodes[i]->setSyncInput(input->getName());
                                                LOG(info) << "Node (" << nodes[i]->getTreeName() << ") syncs to " << input->getName();
                                            }
@@ -1119,57 +1104,43 @@ namespace cereal
                                     }
                                 }
                            }
-                       }else
-                       {
+                       }else{
                            if(itr->second.name.size())
                                LOG(warning) << "Invalid input format for input [" << itr->second.name << "] of node: " << nodes[i]->getTreeName();
                        }
-                }else
-                {
-                    if(input->checkFlags(mo::Optional_e))
-                    {
+                }else{
+                    if(input->checkFlags(mo::Optional_e)){
                         LOG(debug) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
-                    }else
-                    {
+                    }else{
                         LOG(warning) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
                     }
                 }
             }
         }
-        for(int i = 0; i < nodes.size(); ++i)
-        {
-            if(nodes[i] != nullptr && nodes[i]->getParents().size() == 0)
-            {
+        for(int i = 0; i < nodes.size(); ++i){
+            if(nodes[i] != nullptr && nodes[i]->getParents().size() == 0){
                 stream->addNode(nodes[i]);
             }
         }
     }
 
-    inline void load(JSONInputArchive& ar, std::vector<mo::IParam*>& parameters)
-    {
-        for (auto& param : parameters)
-        {
+    inline void load(JSONInputArchive& ar, std::vector<mo::IParam*>& parameters){
+        for (auto& param : parameters){
             if (param->checkFlags(mo::Output_e) || param->checkFlags(mo::Input_e))
                 continue;
             auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
-            if (func1)
-            {
-                if (!func1(param, ar))
-                {
+            if (func1){
+                if (!func1(param, ar)){
                     LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
                 }
-            }
-            else
-            {
+            }else{
                 LOG(debug) << "No deserialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
             }
         }
     }
 
-    inline void load(JSONInputArchive& ar, std::vector<mo::InputParam*> & parameters)
-    {
-        for (auto& param : parameters)
-        {
+    inline void load(JSONInputArchive& ar, std::vector<mo::InputParam*> & parameters){
+        for (auto& param : parameters){
             std::string name = param->getName();
             aq::InputInfo info;
             auto nvp = cereal::make_optional_nvp(name, info, info);
