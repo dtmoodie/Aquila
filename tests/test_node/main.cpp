@@ -20,7 +20,7 @@
 #include <iostream>
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 
 struct test_node: public Node
 {

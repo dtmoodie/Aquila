@@ -8,7 +8,7 @@
 #include <cereal/types/vector.hpp>
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 #include "MetaObject/params/traits/MemoryTraits.hpp"
 
 INSTANTIATE_META_PARAM(rcc::shared_ptr<Node>);

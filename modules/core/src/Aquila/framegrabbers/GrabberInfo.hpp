@@ -37,7 +37,7 @@ namespace Grabbers
 namespace mo
 {
     template<class Type>
-    struct MetaObjectInfoImpl<Type, aq::Nodes::GrabberInfo> : public aq::Nodes::GrabberInfo
+    struct MetaObjectInfoImpl<Type, aq::nodes::GrabberInfo> : public aq::nodes::GrabberInfo
     {
         int canLoad(const std::string& path) const
         {

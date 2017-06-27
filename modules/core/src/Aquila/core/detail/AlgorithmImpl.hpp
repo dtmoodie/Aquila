@@ -12,6 +12,14 @@ namespace aq{
                 ts(ts_), fn(fn_){}
             boost::optional<mo::Time_t> ts;
             size_t fn = std::numeric_limits<size_t>::max();
+            bool operator==(const SyncData& other){
+                if(ts && other.ts)
+                    return *ts == other.ts;
+                return fn == other.fn;
+            }
+            bool operator!=(const SyncData& other){
+                return !(*this == other);
+            }
         };
 
         size_t fn = std::numeric_limits<size_t>::max();

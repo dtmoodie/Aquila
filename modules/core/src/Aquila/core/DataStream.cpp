@@ -29,7 +29,7 @@
 #include <future>
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 #include "MetaObject/params/detail/MetaParamImpl.hpp"
 #include "MetaObject/params/traits/MemoryTraits.hpp"
 
@@ -87,14 +87,14 @@ DataStream::DataStream() {
     this->_ctx = this->_processing_thread.getContext();
 }
 
-void DataStream::node_updated(Nodes::Node* node) {
+void DataStream::node_updated(nodes::Node* node) {
     dirty_flag = true;
 }
 
 void DataStream::update() {
     dirty_flag = true;
 }
-void DataStream::input_changed(Nodes::Node* node, mo::InputParam* param) {
+void DataStream::input_changed(nodes::Node* node, mo::InputParam* param) {
     dirty_flag = true;
 }
 void DataStream::param_updated(mo::IMetaObject* obj, mo::IParam* param) {
@@ -136,8 +136,8 @@ mo::ContextPtr_t DataStream::getContext(){
     return ctx;
 }
 
-std::vector<rcc::weak_ptr<aq::Nodes::Node> > DataStream::getTopLevelNodes() {
-    std::vector<rcc::weak_ptr<aq::Nodes::Node> > output;
+std::vector<rcc::weak_ptr<aq::nodes::Node> > DataStream::getTopLevelNodes() {
+    std::vector<rcc::weak_ptr<aq::nodes::Node> > output;
     for (auto& itr : top_level_nodes) {
         output.emplace_back(itr);
     }
@@ -178,7 +178,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
     }
     std::lock_guard<std::mutex> lock(nodes_mtx);
 
-    auto                             constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
+    auto                             constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::s_interfaceID);
     std::vector<IObjectConstructor*> valid_frame_grabbers;
     std::vector<int>                 frame_grabber_priorities;
     if (constructors.empty()) {
@@ -188,7 +188,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
     for (auto& constructor : constructors) {
         auto info = constructor->GetObjectInfo();
         if (info) {
-            auto fg_info = dynamic_cast<Nodes::FrameGrabberInfo*>(info);
+            auto fg_info = dynamic_cast<nodes::FrameGrabberInfo*>(info);
             if (fg_info) {
                 int priority = fg_info->canLoadPath(file_to_load);
                 if (priority != 0) {
@@ -276,7 +276,7 @@ bool IDataStream::canLoadPath(const std::string& document) {
         doc_to_load = doc_to_load.substr(1, doc_to_load.size() - 2);
     }
 
-    auto                             constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::Nodes::IFrameGrabber::s_interfaceID);
+    auto                             constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::s_interfaceID);
     std::vector<IObjectConstructor*> valid_frame_grabbers;
     std::vector<int>                 frame_grabber_priorities;
     if (constructors.empty()) {
@@ -300,20 +300,20 @@ bool IDataStream::canLoadPath(const std::string& document) {
     return !valid_frame_grabbers.empty();
 }
 
-std::vector<rcc::shared_ptr<Nodes::Node> > DataStream::getNodes() const {
+std::vector<rcc::shared_ptr<nodes::Node> > DataStream::getNodes() const {
     return top_level_nodes;
 }
-std::vector<rcc::shared_ptr<Nodes::Node> > DataStream::getAllNodes() const {
-    std::vector<rcc::shared_ptr<Nodes::Node> > output;
+std::vector<rcc::shared_ptr<nodes::Node> > DataStream::getAllNodes() const {
+    std::vector<rcc::shared_ptr<nodes::Node> > output;
     for (auto& child : child_nodes) {
         output.emplace_back(child);
     }
     return output;
 }
-std::vector<rcc::shared_ptr<Nodes::Node> > DataStream::addNode(const std::string& nodeName) {
+std::vector<rcc::shared_ptr<nodes::Node> > DataStream::addNode(const std::string& nodeName) {
     return aq::NodeFactory::Instance()->addNode(nodeName, this);
 }
-void DataStream::addNode(rcc::shared_ptr<Nodes::Node> node) {
+void DataStream::addNode(rcc::shared_ptr<nodes::Node> node) {
     node->setDataStream(this);
     if (!_processing_thread.isOnThread() && _processing_thread.getIsRunning()) {
         std::promise<void> promise;
@@ -358,7 +358,7 @@ void DataStream::addNode(rcc::shared_ptr<Nodes::Node> node) {
     top_level_nodes.push_back(node);
     dirty_flag = true;
 }
-void DataStream::addChildNode(rcc::shared_ptr<Nodes::Node> node) {
+void DataStream::addChildNode(rcc::shared_ptr<nodes::Node> node) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     if (std::find(child_nodes.begin(), child_nodes.end(), node.get()) != child_nodes.end())
         return;
@@ -370,16 +370,16 @@ void DataStream::addChildNode(rcc::shared_ptr<Nodes::Node> node) {
     node->setUniqueId(type_count);
     child_nodes.emplace_back(node);
 }
-void DataStream::removeChildNode(rcc::shared_ptr<Nodes::Node> node) {
+void DataStream::removeChildNode(rcc::shared_ptr<nodes::Node> node) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     std::remove(child_nodes.begin(), child_nodes.end(), node);
 }
-void DataStream::addNodeNoInit(rcc::shared_ptr<Nodes::Node> node) {
+void DataStream::addNodeNoInit(rcc::shared_ptr<nodes::Node> node) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     top_level_nodes.push_back(node);
     dirty_flag = true;
 }
-void DataStream::addNodes(std::vector<rcc::shared_ptr<Nodes::Node> > nodes) {
+void DataStream::addNodes(std::vector<rcc::shared_ptr<nodes::Node> > nodes) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     for (auto& node : nodes) {
         node->setDataStream(this);
@@ -402,7 +402,7 @@ void DataStream::addNodes(std::vector<rcc::shared_ptr<Nodes::Node> > nodes) {
     dirty_flag = true;
 }
 
-void DataStream::removeNode(Nodes::Node* node) {
+void DataStream::removeNode(nodes::Node* node) {
     {
         std::lock_guard<std::mutex> lock(nodes_mtx);
         std::remove(top_level_nodes.begin(), top_level_nodes.end(), node);
@@ -411,7 +411,7 @@ void DataStream::removeNode(Nodes::Node* node) {
     removeChildNode(node);
 }
 
-void DataStream::removeNode(rcc::shared_ptr<Nodes::Node> node) {
+void DataStream::removeNode(rcc::shared_ptr<nodes::Node> node) {
     {
         std::lock_guard<std::mutex> lock(nodes_mtx);
         std::remove(top_level_nodes.begin(), top_level_nodes.end(), node);
@@ -419,7 +419,7 @@ void DataStream::removeNode(rcc::shared_ptr<Nodes::Node> node) {
     removeChildNode(node);
 }
 
-Nodes::Node* DataStream::getNode(const std::string& nodeName) {
+nodes::Node* DataStream::getNode(const std::string& nodeName) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     for (auto& node : top_level_nodes) {
         if (node) // during serialization top_level_nodes is resized thus allowing for nullptr nodes until they are serialized

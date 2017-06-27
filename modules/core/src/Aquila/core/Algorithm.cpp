@@ -139,6 +139,15 @@ Algorithm::InputState Algorithm::checkInputs() {
     if (_pimpl->sync_input) {
         boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
         auto input_param = _pimpl->sync_input->getInputParam();
+#ifdef _DEBUG
+        for (auto input : inputs) {
+            IParam* input_param = input->getInputParam();
+            if(input_param){
+                auto in_ts = input_param->getTimestamp();
+                input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
+            }
+        }
+#endif
         if(input_param && input_param->checkFlags(mo::Buffer_e)){
             if(_pimpl->_ts_processing_queue.size()){
                 if(_pimpl->_sync_method == SyncEvery){
@@ -159,7 +168,7 @@ Algorithm::InputState Algorithm::checkInputs() {
         for (auto input : inputs) {
             IParam* input_param = input->getInputParam();
             if (input_param) {
-                if (!input_param->checkFlags(mo::Buffer_e)) {
+                if (!input_param->checkFlags(mo::Buffer_e) && !input_param->checkFlags(mo::Unstamped_e)) {
                     auto in_ts = input_param->getTimestamp();
 #ifdef _DEBUG
                     input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
@@ -235,9 +244,16 @@ Algorithm::InputState Algorithm::checkInputs() {
                         continue;
                 if (input->checkFlags(mo::Optional_e)) {
                     // If the input isn't set and it's optional then this is ok
-                    if (input->getInputParam()) {
+                    if (auto input_param = input->getInputParam()) {
                         // Input is optional and set, but couldn't get the right timestamp, error
-                        LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts;
+                        if(auto buf_ptr = dynamic_cast<mo::Buffer::IBuffer*>(input_param)){
+                            mo::Time_t start, end;
+                            buf_ptr->getTimestampRange(start, end);
+                            LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts << " buffer range [" << start << ", " << end << "]";
+                        }else{
+                            LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts;
+                        }
+                        
                     } else {
                         LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
                     }
@@ -339,23 +355,15 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
     if (_pimpl->_sync_method == SyncEvery) {
         if (param == _pimpl->sync_input) {
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
-#ifdef _MSC_VER
-#ifdef _DEBUG
-/*if(_pimpl->_ts_processing_queue.size() && ts != (_pimpl->_ts_processing_queue.back() + 1))
-                LOG(debug) << "Timestamp not monotonically incrementing.  Current: " << ts << " previous: " << _pimpl->_ts_processing_queue.back();
-            auto itr = std::find(_pimpl->_ts_processing_queue._Get_container().begin(), _pimpl->_ts_processing_queue._Get_container().end(), ts);
-            if(itr != _pimpl->_ts_processing_queue._Get_container().end())
-            {
-                LOG(debug) << "Timestamp (" << ts << ") exists in processing queue.";
-            }*/
-#endif
-#endif
             auto input_param = _pimpl->sync_input->getInputParam();
             if (input_param && input_param->checkFlags(mo::Buffer_e)) {
                 if (ts) {
-                    _pimpl->_ts_processing_queue.push(*ts);
+                    if(_pimpl->_ts_processing_queue.back() != *ts)
+                        _pimpl->_ts_processing_queue.push(*ts);
                 } else {
-                    _pimpl->_fn_processing_queue.push(_pimpl->sync_input->getInputFrameNumber());
+                    auto fn = _pimpl->sync_input->getInputFrameNumber();
+                    if(_pimpl->_fn_processing_queue.back() != fn)
+                        _pimpl->_fn_processing_queue.push(fn);
                 }
             }
         }
@@ -377,7 +385,8 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
                     _pimpl->_buffer_timing_data[in_param].set_capacity(*capacity);
             }
         }
-        _pimpl->_buffer_timing_data[in_param].push_back(impl::SyncData(ts, fn));
+        if(_pimpl->_buffer_timing_data[in_param].size() == 0 || _pimpl->_buffer_timing_data[in_param].back() != impl::SyncData(ts, fn))
+            _pimpl->_buffer_timing_data[in_param].push_back(impl::SyncData(ts, fn));
     }
 }
 

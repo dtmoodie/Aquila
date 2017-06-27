@@ -2,7 +2,7 @@
 #include "Aquila/nodes/NodeInfo.hpp"
 
 namespace aq {
-namespace Nodes {
+namespace nodes {
     class FrameGrabberInfo;
 }
 }
@@ -74,7 +74,7 @@ struct GetCanLoadHelper {
 namespace mo {
 // Specialization for FrameGrabber derived classes to pickup extra fields that are needed
 template <class Type>
-struct MetaObjectInfoImpl<Type, aq::Nodes::FrameGrabberInfo> : public aq::Nodes::FrameGrabberInfo {
+struct MetaObjectInfoImpl<Type, aq::nodes::FrameGrabberInfo> : public aq::nodes::FrameGrabberInfo {
     int loadTimeout() const
     {
         return GetTimeoutHelper<Type>::get();
@@ -90,7 +90,7 @@ struct MetaObjectInfoImpl<Type, aq::Nodes::FrameGrabberInfo> : public aq::Nodes:
         if (GetCanLoadHelper<Type>::value)
             return GetCanLoadHelper<Type>::get(document);
         else
-            return aq::Nodes::FrameGrabberInfo::canLoadPath(document);
+            return aq::nodes::FrameGrabberInfo::canLoadPath(document);
     }
 
     std::vector<std::string> getNodeCategory() const

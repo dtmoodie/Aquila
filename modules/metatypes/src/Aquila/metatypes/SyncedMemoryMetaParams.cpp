@@ -124,6 +124,8 @@ bool TInputParamPtr<aq::SyncedMemory>::getInput(const OptionalTime_t& ts, size_t
         *_user_var    = ParamTraits<aq::SyncedMemory>::ptr(_current_data);
         if (fn_)
             *fn_ = fn;
+        this->_fn = fn;
+        this->_ts = ts;
         this->setCoordinateSystem(cs);
         return true;
     }

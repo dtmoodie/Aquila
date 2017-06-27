@@ -37,11 +37,11 @@ public:
     MO_SIGNAL(void, StopThreads)
 
     MO_SLOT(void, startThread)
-    MO_SLOT(void, input_changed, Nodes::Node*, mo::InputParam*)
+    MO_SLOT(void, input_changed, nodes::Node*, mo::InputParam*)
     MO_SLOT(void, stopThread)
     MO_SLOT(void, pauseThread)
     MO_SLOT(void, resumeThread)
-    MO_SLOT(void, node_updated, Nodes::Node*)
+    MO_SLOT(void, node_updated, nodes::Node*)
     MO_SLOT(void, update)
     MO_SLOT(void, param_updated, mo::IMetaObject*, mo::IParam*)
     MO_SLOT(void, param_added, mo::IMetaObject*, mo::IParam*)
@@ -49,23 +49,23 @@ public:
     MO_SLOT(int, process)
     DS_END_(__COUNTER__);
 
-    std::vector<rcc::weak_ptr<aq::Nodes::Node> > getTopLevelNodes();
+    std::vector<rcc::weak_ptr<aq::nodes::Node> > getTopLevelNodes();
     virtual mo::ContextPtr_t                     getContext();
     virtual void initCustom(bool firstInit);
     virtual std::shared_ptr<mo::IVariableManager>      getVariableManager();
     virtual mo::RelayManager*                          getRelayManager();
     virtual IParameterBuffer*                          getParameterBuffer();
     virtual rcc::weak_ptr<WindowCallbackHandler>       getWindowCallbackManager();
-    virtual std::vector<rcc::shared_ptr<Nodes::Node> > getNodes() const;
-    virtual std::vector<rcc::shared_ptr<Nodes::Node> > getAllNodes() const;
+    virtual std::vector<rcc::shared_ptr<nodes::Node> > getNodes() const;
+    virtual std::vector<rcc::shared_ptr<nodes::Node> > getAllNodes() const;
     virtual bool loadDocument(const std::string& document, const std::string& prefered_loader = "");
-    virtual std::vector<rcc::shared_ptr<Nodes::Node> > addNode(const std::string& nodeName);
-    virtual void addNode(rcc::shared_ptr<Nodes::Node> node);
-    virtual void addNodeNoInit(rcc::shared_ptr<Nodes::Node> node);
-    virtual void addNodes(std::vector<rcc::shared_ptr<Nodes::Node> > node);
-    virtual void removeNode(rcc::shared_ptr<Nodes::Node> node);
-    virtual void removeNode(Nodes::Node* node);
-    virtual Nodes::Node* getNode(const std::string& nodeName);
+    virtual std::vector<rcc::shared_ptr<nodes::Node> > addNode(const std::string& nodeName);
+    virtual void addNode(rcc::shared_ptr<nodes::Node> node);
+    virtual void addNodeNoInit(rcc::shared_ptr<nodes::Node> node);
+    virtual void addNodes(std::vector<rcc::shared_ptr<nodes::Node> > node);
+    virtual void removeNode(rcc::shared_ptr<nodes::Node> node);
+    virtual void removeNode(nodes::Node* node);
+    virtual nodes::Node* getNode(const std::string& nodeName);
     virtual bool saveStream(const std::string& filename);
     virtual bool loadStream(const std::string& filename);
     template <class T>
@@ -78,8 +78,8 @@ public:
 
 protected:
     friend class IDataStream;
-    virtual void addChildNode(rcc::shared_ptr<Nodes::Node> node);
-    virtual void removeChildNode(rcc::shared_ptr<Nodes::Node> node);
+    virtual void addChildNode(rcc::shared_ptr<nodes::Node> node);
+    virtual void removeChildNode(rcc::shared_ptr<nodes::Node> node);
     virtual std::unique_ptr<ISingleton>& getSingleton(mo::TypeInfo type);
     virtual std::unique_ptr<ISingleton>& getIObjectSingleton(mo::TypeInfo type);
 
@@ -96,8 +96,8 @@ protected:
     std::vector<IVariableSink*>           variable_sinks;
     // These are threads for attempted connections
     std::vector<boost::thread*>                connection_threads;
-    std::vector<rcc::shared_ptr<Nodes::Node> > top_level_nodes;
-    std::vector<rcc::weak_ptr<Nodes::Node> >   child_nodes;
+    std::vector<rcc::shared_ptr<nodes::Node> > top_level_nodes;
+    std::vector<rcc::weak_ptr<nodes::Node> >   child_nodes;
     rcc::shared_ptr<WindowCallbackHandler>     _window_callback_handler;
 };
 }

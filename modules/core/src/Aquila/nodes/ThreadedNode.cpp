@@ -4,7 +4,7 @@
 #include <MetaObject/thread/BoostThread.hpp>
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 
 ThreadedNode::ThreadedNode()
 {

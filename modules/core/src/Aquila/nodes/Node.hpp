@@ -66,16 +66,16 @@ namespace cereal{
 }
 
 namespace aq{
-namespace Nodes{
+namespace nodes{
     class Node;
     class NodeImpl;
 }
 class IDataStream;
 class DataStream;
 class NodeFactory;
-AQUILA_EXPORTS bool DeSerialize(cereal::JSONInputArchive& ar, aq::Nodes::Node* obj);
-AQUILA_EXPORTS bool Serialize(cereal::JSONOutputArchive& ar, const aq::Nodes::Node* obj);
-namespace Nodes{
+AQUILA_EXPORTS bool DeSerialize(cereal::JSONInputArchive& ar, aq::nodes::Node* obj);
+AQUILA_EXPORTS bool Serialize(cereal::JSONOutputArchive& ar, const aq::nodes::Node* obj);
+namespace nodes{
 
     struct NodeInfo;
 
@@ -158,7 +158,7 @@ namespace Nodes{
         virtual mo::IParam*         addParameter(mo::IParam* param);
 
         friend bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj);
-        friend bool aq::Serialize(cereal::JSONOutputArchive& ar, const aq::Nodes::Node* obj);
+        friend bool aq::Serialize(cereal::JSONOutputArchive& ar, const aq::nodes::Node* obj);
 
         virtual void onParamUpdate(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, mo::ICoordinateSystem*, mo::UpdateFlags);
         // Current timestamp of the frame that this node is processing / processed last
@@ -178,5 +178,5 @@ namespace Nodes{
     private:
         std::shared_ptr<NodeImpl>                       _pimpl_node;
     };
-} // namespace Nodes
+} // namespace nodes
 } // namespace aq
