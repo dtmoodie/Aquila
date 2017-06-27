@@ -33,7 +33,7 @@
 //#include "../unit_test.hpp"
 
 using namespace aq;
-using namespace aq::Nodes;
+using namespace aq::nodes;
 #define TEST_FRAME_NUMBER 0
 
 bool timestamp_mode = true;
@@ -74,9 +74,9 @@ void test_name::test_method(const param_t &param)                       \
                                   BOOST_AUTO_TEST_CASE_FIXTURE,         \
                                   mbegin, mend)
 
-struct node_a: public Nodes::Node
+struct node_a: public nodes::Node
 {
-    MO_DERIVE(node_a, Nodes::Node)
+    MO_DERIVE(node_a, nodes::Node)
         OUTPUT(int, out_a, 0)
     MO_END;
 
@@ -97,9 +97,9 @@ struct node_a: public Nodes::Node
     int iterations = 0;
 };
 
-struct node_b: public Nodes::Node
+struct node_b: public nodes::Node
 {
-    MO_DERIVE(node_b, Nodes::Node)
+    MO_DERIVE(node_b, nodes::Node)
         OUTPUT(int, out_b, 0)
     MO_END;
 
@@ -121,9 +121,9 @@ struct node_b: public Nodes::Node
 };
 
 
-struct node_c: public Nodes::Node
+struct node_c: public nodes::Node
 {
-    MO_DERIVE(node_c, Nodes::Node)
+    MO_DERIVE(node_c, nodes::Node)
         INPUT(int, in_a, nullptr)
         INPUT(int, in_b, nullptr)
     MO_END;
@@ -145,9 +145,9 @@ struct node_c: public Nodes::Node
     int iterations = 0;
 };
 
-struct node_d : public Nodes::Node
+struct node_d : public nodes::Node
 {
-    MO_DERIVE(node_d, Nodes::Node)
+    MO_DERIVE(node_d, nodes::Node)
         INPUT(int, in_d, nullptr)
         OUTPUT(int, out_d, 0)
     MO_END;
@@ -383,9 +383,9 @@ BOOST_AUTO_TEST_CASE(merging_direct_fn)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-struct node_e: public Nodes::Node
+struct node_e: public nodes::Node
 {
-    MO_DERIVE(node_e, Nodes::Node)
+    MO_DERIVE(node_e, nodes::Node)
         OUTPUT(int, out, 0)
     MO_END;
     bool processImpl()
@@ -637,9 +637,9 @@ BOOST_AUTO_PARAM_TEST_CASE(diamond_buffered_right, settings, settings + num_sett
 
 BOOST_AUTO_TEST_SUITE_END() // DiamondSuite
 
-struct mt_a: public aq::Nodes::Node
+struct mt_a: public aq::nodes::Node
 {
-    MO_DERIVE(mt_a, aq::Nodes::Node)
+    MO_DERIVE(mt_a, aq::nodes::Node)
         OUTPUT(int, out_a, 0)
         APPEND_FLAGS(out_a, mo::Source_e)
     MO_END;
@@ -662,7 +662,7 @@ struct mt_a: public aq::Nodes::Node
         boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
         _modified = true;
         ++iterations;
-        aq::Nodes::Node* This = this;
+        aq::nodes::Node* This = this;
         sig_node_updated(This);
         return true;
     }
@@ -703,7 +703,7 @@ BOOST_AUTO_TEST_CASE(linear_threaded)
     d->setContext(mo::Context::getDefaultThreadContext());
     BOOST_REQUIRE(d->connectInput(a, "out_a", "in_d"));
     a->consumer_ready = true;
-    Nodes::Node* ptr = a.get();
+    nodes::Node* ptr = a.get();
     a->sig_node_updated(ptr);
     for(int i = 0; i < 1000; ++i)
     {
