@@ -358,11 +358,11 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
             auto input_param = _pimpl->sync_input->getInputParam();
             if (input_param && input_param->checkFlags(mo::Buffer_e)) {
                 if (ts) {
-                    if(_pimpl->_ts_processing_queue.back() != *ts)
+                    if(_pimpl->_ts_processing_queue.empty() || _pimpl->_ts_processing_queue.back() != *ts)
                         _pimpl->_ts_processing_queue.push(*ts);
                 } else {
                     auto fn = _pimpl->sync_input->getInputFrameNumber();
-                    if(_pimpl->_fn_processing_queue.back() != fn)
+                    if(_pimpl->_fn_processing_queue.empty() || _pimpl->_fn_processing_queue.back() != fn)
                         _pimpl->_fn_processing_queue.push(fn);
                 }
             }
