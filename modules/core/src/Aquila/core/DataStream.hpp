@@ -3,7 +3,6 @@
 
 #include <MetaObject/object/MetaObject.hpp>
 #include <MetaObject/object/detail/MetaObjectMacrosImpl.hpp>
-#include <MetaObject/thread/Thread.hpp>
 #include <MetaObject/thread/ThreadHandle.hpp>
 #include <boost/thread.hpp>
 #include <opencv2/core/cuda.hpp>
