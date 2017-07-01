@@ -83,11 +83,12 @@ DataStream::DataStream() {
     _thread_id         = 0;
     _processing_thread = mo::ThreadPool::Instance()->RequestThread();
     _processing_thread.setInnerLoop(getSlot_process<int(void)>());
-    _processing_thread.setThreadName("DataStreamThread");
     this->_ctx = this->_processing_thread.getContext();
+    _processing_thread.setThreadName("DataStreamThread");
 }
 
 void DataStream::node_updated(nodes::Node* node) {
+    (void)node;
     dirty_flag = true;
 }
 
@@ -95,19 +96,26 @@ void DataStream::update() {
     dirty_flag = true;
 }
 void DataStream::input_changed(nodes::Node* node, mo::InputParam* param) {
+    (void)node;
+    (void)param;
     dirty_flag = true;
 }
 void DataStream::param_updated(mo::IMetaObject* obj, mo::IParam* param) {
+    (void)obj;
     if (param->checkFlags(mo::Control_e) || param->checkFlags(mo::Source_e))
         dirty_flag = true;
 }
 
 void DataStream::param_added(mo::IMetaObject* obj, mo::IParam* param) {
+    (void)obj;
+    (void)param;
     dirty_flag = true;
 }
 
 void DataStream::run_continuously(bool value) {
+    (void)value;
 }
+
 
 void DataStream::initCustom(bool firstInit) {
     if (firstInit) {
@@ -216,7 +224,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
 
     auto idx = sort_index_descending(frame_grabber_priorities);
     if (prefered_loader.size()) {
-        for (int i = 0; i < valid_frame_grabbers.size(); ++i) {
+        for (size_t i = 0; i < valid_frame_grabbers.size(); ++i) {
             if (prefered_loader == valid_frame_grabbers[i]->GetName()) {
                 idx.insert(idx.begin(), i);
                 break;
@@ -224,7 +232,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
         }
     }
 
-    for (int i = 0; i < idx.size(); ++i) {
+    for (size_t i = 0; i < idx.size(); ++i) {
         auto fg      = rcc::shared_ptr<IFrameGrabber>(valid_frame_grabbers[idx[i]]->Construct());
         auto fg_info = dynamic_cast<FrameGrabberInfo*>(valid_frame_grabbers[idx[i]]->GetObjectInfo());
         fg->Init(true);
@@ -253,7 +261,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
         if (connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->loadTimeout()))) {
             if (future.get()) {
                 top_level_nodes.emplace_back(fg);
-                LOG(info) << "Loading " << file_to_load << " with frame_grabber: " << fg->GetTypeName() << " with priority: " << frame_grabber_priorities[idx[i]];
+                LOG(info) << "Loading " << file_to_load << " with frame_grabber: " << fg->GetTypeName() << " with priority: " << frame_grabber_priorities[static_cast<size_t>(idx[i])];
                 delete connection_thread;
                 return true; // successful load
             } else // unsuccessful load

@@ -15,7 +15,7 @@ template <class T, class U>
 float iou(const cv::Rect_<T>& r1, const cv::Rect_<U>& r2)
 {
     float intersection = (r1 & r2).area();
-    float rect_union = (r1.area() + r2.area()) - intersection;
+    float rect_union = (r1 | r2).area();
     return intersection / rect_union;
 }
 
