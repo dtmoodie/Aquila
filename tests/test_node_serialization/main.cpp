@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(read_datastream)
     ar(stream);
 }
 
-BOOST_AUTO_TEST_CASE(cleanup)
+/*BOOST_AUTO_TEST_CASE(cleanup)
 {
     mo::ThreadPool::Instance()->Cleanup();
-}
+}*/

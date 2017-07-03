@@ -392,7 +392,7 @@ struct node_e: public nodes::Node
     {
         if(timestamp_mode)
         {
-            out_param.updateData(iterations*2, mo::Time_t(mo::ms * iterations*2));
+            out_param.updateData(iterations*2, mo::Time_t(mo::ms * (iterations * 2)));
         }else
         {
             out_param.updateData(iterations* 2, mo::tag::_frame_number = iterations*2);
