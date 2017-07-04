@@ -39,6 +39,11 @@ namespace mo
     template<class Type>
     struct MetaObjectInfoImpl<Type, aq::nodes::GrabberInfo> : public aq::nodes::GrabberInfo
     {
+        enum{
+            HAS_CANLOAD = Grabbers::HasCanLoad<Type>::value,
+            HAS_LISTPATHS = Grabbers::HasListPaths<Type>::value,
+            HAS_TIMEOUT = Grabbers::HasTimeout<Type>::value
+        };
         int canLoad(const std::string& path) const
         {
             return Grabbers::HasLoadHelper<Type>(path);
