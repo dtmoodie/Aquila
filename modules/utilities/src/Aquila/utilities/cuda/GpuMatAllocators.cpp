@@ -91,14 +91,14 @@ namespace aq
                 mat->step = stride;
                 mat->refcount = (int*)cv::fastMalloc(sizeof(int));
                 memoryUsage += mat->step*rows;
-                LOG(trace) << "[GPU] Reusing block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB from memory block. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
+                MO_LOG(trace) << "[GPU] Reusing block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB from memory block. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
                 Increment(ptr, mat->step*rows);
                 return true;
             }
         }
         // If we get to this point, then no memory was found, need to allocate new memory
         blocks.push_back(std::shared_ptr<GpuMemoryBlock>(new GpuMemoryBlock(std::max(initialBlockSize_ / 2, size_needed))));
-        LOG(trace) << "[GPU] Expanding memory pool by " <<  std::max(initialBlockSize_ / 2, size_needed) / (1024 * 1024) << " MB";
+        MO_LOG(trace) << "[GPU] Expanding memory pool by " <<  std::max(initialBlockSize_ / 2, size_needed) / (1024 * 1024) << " MB";
         if (unsigned char* ptr = (*blocks.rbegin())->allocate(size_needed, elemSize))
         {
             mat->data = ptr;
@@ -106,7 +106,7 @@ namespace aq
             mat->refcount = (int*)cv::fastMalloc(sizeof(int));
             memoryUsage += mat->step*rows;
             Increment(ptr, mat->step*rows);
-            LOG(trace) << "[GPU] Reusing block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB from memory block. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
+            MO_LOG(trace) << "[GPU] Reusing block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB from memory block. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
             return true;
         }
         return false;
@@ -125,7 +125,7 @@ namespace aq
         }
         // If we get to this point, then no memory was found, need to allocate new memory
         blocks.push_back(std::shared_ptr<GpuMemoryBlock>(new GpuMemoryBlock(std::max(initialBlockSize_ / 2, size_needed))));
-        LOG(trace) << "[GPU] Expanding memory pool by " << std::max(initialBlockSize_ / 2, size_needed) / (1024 * 1024) << " MB";
+        MO_LOG(trace) << "[GPU] Expanding memory pool by " << std::max(initialBlockSize_ / 2, size_needed) / (1024 * 1024) << " MB";
         if (unsigned char* ptr = (*blocks.rbegin())->allocate(size_needed, 1))
         {
             memoryUsage += size_needed;
@@ -200,7 +200,7 @@ namespace aq
                 deallocateList.erase(itr);
                 memoryUsage += mat->step*rows;
                 Increment(mat->data, mat->step*rows);
-                LOG(trace) << "[GPU] Reusing block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB. total usage: " << memoryUsage / (1024 * 1024) << " MB";
+                MO_LOG(trace) << "[GPU] Reusing block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB. total usage: " << memoryUsage / (1024 * 1024) << " MB";
                 return true;
             }
         }
@@ -209,14 +209,14 @@ namespace aq
             CV_CUDEV_SAFE_CALL(cudaMallocPitch(&mat->data, &mat->step, elemSize * cols, rows));
             memoryUsage += mat->step*rows;
             Increment(mat->data, mat->step*rows);
-            LOG(trace) << "[GPU] Allocating block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
+            MO_LOG(trace) << "[GPU] Allocating block of size (" << rows << "," << cols << ") " << mat->step * rows / (1024 * 1024) << " MB. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
         }
         else
         {
             CV_CUDEV_SAFE_CALL(cudaMalloc(&mat->data, elemSize * cols * rows));
             memoryUsage += elemSize*cols*rows;
             Increment(mat->data, elemSize*cols*rows);
-            LOG(trace) << "[GPU] Allocating block of size (" << rows << "," << cols << ") " << cols * rows / (1024 * 1024) << " MB. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
+            MO_LOG(trace) << "[GPU] Allocating block of size (" << rows << "," << cols << ") " << cols * rows / (1024 * 1024) << " MB. Total usage: " << memoryUsage / (1024 * 1024) << " MB";
             mat->step = elemSize * cols;
         }
         mat->refcount = (int*)cv::fastMalloc(sizeof(int));
@@ -249,7 +249,7 @@ namespace aq
         //Decrement(ptr, mat->step*mat->rows);
         //scopedAllocationSize[scopeOwnership[ptr]] -= mat->rows*mat->step;
         //memoryUsage -= mat->rows*mat->step;
-        //BOOST_LOG(trace) << "[GPU] Releasing mat of size (" << mat->rows << "," << mat->cols << ") " << (mat->dataend - mat->datastart) / (1024 * 1024) << " MB to the memory pool";
+        //BOOST_MO_LOG(trace) << "[GPU] Releasing mat of size (" << mat->rows << "," << mat->cols << ") " << (mat->dataend - mat->datastart) / (1024 * 1024) << " MB to the memory pool";
         auto itr = current_allocations.find(ptr);
         if(itr != current_allocations.end())
         {
@@ -265,7 +265,7 @@ namespace aq
         Decrement(mat->data, mat->step*mat->rows);
         scopedAllocationSize[scopeOwnership[mat->data]] -= mat->rows*mat->step;
         memoryUsage -= mat->rows*mat->step;
-        LOG(trace) << "[GPU] Releasing mat of size (" << mat->rows << "," << mat->cols << ") " << (mat->dataend - mat->datastart)/(1024*1024) << " MB to the memory pool";
+        MO_LOG(trace) << "[GPU] Releasing mat of size (" << mat->rows << "," << mat->cols << ") " << (mat->dataend - mat->datastart)/(1024*1024) << " MB to the memory pool";
         deallocateList.push_back(std::make_tuple(mat->data, clock(), mat->dataend - mat->datastart));
         cv::fastFree(mat->refcount);
         clear();
@@ -278,7 +278,7 @@ namespace aq
             if((time - std::get<1>(*itr)) > deallocateDelay)
             {
                 memoryUsage -= std::get<2>(*itr);
-                LOG(trace) << "[GPU] Deallocating block of size " << std::get<2>(*itr) /(1024*1024) << "MB. Which was stale for " << time - std::get<1>(*itr) << " ms";
+                MO_LOG(trace) << "[GPU] Deallocating block of size " << std::get<2>(*itr) /(1024*1024) << "MB. Which was stale for " << time - std::get<1>(*itr) << " ms";
                 CV_CUDEV_SAFE_CALL(cudaFree(std::get<0>(*itr)));
                 itr = deallocateList.erase(itr);
             }

@@ -7,16 +7,17 @@
 #include "Aquila/framegrabbers/IFrameGrabber.hpp"
 #include "Aquila/nodes/Node.hpp"
 #include "Aquila/nodes/NodeFactory.hpp"
-#include "MetaObject/object/MetaObjectFactory.hpp"
-#include "MetaObject/object/RelayManager.hpp"
-#include "MetaObject/params/VariableManager.hpp"
-#include "MetaObject/serialization/memory.hpp"
-#include "MetaObject/signals/TSlot.hpp"
-#include "MetaObject/thread/InterThread.hpp"
-#include "MetaObject/thread/ThreadPool.hpp"
 #include <Aquila/gui/UiCallbackHandlers.h>
 #include <Aquila/utilities/cuda/sorting.hpp>
-#include <MetaObject/logging/Profiling.hpp>
+#include <MetaObject/logging/profiling.hpp>
+#include <MetaObject/object/MetaObjectFactory.hpp>
+#include <MetaObject/object/RelayManager.hpp>
+#include <MetaObject/params/VariableManager.hpp>
+#include <MetaObject/serialization/memory.hpp>
+#include <MetaObject/signals/TSlot.hpp>
+#include <MetaObject/thread/InterThread.hpp>
+#include <MetaObject/thread/ThreadPool.hpp>
+#include <MetaObject/thread/boost_thread.hpp>
 
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 
@@ -38,28 +39,28 @@ INSTANTIATE_META_PARAM(rcc::weak_ptr<IDataStream>);
 
 #define CATCH_MACRO                                                            \
     catch (boost::thread_resource_error & err) {                               \
-        LOG(error) << err.what();                                              \
+        MO_LOG(error) << err.what();                                           \
     }                                                                          \
     catch (boost::thread_interrupted & err) {                                  \
-        LOG(error) << "Thread interrupted";                                    \
+        MO_LOG(error) << "Thread interrupted";                                 \
         /* Needs to pass this back up to the chain to the processing thread.*/ \
         /* That way it knowns it needs to exit this thread */                  \
         throw err;                                                             \
     }                                                                          \
     catch (boost::thread_exception & err) {                                    \
-        LOG(error) << err.what();                                              \
+        MO_LOG(error) << err.what();                                           \
     }                                                                          \
     catch (cv::Exception & err) {                                              \
-        LOG(error) << err.what();                                              \
+        MO_LOG(error) << err.what();                                           \
     }                                                                          \
     catch (boost::exception & err) {                                           \
-        LOG(error) << "Boost error";                                           \
+        MO_LOG(error) << "Boost error";                                        \
     }                                                                          \
     catch (std::exception & err) {                                             \
-        LOG(error) << err.what();                                              \
+        MO_LOG(error) << err.what();                                           \
     }                                                                          \
     catch (...) {                                                              \
-        LOG(error) << "Unknown exception";                                     \
+        MO_LOG(error) << "Unknown exception";                                  \
     }
 
 // **********************************************************************
@@ -79,12 +80,15 @@ DataStream::DataStream() {
     }
     getRelayManager()->connectSlots(this);
     getRelayManager()->connectSignals(this);
-    stream_id          = 0;
-    _thread_id         = 0;
-    _processing_thread = mo::ThreadPool::Instance()->RequestThread();
+    stream_id            = 0;
+    _thread_id           = 0;
+    std::string old_name = mo::getThisThreadName();
+    mo::setThisThreadName("DataStream");
+    _processing_thread = mo::ThreadPool::instance()->requestThread();
     _processing_thread.setInnerLoop(getSlot_process<int(void)>());
     this->_ctx = this->_processing_thread.getContext();
-    _processing_thread.setThreadName("DataStreamThread");
+    _processing_thread.setThreadName("DataStream");
+    mo::setThisThreadName(old_name);
 }
 
 void DataStream::node_updated(nodes::Node* node) {
@@ -116,7 +120,6 @@ void DataStream::run_continuously(bool value) {
     (void)value;
 }
 
-
 void DataStream::initCustom(bool firstInit) {
     if (firstInit) {
         this->setupSignals(getRelayManager());
@@ -134,9 +137,9 @@ DataStream::~DataStream() {
     }
 }
 
-mo::ContextPtr_t DataStream::getContext(){
+mo::ContextPtr_t DataStream::getContext() {
     auto ctx = IDataStream::getContext();
-    if(!ctx){
+    if (!ctx) {
         ctx = this->_processing_thread.getContext();
         MO_ASSERT(ctx) << " processing thread returned a null context";
         setContext(ctx);
@@ -190,7 +193,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
     std::vector<IObjectConstructor*> valid_frame_grabbers;
     std::vector<int>                 frame_grabber_priorities;
     if (constructors.empty()) {
-        LOG(warning) << "No frame grabbers found";
+        MO_LOG(warning) << "No frame grabbers found";
         return false;
     }
     for (auto& constructor : constructors) {
@@ -215,8 +218,8 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
             }
             return ss.str();
         };
-        LOG(warning) << "No valid frame grabbers for " << file_to_load
-                     << " framegrabbers: " << f();
+        MO_LOG(warning) << "No valid frame grabbers for " << file_to_load
+                        << " framegrabbers: " << f();
 
         return false;
     }
@@ -253,7 +256,7 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
             try {
                 obj->load();
             } catch (cv::Exception& e) {
-                LOG(debug) << e.what();
+                MO_LOG(debug) << e.what();
             }
 
             delete obj;
@@ -261,16 +264,16 @@ bool DataStream::loadDocument(const std::string& document, const std::string& pr
         if (connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->loadTimeout()))) {
             if (future.get()) {
                 top_level_nodes.emplace_back(fg);
-                LOG(info) << "Loading " << file_to_load << " with frame_grabber: " << fg->GetTypeName() << " with priority: " << frame_grabber_priorities[static_cast<size_t>(idx[i])];
+                MO_LOG(info) << "Loading " << file_to_load << " with frame_grabber: " << fg->GetTypeName() << " with priority: " << frame_grabber_priorities[static_cast<size_t>(idx[i])];
                 delete connection_thread;
                 return true; // successful load
             } else // unsuccessful load
             {
-                LOG(warning) << "Unable to load " << file_to_load << " with " << fg_info->GetObjectName();
+                MO_LOG(warning) << "Unable to load " << file_to_load << " with " << fg_info->GetObjectName();
             }
         } else // timeout
         {
-            LOG(warning) << "Timeout while loading " << file_to_load << " with " << fg_info->GetObjectName() << " after waiting " << fg_info->loadTimeout() << " ms";
+            MO_LOG(warning) << "Timeout while loading " << file_to_load << " with " << fg_info->GetObjectName() << " after waiting " << fg_info->loadTimeout() << " ms";
             connection_threads.push_back(connection_thread);
         }
     }
@@ -288,7 +291,7 @@ bool IDataStream::canLoadPath(const std::string& document) {
     std::vector<IObjectConstructor*> valid_frame_grabbers;
     std::vector<int>                 frame_grabber_priorities;
     if (constructors.empty()) {
-        LOG(warning) << "No frame grabbers found";
+        MO_LOG(warning) << "No frame grabbers found";
         return false;
     }
     for (auto& constructor : constructors) {
@@ -298,7 +301,7 @@ bool IDataStream::canLoadPath(const std::string& document) {
             if (fg_info) {
                 int priority = fg_info->canLoadPath(doc_to_load);
                 if (priority != 0) {
-                    LOG(debug) << fg_info->GetObjectName() << " can load document";
+                    MO_LOG(debug) << fg_info->GetObjectName() << " can load document";
                     valid_frame_grabbers.push_back(constructor);
                     frame_grabber_priorities.push_back(priority);
                 }
@@ -329,11 +332,11 @@ void DataStream::addNode(rcc::shared_ptr<nodes::Node> node) {
 
         _processing_thread.pushEventQueue(std::bind([&promise, node, this]() {
             rcc::shared_ptr<Node> node_ = node;
-            if (std::find(top_level_nodes.begin(), top_level_nodes.end(), node) != top_level_nodes.end()){
+            if (std::find(top_level_nodes.begin(), top_level_nodes.end(), node) != top_level_nodes.end()) {
                 promise.set_value();
                 return;
             }
-            
+
             if (node->name.size() == 0) {
                 std::string node_name = node->GetTypeName();
                 int         count     = 0;

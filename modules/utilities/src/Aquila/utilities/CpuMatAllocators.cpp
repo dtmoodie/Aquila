@@ -4,7 +4,7 @@
 
 #include <opencv2/core/cuda/common.hpp>
 #include <opencv2/core/core_c.h>
-#include <MetaObject/logging/Log.hpp>
+#include <MetaObject/logging/logging.hpp>
 
 
 using namespace aq;
@@ -36,11 +36,11 @@ CpuDelayedDeallocationPool* CpuDelayedDeallocationPool::instance(size_t initial_
 void CpuDelayedDeallocationPool::allocate(void** ptr, size_t total, size_t elemSize)
 {
     std::lock_guard<std::recursive_timed_mutex> lock(deallocate_pool_mutex);
-    LOG(trace) << "Requesting allocation of " << total << " bytes";
+    MO_LOG(trace) << "Requesting allocation of " << total << " bytes";
     *ptr = nullptr;
     if (total < _threshold_level && false)
     {
-        LOG(trace) << "Requesting allocation is less than threshold, using block memory allocation";
+        MO_LOG(trace) << "Requesting allocation is less than threshold, using block memory allocation";
         int index = 0;
         unsigned char* _ptr;
         for (auto& block : blocks)
@@ -49,37 +49,37 @@ void CpuDelayedDeallocationPool::allocate(void** ptr, size_t total, size_t elemS
             if (_ptr)
             {
                 *ptr = _ptr;
-                LOG(trace) << "Allocating " << total << " bytes from pre-allocated memory block number " << index << " at address: " << (void*)_ptr;
+                MO_LOG(trace) << "Allocating " << total << " bytes from pre-allocated memory block number " << index << " at address: " << (void*)_ptr;
                 return;
             }
             ++index;
         }
-        LOG(trace) << "Creating new block of page locked memory for allocation.";
+        MO_LOG(trace) << "Creating new block of page locked memory for allocation.";
         blocks.push_back(
             std::shared_ptr<mo::CpuMemoryBlock>(
                 new mo::CpuMemoryBlock(std::max(_initial_block_size / 2, total))));
         _ptr = (*blocks.rbegin())->allocate(total, elemSize);
         if (_ptr)
         {
-            LOG(debug) << "Allocating " << total << " bytes from newly created memory block at address: " << (void*)_ptr;
+            MO_LOG(debug) << "Allocating " << total << " bytes from newly created memory block at address: " << (void*)_ptr;
             *ptr = _ptr;
             return;
         }
         throw cv::Exception(-1, "Failed to allocate sufficient page locked memory", __FUNCTION__, __FILE__, __LINE__);
     }
-    LOG(trace) << "Requested allocation is greater than threshold, using lazy deallocation pool";
+    MO_LOG(trace) << "Requested allocation is greater than threshold, using lazy deallocation pool";
     for (auto itr = deallocate_pool.begin(); itr != deallocate_pool.end(); ++itr)
     {
         if(std::get<2>(*itr) == total)
         {
             *ptr = std::get<0>(*itr);
             deallocate_pool.erase(itr);
-            LOG(trace) << "[CPU] Reusing memory block of size " << total / (1024 * 1024) << " MB. Total usage: " << total_usage /(1024*1024) << " MB";
+            MO_LOG(trace) << "[CPU] Reusing memory block of size " << total / (1024 * 1024) << " MB. Total usage: " << total_usage /(1024*1024) << " MB";
             return;
         }
     }
     total_usage += total;
-    LOG(trace) << "[CPU] Allocating block of size " << total / (1024 * 1024) << " MB. Total usage: " << total_usage / (1024 * 1024) << " MB";
+    MO_LOG(trace) << "[CPU] Allocating block of size " << total / (1024 * 1024) << " MB. Total usage: " << total_usage / (1024 * 1024) << " MB";
     cudaSafeCall(cudaMallocHost(ptr, total));
 }
 
@@ -91,7 +91,7 @@ void CpuDelayedDeallocationPool::deallocate(void* ptr, size_t total)
     {
         if (ptr > itr->begin && ptr < itr->end)
         {
-            BOOST_LOG(trace) << "Releasing memory block of size " << total << " at address: " << ptr;
+            BOOST_MO_LOG(trace) << "Releasing memory block of size " << total << " at address: " << ptr;
             if (itr->deAllocate((unsigned char*)ptr))
             {
                 return;
@@ -99,7 +99,7 @@ void CpuDelayedDeallocationPool::deallocate(void* ptr, size_t total)
         }
     }
     */
-    LOG(trace) << "Releasing " << total / (1024 * 1024) << " MB to lazy deallocation pool";
+    MO_LOG(trace) << "Releasing " << total / (1024 * 1024) << " MB to lazy deallocation pool";
     deallocate_pool.push_back(std::make_tuple((unsigned char*)ptr, clock(), total));
     cleanup();
 }
@@ -113,7 +113,7 @@ void CpuDelayedDeallocationPool::cleanup(bool force)
         if((time - std::get<1>(*itr)) > deallocation_delay)
         {
             total_usage -= std::get<2>(*itr);
-            LOG(trace) << "[CPU] DeAllocating block of size " << std::get<2>(*itr) / (1024 * 1024)
+            MO_LOG(trace) << "[CPU] DeAllocating block of size " << std::get<2>(*itr) / (1024 * 1024)
                 << " MB. Which was stale for " << time - std::get<1>(*itr)
                 << " ms. Total usage: " << total_usage / (1024 * 1024) << " MB";
             cudaFreeHost((void*)std::get<0>(*itr));

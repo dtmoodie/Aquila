@@ -48,7 +48,7 @@ std::vector<IDataStream::Ptr> IDataStream::load(JSONInputArchive& ar){
     auto dsnvp = cereal::make_optional_nvp("DataStreams", streams);
     ar(dsnvp);
     if (!dsnvp.success) {
-        LOG(warning) << "Attempting to load old config file format";
+        MO_LOG(warning) << "Attempting to load old config file format";
         rcc::shared_ptr<IDataStream> stream;
         ar(cereal::make_optional_nvp("value0", stream));
         if (stream) {
@@ -61,7 +61,7 @@ std::vector<IDataStream::Ptr> IDataStream::load(JSONInputArchive& ar){
 std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm){
     std::vector<rcc::shared_ptr<IDataStream> > streams;
     if (!boost::filesystem::exists(config_file)) {
-        LOG(warning) << "Stream config file doesn't exist: " << config_file;
+        MO_LOG(warning) << "Stream config file doesn't exist: " << config_file;
         return {};
     }
     std::string ext = boost::filesystem::extension(config_file);
@@ -90,7 +90,7 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, 
                 for (const auto& pair : sm)
                     ss << "\n"
                        << pair.first << " = " << pair.second;
-                LOG(debug) << "Used string replacements: " << ss.str();
+                MO_LOG(debug) << "Used string replacements: " << ss.str();
             }
 
             if (vm.size()) {
@@ -98,11 +98,11 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, 
                 for (const auto& pair : vm)
                     ss << "\n"
                        << pair.first << " = " << pair.second;
-                LOG(debug) << "Used variable replacements: " << ss.str();
+                MO_LOG(debug) << "Used variable replacements: " << ss.str();
             }
             streams = load(ar);
         } catch (cereal::RapidJSONException& e) {
-            LOG(warning) << "Unable to parse " << config_file << " due to " << e.what();
+            MO_LOG(warning) << "Unable to parse " << config_file << " due to " << e.what();
             return {};
         }
         return streams;
@@ -133,7 +133,7 @@ void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_p
     for (auto& stream : streams)
         stream->stopThread();
     if (boost::filesystem::exists(config_file)) {
-        LOG(info) << "Stream config file exists, overwiting: " << config_file;
+        MO_LOG(info) << "Stream config file exists, overwiting: " << config_file;
     }
     std::string ext = boost::filesystem::extension(config_file);
     if (ext == ".json") {
@@ -150,7 +150,7 @@ void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_p
             }
             save(ar, streams);
         } catch (cereal::RapidJSONException& e) {
-            LOG(warning) << "Unable to save " << config_file << " due to " << e.what();
+            MO_LOG(warning) << "Unable to save " << config_file << " due to " << e.what();
         }
     }
 }
@@ -166,7 +166,7 @@ void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<nodes::Node>& node
     ar.startNode();
     node = mo::MetaObjectFactory::instance()->create(type.c_str());
     if (!node) {
-        LOG(warning) << "Unable to create node with type: " << type;
+        MO_LOG(warning) << "Unable to create node with type: " << type;
         return;
     }
     node->setTreeName(name);
@@ -177,7 +177,7 @@ void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<nodes::Node>& node
         auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
         if (func1) {
             if (!func1(param, ar)) {
-                LOG(info) << "Unable to deserialize " << param->getName();
+                MO_LOG(info) << "Unable to deserialize " << param->getName();
             }
         }
     }
@@ -211,7 +211,7 @@ struct NodeSerializationInfo {
             auto func1 = mo::SerializationFactory::instance()->getJsonSerializationFunction(parameters[i]->getTypeInfo());
             if (func1) {
                 if (!func1(parameters[i], ar)) {
-                    LOG(debug) << "Unable to serialize " << parameters[i]->getTreeName();
+                    MO_LOG(debug) << "Unable to serialize " << parameters[i]->getTreeName();
                 }
             }
         }
@@ -265,7 +265,7 @@ void PopulateSerializationInfo(nodes::Node* node, std::vector<NodeSerializationI
 bool DataStream::saveStream(const std::string& filename)
 {
     if (boost::filesystem::exists(filename)) {
-        LOG(warning) << "Overwriting existing stream config file: " << filename;
+        MO_LOG(warning) << "Overwriting existing stream config file: " << filename;
     }
 
     std::string ext = boost::filesystem::extension(filename);

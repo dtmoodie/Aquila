@@ -925,12 +925,12 @@ namespace cereal
             {
                 if (!func1(param, ar))
                 {
-                    LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
+                    MO_LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
                 }
             }
             else
             {
-                LOG(debug) << "No serialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
+                MO_LOG(debug) << "No serialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
             }
         }
     }
@@ -1052,7 +1052,7 @@ namespace cereal
                     }
                 }
                 if(!found_parent){
-                    LOG(warning) << "Unable to find parent [" << parent << "] for node [" << nodes[i]->getTreeName() << "]";
+                    MO_LOG(warning) << "Unable to find parent [" << parent << "] for node [" << nodes[i]->getTreeName() << "]";
                 }
             }
             auto& input_mappings = ar_.input_mappings[nodes[i]->getTreeName()];
@@ -1068,7 +1068,7 @@ namespace cereal
                                     auto space_pos = itr->second.name.find(' ');
                                     auto output_param = nodes[j]->getOutput(itr->second.name.substr(pos + 1, space_pos - (pos + 1)));
                                     if (!output_param){
-                                        LOG(warning) << "Unable to find parameter " << itr->second.name.substr(pos + 1) << " in node " << nodes[j]->getTreeName();
+                                        MO_LOG(warning) << "Unable to find parameter " << itr->second.name.substr(pos + 1) << " in node " << nodes[j]->getTreeName();
                                         break;
                                     }
 
@@ -1076,7 +1076,7 @@ namespace cereal
                                     if(type != "Direct"){
                                           mo::ParamType buffer_type = mo::stringToParamType(type);
                                           if (!nodes[i]->connectInput(nodes[j], output_param, input, mo::ParamType(buffer_type | mo::ForceBufferedConnection_e))){
-                                              LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
+                                              MO_LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
                                                   << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
                                           }else{
                                               if(itr->second.buffer_size > 0){
@@ -1093,12 +1093,12 @@ namespace cereal
                                           }
                                     }else{
                                         if (!nodes[i]->connectInput(nodes[j], output_param, input)){
-                                            LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
+                                            MO_LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
                                                 << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
                                         }else{
                                            if(itr->second.sync){
                                                nodes[i]->setSyncInput(input->getName());
-                                               LOG(info) << "Node (" << nodes[i]->getTreeName() << ") syncs to " << input->getName();
+                                               MO_LOG(info) << "Node (" << nodes[i]->getTreeName() << ") syncs to " << input->getName();
                                            }
                                         }
                                     }
@@ -1106,13 +1106,13 @@ namespace cereal
                            }
                        }else{
                            if(itr->second.name.size())
-                               LOG(warning) << "Invalid input format for input [" << itr->second.name << "] of node: " << nodes[i]->getTreeName();
+                               MO_LOG(warning) << "Invalid input format for input [" << itr->second.name << "] of node: " << nodes[i]->getTreeName();
                        }
                 }else{
                     if(input->checkFlags(mo::Optional_e)){
-                        LOG(debug) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
+                        MO_LOG(debug) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
                     }else{
-                        LOG(warning) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
+                        MO_LOG(warning) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
                     }
                 }
             }
@@ -1131,10 +1131,10 @@ namespace cereal
             auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
             if (func1){
                 if (!func1(param, ar)){
-                    LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
+                    MO_LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
                 }
             }else{
-                LOG(debug) << "No deserialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
+                MO_LOG(debug) << "No deserialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
             }
         }
     }
@@ -1169,7 +1169,7 @@ namespace cereal
        }
        if(!obj)
        {
-            LOG(warning) << "Unable to create algorithm of type: " << type;
+            MO_LOG(warning) << "Unable to create algorithm of type: " << type;
             return;
        }
        auto parameters = obj->getParams();
@@ -1210,7 +1210,7 @@ namespace cereal
 
         if (!node)
         {
-            LOG(warning) << "Unable to create node with type: " << type;
+            MO_LOG(warning) << "Unable to create node with type: " << type;
             return;
         }
         node->setTreeName(name);

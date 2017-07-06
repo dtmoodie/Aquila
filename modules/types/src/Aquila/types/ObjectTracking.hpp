@@ -247,7 +247,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject : public T {
             return;
         auto dt = ts - current_state_timestamp;
         for (int i = 0; i < T::Dims; ++i) {
-            kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
+            kf.transitionMatrix.at<float>(T::Dims + i, i) = std::chrono::duration_cast<std::chrono::milliseconds>(dt) * 1000.0f;
         }
         cv::Mat state = kf.predict();
         kf.statePost = state;
@@ -263,7 +263,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject : public T {
         if (initialized) {
             auto dt = *obj.timestamp - current_state_timestamp;
             for (int i = 0; i < T::Dims; ++i) {
-                kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
+                kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.count();
             }
         }
         current_state_timestamp = *obj.timestamp;
@@ -310,7 +310,7 @@ struct AQUILA_EXPORTS KalmanTrackedObject : public T {
 
         auto dt = ts - current_state_timestamp;
         for (int i = 0; i < T::Dims; ++i) {
-            kf.transitionMatrix.at<float>(T::Dims + i, i) = dt.value();
+            kf.transitionMatrix.at<float>(T::Dims + i, i) = std::chrono::duration_cast<std::chrono::milliseconds>(dt).count() * 1000.0f;
         }
 
         predicted_state = kf.predict();

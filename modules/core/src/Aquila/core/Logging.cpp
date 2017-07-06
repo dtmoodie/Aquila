@@ -1,5 +1,5 @@
 #include "Aquila/core/Logging.hpp"
-#include "MetaObject/logging/Log.hpp"
+#include "MetaObject/logging/logging.hpp"
 #include <Aquila/core/Logger.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -41,7 +41,7 @@
 int static_errorHandler(int status, const char* func_name, const char* err_msg, const char* file_name, int line, void* userdata)
 {
     std::stringstream ss;
-    LOG(debug) << "Exception at" << mo::printCallstack(5, true, ss) << "[" << file_name << ":" << line << " " << func_name << "] " << err_msg;
+    MO_LOG(debug) << "Exception at" << mo::printCallstack(5, true, ss) << "[" << file_name << ":" << line << " " << func_name << "] " << err_msg;
     throw mo::ExceptionWithCallStack<cv::Exception>(cv::Exception(status, err_msg, func_name, file_name, line), ss.str());
     return 0;
 }

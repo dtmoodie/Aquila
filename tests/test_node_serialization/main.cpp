@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(initialize)
 #else
     currentDir = boost::filesystem::path(currentDir.string() + "/Plugins");
 #endif
-    LOG(info) << "Looking for plugins in: " << currentDir.string();
+    MO_LOG(info) << "Looking for plugins in: " << currentDir.string();
     boost::filesystem::directory_iterator end_itr;
     if (boost::filesystem::is_directory(currentDir))
     {
@@ -96,5 +96,5 @@ BOOST_AUTO_TEST_CASE(read_datastream)
 
 /*BOOST_AUTO_TEST_CASE(cleanup)
 {
-    mo::ThreadPool::Instance()->Cleanup();
+    mo::ThreadPool::instance()->cleanup();
 }*/

@@ -112,7 +112,7 @@ Algorithm::InputState Algorithm::checkInputs() {
         return AllValid;
     for (auto input : inputs) {
         if (!input->isInputSet() && !input->checkFlags(mo::Optional_e)) {
-            LOG(trace) << "Required input (" << input->getTreeName() << ") is not set to anything";
+            MO_LOG(trace) << "Required input (" << input->getTreeName() << ") is not set to anything";
             return NoneValid;
         }
     }
@@ -249,23 +249,23 @@ Algorithm::InputState Algorithm::checkInputs() {
                         if(auto buf_ptr = dynamic_cast<mo::Buffer::IBuffer*>(input_param)){
                             mo::Time_t start, end;
                             buf_ptr->getTimestampRange(start, end);
-                            LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts << " buffer range [" << start << ", " << end << "]";
+                            MO_LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts << " buffer range [" << start << ", " << end << "]";
                         }else{
-                            LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts;
+                            MO_LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts;
                         }
                         
                     } else {
-                        LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
+                        MO_LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
                     }
                 } else {
                     // Input is not optional
                     if (auto param = input->getInputParam()) {
                         if (param->checkFlags(mo::Unstamped_e))
                             continue;
-                        LOG(trace) << "Failed to get input for \"" << input->getTreeName() << "\" (" << param->getTreeName() << ") at timestamp " << ts;
+                        MO_LOG(trace) << "Failed to get input for \"" << input->getTreeName() << "\" (" << param->getTreeName() << ") at timestamp " << ts;
                         return NoneValid;
                     } else {
-                        LOG(trace) << "Input not set \"" << input->getTreeName() << "\"";
+                        MO_LOG(trace) << "Input not set \"" << input->getTreeName() << "\"";
                         return NoneValid;
                     }
                 }
@@ -289,7 +289,7 @@ Algorithm::InputState Algorithm::checkInputs() {
         boost::optional<mo::Time_t> ts;
         for (auto input : inputs) {
             if (!input->isInputSet() && !input->checkFlags(Optional_e)) {
-                LOG(trace) << "Input not set \"" << input->getTreeName() << "\"";
+                MO_LOG(trace) << "Input not set \"" << input->getTreeName() << "\"";
                 return NoneValid;
             }
             if (!input->getInput(*fn, &ts)) {
@@ -300,14 +300,14 @@ Algorithm::InputState Algorithm::checkInputs() {
                     // If the input isn't set and it's optional then this is ok
                     if (input->isInputSet()) {
                         // Input is optional and set, but couldn't get the right timestamp, error
-                        LOG(debug) << "Input is set to \"" << input->getTreeName() << "\" but could not get at frame number " << *fn;
+                        MO_LOG(debug) << "Input is set to \"" << input->getTreeName() << "\" but could not get at frame number " << *fn;
                     } else {
-                        LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
+                        MO_LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
                     }
                 } else {
                     // Input is not optional
                     if (auto param = input->getInputParam()) {
-                        LOG(trace) << "Failed to get input for \"" << input->getTreeName() << "\" (" << param->getTreeName() << ") at framenumber "
+                        MO_LOG(trace) << "Failed to get input for \"" << input->getTreeName() << "\" (" << param->getTreeName() << ") at framenumber "
                                    << *fn << " actual frame number " << input->getFrameNumber();
                         return NoneValid;
                     }
@@ -331,9 +331,9 @@ boost::optional<mo::Time_t> Algorithm::getTimestamp() {
 void Algorithm::setSyncInput(const std::string& name) {
     _pimpl->sync_input = getInput(name);
     if (_pimpl->sync_input) {
-        LOG(info) << "Updating sync parameter for " << this->GetTypeName() << " to " << name;
+        MO_LOG(info) << "Updating sync parameter for " << this->GetTypeName() << " to " << name;
     } else {
-        LOG(warning) << "Unable to set sync input for " << this->GetTypeName() << " to " << name;
+        MO_LOG(warning) << "Unable to set sync input for " << this->GetTypeName() << " to " << name;
     }
 }
 int Algorithm::setupVariableManager(mo::IVariableManager* mgr) {

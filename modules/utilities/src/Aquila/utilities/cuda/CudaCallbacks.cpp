@@ -1,8 +1,8 @@
 #include "Aquila/utilities/cuda/CudaCallbacks.hpp"
 
-#include <MetaObject/logging/Log.hpp>
+#include <MetaObject/logging/logging.hpp>
 #include <MetaObject/thread/InterThread.hpp>
-#include <MetaObject/thread/Cuda.hpp>
+#include <MetaObject/thread/cuda.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/microsec_time_clock.hpp>
@@ -37,14 +37,14 @@ void aq::cuda::ICallback::cb_func_async(int status, void* user_data)
         auto cb = static_cast<ICallback*>(user_data);
         auto start = clock();
         cb->run();
-        LOG(trace) << "Callback execution time: " << clock() - start << " ms";
+        MO_LOG(trace) << "Callback execution time: " << clock() - start << " ms";
         delete cb;
     });*/
 #else
     /*auto cb = static_cast<ICallback*>(user_data);
     auto start = clock();
     cb->run();
-    LOG(trace) << "Callback execution time: " << clock() - start << " ms";
+    MO_LOG(trace) << "Callback execution time: " << clock() - start << " ms";
     delete cb;*/
 #endif
 }
@@ -84,7 +84,7 @@ scoped_stream_timer::~scoped_stream_timer()
     data.start_time = start_time;
     aq::cuda::enqueue_callback<scoped_event_timer_data, void>(data, [](scoped_event_timer_data data)
     {
-        LOG(trace) << "[" << data.scope_name << "] executed in " <<
+        MO_LOG(trace) << "[" << data.scope_name << "] executed in " <<
             boost::posix_time::time_duration(boost::posix_time::microsec_clock::universal_time() - *data.start_time).total_microseconds() << " us";
         delete data.start_time;
     }, _stream);
@@ -116,7 +116,7 @@ scoped_event_stream_timer::~scoped_event_stream_timer()
     aq::cuda::enqueue_callback_async<scoped_event_data, void>(data,
         [](scoped_event_data data)->void
     {
-        LOG(trace) << "[" << data._scope_name << "] executed in " << cv::cuda::Event::elapsedTime((*data.startEvent.get()), (*data.endEvent.get())) << " ms";
+        MO_LOG(trace) << "[" << data._scope_name << "] executed in " << cv::cuda::Event::elapsedTime((*data.startEvent.get()), (*data.endEvent.get())) << " ms";
     }, _stream);
 }
 

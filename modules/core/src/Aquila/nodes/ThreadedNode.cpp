@@ -1,7 +1,7 @@
 #include "Aquila/nodes/ThreadedNode.hpp"
 #include "Aquila/nodes/NodeInfo.hpp"
 #include <MetaObject/thread/InterThread.hpp>
-#include <MetaObject/thread/BoostThread.hpp>
+#include <MetaObject/thread/boost_thread.hpp>
 
 using namespace aq;
 using namespace aq::nodes;

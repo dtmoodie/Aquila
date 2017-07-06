@@ -13,8 +13,8 @@
 #include "RuntimeObjectSystem/RuntimeInclude.h"
 #include "RuntimeObjectSystem/RuntimeSourceDependency.h"
 
-#include <MetaObject/logging/Log.hpp>
-#include <MetaObject/logging/Profiling.hpp>
+#include <MetaObject/logging/logging.hpp>
+#include <MetaObject/logging/profiling.hpp>
 #include <MetaObject/object/MetaObject.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
@@ -44,7 +44,7 @@ RUNTIME_MODIFIABLE_INCLUDE
 #define CATCH_MACRO                                                            \
     catch (mo::ExceptionWithCallStack<cv::Exception> & e) {                    \
         LOG_NODE(error) << e.what() << "\n"                                    \
-                        << e.CallStack();                                      \
+                        << e.callStack();                                      \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
@@ -57,14 +57,14 @@ RUNTIME_MODIFIABLE_INCLUDE
     }                                                                          \
     catch (mo::ExceptionWithCallStack<std::string> & e) {                      \
         LOG_NODE(error) << std::string(e) << "\n"                              \
-                        << e.CallStack();                                      \
+                        << e.callStack();                                      \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
     }                                                                          \
     catch (mo::IExceptionWithCallStackBase & e) {                              \
         LOG_NODE(error) << "Exception thrown with callstack: \n"               \
-                        << e.CallStack();                                      \
+                        << e.callStack();                                      \
         ++_pimpl_node->throw_count;                                            \
         if (_pimpl_node->throw_count > EXCEPTION_TRY_COUNT)                    \
             _pimpl_node->disable_due_to_errors = true;                         \
@@ -172,7 +172,7 @@ bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_na
             }
             return ss.str();
         };
-        LOG(debug) << "Unable to find output with name \"" << output_name << "\" in node \"" << node->getTreeName() << "\".  Existing outputs: " << f();
+        MO_LOG(debug) << "Unable to find output with name \"" << output_name << "\" in node \"" << node->getTreeName() << "\".  Existing outputs: " << f();
         ;
     }
     if (input == nullptr) {
@@ -184,7 +184,7 @@ bool Node::connectInput(rcc::shared_ptr<Node> node, const std::string& output_na
             }
             return ss.str();
         };
-        LOG(debug) << "Unable to find input with name \"" << input_name << "\" in node \"" << this->getTreeName() << "\". Existing inputs: " << f();
+        MO_LOG(debug) << "Unable to find input with name \"" << input_name << "\" in node \"" << this->getTreeName() << "\". Existing inputs: " << f();
     }
     return false;
 }
@@ -204,7 +204,7 @@ Algorithm::InputState Node::checkInputs() {
         _modified = true;
     /*if(_modified == false)
     {
-        LOG_EVERY_N(trace, 10) << "_modified == false for " << getTreeName();
+        MO_LOG_EVERY_N(trace, 10) << "_modified == false for " << getTreeName();
         return Algorithm::NoneValid;
     }*/
 
@@ -225,8 +225,8 @@ void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t
 bool Node::process() {
     ++_pimpl_node->iterations_since_execution;
     if (_pimpl_node->iterations_since_execution % 100 == 0) {
-        LOG(debug) << this->getTreeName() << " has not executed in " << _pimpl_node->iterations_since_execution << " iterations due to "
-                     << (_pimpl_node->last_execution_failure_reason ? _pimpl_node->last_execution_failure_reason : "");
+        MO_LOG(debug) << this->getTreeName() << " has not executed in " << _pimpl_node->iterations_since_execution << " iterations due to "
+                      << (_pimpl_node->last_execution_failure_reason ? _pimpl_node->last_execution_failure_reason : "");
     }
     if (_enabled == true && _pimpl_node->disable_due_to_errors == false) {
         mo::scoped_profile       profiler(this->getTreeName().c_str(), nullptr, nullptr, cudaStream());
@@ -309,8 +309,8 @@ Node::Ptr Node::addChild(Node::Ptr child) {
     std::string node_name = child->GetTypeName();
     child->setUniqueId(count);
     child->setParamRoot(child->getTreeName());
-    LOG(trace) << "[ " << getTreeName() << " ]"
-               << " Adding child " << child->getTreeName();
+    MO_LOG(trace) << "[ " << getTreeName() << " ]"
+                  << " Adding child " << child->getTreeName();
     return child;
 }
 
@@ -465,7 +465,7 @@ void Node::setDataStream(IDataStream* stream_) {
 
 IDataStream* Node::getDataStream() {
     if (_parents.size() && _data_stream == nullptr) {
-        LOG(debug) << "Setting data stream from parent";
+        MO_LOG(debug) << "Setting data stream from parent";
         setDataStream(_parents[0]->getDataStream());
     }
     if (_parents.size() == 0 && _data_stream == nullptr) {
@@ -531,7 +531,7 @@ void Node::postSerializeInit() {
 }
 
 void Node::Serialize(ISimpleSerializer* pSerializer) {
-    LOG(info) << "RCC serializing " << getTreeName();
+    MO_LOG(info) << "RCC serializing " << getTreeName();
     Algorithm::Serialize(pSerializer);
     SERIALIZE(_children);
     SERIALIZE(_parents);

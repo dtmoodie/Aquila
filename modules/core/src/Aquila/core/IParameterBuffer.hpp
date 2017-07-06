@@ -1,6 +1,6 @@
 #pragma once
 #include "MetaObject/detail/TypeInfo.hpp"
-#include <MetaObject/logging/Log.hpp>
+#include <MetaObject/logging/logging.hpp>
 #include <boost/any.hpp>
 
 namespace aq
@@ -23,7 +23,7 @@ namespace aq
             }
             catch (boost::bad_any_cast& bad_cast)
             {
-                LOG(trace) << bad_cast.what();
+                MO_LOG(trace) << bad_cast.what();
             }
             return false;
         }

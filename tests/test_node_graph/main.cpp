@@ -139,7 +139,7 @@ struct node_c: public nodes::Node
     void check_timestamps()
     {
         Algorithm::impl* impl = _pimpl;
-        LOG(debug) << impl->_ts_processing_queue.size() << " frames left to process";
+        MO_LOG(debug) << impl->_ts_processing_queue.size() << " frames left to process";
     }
     int sum = 0;
     int iterations = 0;
@@ -189,7 +189,7 @@ struct GlobalFixture
     #else
         currentDir = boost::filesystem::path("./Plugins");
     #endif
-        LOG(info) << "Looking for plugins in: " << currentDir.string();
+        MO_LOG(info) << "Looking for plugins in: " << currentDir.string();
         boost::filesystem::directory_iterator end_itr;
         if(boost::filesystem::is_directory(currentDir))
         {
@@ -219,7 +219,7 @@ struct GlobalFixture
     }
     ~GlobalFixture()
     {
-        mo::ThreadPool::Instance()->Cleanup();
+        mo::ThreadPool::instance()->cleanup();
         mo::ThreadSpecificQueue::cleanup();
         mo::Allocator::cleanupThreadSpecificAllocator();
         delete g_allocator;
@@ -718,6 +718,6 @@ BOOST_AUTO_TEST_SUITE_END() // ThreadedSuite
 BOOST_AUTO_TEST_CASE(finish)
 {
     mo::ThreadSpecificQueue::cleanup();
-    mo::ThreadPool::Instance()->Cleanup();
+    mo::ThreadPool::instance()->cleanup();
     mo::Allocator::cleanupThreadSpecificAllocator();
 }

@@ -2,7 +2,7 @@
 #include "Aquila/nodes/Node.hpp"
 #include "RuntimeObjectSystem/shared_ptr.hpp"
 #include "serialize.hpp"
-#include <MetaObject/logging/Log.hpp>
+#include <MetaObject/logging/logging.hpp>
 #include <MetaObject/serialization/Serializer.hpp>
 
 #include <cereal/archives/binary.hpp>

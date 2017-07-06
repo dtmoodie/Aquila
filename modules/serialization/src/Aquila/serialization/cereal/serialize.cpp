@@ -22,7 +22,7 @@ bool aq::Serialize(cereal::BinaryOutputArchive& ar, const Node* obj)
     }
     else
     {
-        LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
+        MO_LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
         auto params = obj->getParams();
         std::string type = obj->GetTypeName();
         ObjectId id = obj->GetObjectId();
@@ -36,12 +36,12 @@ bool aq::Serialize(cereal::BinaryOutputArchive& ar, const Node* obj)
             {
                 if (!func1(param, ar))
                 {
-                    LOG(debug) << "Unable to serialize " << param->getTreeName();
+                    MO_LOG(debug) << "Unable to serialize " << param->getTreeName();
                 }
             }
             else
             {
-                LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
+                MO_LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
             }
         }
     }
@@ -62,7 +62,7 @@ bool aq::Serialize(cereal::XMLOutputArchive& ar, const Node* obj)
     }
     else
     {
-        LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
+        MO_LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
         auto params = obj->getParams();
         std::string type = obj->GetTypeName();
         ObjectId id = obj->GetObjectId();
@@ -76,12 +76,12 @@ bool aq::Serialize(cereal::XMLOutputArchive& ar, const Node* obj)
             {
                 if (!func1(param, ar))
                 {
-                    LOG(debug) << "Unable to serialize " << param->getTreeName();
+                    MO_LOG(debug) << "Unable to serialize " << param->getTreeName();
                 }
             }
             else
             {
-                LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
+                MO_LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
             }
         }
         return true;
@@ -102,7 +102,7 @@ bool aq::Serialize(cereal::JSONOutputArchive& ar, const Node* obj)
     }
     else
     {
-        LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
+        MO_LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
         auto params = obj->getParams();
         std::string type = obj->GetTypeName();
         ObjectId id = obj->GetObjectId();
@@ -139,12 +139,12 @@ bool aq::Serialize(cereal::JSONOutputArchive& ar, const Node* obj)
             {
                 if (!func1(param, ar))
                 {
-                    LOG(debug) << "Unable to serialize " << param->getTreeName();
+                    MO_LOG(debug) << "Unable to serialize " << param->getTreeName();
                 }
             }
             else
             {
-                LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
+                MO_LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
             }
         }
         return true;
@@ -164,7 +164,7 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
     }
     else
     {
-        LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
+        MO_LOG(debug) << "No object specific serialization function found for " << obj->GetTypeName();
         auto params = obj->getParams();
         for (auto& param : params)
         {
@@ -177,12 +177,12 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
             {
                 if (!func1(param, ar))
                 {
-                    LOG(debug) << "Unable to serialize " << param->getTreeName();
+                    MO_LOG(debug) << "Unable to serialize " << param->getTreeName();
                 }
             }
             else
             {
-                LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
+                MO_LOG(debug) << "No serialization function found for " << param->getTypeInfo().name();
             }
             if (param->getName() == "_dataStream")
             {

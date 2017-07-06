@@ -81,12 +81,12 @@ rcc::shared_ptr<nodes::Node> NodeFactory::addNode(const std::string &nodeName)
             }
             catch (cv::Exception &e)
             {
-                LOG(error) << "Failed to initialize node " << nodeName << " due to: " << e.what();
+                MO_LOG(error) << "Failed to initialize node " << nodeName << " due to: " << e.what();
                 return rcc::shared_ptr<nodes::Node>();
             }
             catch (...)
             {
-                LOG(error) << "Failed to initialize node " << nodeName;
+                MO_LOG(error) << "Failed to initialize node " << nodeName;
                 return rcc::shared_ptr<nodes::Node>();
             }
 
@@ -95,14 +95,14 @@ rcc::shared_ptr<nodes::Node> NodeFactory::addNode(const std::string &nodeName)
         }
         else
         {
-            LOG(warning) << "[ NodeManager ] " << nodeName << " not a node";
+            MO_LOG(warning) << "[ NodeManager ] " << nodeName << " not a node";
             // Input nodename is a compatible object but it is not a node
             return rcc::shared_ptr<nodes::Node>();
         }
     }
     else
     {
-        LOG(warning) << "[ NodeManager ] " << nodeName << " not a valid node name";
+        MO_LOG(warning) << "[ NodeManager ] " << nodeName << " not a valid node name";
         return rcc::shared_ptr<nodes::Node>();
     }
 

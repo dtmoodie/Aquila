@@ -21,7 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <queue>
 #include <boost/thread.hpp>
 #ifndef __CUDA_ARCH__
-#include <MetaObject/logging/Log.hpp>
+#include <MetaObject/logging/logging.hpp>
 #endif
 namespace aq
 {
@@ -305,7 +305,7 @@ template<typename Data>
             if (!buffer[itr].ready())
             {
 #ifndef __NVCC__
-                LOG(warning) << "Buffer not ready, increasing size of buffer pool";
+                MO_LOG(warning) << "Buffer not ready, increasing size of buffer pool";
 #endif
                 resize(buffer.size() + 1);
             }
@@ -318,7 +318,7 @@ template<typename Data>
             if (!buffer[itr].ready())
             {
 #ifndef __NVCC__
-                LOG(warning) << "Buffer not ready, increasing size of buffer pool";
+                MO_LOG(warning) << "Buffer not ready, increasing size of buffer pool";
 #endif
                 resize(buffer.size() + 1);
             }
@@ -375,7 +375,7 @@ template<typename Data>
             if (!buffer[itr].ready())
             {
 #ifndef __NVCC__
-                LOG(warning) << "Buffer not ready, increasing size of buffer pool";
+                MO_LOG(warning) << "Buffer not ready, increasing size of buffer pool";
 #endif
                 resize(buffer.size() + 1);
             }
@@ -388,7 +388,7 @@ template<typename Data>
             if (!buffer[itr].ready())
             {
 #ifndef __NVCC__
-                LOG(warning) << "Buffer not ready, increasing size of buffer pool";
+                MO_LOG(warning) << "Buffer not ready, increasing size of buffer pool";
 #endif
                 resize(buffer.size() + 1);
             }
@@ -445,7 +445,7 @@ template<typename Data>
             if (!buffer[itr].ready())
             {
 #ifndef __NVCC__
-                LOG(warning) << "Buffer not ready, increasing size of buffer pool";
+                MO_LOG(warning) << "Buffer not ready, increasing size of buffer pool";
 #endif
                 resize(buffer.size() + 1);
             }
@@ -458,7 +458,7 @@ template<typename Data>
             if (!buffer[itr].ready())
             {
 #ifndef __NVCC__
-                LOG(warning) << "Buffer not ready, increasing size of buffer pool";
+                MO_LOG(warning) << "Buffer not ready, increasing size of buffer pool";
 #endif
                 resize(buffer.size() + 1);
             }
