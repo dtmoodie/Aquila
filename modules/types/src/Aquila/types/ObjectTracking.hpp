@@ -89,16 +89,16 @@ struct AQUILA_EXPORTS TrackedObject2d {
      */
     virtual float Score(const DetectedObject2d& obj)
     {
-        return iou(obj.boundingBox, last_bb);
+        return iou(obj.bounding_box, last_bb);
     }
 
     virtual void AddDetection(const DetectedObject2d& obj)
     {
         detection_history.push_back(obj);
-        last_bb = obj.boundingBox;
+        last_bb = obj.bounding_box;
         if (detection_history.size()) {
-            cv::Vec2f pos0 = center<float>(detection_history.back().boundingBox);
-            cv::Vec2f pos1 = center<float>(obj.boundingBox);
+            cv::Vec2f pos0 = center<float>(detection_history.back().bounding_box);
+            cv::Vec2f pos1 = center<float>(obj.bounding_box);
             velocity = pos1 - pos0;
         }
     }
@@ -323,10 +323,10 @@ protected:
     cv::Mat measure(const DetectedObject2d& obj)
     {
         cv::Mat meas(4, 1, CV_32F);
-        meas.at<float>(0) = obj.boundingBox.x + obj.boundingBox.width / 2;
-        meas.at<float>(1) = obj.boundingBox.y + obj.boundingBox.height / 2;
-        meas.at<float>(2) = obj.boundingBox.width;
-        meas.at<float>(3) = obj.boundingBox.height;
+        meas.at<float>(0) = obj.bounding_box.x + obj.bounding_box.width / 2;
+        meas.at<float>(1) = obj.bounding_box.y + obj.bounding_box.height / 2;
+        meas.at<float>(2) = obj.bounding_box.width;
+        meas.at<float>(3) = obj.bounding_box.height;
         return meas;
     }
 
