@@ -38,7 +38,7 @@ namespace IO {
                     os << obj.classification.label;
                 else
                     os << obj.classification.classNumber;
-                os << obj.boundingBox;
+                os << obj.bounding_box;
                 return true;
             }
 
@@ -50,25 +50,25 @@ namespace IO {
             }
             inline size_t textSize(int value);
 
-            template<int N>
-            size_t textSize(const aq::DetectedObject2d_<N>& obj) {
+            template <int N>
+            size_t textSize(const aq::DetectedObject_<2, N>& obj) {
                 size_t out = 8;
 
                 if (obj.classification.label.size())
                     out += obj.classification.label.size();
                 else
                     out += textSize(obj.classification.classNumber);
-                out += textSize(obj.boundingBox);
+                out += textSize(obj.bounding_box);
                 return out;
             }
-            size_t textSize(const aq::DetectedObject2d& obj){
+            size_t textSize(const aq::DetectedObject_<2, 1>& obj) {
                 size_t out = 8;
 
                 if (obj.classification.label.size())
                     out += obj.classification.label.size();
                 else
                     out += textSize(obj.classification.classNumber);
-                out += textSize(obj.boundingBox);
+                out += textSize(obj.bounding_box);
                 return out;
             }
         } // namespace mo::IO::Text::imp
@@ -77,27 +77,27 @@ namespace IO {
 } // namespace mo
 
 #include "MetaObject/serialization/TextPolicy.hpp"
-namespace aq{
-    std::ostream& operator<<(std::ostream& os, const aq::DetectedObject& obj) {
-        os << std::setprecision(3) << obj.classification.confidence << " ";
-        os << obj.id << " ";
-    
-        if (obj.classification.label.size())
-            os << obj.classification.label;
-        else
-            os << obj.classification.classNumber;
-        os << std::fixed << obj.boundingBox;
-        return os;
-    }
+namespace aq {
+std::ostream& operator<<(std::ostream& os, const aq::DetectedObject& obj) {
+    os << std::setprecision(3) << obj.classification.confidence << " ";
+    os << obj.id << " ";
+
+    if (obj.classification.label.size())
+        os << obj.classification.label;
+    else
+        os << obj.classification.classNumber;
+    os << std::fixed << obj.bounding_box;
+    return os;
+}
 }
 
 INSTANTIATE_META_PARAM(DetectedObject);
 INSTANTIATE_META_PARAM(Classification);
 INSTANTIATE_META_PARAM(std::vector<DetectedObject>);
 INSTANTIATE_META_PARAM(std::vector<DetectedObject3d>);
-namespace aq{
-template struct DetectedObject2d_<1>;
-template struct DetectedObject2d_<-1>;
+namespace aq {
+template struct DetectedObject_<2, 1>;
+template struct DetectedObject_<2, -1>;
 
 //template<> AQUILA_EXPORTS void DetectedObject2d::serialize<cereal::JSONInputArchive>(cereal::JSONInputArchive& ar);
 //template<> AQUILA_EXPORTS void DetectedObject2d::serialize<cereal::JSONOutputArchive>(cereal::JSONOutputArchive& ar);
