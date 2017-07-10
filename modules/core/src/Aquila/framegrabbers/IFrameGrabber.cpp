@@ -161,7 +161,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri,
     return rcc::shared_ptr<IFrameGrabber>();
 }
 
-void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, mo::ICoordinateSystem*, mo::UpdateFlags) {
+void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, const std::shared_ptr<mo::ICoordinateSystem>&, mo::UpdateFlags) {
     loadData(loaded_document);
 }
 
