@@ -86,7 +86,7 @@ void TInputParamPtr<aq::SyncedMemory>::setUserDataPtr(Input_t* user_var_) {
     _user_var = user_var_;
 }
 
-void TInputParamPtr<aq::SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IParam* param, Context* ctx, OptionalTime_t ts, size_t fn, ICoordinateSystem* cs, UpdateFlags fg) {
+void TInputParamPtr<aq::SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IParam* param, Context* ctx, OptionalTime_t ts, size_t fn, const std::shared_ptr<ICoordinateSystem>& cs, UpdateFlags fg) {
     if (fg == mo::BufferUpdated_e && param->checkFlags(mo::Buffer_e)) {
         ITParam<aq::SyncedMemory>::_typed_update_signal(data, this, ctx, ts, fn, cs, mo::BufferUpdated_e);
         IParam::emitUpdate(ts, ctx, fn, cs, fg);
@@ -105,9 +105,9 @@ void TInputParamPtr<aq::SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IPa
 bool TInputParamPtr<aq::SyncedMemory>::getInput(const OptionalTime_t& ts, size_t* fn_) {
     mo::Mutex_t::scoped_lock lock(IParam::mtx());
     if (_user_var && (ITInputParam<aq::SyncedMemory>::_input || ITInputParam<aq::SyncedMemory>::_shared_input)) {
-        size_t             fn;
-        InputStorage_t     data;
-        ICoordinateSystem* cs = nullptr;
+        size_t                             fn;
+        InputStorage_t                     data;
+        std::shared_ptr<ICoordinateSystem> cs;
         if (ITInputParam<aq::SyncedMemory>::_shared_input) {
             if (!ITInputParam<aq::SyncedMemory>::_shared_input->getData(data, ts, this->_ctx, &fn)) {
                 return false;
@@ -123,7 +123,7 @@ bool TInputParamPtr<aq::SyncedMemory>::getInput(const OptionalTime_t& ts, size_t
         _current_data = data;
         *_user_var    = ParamTraits<aq::SyncedMemory>::ptr(_current_data);
         if (fn_)
-            *fn_ = fn;
+            *fn_  = fn;
         this->_fn = fn;
         this->_ts = ts;
         this->setCoordinateSystem(cs);
@@ -140,7 +140,7 @@ bool TInputParamPtr<aq::SyncedMemory>::getInput(size_t fn, OptionalTime_t* ts_) 
             InputStorage_t data;
             if (ITInputParam<aq::SyncedMemory>::_shared_input->getData(data, fn, this->_ctx, &ts)) {
                 _current_data = data;
-                *_user_var = ParamTraits<aq::SyncedMemory>::ptr(_current_data);
+                *_user_var    = ParamTraits<aq::SyncedMemory>::ptr(_current_data);
                 if (ts_)
                     *ts_  = ts;
                 this->_ts = ts;
