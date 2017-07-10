@@ -350,7 +350,7 @@ void Algorithm::setSyncMethod(SyncMethod _method) {
     }
     _pimpl->_sync_method = _method;
 }
-void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, mo::ICoordinateSystem* cs, mo::UpdateFlags fg) {
+void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, const std::shared_ptr<mo::ICoordinateSystem>& cs, mo::UpdateFlags fg) {
     mo::IMetaObject::onParamUpdate(param, ctx, ts, fn, cs, fg);
     if (_pimpl->_sync_method == SyncEvery) {
         if (param == _pimpl->sync_input) {
@@ -407,7 +407,7 @@ void Algorithm::postSerializeInit() {
 void Algorithm::addComponent(rcc::weak_ptr<Algorithm> component) {
     auto ptr = component.get();
     _algorithm_components.push_back(component);
-    mo::ISlot* slot = this->getSlot("param_updated", mo::TypeInfo(typeid(void(IParam*, Context*, OptionalTime_t, size_t, ICoordinateSystem*, UpdateFlags))));
+    mo::ISlot* slot = this->getSlot("param_updated", mo::TypeInfo(typeid(void(IParam*, Context*, OptionalTime_t, size_t, const std::shared_ptr<ICoordinateSystem>&, UpdateFlags))));
     if (slot) {
         auto params = component->getParams();
         for (auto param : params) {
