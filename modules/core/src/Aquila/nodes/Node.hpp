@@ -160,7 +160,7 @@ namespace nodes{
         friend bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj);
         friend bool aq::Serialize(cereal::JSONOutputArchive& ar, const aq::nodes::Node* obj);
 
-        virtual void onParamUpdate(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, mo::ICoordinateSystem*, mo::UpdateFlags);
+        virtual void onParamUpdate(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, const std::shared_ptr<mo::ICoordinateSystem>&, mo::UpdateFlags);
         // Current timestamp of the frame that this node is processing / processed last
 
         // The variable manager is one object shared within a processing graph

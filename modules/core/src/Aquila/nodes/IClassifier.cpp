@@ -3,7 +3,7 @@
 
 namespace aq {
 namespace nodes {
-    void IClassifier::on_label_file_modified(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, mo::ICoordinateSystem*, mo::UpdateFlags) {
+    void IClassifier::on_label_file_modified(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, const std::shared_ptr<mo::ICoordinateSystem>&, mo::UpdateFlags) {
         mo::Mutex_t::scoped_lock lock(*_mtx);
         labels.clear();
         std::ifstream ifs(label_file.string().c_str());

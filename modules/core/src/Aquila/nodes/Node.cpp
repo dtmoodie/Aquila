@@ -211,7 +211,7 @@ Algorithm::InputState Node::checkInputs() {
     return Algorithm::checkInputs();
 }
 
-void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, mo::ICoordinateSystem* cs, mo::UpdateFlags fg) {
+void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, const std::shared_ptr<mo::ICoordinateSystem>& cs, mo::UpdateFlags fg) {
     Algorithm::onParamUpdate(param, ctx, ts, fn, cs, fg);
     if (param->checkFlags(mo::Control_e)) {
         _modified = true;
