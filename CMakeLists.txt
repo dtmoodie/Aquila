@@ -237,6 +237,7 @@ function(aquila_declare_module)
     export(TARGETS aquila_${aquila_declare_module_NAME}
         FILE "${PROJECT_BINARY_DIR}/AquilaTargets-${aquila_declare_module_NAME}.cmake"
     )
+
     install(TARGETS aquila_${aquila_declare_module_NAME}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
@@ -255,7 +256,10 @@ function(aquila_declare_module)
         DESTINATION include
         FILES_MATCHING PATTERN "*.hpp"
     )
-    install(EXPORT aquila_${aquila_declare_module_NAME}Targets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
+    install(EXPORT aquila_${aquila_declare_module_NAME}Targets 
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev
+    )
+
     set_target_properties(aquila_${aquila_declare_module_NAME} PROPERTIES FOLDER Aquila)
 endfunction()
 
@@ -309,7 +313,6 @@ endif()
 configure_file(AquilaConfig.cmake.in
     "${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
 )
-
 
 install(DIRECTORY include/
     DESTINATION include
