@@ -106,7 +106,7 @@ namespace nodes{
 
         virtual Ptr                     addChild(Node* child);
         virtual Ptr                     addChild(Node::Ptr child);
-
+        virtual void addComponent(const rcc::weak_ptr<Algorithm>& component);
         virtual Ptr                     getChild(const std::string& treeName);
         virtual Ptr                     getChild(const int& index);
         virtual VecPtr                  getChildren();
@@ -145,7 +145,7 @@ namespace nodes{
             MO_SIGNAL(void, node_updated, Node*)
             MO_SIGNAL(void, input_changed, Node*, mo::InputParam*)
         MO_END
-
+            
     protected:
         friend class NodeFactory;
         friend class IDataStream;

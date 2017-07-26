@@ -51,7 +51,7 @@ public:
         return _algorithm_components;
     }
     void Serialize(ISimpleSerializer* pSerializer);
-    virtual void addComponent(rcc::weak_ptr<Algorithm> component);
+    virtual void addComponent(const rcc::weak_ptr<Algorithm>& component);
 
 protected:
     virtual InputState checkInputs();
