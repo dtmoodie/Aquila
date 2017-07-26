@@ -39,14 +39,15 @@ namespace aq
          * \param sm string replacement map, all strings found in sm with the format ${key} will be replaced with sm[key]
          * \return vector of data streams loaded from file
          */
-        static std::vector<Ptr> load(const std::string& config_file, VariableMap& vm, VariableMap& sm);
-        static std::vector<Ptr> load(const std::string& config_file);
+        static std::vector<Ptr> load(const std::string& config_file, VariableMap& vm, VariableMap& sm, const std::string preset = "Default");
+        static std::vector<Ptr> load(const std::string& config_file, const std::string preset = "Default");
         static std::vector<Ptr> load(JSONInputArchive& ar);
-        static void save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream);
-        static void save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams);
+        static void save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream, const std::string preset = "Default");
+        static void save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams, const std::string preset = "Default");
         static void save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream>>& streams,
-                         const VariableMap& vm, const VariableMap& sm);
+                         const VariableMap& vm, const VariableMap& sm, const std::string preset = "Default");
         static void save(JSONOutputArchive& ar, std::vector<rcc::shared_ptr<IDataStream>>& streams);
+
         static bool canLoadPath(const std::string& document);
 
         virtual std::vector<rcc::weak_ptr<nodes::Node>> getTopLevelNodes() = 0;

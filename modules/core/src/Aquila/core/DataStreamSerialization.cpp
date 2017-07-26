@@ -38,13 +38,13 @@ void DataStream::save(AR& ar) const
     this->_save_parent<AR>(ar);
 }
 
-std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file)
+std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, const std::string preset)
 {
     VariableMap vm, sm;
-    return load(config_file, vm, sm);
+    return load(config_file, vm, sm, preset);
 }
 std::vector<IDataStream::Ptr> IDataStream::load(JSONInputArchive& ar){
-    std::vector<rcc::shared_ptr<IDataStream> > streams; //(stream_);
+    std::vector<rcc::shared_ptr<IDataStream> > streams;
     auto dsnvp = cereal::make_optional_nvp("DataStreams", streams);
     ar(dsnvp);
     if (!dsnvp.success) {
@@ -58,7 +58,7 @@ std::vector<IDataStream::Ptr> IDataStream::load(JSONInputArchive& ar){
     return streams;
 }
 
-std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm){
+std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, VariableMap& vm, VariableMap& sm, const std::string preset){
     std::vector<rcc::shared_ptr<IDataStream> > streams;
     if (!boost::filesystem::exists(config_file)) {
         MO_LOG(warning) << "Stream config file doesn't exist: " << config_file;
@@ -73,10 +73,10 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, 
     } else if (ext == ".json") {
         try {
             std::ifstream ifs(config_file, std::ios::binary);
-            aq::JSONInputArchive ar(ifs, vm, sm);
+            aq::JSONInputArchive ar(ifs, vm, sm, preset);
             VariableMap defaultVM, defaultSM;
-            ar(cereal::make_optional_nvp("DefaultVariables", defaultVM, defaultVM));
-            ar(cereal::make_optional_nvp("DefaultStrings", defaultSM, defaultSM));
+            ar(cereal::make_optional_nvp(preset + "Variables", defaultVM, defaultVM));
+            ar(cereal::make_optional_nvp(preset + "Strings", defaultSM, defaultSM));
             for (const auto& pair : defaultVM) {
                 if (vm.count(pair.first) == 0)
                     vm[pair.first] = pair.second;
@@ -114,21 +114,21 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, 
     return streams;
 }
 
-void IDataStream::save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream)
-{
+void IDataStream::save(const std::string& config_file, rcc::shared_ptr<IDataStream>& stream, const std::string preset){
     std::vector<rcc::shared_ptr<IDataStream> > streams;
     streams.push_back(stream);
-    save(config_file, streams);
+    save(config_file, streams, preset);
 }
-void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream> >& streams)
-{
-    save(config_file, streams, VariableMap(), VariableMap());
+
+void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream> >& streams, const std::string preset){
+    save(config_file, streams, VariableMap(), VariableMap(), preset);
 }
+
 void IDataStream::save(JSONOutputArchive& ar, std::vector<rcc::shared_ptr<IDataStream>>& streams){
     ar(cereal::make_nvp("DataStreams", streams));
 }
 void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_ptr<IDataStream> >& streams,
-                       const VariableMap& vm, const VariableMap& sm)
+                       const VariableMap& vm, const VariableMap& sm, const std::string preset)
 {
     for (auto& stream : streams)
         stream->stopThread();
@@ -145,9 +145,7 @@ void IDataStream::save(const std::string& config_file, std::vector<rcc::shared_p
                     write_sm[pair.first.substr(2, pair.first.size() - 3)] = pair.second;
                 }
             }
-            aq::JSONOutputArchive ar(ofs, aq::JSONOutputArchive::Options(), vm, write_sm);
-            if (vm.size()) {
-            }
+            aq::JSONOutputArchive ar(ofs, aq::JSONOutputArchive::Options(), vm, write_sm, preset);
             save(ar, streams);
         } catch (cereal::RapidJSONException& e) {
             MO_LOG(warning) << "Unable to save " << config_file << " due to " << e.what();
