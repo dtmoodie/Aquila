@@ -170,18 +170,6 @@ ENDIF()
 LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIR_RELEASE})
 
-macro(GroupSources curdir)
-file(GLOB children RELATIVE ${PROJECT_SOURCE_DIR}/${curdir} ${PROJECT_SOURCE_DIR}/${curdir}/*)
-    foreach(child ${children})
-        if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/${curdir}/${child})
-            GroupSources(${curdir}/${child})
-        else()
-            string(REPLACE "/" "\\" groupname ${curdir})
-            source_group(${groupname} FILES ${PROJECT_SOURCE_DIR}/${curdir}/${child})
-        endif()
-   endforeach()
-endmacro()
-
 # =====================
 # modules
 set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
@@ -237,6 +225,7 @@ function(aquila_declare_module)
     export(TARGETS aquila_${aquila_declare_module_NAME}
         FILE "${PROJECT_BINARY_DIR}/AquilaTargets-${aquila_declare_module_NAME}.cmake"
     )
+
     install(TARGETS aquila_${aquila_declare_module_NAME}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
@@ -255,7 +244,10 @@ function(aquila_declare_module)
         DESTINATION include
         FILES_MATCHING PATTERN "*.hpp"
     )
-    install(EXPORT aquila_${aquila_declare_module_NAME}Targets DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev)
+    install(EXPORT aquila_${aquila_declare_module_NAME}Targets 
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev
+    )
+
     set_target_properties(aquila_${aquila_declare_module_NAME} PROPERTIES FOLDER Aquila)
 endfunction()
 
@@ -309,7 +301,6 @@ endif()
 configure_file(AquilaConfig.cmake.in
     "${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
 )
-
 
 install(DIRECTORY include/
     DESTINATION include

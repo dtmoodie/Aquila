@@ -562,7 +562,13 @@ mo::IParam* Node::addParameter(std::shared_ptr<mo::IParam> param) {
     }
     return result;
 }
-
+void Node::addComponent(const rcc::weak_ptr<Algorithm>& component){
+    Algorithm::addComponent(component);
+    auto params = component->getParams();
+    for (auto param : params) {
+        param->setTreeRoot(this->getTreeName());
+    }
+}
 mo::IParam* Node::addParameter(mo::IParam* param) {
     auto result = mo::IMetaObject::addParam(param);
     if (result) {

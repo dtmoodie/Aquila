@@ -404,9 +404,10 @@ void Algorithm::postSerializeInit() {
     }
 }
 
-void Algorithm::addComponent(rcc::weak_ptr<Algorithm> component) {
+void Algorithm::addComponent(const rcc::weak_ptr<Algorithm>& component) {
     auto ptr = component.get();
-    _algorithm_components.push_back(component);
+    if(std::find(_algorithm_components.begin(), _algorithm_components.end(), component) == _algorithm_components.end())
+        _algorithm_components.push_back(component);
     mo::ISlot* slot = this->getSlot("param_updated", mo::TypeInfo(typeid(void(IParam*, Context*, OptionalTime_t, size_t, const std::shared_ptr<ICoordinateSystem>&, UpdateFlags))));
     if (slot) {
         auto params = component->getParams();

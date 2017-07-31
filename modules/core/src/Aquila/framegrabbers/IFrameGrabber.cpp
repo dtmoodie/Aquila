@@ -191,13 +191,13 @@ public:
     MO_SLOT(bool, loadData, std::string)
     MO_END;
     bool processImpl();
-    void addComponent(rcc::weak_ptr<Algorithm> component);
+    void addComponent(const rcc::weak_ptr<Algorithm>& component);
 
 protected:
     std::vector<IGrabber::Ptr> _grabbers;
 };
 
-void FrameGrabber::addComponent(rcc::weak_ptr<Algorithm> component) {
+void FrameGrabber::addComponent(const rcc::weak_ptr<Algorithm>& component) {
     Node::addComponent(component);
     auto typed = component.DynamicCast<IGrabber>();
     if (typed) {

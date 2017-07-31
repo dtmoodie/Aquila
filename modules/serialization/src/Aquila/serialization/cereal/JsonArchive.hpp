@@ -46,19 +46,21 @@ namespace aq
                 ar(CEREAL_NVP(type));
         }
     };
-    class AQUILA_EXPORTS JSONOutputArchive : public cereal::JSONOutputArchive
-    {
+    class AQUILA_EXPORTS JSONOutputArchive : public cereal::JSONOutputArchive{
         const std::map<std::string, std::string>& _vm;
         const std::map<std::string, std::string>& _sm;
         bool _writing_defaults = false;
     public:
+        std::string preset;
         JSONOutputArchive(std::ostream & stream,
                           Options const & options = Options::Default(),
                           const std::map<std::string, std::string>& vm = std::map<std::string, std::string>(),
-                          const std::map<std::string, std::string>& sm = std::map<std::string, std::string>()) :
+                          const std::map<std::string, std::string>& sm = std::map<std::string, std::string>(),
+                          const std::string preset_ = "Default") :
             cereal::JSONOutputArchive(stream, options),
             _vm(vm),
-            _sm(sm)
+            _sm(sm),
+            preset(preset_)
         {
             _writing_defaults = true;
             if(sm.size())
@@ -318,16 +320,19 @@ namespace aq
         std::map<std::string, std::vector<std::string>> parent_mappings;
         const std::map<std::string, std::string>& variable_replace_mapping;
         const std::map<std::string, std::string>& string_replace_mapping;
+        std::string preset;
+        std::map<rcc::shared_ptr<aq::nodes::Node>, std::string> node_preset_map;
         /*! @name Common Functionality
         Common use cases for directly interacting with an JSONInputArchive */
         //! @{
 
         //! Construct, reading from the provided stream
         /*! @param stream The stream to read from */
-        JSONInputArchive(std::istream & stream, const std::map<std::string, std::string>& vm, const std::map<std::string, std::string>& sm) :
+        JSONInputArchive(std::istream & stream, const std::map<std::string, std::string>& vm, const std::map<std::string, std::string>& sm, const std::string& preset_ = "Default") :
             cereal::JSONInputArchive(stream),
             variable_replace_mapping(vm),
-            string_replace_mapping(sm)
+            string_replace_mapping(sm),
+            preset(preset_)
         {
 
         }
@@ -994,14 +999,16 @@ namespace cereal
             ar(CEREAL_NVP(components));
     }
 
-    inline void save(JSONOutputArchive& ar, rcc::shared_ptr<aq::nodes::Node> const& node)
-    {
+    inline void save(JSONOutputArchive& ar, rcc::shared_ptr<aq::nodes::Node> const& node){
+        aq::JSONOutputArchive& ar_ = dynamic_cast<aq::JSONOutputArchive&>(ar);
         auto parameters = node->getParams();
         std::string type = node->GetTypeName();
         std::string name = node->getTreeName();
         const auto& components = node->getComponents();
         ar(CEREAL_NVP(type));
         ar(CEREAL_NVP(name));
+        if(ar_.preset != "Default")
+            ar(cereal::make_nvp("preset", ar_.preset));
         int control_count = 0;
         for(auto param : parameters)
             if(param->checkFlags(mo::Control_e))
@@ -1024,25 +1031,30 @@ namespace cereal
     }
 
 
-    inline void load(JSONInputArchive& ar, rcc::shared_ptr<aq::IDataStream>& stream)
-    {
-        if(stream == nullptr)
-        {
+    inline void load(JSONInputArchive& ar, rcc::shared_ptr<aq::IDataStream>& stream){
+        if(stream == nullptr){
             stream = aq::IDataStream::create();
             MO_ASSERT(stream) << "Unable to create datastream.  Was aquila_core loaded correctly?";
         }
         std::vector<rcc::shared_ptr<aq::nodes::Node>> nodes;
         ar(CEREAL_NVP(nodes));
         aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
+        
         for(int i = 0; i < nodes.size(); ++i){
-            MO_ASSERT(nodes[i]) << "Unable to deserialize node at index: " << i;
+            if(!nodes[i]){
+                MO_LOG(debug) << "Unable to deserialize node at index: " << i;
+                continue;
+            }
             nodes[i]->setDataStream(stream.get());
             nodes[i]->postSerializeInit();
             auto& parents = ar_.parent_mappings[nodes[i]->getTreeName()];
             for (auto& parent : parents){
                 bool found_parent = false;
                 for(int j = 0; j < nodes.size(); ++j){
-                    MO_ASSERT(nodes[j]) << "Unable to deserialize node at index: " << j;
+                    if(nodes[j] == nullptr){
+                        MO_LOG(debug) << "Unable to deserialize node at index: " << j;
+                        continue;
+                    }
                     if(i != j){
                         if(nodes[j]->getTreeName() == parent){
                             nodes[j]->addChild(nodes[i]);
@@ -1064,6 +1076,8 @@ namespace cereal
                        if(pos != std::string::npos){
                            std::string output_node_name = itr->second.name.substr(0, pos);
                            for(int j = 0; j < nodes.size(); ++j){
+                               if(nodes[j] == nullptr)
+                                   continue;
                                 if(nodes[j]->getTreeName() == output_node_name){
                                     auto space_pos = itr->second.name.find(' ');
                                     auto output_param = nodes[j]->getOutput(itr->second.name.substr(pos + 1, space_pos - (pos + 1)));
@@ -1151,15 +1165,13 @@ namespace cereal
             ar_.input_mappings[param->getTreeRoot()][name] = info;
         }
     }
-   inline void load(JSONInputArchive& ar, rcc::weak_ptr<aq::Algorithm>& obj)
-   {
+
+   inline void load(JSONInputArchive& ar, rcc::weak_ptr<aq::Algorithm>& obj){
        std::string type;
        ar(CEREAL_NVP(type));
-       if(!obj)
-       {
+       if(!obj){
             IObject* ptr =  mo::MetaObjectFactory::instance()->create(type.c_str());
-            if(ptr)
-            {
+            if(ptr){
                 aq::Algorithm* alg_ptr = dynamic_cast<aq::Algorithm*>(ptr);
                 if(!alg_ptr)
                     delete ptr;
@@ -1167,8 +1179,7 @@ namespace cereal
                     obj = alg_ptr;
             }
        }
-       if(!obj)
-       {
+       if(!obj){
             MO_LOG(warning) << "Unable to create algorithm of type: " << type;
             return;
        }
@@ -1179,8 +1190,7 @@ namespace cereal
        try
        {
            ar(CEREAL_OPTIONAL_NVP(components, components));
-       }catch(...)
-       {
+       }catch(...){
 
        }
 
@@ -1188,10 +1198,14 @@ namespace cereal
             for(auto component : components)
                 obj->addComponent(component);
    }
-    inline void load(JSONInputArchive& ar, rcc::shared_ptr<aq::nodes::Node>& node)
-    {
+    inline void load(JSONInputArchive& ar, rcc::shared_ptr<aq::nodes::Node>& node){
+        aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
         std::string type;
         std::string name;
+        std::string preset = "Default";
+        ar(CEREAL_OPTIONAL_NVP(preset, preset));
+        if(preset != ar_.preset && preset != "Default")
+            return;
         ar(CEREAL_NVP(type));
         if(!node)
             node = mo::MetaObjectFactory::instance()->create(type.c_str());
@@ -1199,29 +1213,23 @@ namespace cereal
         std::vector<rcc::weak_ptr<aq::Algorithm>> components;
         auto components_nvp = CEREAL_OPTIONAL_NVP(components, components);
         ar(components_nvp);
-        if(components_nvp.success)
-        {
-            for(auto component : components)
-            {
+        if(components_nvp.success){
+            for(auto component : components){
                 if(component)
                     node->addComponent(component);
             }
         }
 
-        if (!node)
-        {
+        if (!node){
             MO_LOG(warning) << "Unable to create node with type: " << type;
             return;
         }
         node->setTreeName(name);
         auto parameters = node->getParams();
-        for(auto itr = parameters.begin(); itr != parameters.end(); )
-        {
-            if((*itr)->checkFlags(mo::Input_e))
-            {
+        for(auto itr = parameters.begin(); itr != parameters.end(); ){
+            if((*itr)->checkFlags(mo::Input_e)){
                 itr = parameters.erase(itr);
-            }else
-            {
+            }else{
                 ++itr;
             }
         }
@@ -1230,8 +1238,9 @@ namespace cereal
         auto inputs = node->getInputs();
         if(inputs.size())
             ar(CEREAL_OPTIONAL_NVP(inputs, inputs));
-        aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
+        
         ar(cereal::make_optional_nvp("parents", ar_.parent_mappings[name]));
+        ar_.node_preset_map[node] = preset;
     }
 }
 
