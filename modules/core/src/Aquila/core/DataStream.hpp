@@ -57,6 +57,7 @@ public:
     virtual rcc::weak_ptr<WindowCallbackHandler>       getWindowCallbackManager();
     virtual std::vector<rcc::shared_ptr<nodes::Node> > getNodes() const;
     virtual std::vector<rcc::shared_ptr<nodes::Node> > getAllNodes() const;
+    virtual bool getDirty() const{return dirty_flag; };
     virtual bool loadDocument(const std::string& document, const std::string& prefered_loader = "");
     virtual std::vector<rcc::shared_ptr<nodes::Node> > addNode(const std::string& nodeName);
     virtual void addNode(rcc::shared_ptr<nodes::Node> node);

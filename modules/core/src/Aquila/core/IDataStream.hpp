@@ -58,6 +58,7 @@ namespace aq
         virtual IParameterBuffer*                           getParameterBuffer() = 0;
         virtual std::vector<rcc::shared_ptr<nodes::Node>>   getNodes() const = 0;
         virtual std::vector<rcc::shared_ptr<nodes::Node>>   getAllNodes() const = 0;
+        virtual bool getDirty() const = 0;
         virtual bool loadDocument(const std::string& document, const std::string& prefered_loader = "") = 0;
 
         virtual std::vector<rcc::shared_ptr<nodes::Node>> addNode(const std::string& nodeName) = 0;
