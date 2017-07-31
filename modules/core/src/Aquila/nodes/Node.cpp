@@ -570,3 +570,6 @@ mo::IParam* Node::addParameter(mo::IParam* param) {
     }
     return result;
 }
+bool Node::getModified() const{
+    return _modified;
+}

@@ -145,7 +145,7 @@ namespace nodes{
             MO_SIGNAL(void, node_updated, Node*)
             MO_SIGNAL(void, input_changed, Node*, mo::InputParam*)
         MO_END
-
+        bool getModified() const;
     protected:
         friend class NodeFactory;
         friend class IDataStream;
