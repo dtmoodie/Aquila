@@ -71,14 +71,53 @@ namespace IO {
                 out += textSize(obj.bounding_box);
                 return out;
             }
+
+            size_t textSize(const aq::DetectedObject_<2, -1>& obj) {
+                size_t out = 8;
+                for (size_t i = 0; i < obj.classification.size(); ++i) {
+                    if (obj.classification[i].label.size())
+                        out += obj.classification[i].label.size();
+                    else
+                        out += textSize(obj.classification[i].classNumber);
+                }
+
+                out += textSize(obj.bounding_box);
+                return out;
+            }
+
         } // namespace mo::IO::Text::imp
     } // namespace mo::IO::Text
+
 } // namespace mo::IO
 } // namespace mo
 
 #include "MetaObject/serialization/TextPolicy.hpp"
+namespace mo {
+namespace IO {
+    template <>
+    struct PODTraits<aq::DetectedObject_<2, -1>, void> {
+        enum {
+            // used in containers to determine the number of elements that can be displayed per line
+            ElemsPerLine = 1,
+        };
+        static inline size_t textSize(const aq::DetectedObject_<2, -1>& obj) {
+            return Text::imp::textSize(obj);
+        }
+        static inline bool serialize(std::ostream& os, const aq::DetectedObject_<2, -1>& obj) {
+            os << obj;
+            return true;
+        }
+        static inline bool deserialize(std::istream& is, aq::DetectedObject_<2, -1>& obj) {
+            (void)obj;
+            return false;
+        }
+    };
+}
+}
 namespace aq {
+
 std::ostream& operator<<(std::ostream& os, const aq::DetectedObject& obj) {
+    ASSERT_SERIALIZABLE(aq::DetectedObject);
     os << std::setprecision(3) << obj.classification.confidence << " ";
     os << obj.id << " ";
 
@@ -89,11 +128,28 @@ std::ostream& operator<<(std::ostream& os, const aq::DetectedObject& obj) {
     os << std::fixed << obj.bounding_box;
     return os;
 }
+
+std::ostream& operator<<(std::ostream& os, const aq::NClassDetectedObject& obj) {
+    ASSERT_SERIALIZABLE(aq::NClassDetectedObject);
+    for (size_t i = 0; i < obj.classification.size(); ++i) {
+        os << std::setprecision(3) << obj.classification[i].confidence << " ";
+        if (obj.classification[i].label.size())
+            os << obj.classification[i].label;
+        else
+            os << obj.classification[i].classNumber;
+        os << '\n';
+    }
+    os << obj.id << " ";
+    os << std::fixed << obj.bounding_box;
+    return os;
+}
 }
 
 INSTANTIATE_META_PARAM(DetectedObject);
+INSTANTIATE_META_PARAM(NClassDetectedObject);
 INSTANTIATE_META_PARAM(Classification);
 INSTANTIATE_META_PARAM(std::vector<DetectedObject>);
+INSTANTIATE_META_PARAM(std::vector<NClassDetectedObject>);
 INSTANTIATE_META_PARAM(std::vector<DetectedObject3d>);
 namespace aq {
 template struct DetectedObject_<2, 1>;

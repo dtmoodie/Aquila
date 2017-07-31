@@ -49,4 +49,5 @@ void DetectedObject_<3, 1>::serialize(AR& ar) {
     ar(CEREAL_NVP(pose), CEREAL_NVP(classification), CEREAL_NVP(timestamp), CEREAL_NVP(id));
 }
 std::ostream& operator<<(std::ostream& os, const aq::DetectedObject& obj);
+std::ostream& operator<<(std::ostream& os, const aq::NClassDetectedObject& obj);
 }
