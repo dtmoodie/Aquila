@@ -10,7 +10,7 @@
 #include <MetaObject/serialization/SerializationFactory.hpp>
 #include <MetaObject/params/buffers/IBuffer.hpp>
 #include <MetaObject/params/buffers/BufferFactory.hpp>
-
+#include <MetaObject/params/ParamFactory.hpp>
 #include <boost/lexical_cast.hpp>
 
 namespace aq
@@ -140,6 +140,8 @@ namespace aq
             {
                 for(const auto& str : _sm)
                 {
+                    if(str.second.empty())
+                        continue;
                     auto pos = s.find(str.second);
                     if(pos != std::string::npos)
                     {
@@ -321,7 +323,6 @@ namespace aq
         const std::map<std::string, std::string>& variable_replace_mapping;
         const std::map<std::string, std::string>& string_replace_mapping;
         std::string preset;
-        std::map<rcc::shared_ptr<aq::nodes::Node>, std::string> node_preset_map;
         /*! @name Common Functionality
         Common use cases for directly interacting with an JSONInputArchive */
         //! @{
@@ -919,27 +920,58 @@ namespace cereal
         auto nodes = stream->getAllNodes();
         ar(CEREAL_NVP(nodes));
     }
-    inline void save(JSONOutputArchive& ar, std::vector<mo::IParam*> const& parameters)
-    {
-        for (auto& param : parameters)
-        {
+    struct ImplicitParamInfo{
+        std::string type;
+        std::string flags;
+        template<class AR>
+        void save(AR& ar) const{
+            ar(CEREAL_NVP(type));
+            if(!flags.empty())
+                ar(CEREAL_OPTIONAL_NVP(flags, flags));
+        }
+
+        template<class AR>
+        void load(AR& ar){
+            ar(CEREAL_NVP(type));
+            ar(CEREAL_OPTIONAL_NVP(flags, flags));
+        }
+    };
+
+    inline void save(JSONOutputArchive& ar, std::vector<std::shared_ptr<mo::IParam>> const& params){
+          std::map<std::string, ImplicitParamInfo> types;
+          for (auto& param : params){
+              if (!param->checkFlags(mo::Control_e)){
+                  types[param->getName()] = {mo::Demangle::typeToName(param->getTypeInfo()), mo::paramFlagsToString(param->getFlags())};
+                  continue;
+              }
+              auto func1 = mo::SerializationFactory::instance()->getJsonSerializationFunction(param->getTypeInfo());
+              if (func1){
+                  if (func1(param.get(), ar)){
+                      types[param->getName()] = {mo::Demangle::typeToName(param->getTypeInfo()), mo::paramFlagsToString(param->getFlags())};
+                  }else{
+                      MO_LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
+                  }
+              }else{
+                  MO_LOG(debug) << "No serialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
+              }
+          }
+          ar(CEREAL_NVP(types));
+    }
+
+    inline void save(JSONOutputArchive& ar, std::vector<mo::IParam*> const& parameters){
+        for (auto& param : parameters){
             if (!param->checkFlags(mo::Control_e))
                 continue;
             auto func1 = mo::SerializationFactory::instance()->getJsonSerializationFunction(param->getTypeInfo());
-            if (func1)
-            {
-                if (!func1(param, ar))
-                {
+            if (func1){
+                if (!func1(param, ar)){
                     MO_LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
                 }
-            }
-            else
-            {
+            }else{
                 MO_LOG(debug) << "No serialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
             }
         }
     }
-
 
     inline void save(JSONOutputArchive& ar, std::vector<mo::InputParam*> const& parameters)
     {
@@ -1008,13 +1040,16 @@ namespace cereal
         ar(CEREAL_NVP(type));
         ar(CEREAL_NVP(name));
         if(ar_.preset != "Default")
-            ar(cereal::make_nvp("preset", ar_.preset));
+            ar(cereal::make_nvp("preset", std::vector<std::string>(1, ar_.preset)));
         int control_count = 0;
         for(auto param : parameters)
             if(param->checkFlags(mo::Control_e))
                 ++control_count;
         if(control_count)
             ar(CEREAL_NVP(parameters));
+        auto implicit_params = node->getImplicitParams();
+        if(implicit_params.size())
+            ar(CEREAL_NVP(implicit_params));
         if(components.size())
             ar(CEREAL_NVP(components));
         auto inputs = node->getInputs();
@@ -1022,8 +1057,7 @@ namespace cereal
             ar(CEREAL_NVP(inputs));
         auto parent_nodes = node->getParents();
         std::vector<std::string> parents;
-        for(auto& node : parent_nodes)
-        {
+        for(auto& node : parent_nodes){
             parents.emplace_back(node->getTreeName());
         }
         if(parents.size())
@@ -1138,6 +1172,31 @@ namespace cereal
         }
     }
 
+   inline void load(JSONInputArchive& ar, std::vector<std::shared_ptr<mo::IParam>>& parameters){
+       std::map<std::string, ImplicitParamInfo> types;
+       ar(CEREAL_OPTIONAL_NVP(types, types));
+       for(const auto& type_info : types){
+          const auto& type = mo::Demangle::nameToType(type_info.second.type);
+          if(type != mo::TypeInfo(typeid(void))){
+              auto param = mo::ParamFactory::instance()->create(type, mo::TParam_e);
+              if(param){
+                  auto flag = mo::stringToParamFlags(type_info.second.flags);
+                  param->setFlags(flag);
+                  param->setName(type_info.first);
+                  auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
+                   if (func1){
+                       if (!func1(param.get(), ar)){
+                           MO_LOG(debug) << "Unable to deserialize " << param->getName() << " of type " << param->getTypeInfo().name();
+                       }
+                   }else{
+                       MO_LOG(debug) << "No deserialization function exists for  " << param->getName() << " of type " << param->getTypeInfo().name();
+                   }
+                   parameters.push_back(param);
+              }
+          }
+       }
+   }
+
     inline void load(JSONInputArchive& ar, std::vector<mo::IParam*>& parameters){
         for (auto& param : parameters){
             if (param->checkFlags(mo::Output_e) || param->checkFlags(mo::Input_e))
@@ -1202,14 +1261,30 @@ namespace cereal
         aq::JSONInputArchive& ar_ = dynamic_cast<aq::JSONInputArchive&>(ar);
         std::string type;
         std::string name;
-        std::string preset = "Default";
+        std::vector<std::string> preset;
         ar(CEREAL_OPTIONAL_NVP(preset, preset));
-        if(preset != ar_.preset && preset != "Default")
+        bool valid_preset = preset.empty();
+        for(const auto& prst : preset){
+           if(prst == ar_.preset || prst == "Default"){
+                valid_preset = true;
+           }
+           if(prst[0] == '!'){
+                if(prst.substr(1) == ar_.preset)
+                    return;
+                else
+                    valid_preset = true;
+            }
+        }
+        if(!valid_preset)
             return;
         ar(CEREAL_NVP(type));
         if(!node)
             node = mo::MetaObjectFactory::instance()->create(type.c_str());
-        ar(CEREAL_NVP(name));
+        if (!node){
+            MO_LOG(warning) << "Unable to create node with type: " << type;
+            return;
+        }
+
         std::vector<rcc::weak_ptr<aq::Algorithm>> components;
         auto components_nvp = CEREAL_OPTIONAL_NVP(components, components);
         ar(components_nvp);
@@ -1220,10 +1295,7 @@ namespace cereal
             }
         }
 
-        if (!node){
-            MO_LOG(warning) << "Unable to create node with type: " << type;
-            return;
-        }
+        ar(CEREAL_NVP(name));
         node->setTreeName(name);
         auto parameters = node->getParams();
         for(auto itr = parameters.begin(); itr != parameters.end(); ){
@@ -1235,12 +1307,15 @@ namespace cereal
         }
         if(parameters.size())
             ar(CEREAL_OPTIONAL_NVP(parameters, parameters));
+        std::vector<std::shared_ptr<mo::IParam>> implicit_params;
+        ar(CEREAL_OPTIONAL_NVP(implicit_params,implicit_params));
+        for(const auto& imp : implicit_params)
+            node->addParam(imp);
         auto inputs = node->getInputs();
         if(inputs.size())
             ar(CEREAL_OPTIONAL_NVP(inputs, inputs));
         
         ar(cereal::make_optional_nvp("parents", ar_.parent_mappings[name]));
-        ar_.node_preset_map[node] = preset;
     }
 }
 
