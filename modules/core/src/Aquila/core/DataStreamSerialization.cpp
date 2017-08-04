@@ -75,8 +75,22 @@ std::vector<IDataStream::Ptr> IDataStream::load(const std::string& config_file, 
             std::ifstream ifs(config_file, std::ios::binary);
             aq::JSONInputArchive ar(ifs, vm, sm, preset);
             VariableMap defaultVM, defaultSM;
-            ar(cereal::make_optional_nvp(preset + "Variables", defaultVM, defaultVM));
-            ar(cereal::make_optional_nvp(preset + "Strings", defaultSM, defaultSM));
+            ar(cereal::make_optional_nvp("DefaultVariables", defaultVM, defaultVM));
+            ar(cereal::make_optional_nvp("DefaultStrings", defaultSM, defaultSM));
+            if(preset != "Default"){
+                VariableMap presetVM, presetSM;
+                ar(cereal::make_optional_nvp(preset + "Variables", presetVM, presetVM));
+                ar(cereal::make_optional_nvp(preset + "Strings", presetSM, presetSM));
+                for (const auto& pair : presetVM) {
+                    if (vm.count(pair.first) == 0)
+                        vm[pair.first] = pair.second;
+                }
+                for (const auto& pair : presetSM) {
+                    if (sm.count("${" + pair.first + "}") == 0)
+                        sm["${" + pair.first + "}"] = pair.second;
+                }
+            }
+
             for (const auto& pair : defaultVM) {
                 if (vm.count(pair.first) == 0)
                     vm[pair.first] = pair.second;
