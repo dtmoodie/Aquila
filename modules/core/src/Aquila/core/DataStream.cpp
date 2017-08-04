@@ -106,8 +106,25 @@ void DataStream::input_changed(nodes::Node* node, mo::InputParam* param) {
 }
 void DataStream::param_updated(mo::IMetaObject* obj, mo::IParam* param) {
     (void)obj;
-    if (param->checkFlags(mo::Control_e) || param->checkFlags(mo::Source_e))
+    if (param->checkFlags(mo::Control_e) || param->checkFlags(mo::Source_e)){
         dirty_flag = true;
+    }if(param->checkFlags(mo::Input_e)){
+        auto input = dynamic_cast<mo::InputParam*>(param);
+        if(input){
+            mo::IParam* input_param = input->getInputParam();
+            if(input_param){
+                if(input_param->checkFlags(mo::Buffer_e)){
+                    mo::InputParam* buffer_param = dynamic_cast<mo::InputParam*>(input_param);
+                    if(buffer_param){
+                        auto src = buffer_param->getInputParam();
+                        if(src && src->checkFlags(mo::Source_e)){
+                            dirty_flag = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void DataStream::param_added(mo::IMetaObject* obj, mo::IParam* param) {
@@ -337,7 +354,7 @@ void DataStream::addNode(rcc::shared_ptr<nodes::Node> node) {
                 return;
             }
 
-            if (node->name.size() == 0) {
+            if (node->name.empty()) {
                 std::string node_name = node->GetTypeName();
                 int         count     = 0;
                 for (size_t i = 0; i < top_level_nodes.size(); ++i) {
@@ -356,7 +373,7 @@ void DataStream::addNode(rcc::shared_ptr<nodes::Node> node) {
     }
     if (std::find(top_level_nodes.begin(), top_level_nodes.end(), node) != top_level_nodes.end())
         return;
-    if (node->name.size() == 0) {
+    if (node->name.empty()) {
         std::string node_name = node->GetTypeName();
         int         count     = 0;
         for (size_t i = 0; i < top_level_nodes.size(); ++i) {
