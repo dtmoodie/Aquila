@@ -125,7 +125,14 @@ bool TInputParamPtr<aq::SyncedMemory>::getInput(const OptionalTime_t& ts, size_t
         if (fn_)
             *fn_  = fn;
         this->_fn = fn;
-        this->_ts = ts;
+        if(ts)
+            this->_ts = ts;
+        else{
+            if(this->_shared_input)
+                this->_ts = this->_shared_input->getTimestamp();
+            if(this->_input)
+                this->_ts = this->_input->getTimestamp();
+        }
         this->setCoordinateSystem(cs);
         return true;
     }
