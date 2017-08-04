@@ -106,7 +106,7 @@ namespace nodes{
 
         virtual Ptr                     addChild(Node* child);
         virtual Ptr                     addChild(Node::Ptr child);
-        virtual void addComponent(const rcc::weak_ptr<Algorithm>& component);
+        virtual void                    addComponent(const rcc::weak_ptr<Algorithm>& component);
         virtual Ptr                     getChild(const std::string& treeName);
         virtual Ptr                     getChild(const int& index);
         virtual VecPtr                  getChildren();
@@ -126,7 +126,6 @@ namespace nodes{
         virtual mo::IVariableManagerPtr getVariableManager();
 
         void                            setUniqueId(int id);
-        std::string                     getTreeName();
         std::string                     getTreeName() const;
         void                            setTreeName(const std::string& name);
 
@@ -146,6 +145,8 @@ namespace nodes{
             MO_SIGNAL(void, input_changed, Node*, mo::InputParam*)
         MO_END
         bool getModified() const;
+        virtual mo::IParam*         addParam(std::shared_ptr<mo::IParam> param) override;
+        virtual mo::IParam*         addParam(mo::IParam* param) override;
     protected:
         friend class NodeFactory;
         friend class IDataStream;
@@ -154,8 +155,7 @@ namespace nodes{
         virtual std::vector<Node*>  getNodesInScope();
         virtual Node *              getNodeInScope(const std::string& name);
         virtual void                getNodesInScope(std::vector<Node*>& nodes);
-        virtual mo::IParam*         addParameter(std::shared_ptr<mo::IParam> param);
-        virtual mo::IParam*         addParameter(mo::IParam* param);
+
 
         friend bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj);
         friend bool aq::Serialize(cereal::JSONOutputArchive& ar, const aq::nodes::Node* obj);
@@ -174,8 +174,7 @@ namespace nodes{
         rcc::weak_ptr<IDataStream>                      _data_stream;
         int _unique_id;
         std::vector<WeakPtr>                            _parents;
-        std::string                                     name;
-    private:
+        mutable std::string                             name;
         std::shared_ptr<NodeImpl>                       _pimpl_node;
     };
 } // namespace nodes
