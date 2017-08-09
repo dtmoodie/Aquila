@@ -105,21 +105,21 @@ namespace nodes{
                                                      mo::ParamType type = mo::StreamBuffer_e);
 
         virtual Ptr                     addChild(Node* child);
-        virtual Ptr                     addChild(Node::Ptr child);
+        virtual Ptr                     addChild(const Node::Ptr& child);
         virtual void                    addComponent(const rcc::weak_ptr<Algorithm>& component);
         virtual Ptr                     getChild(const std::string& treeName);
         virtual Ptr                     getChild(const int& index);
         virtual VecPtr                  getChildren();
 
         virtual void                    removeChild(const std::string& name);
-        virtual void                    removeChild(Ptr node);
+        virtual void                    removeChild(const Ptr& node);
         virtual void                    removeChild(Node* node);
-        virtual void                    removeChild(WeakPtr node);
+        virtual void                    removeChild(const WeakPtr& node);
         virtual void                    removeChild(int idx);
 
         virtual void                    swapChildren(int idx1, int idx2);
         virtual void                    swapChildren(const std::string& name1, const std::string& name2);
-        virtual void                    swapChildren(Node::Ptr child1, Node::Ptr child2);
+        virtual void                    swapChildren(const Node::Ptr& child1, const Node::Ptr& child2);
 
         virtual void                    setDataStream(IDataStream* stream);
         virtual IDataStream*            getDataStream();

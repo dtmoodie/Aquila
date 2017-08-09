@@ -63,9 +63,9 @@ namespace aq
         virtual bool loadDocument(const std::string& document, const std::string& prefered_loader = "") = 0;
 
         virtual std::vector<rcc::shared_ptr<nodes::Node>> addNode(const std::string& nodeName) = 0;
-        virtual void addNode(rcc::shared_ptr<nodes::Node> node) = 0;
-        virtual void addNodes(std::vector<rcc::shared_ptr<nodes::Node>> node) = 0;
-        virtual void removeNode(rcc::shared_ptr<nodes::Node> node) = 0;
+        virtual void addNode(const rcc::shared_ptr<nodes::Node>& node) = 0;
+        virtual void addNodes(const std::vector<rcc::shared_ptr<nodes::Node>>& node) = 0;
+        virtual void removeNode(const rcc::shared_ptr<nodes::Node>& node) = 0;
         virtual void removeNode(nodes::Node* node) = 0;
         virtual nodes::Node* getNode(const std::string& nodeName) = 0;
 

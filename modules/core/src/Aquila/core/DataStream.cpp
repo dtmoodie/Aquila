@@ -91,6 +91,19 @@ DataStream::DataStream() {
     mo::setThisThreadName(old_name);
 }
 
+DataStream::~DataStream() {
+    MO_LOG(info) << "DataStream destructor";
+    stopThread();
+    top_level_nodes.clear();
+    MO_LOG(info) << "End cleanup nodes";
+    relay_manager.reset();
+    _sig_manager = nullptr;
+    for (auto thread : connection_threads) {
+        thread->join();
+        delete thread;
+    }
+}
+
 void DataStream::node_updated(nodes::Node* node) {
     (void)node;
     dirty_flag = true;
@@ -99,11 +112,13 @@ void DataStream::node_updated(nodes::Node* node) {
 void DataStream::update() {
     dirty_flag = true;
 }
+
 void DataStream::input_changed(nodes::Node* node, mo::InputParam* param) {
     (void)node;
     (void)param;
     dirty_flag = true;
 }
+
 void DataStream::param_updated(mo::IMetaObject* obj, mo::IParam* param) {
     (void)obj;
     if (param->checkFlags(mo::Control_e) || param->checkFlags(mo::Source_e)){
@@ -140,17 +155,6 @@ void DataStream::run_continuously(bool value) {
 void DataStream::initCustom(bool firstInit) {
     if (firstInit) {
         this->setupSignals(getRelayManager());
-    }
-}
-
-DataStream::~DataStream() {
-    stopThread();
-    top_level_nodes.clear();
-    relay_manager.reset();
-    _sig_manager = nullptr;
-    for (auto thread : connection_threads) {
-        thread->join();
-        delete thread;
     }
 }
 
@@ -341,7 +345,7 @@ std::vector<rcc::shared_ptr<nodes::Node> > DataStream::getAllNodes() const {
 std::vector<rcc::shared_ptr<nodes::Node> > DataStream::addNode(const std::string& nodeName) {
     return aq::NodeFactory::Instance()->addNode(nodeName, this);
 }
-void DataStream::addNode(rcc::shared_ptr<nodes::Node> node) {
+void DataStream::addNode(const rcc::shared_ptr<nodes::Node>& node) {
     node->setDataStream(this);
     if (!_processing_thread.isOnThread() && _processing_thread.getIsRunning()) {
         std::promise<void> promise;
@@ -402,12 +406,12 @@ void DataStream::removeChildNode(rcc::shared_ptr<nodes::Node> node) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     std::remove(child_nodes.begin(), child_nodes.end(), node);
 }
-void DataStream::addNodeNoInit(rcc::shared_ptr<nodes::Node> node) {
+void DataStream::addNodeNoInit(const rcc::shared_ptr<nodes::Node>& node) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     top_level_nodes.push_back(node);
     dirty_flag = true;
 }
-void DataStream::addNodes(std::vector<rcc::shared_ptr<nodes::Node> > nodes) {
+void DataStream::addNodes(const std::vector<rcc::shared_ptr<nodes::Node> >& nodes) {
     std::lock_guard<std::mutex> lock(nodes_mtx);
     for (auto& node : nodes) {
         node->setDataStream(this);
@@ -439,7 +443,7 @@ void DataStream::removeNode(nodes::Node* node) {
     removeChildNode(node);
 }
 
-void DataStream::removeNode(rcc::shared_ptr<nodes::Node> node) {
+void DataStream::removeNode(const rcc::shared_ptr<nodes::Node>& node) {
     {
         std::lock_guard<std::mutex> lock(nodes_mtx);
         std::remove(top_level_nodes.begin(), top_level_nodes.end(), node);
@@ -506,7 +510,7 @@ int DataStream::process() {
 }
 
 IDataStream::Ptr IDataStream::create(const std::string& document, const std::string& preferred_frame_grabber) {
-    auto stream = DataStream::create();
+    auto stream = std::move(DataStream::create());
     if (document.size() || preferred_frame_grabber.size()) {
         auto fg = IFrameGrabber::create(document, preferred_frame_grabber);
         if (fg) {

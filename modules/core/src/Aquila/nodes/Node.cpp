@@ -188,7 +188,7 @@ Node::Ptr Node::addChild(Node* child) {
     return addChild(Node::Ptr(child));
 }
 
-Node::Ptr Node::addChild(Node::Ptr child) {
+Node::Ptr Node::addChild(const Node::Ptr& child) {
     if (_ctx.get() && mo::getThisThread() != _ctx.get()->thread_id) {
         std::future<Ptr>  result;
         std::promise<Ptr> promise;
@@ -217,7 +217,6 @@ Node::Ptr Node::addChild(Node::Ptr child) {
     child->setDataStream(getDataStream());
     child->addParent(this);
     child->setContext(this->_ctx, false);
-    std::string node_name = child->GetTypeName();
     child->setUniqueId(count);
     child->setParamRoot(child->getTreeName());
     MO_LOG(trace) << "[ " << getTreeName() << " ]"
@@ -266,7 +265,7 @@ void Node::swapChildren(const std::string& name1, const std::string& name2) {
         std::iter_swap(itr1, itr2);
 }
 
-void Node::swapChildren(Node::Ptr child1, Node::Ptr child2) {
+void Node::swapChildren(const Node::Ptr& child1, const Node::Ptr& child2) {
 
     auto itr1 = std::find(_children.begin(), _children.end(), child1);
     if (itr1 == _children.end())
@@ -321,7 +320,7 @@ void Node::getNodesInScope(std::vector<Node*>& nodes) {
     }
 }
 
-void Node::removeChild(Node::Ptr node) {
+void Node::removeChild(const Node::Ptr& node) {
     mo::Mutex_t::scoped_lock lock(*_mtx);
     for (auto itr = _children.begin(); itr != _children.end(); ++itr) {
         if (*itr == node) {
@@ -330,6 +329,7 @@ void Node::removeChild(Node::Ptr node) {
         }
     }
 }
+
 void Node::removeChild(int idx) {
     _children.erase(_children.begin() + idx);
 }
@@ -350,7 +350,7 @@ void Node::removeChild(Node* node) {
     }
 }
 
-void Node::removeChild(rcc::weak_ptr<Node> node) {
+void Node::removeChild(const rcc::weak_ptr<Node>& node) {
     auto itr = std::find(_children.begin(), _children.end(), node.get());
     if (itr != _children.end()) {
         _children.erase(itr);

@@ -52,7 +52,7 @@ std::vector<IDataStream::Ptr> IDataStream::load(JSONInputArchive& ar){
         rcc::shared_ptr<IDataStream> stream;
         ar(cereal::make_optional_nvp("value0", stream));
         if (stream) {
-            streams.push_back(stream);
+            streams.push_back(std::move(stream));
         }
     }
     return streams;

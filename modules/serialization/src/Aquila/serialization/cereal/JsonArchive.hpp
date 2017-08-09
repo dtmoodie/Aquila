@@ -1124,8 +1124,8 @@ namespace cereal
                                     if(type != "Direct"){
                                           mo::ParamType buffer_type = mo::stringToParamType(type);
                                           if (!nodes[i]->connectInput(nodes[j], output_param, input, mo::ParamType(buffer_type | mo::ForceBufferedConnection_e))){
-                                              MO_LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
-                                                  << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
+                                              MO_LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << mo::Demangle::typeToName(output_param->getTypeInfo()) << ") to "
+                                                  << input->getTreeName() << " (" << mo::Demangle::typeToName(input->getTypeInfo()) << ")";
                                           }else{
                                               if(itr->second.buffer_size > 0){
                                                   mo::IParam* p = input->getInputParam();
@@ -1141,8 +1141,8 @@ namespace cereal
                                           }
                                     }else{
                                         if (!nodes[i]->connectInput(nodes[j], output_param, input)){
-                                            MO_LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << output_param->getTypeInfo().name() << ") to "
-                                                << input->getTreeName() << " (" << input->getTypeInfo().name() << ")";
+                                            MO_LOG(warning) << "Unable to connect " << output_param->getTreeName() << " (" << mo::Demangle::typeToName(output_param->getTypeInfo()) << ") to "
+                                                << input->getTreeName() << " (" << mo::Demangle::typeToName(input->getTypeInfo()) << ")";
                                         }else{
                                            if(itr->second.sync){
                                                nodes[i]->setSyncInput(input->getName());

@@ -48,40 +48,40 @@ public:
     MO_SLOT(int, process)
     DS_END_(__COUNTER__);
 
-    std::vector<rcc::weak_ptr<aq::nodes::Node> > getTopLevelNodes();
-    virtual mo::ContextPtr_t                     getContext();
-    virtual void initCustom(bool firstInit);
-    virtual std::shared_ptr<mo::IVariableManager>      getVariableManager();
-    virtual mo::RelayManager*                          getRelayManager();
-    virtual IParameterBuffer*                          getParameterBuffer();
-    virtual rcc::weak_ptr<WindowCallbackHandler>       getWindowCallbackManager();
-    virtual std::vector<rcc::shared_ptr<nodes::Node> > getNodes() const;
-    virtual std::vector<rcc::shared_ptr<nodes::Node> > getAllNodes() const;
-    virtual bool getDirty() const{return dirty_flag; };
-    virtual bool loadDocument(const std::string& document, const std::string& prefered_loader = "");
-    virtual std::vector<rcc::shared_ptr<nodes::Node> > addNode(const std::string& nodeName);
-    virtual void addNode(rcc::shared_ptr<nodes::Node> node);
-    virtual void addNodeNoInit(rcc::shared_ptr<nodes::Node> node);
-    virtual void addNodes(std::vector<rcc::shared_ptr<nodes::Node> > node);
-    virtual void removeNode(rcc::shared_ptr<nodes::Node> node);
-    virtual void removeNode(nodes::Node* node);
-    virtual nodes::Node* getNode(const std::string& nodeName);
-    virtual bool saveStream(const std::string& filename);
-    virtual bool loadStream(const std::string& filename);
+    std::vector<rcc::weak_ptr<aq::nodes::Node> > getTopLevelNodes() override;
+    virtual mo::ContextPtr_t                     getContext() override;
+    virtual void initCustom(bool firstInit) override;
+    virtual std::shared_ptr<mo::IVariableManager>      getVariableManager() override;
+    virtual mo::RelayManager*                          getRelayManager() override;
+    virtual IParameterBuffer*                          getParameterBuffer() override;
+    virtual rcc::weak_ptr<WindowCallbackHandler>       getWindowCallbackManager() override;
+    virtual std::vector<rcc::shared_ptr<nodes::Node> > getNodes() const override;
+    virtual std::vector<rcc::shared_ptr<nodes::Node> > getAllNodes() const override;
+    virtual bool getDirty() const override{return dirty_flag; }
+    virtual bool loadDocument(const std::string& document, const std::string& prefered_loader = "") override;
+    virtual std::vector<rcc::shared_ptr<nodes::Node> > addNode(const std::string& nodeName) override;
+    virtual void addNode(const rcc::shared_ptr<nodes::Node>& node) override;
+    virtual void addNodeNoInit(const rcc::shared_ptr<nodes::Node>& node);
+    virtual void addNodes(const std::vector<rcc::shared_ptr<nodes::Node> >& node) override;
+    virtual void removeNode(const rcc::shared_ptr<nodes::Node>& node) override;
+    virtual void removeNode(nodes::Node* node) override;
+    virtual nodes::Node* getNode(const std::string& nodeName) override;
+    virtual bool saveStream(const std::string& filename) override;
+    virtual bool loadStream(const std::string& filename) override;
     template <class T>
     void load(T& ar);
     template <class T>
     void save(T& ar) const;
 
-    void addVariableSink(IVariableSink* sink);
-    void removeVariableSink(IVariableSink* sink);
+    void addVariableSink(IVariableSink* sink) override;
+    void removeVariableSink(IVariableSink* sink) override;
 
 protected:
     friend class IDataStream;
-    virtual void addChildNode(rcc::shared_ptr<nodes::Node> node);
-    virtual void removeChildNode(rcc::shared_ptr<nodes::Node> node);
-    virtual std::unique_ptr<ISingleton>& getSingleton(mo::TypeInfo type);
-    virtual std::unique_ptr<ISingleton>& getIObjectSingleton(mo::TypeInfo type);
+    virtual void addChildNode(rcc::shared_ptr<nodes::Node> node) override;
+    virtual void removeChildNode(rcc::shared_ptr<nodes::Node> node) override;
+    virtual std::unique_ptr<ISingleton>& getSingleton(mo::TypeInfo type) override;
+    virtual std::unique_ptr<ISingleton>& getIObjectSingleton(mo::TypeInfo type) override;
 
     std::map<mo::TypeInfo, std::unique_ptr<ISingleton> > _singletons;
     std::map<mo::TypeInfo, std::unique_ptr<ISingleton> > _iobject_singletons;
