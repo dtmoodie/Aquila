@@ -10,7 +10,7 @@ namespace aq{
                 PARAM(mo::ReadFile, label_file, {})
                 PARAM_UPDATE_SLOT(label_file)
                 OUTPUT(std::vector<std::string>, labels, {})
-                APPEND_FLAGS(labels, mo::Unstamped_e)
+                APPEND_FLAGS(labels, mo::ParamFlags::Unstamped_e)
             MO_END;
         };
     }

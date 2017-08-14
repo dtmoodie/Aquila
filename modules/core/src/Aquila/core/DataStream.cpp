@@ -121,18 +121,18 @@ void DataStream::input_changed(nodes::Node* node, mo::InputParam* param) {
 
 void DataStream::param_updated(mo::IMetaObject* obj, mo::IParam* param) {
     (void)obj;
-    if (param->checkFlags(mo::Control_e) || param->checkFlags(mo::Source_e)){
+    if (param->checkFlags(mo::ParamFlags::Control_e) || param->checkFlags(mo::ParamFlags::Source_e)){
         dirty_flag = true;
-    }if(param->checkFlags(mo::Input_e)){
+    }if(param->checkFlags(mo::ParamFlags::Input_e)){
         auto input = dynamic_cast<mo::InputParam*>(param);
         if(input){
             mo::IParam* input_param = input->getInputParam();
             if(input_param){
-                if(input_param->checkFlags(mo::Buffer_e)){
+                if(input_param->checkFlags(mo::ParamFlags::Buffer_e)){
                     mo::InputParam* buffer_param = dynamic_cast<mo::InputParam*>(input_param);
                     if(buffer_param){
                         auto src = buffer_param->getInputParam();
-                        if(src && src->checkFlags(mo::Source_e)){
+                        if(src && src->checkFlags(mo::ParamFlags::Source_e)){
                             dirty_flag = true;
                         }
                     }

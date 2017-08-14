@@ -34,7 +34,7 @@ namespace mo {
 TInputParamPtr<aq::SyncedMemory>::TInputParamPtr(const std::string& name, Input_t* user_var_, Context* ctx)
     : _user_var(user_var_)
     , ITInputParam<aq::SyncedMemory>(name, ctx)
-    , IParam(name, mo::Input_e) {
+    , IParam(name, mo::ParamFlags::Input_e) {
 }
 
 bool TInputParamPtr<aq::SyncedMemory>::setInput(std::shared_ptr<IParam> param) {
@@ -87,7 +87,7 @@ void TInputParamPtr<aq::SyncedMemory>::setUserDataPtr(Input_t* user_var_) {
 }
 
 void TInputParamPtr<aq::SyncedMemory>::onInputUpdate(ConstStorageRef_t data, IParam* param, Context* ctx, OptionalTime_t ts, size_t fn, const std::shared_ptr<ICoordinateSystem>& cs, UpdateFlags fg) {
-    if (fg == mo::BufferUpdated_e && param->checkFlags(mo::Buffer_e)) {
+    if (fg == mo::BufferUpdated_e && param->checkFlags(mo::ParamFlags::Buffer_e)) {
         ITParam<aq::SyncedMemory>::_typed_update_signal(data, this, ctx, ts, fn, cs, mo::BufferUpdated_e);
         IParam::emitUpdate(ts, ctx, fn, cs, fg);
         return;

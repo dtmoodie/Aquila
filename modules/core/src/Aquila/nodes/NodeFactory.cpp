@@ -53,7 +53,7 @@ void NodeFactory::onConstructorsAdded()
         auto parameters = newNodes[i]->getDisplayParams();
         for (size_t j = 0; j < parameters.size(); ++j)
         {
-            if (parameters[j]->checkFlags(mo::Input_e))
+            if (parameters[j]->checkFlags(mo::ParamFlags::Input_e))
             {
                 auto inputParam = dynamic_cast<mo::InputParam*>(parameters[j]);
                 if(inputParam)

@@ -111,7 +111,7 @@ bool aq::Serialize(cereal::JSONOutputArchive& ar, const Node* obj)
         ar(cereal::make_nvp("TypeName", type));
         for (auto& param : params)
         {
-            if (param->checkFlags(mo::Input_e))
+            if (param->checkFlags(mo::ParamFlags::Input_e))
             {
                 mo::InputParam* input = dynamic_cast<mo::InputParam*>(param);
                 if (input)
@@ -132,7 +132,7 @@ bool aq::Serialize(cereal::JSONOutputArchive& ar, const Node* obj)
                     }
                 }
             }
-            if (param->checkFlags(mo::Output_e))
+            if (param->checkFlags(mo::ParamFlags::Output_e))
                 continue;
             auto func1 = mo::SerializationFactory::instance()->getJsonSerializationFunction(param->getTypeInfo());
             if (func1)
@@ -168,9 +168,9 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
         auto params = obj->getParams();
         for (auto& param : params)
         {
-            if (param->checkFlags(mo::Input_e))
+            if (param->checkFlags(mo::ParamFlags::Input_e))
                 continue;
-            if (param->checkFlags(mo::Output_e))
+            if (param->checkFlags(mo::ParamFlags::Output_e))
                 continue;
             auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
             if (func1)
@@ -199,7 +199,7 @@ bool aq::DeSerialize(cereal::JSONInputArchive& ar, Node* obj)
         obj->setParamRoot(obj->getTreeName());
         for (auto& param : params)
         {
-            if (param->checkFlags(mo::Input_e))
+            if (param->checkFlags(mo::ParamFlags::Input_e))
             {
                 mo::InputParam* input = dynamic_cast<mo::InputParam*>(param);
                 if (input)

@@ -184,7 +184,7 @@ void HandleNode(cereal::JSONInputArchive& ar, rcc::shared_ptr<nodes::Node>& node
     node->setTreeName(name);
     auto parameters = node->getParams();
     for (auto param : parameters) {
-        if (param->checkFlags(mo::Output_e) || param->checkFlags(mo::Input_e))
+        if (param->checkFlags(mo::ParamFlags::Output_e) || param->checkFlags(mo::ParamFlags::Input_e))
             continue;
         auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
         if (func1) {
@@ -251,10 +251,10 @@ void PopulateSerializationInfo(nodes::Node* node, std::vector<NodeSerializationI
         for (auto& param : all_params) {
             if (param->getName() == "_dataStream" || param->getName() == "_children" || param->getName() == "_parents" || param->getName() == "_unique_id")
                 continue;
-            if (param->checkFlags(mo::Control_e)) {
+            if (param->checkFlags(mo::ParamFlags::Control_e)) {
                 node_info.parameters.push_back(param);
             }
-            if (param->checkFlags(mo::Input_e)) {
+            if (param->checkFlags(mo::ParamFlags::Input_e)) {
                 std::string input_name;
                 mo::InputParam* input_param = dynamic_cast<mo::InputParam*>(param);
                 if (input_param) {

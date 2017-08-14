@@ -124,10 +124,10 @@ Algorithm::InputState Node::checkInputs() {
 
 void Node::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, const std::shared_ptr<mo::ICoordinateSystem>& cs, mo::UpdateFlags fg) {
     Algorithm::onParamUpdate(param, ctx, ts, fn, cs, fg);
-    if (param->checkFlags(mo::Control_e)) {
+    if (param->checkFlags(mo::ParamFlags::Control_e)) {
         _modified = true;
     }
-    if (_pimpl_node->disable_due_to_errors && param->checkFlags(mo::Control_e)) {
+    if (_pimpl_node->disable_due_to_errors && param->checkFlags(mo::ParamFlags::Control_e)) {
         _pimpl_node->throw_count--;
         _pimpl_node->disable_due_to_errors = false;
     }

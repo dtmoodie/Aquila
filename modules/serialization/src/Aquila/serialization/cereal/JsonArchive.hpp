@@ -940,7 +940,7 @@ namespace cereal
     inline void save(JSONOutputArchive& ar, std::vector<std::shared_ptr<mo::IParam>> const& params){
           std::map<std::string, ImplicitParamInfo> types;
           for (auto& param : params){
-              if (!param->checkFlags(mo::Control_e)){
+              if (!param->checkFlags(mo::ParamFlags::Control_e)){
                   types[param->getName()] = {mo::Demangle::typeToName(param->getTypeInfo()), mo::paramFlagsToString(param->getFlags())};
                   continue;
               }
@@ -960,7 +960,7 @@ namespace cereal
 
     inline void save(JSONOutputArchive& ar, std::vector<mo::IParam*> const& parameters){
         for (auto& param : parameters){
-            if (!param->checkFlags(mo::Control_e))
+            if (!param->checkFlags(mo::ParamFlags::Control_e))
                 continue;
             auto func1 = mo::SerializationFactory::instance()->getJsonSerializationFunction(param->getTypeInfo());
             if (func1){
@@ -994,7 +994,7 @@ namespace cereal
                         input_name = input_name.substr(0, input_name.find_first_of(' '));
                     }
 
-                    if(_input_param->checkFlags(mo::Buffer_e))
+                    if(_input_param->checkFlags(mo::ParamFlags::Buffer_e))
                     {
                         mo::Buffer::IBuffer* buffer = dynamic_cast<mo::Buffer::IBuffer*>(_input_param);
                         if(buffer)
@@ -1043,7 +1043,7 @@ namespace cereal
             ar(cereal::make_nvp("preset", std::vector<std::string>(1, ar_.preset)));
         int control_count = 0;
         for(auto param : parameters)
-            if(param->checkFlags(mo::Control_e))
+            if(param->checkFlags(mo::ParamFlags::Control_e))
                 ++control_count;
         if(control_count)
             ar(CEREAL_NVP(parameters));
@@ -1157,7 +1157,7 @@ namespace cereal
                                MO_LOG(warning) << "Invalid input format for input [" << itr->second.name << "] of node: " << nodes[i]->getTreeName();
                        }
                 }else{
-                    if(input->checkFlags(mo::Optional_e)){
+                    if(input->checkFlags(mo::ParamFlags::Optional_e)){
                         MO_LOG(debug) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
                     }else{
                         MO_LOG(warning) << "Unable to find input setting for " << input->getName() << " for node " << nodes[i]->getTreeName();
@@ -1199,7 +1199,7 @@ namespace cereal
 
     inline void load(JSONInputArchive& ar, std::vector<mo::IParam*>& parameters){
         for (auto& param : parameters){
-            if (param->checkFlags(mo::Output_e) || param->checkFlags(mo::Input_e))
+            if (param->checkFlags(mo::ParamFlags::Output_e) || param->checkFlags(mo::ParamFlags::Input_e))
                 continue;
             auto func1 = mo::SerializationFactory::instance()->getJsonDeSerializationFunction(param->getTypeInfo());
             if (func1){
@@ -1299,7 +1299,7 @@ namespace cereal
         node->setTreeName(name);
         auto parameters = node->getParams();
         for(auto itr = parameters.begin(); itr != parameters.end(); ){
-            if((*itr)->checkFlags(mo::Input_e)){
+            if((*itr)->checkFlags(mo::ParamFlags::Input_e)){
                 itr = parameters.erase(itr);
             }else{
                 ++itr;

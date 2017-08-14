@@ -641,7 +641,7 @@ struct mt_a: public aq::nodes::Node
 {
     MO_DERIVE(mt_a, aq::nodes::Node)
         OUTPUT(int, out_a, 0)
-        APPEND_FLAGS(out_a, mo::Source_e)
+        APPEND_FLAGS(out_a, mo::ParamFlags::Source_e)
     MO_END;
 
     bool processImpl()

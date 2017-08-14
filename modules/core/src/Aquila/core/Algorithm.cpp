@@ -111,7 +111,7 @@ Algorithm::InputState Algorithm::checkInputs() {
     if (inputs.size() == 0)
         return AllValid;
     for (auto input : inputs) {
-        if (!input->isInputSet() && !input->checkFlags(mo::Optional_e)) {
+        if (!input->isInputSet() && !input->checkFlags(mo::ParamFlags::Optional_e)) {
             MO_LOG(trace) << "Required input (" << input->getTreeName() << ") is not set to anything";
             return NoneValid;
         }
@@ -148,7 +148,7 @@ Algorithm::InputState Algorithm::checkInputs() {
             }
         }
 #endif
-        if(input_param && input_param->checkFlags(mo::Buffer_e)){
+        if(input_param && input_param->checkFlags(mo::ParamFlags::Buffer_e)){
             if(_pimpl->_ts_processing_queue.size()){
                 if(_pimpl->_sync_method == SyncEvery){
                     ts = _pimpl->_ts_processing_queue.front();
@@ -168,7 +168,7 @@ Algorithm::InputState Algorithm::checkInputs() {
         for (auto input : inputs) {
             IParam* input_param = input->getInputParam();
             if (input_param) {
-                if (!input_param->checkFlags(mo::Buffer_e) && !input_param->checkFlags(mo::Unstamped_e)) {
+                if (!input_param->checkFlags(mo::ParamFlags::Buffer_e) && !input_param->checkFlags(mo::ParamFlags::Unstamped_e)) {
                     auto in_ts = input_param->getTimestamp();
 #ifdef _DEBUG
                     input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
@@ -239,10 +239,10 @@ Algorithm::InputState Algorithm::checkInputs() {
         size_t fn;
         for (auto input : inputs) {
             if (!input->getInput(ts, &fn)) {
-                if (input->checkFlags(mo::Desynced_e))
+                if (input->checkFlags(mo::ParamFlags::Desynced_e))
                     if (input->getInput(boost::optional<mo::Time_t>(), &fn))
                         continue;
-                if (input->checkFlags(mo::Optional_e)) {
+                if (input->checkFlags(mo::ParamFlags::Optional_e)) {
                     // If the input isn't set and it's optional then this is ok
                     if (auto input_param = input->getInputParam()) {
                         // Input is optional and set, but couldn't get the right timestamp, error
@@ -260,7 +260,7 @@ Algorithm::InputState Algorithm::checkInputs() {
                 } else {
                     // Input is not optional
                     if (auto param = input->getInputParam()) {
-                        if (param->checkFlags(mo::Unstamped_e))
+                        if (param->checkFlags(mo::ParamFlags::Unstamped_e))
                             continue;
                         MO_LOG(trace) << "Failed to get input for \"" << input->getTreeName() << "\" (" << param->getTreeName() << ") at timestamp " << ts;
                         return NoneValid;
@@ -288,15 +288,15 @@ Algorithm::InputState Algorithm::checkInputs() {
     if (fn && *fn != std::numeric_limits<size_t>::max()) {
         boost::optional<mo::Time_t> ts;
         for (auto input : inputs) {
-            if (!input->isInputSet() && !input->checkFlags(Optional_e)) {
+            if (!input->isInputSet() && !input->checkFlags(mo::ParamFlags::Optional_e)) {
                 MO_LOG(trace) << "Input not set \"" << input->getTreeName() << "\"";
                 return NoneValid;
             }
             if (!input->getInput(*fn, &ts)) {
-                if (input->checkFlags(Desynced_e)) {
+                if (input->checkFlags(mo::ParamFlags::Desynced_e)) {
                     continue;
                 }
-                if (input->checkFlags(Optional_e)) {
+                if (input->checkFlags(mo::ParamFlags::Optional_e)) {
                     // If the input isn't set and it's optional then this is ok
                     if (input->isInputSet()) {
                         // Input is optional and set, but couldn't get the right timestamp, error
@@ -356,7 +356,7 @@ void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalT
         if (param == _pimpl->sync_input) {
             boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
             auto input_param = _pimpl->sync_input->getInputParam();
-            if (input_param && input_param->checkFlags(mo::Buffer_e)) {
+            if (input_param && input_param->checkFlags(mo::ParamFlags::Buffer_e)) {
                 if (ts) {
                     if(_pimpl->_ts_processing_queue.empty() || _pimpl->_ts_processing_queue.back() != *ts)
                         _pimpl->_ts_processing_queue.push(*ts);
