@@ -1,19 +1,19 @@
-#include "Aquila/plotters/Plotter.h"
-#include <MetaObject/Parameters/IParameter.hpp>
-#include <MetaObject/Detail/IMetaObjectImpl.hpp>
-#include "MetaObject/Parameters/detail/TypedInputParameterPtrImpl.hpp"
-#include "MetaObject/Parameters/detail/TypedParameterPtrImpl.hpp"
+#include "Aquila/plotting/Plotter.h"
+#include <MetaObject/params/IParam.hpp>
+#include <MetaObject/object/detail/IMetaObjectImpl.hpp>
+#include "MetaObject/params/detail/TInputParamPtrImpl.hpp"
+#include "MetaObject/params/detail/TParamPtrImpl.hpp"
 #include <RuntimeObjectSystem/ISimpleSerializer.h>
 #include <map>
 using namespace aq;
 
 void Plotter::Init(bool firstInit)
 {
-    PlotInit(firstInit);
+    plotInit(firstInit);
     IMetaObject::Init(firstInit);
     if (!firstInit)
     {
-        SetInput(parameter);
+        setInput(parameter);
         if (parameter)
         {
             //param->RegisterUpdateNotifier(GetSlot<void(mo::Context*, mo::IParameter*)>("on_parameter_update"));
@@ -21,12 +21,12 @@ void Plotter::Init(bool firstInit)
     }
 }
 
-void Plotter::PlotInit(bool firstInit)
+void Plotter::plotInit(bool firstInit)
 {
 
 }
 
-void Plotter::SetInput(mo::IParameter* param_)
+void Plotter::setInput(mo::IParam* param_)
 {
     parameter = param_;
     if (parameter)
@@ -36,12 +36,12 @@ void Plotter::SetInput(mo::IParameter* param_)
     }
 }
 
-void Plotter::on_parameter_update(mo::Context* ctx, mo::IParameter* param)
+void Plotter::on_parameter_update(mo::Context* ctx, mo::IParam* param)
 {
 
 }
 
-void Plotter::on_parameter_delete(mo::IParameter const* param)
+void Plotter::on_parameter_delete(mo::IParam const* param)
 {
     param = nullptr;
 }
@@ -138,18 +138,16 @@ mo::IParameter* QtPlotter::addParameter(std::shared_ptr<mo::IParameter> param)
     return param.get();
 }
 #else
-QWidget* QtPlotter::GetControlWidget(QWidget* parent)
+QWidget* QtPlotter::getControlWidget(QWidget* parent)
 {
     return nullptr;
 }
-mo::IParameter* QtPlotter::addParameter(std::shared_ptr<mo::IParameter> param)
+mo::IParam* QtPlotter::addParam(std::shared_ptr<mo::IParam> param)
 {
-    //return Plotter::addParameter(param);
     return param.get();
 }
-mo::IParameter* QtPlotter::addParameter(mo::IParameter* param)
+mo::IParam* QtPlotter::addParam(mo::IParam* param)
 {
-    //return Plotter::addParameter(param);
     return param;
 }
 #endif

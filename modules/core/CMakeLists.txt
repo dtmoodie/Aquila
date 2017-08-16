@@ -6,8 +6,8 @@ aquila_declare_module(NAME core SRC src
         metaobject_object
         metaobject_serialization
         metaobject_params
-        aquila_rcc
         aquila_gui
+        aquila_rcc
         metaobject_metaparams
 )
 
@@ -18,7 +18,17 @@ target_include_directories(aquila_core
 target_include_directories(aquila_core
     PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../serialization/src
 )
+IF(WIN32)
+set_target_properties(aquila_core
+    PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug
+        ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}/RelWithDebInfo
+)
+ENDIF()
+
 RCC_TARGET_CONFIG(aquila_core libraries_deb libraries_rel)
+
 if(UNIX)
     # This is needed so that the objects inside of core are loaded into the object factory
     IF(CMAKE_BUILD_TYPE MATCHES Debug)

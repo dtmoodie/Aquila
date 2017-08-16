@@ -1,2 +1,2 @@
-#include "Aquila/plotters/PlotInfo.hpp"
+#include "Aquila/plotting/PlotInfo.hpp"
 

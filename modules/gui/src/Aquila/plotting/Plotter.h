@@ -1,9 +1,9 @@
 #pragma once
 #include <Aquila/core/detail/Export.hpp>
 #include <MetaObject/object/IMetaObject.hpp>
-#include <MetaObject/Detail/MetaObjectMacros.hpp>
+#include <MetaObject/object/detail/MetaObjectMacros.hpp>
 #include <MetaObject/Signals/detail/SlotMacros.hpp>
-#include <MetaObject/params/ParameterMacros.hpp>
+#include <MetaObject/params/ParamMacros.hpp>
 #include <IObjectInfo.h>
 #include <list>
 
@@ -15,7 +15,7 @@ class QWidget;
 
 namespace mo
 {
-    class IParameter;
+    class IParam;
     class Context;
 }
 /*
@@ -37,9 +37,9 @@ namespace aq
         typedef rcc::weak_ptr<Plotter>   WeakPtr;
 
         virtual void Init(bool firstInit);
-        virtual void PlotInit(bool firstInit);
-        virtual void SetInput(mo::IParam* param_ = nullptr);
-        virtual bool AcceptsParameter(mo::IParam* param) = 0;
+        virtual void plotInit(bool firstInit);
+        virtual void setInput(mo::IParam* param_ = nullptr);
+        virtual bool acceptsParameter(mo::IParam* param) = 0;
 
         MO_BEGIN(Plotter)
             MO_SLOT(void, on_parameter_update, mo::Context*, mo::IParam*);
@@ -52,12 +52,12 @@ namespace aq
     class AQUILA_EXPORTS QtPlotter : public Plotter
     {
     public:
-        virtual mo::IParam* addParameter(mo::IParam* param);
-        virtual mo::IParam* addParameter(std::shared_ptr<mo::IParam> param);
+        virtual mo::IParam* addParam(mo::IParam* param);
+        virtual mo::IParam* addParam(std::shared_ptr<mo::IParam> param);
         virtual void AddPlot(QWidget* plot_) = 0;
 
-        virtual QWidget* CreatePlot(QWidget* parent) = 0;
-        virtual QWidget* GetControlWidget(QWidget* parent);
+        virtual QWidget* createPlot(QWidget* parent) = 0;
+        virtual QWidget* getControlWidget(QWidget* parent);
     protected:
         std::list<QWidget*> plot_widgets;
     public:

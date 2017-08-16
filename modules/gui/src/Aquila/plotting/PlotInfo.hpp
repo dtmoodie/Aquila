@@ -1,9 +1,10 @@
 #pragma once
 #include "Aquila/core/detail/Export.hpp"
 #include "MetaObject/object/MetaObjectInfo.hpp"
+
 namespace mo
 {
-    class IParameter;
+    class IParam;
 }
 namespace aq
 {
