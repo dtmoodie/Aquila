@@ -5,6 +5,16 @@
 #include <memory>
 #include <opencv2/core/cuda.hpp>
 
+#if _WIN32
+#if _DEBUG
+RUNTIME_COMPILER_LINKLIBRARY("aquila_typesd.lib")
+#else
+RUNTIME_COMPILER_LINKLIBRARY("aquila_types.lib")
+#endif
+#else
+RUNTIME_COMPILER_LINKLIBRARY("-laquila_types")
+#endif
+
 namespace aq {
 class SyncedMemory;
 }

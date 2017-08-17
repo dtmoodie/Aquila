@@ -15,6 +15,16 @@
 #include <set>
 #include <memory>
 
+#if _WIN32
+#if _DEBUG
+RUNTIME_COMPILER_LINKLIBRARY("aquila_guid.lib")
+#else
+RUNTIME_COMPILER_LINKLIBRARY("aquila_gui.lib")
+#endif
+#else
+RUNTIME_COMPILER_LINKLIBRARY("-laquila_gui")
+#endif
+
 namespace aq
 {
     class IDataStream;
