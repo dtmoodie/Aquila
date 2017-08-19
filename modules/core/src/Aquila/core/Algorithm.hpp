@@ -36,6 +36,7 @@ public:
     void setSyncInput(const std::string& name);
     void setSyncMethod(SyncMethod method);
     virtual void postSerializeInit();
+    virtual void Init(bool first_init) override;
 
     std::vector<mo::IParam*> getComponentParams(const std::string& filter = "") const;
     std::vector<mo::IParam*> getAllParams(const std::string& filter = "") const;

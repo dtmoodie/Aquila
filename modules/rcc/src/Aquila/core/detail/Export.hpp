@@ -11,17 +11,6 @@
   #define TEMPLATE_EXTERN
 #endif
 
-// TODO figure out new comment(lib for modularized aquila and metaobject.
-/*#ifdef _MSC_VER
-  #ifndef Aquila_EXPORTS
-    #ifdef _DEBUG
-      #pragma comment(lib, "aquilad.lib")
-    #else
-      #pragma comment(lib, "Aquila.lib")
-    #endif
-  #endif
-#endif*/
-
 #ifndef _MSC_VER
   #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
   #ifdef NDEBUG

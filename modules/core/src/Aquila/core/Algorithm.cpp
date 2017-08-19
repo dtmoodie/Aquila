@@ -336,6 +336,7 @@ void Algorithm::setSyncInput(const std::string& name) {
         MO_LOG(warning) << "Unable to set sync input for " << this->GetTypeName() << " to " << name;
     }
 }
+
 int Algorithm::setupVariableManager(mo::IVariableManager* mgr) {
     int count = mo::IMetaObject::setupVariableManager(mgr);
     for (auto& child : _algorithm_components) {
@@ -343,6 +344,7 @@ int Algorithm::setupVariableManager(mo::IVariableManager* mgr) {
     }
     return count;
 }
+
 void Algorithm::setSyncMethod(SyncMethod _method) {
     if (_pimpl->_sync_method == SyncEvery && _method != SyncEvery) {
         //std::swap(_pimpl->_ts_processing_queue, std::queue<long long>());
@@ -350,6 +352,7 @@ void Algorithm::setSyncMethod(SyncMethod _method) {
     }
     _pimpl->_sync_method = _method;
 }
+
 void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, const std::shared_ptr<mo::ICoordinateSystem>& cs, mo::UpdateFlags fg) {
     mo::IMetaObject::onParamUpdate(param, ctx, ts, fn, cs, fg);
     if (_pimpl->_sync_method == SyncEvery) {
@@ -402,6 +405,16 @@ void Algorithm::postSerializeInit() {
         child->setContext(this->_ctx);
         child->postSerializeInit();
     }
+}
+
+void Algorithm::Init(bool first_init){
+    if(!first_init){
+        for(auto& cmp : _algorithm_components){
+            cmp->Init(first_init);
+            this->addComponent(cmp);
+        }
+    }
+    mo::IMetaObject::Init(first_init);
 }
 
 void Algorithm::addComponent(const rcc::weak_ptr<Algorithm>& component) {
