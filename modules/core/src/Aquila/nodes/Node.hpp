@@ -32,9 +32,9 @@
 // In library includes
 #include "Aquila/core/detail/Export.hpp"
 #include "Aquila/core/Algorithm.hpp"
-//#include "Aquila/core/IDataStream.hpp"
-//#include "Aquila/utilities/cuda/CudaUtils.hpp"
-//#include <Aquila/IO/serialize.hpp>
+
+// Dependent in house libraries
+#include <MetaObject/object/MetaObject.hpp>
 
 // RCC includes
 #include <IObject.h>
@@ -43,25 +43,12 @@
 #include <RuntimeObjectSystem/RuntimeLinkLibrary.h>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 
-// Dependent in house libraries
-#include <MetaObject/object/MetaObject.hpp>
-
 // Dependent 3rd party libraries
 #include <opencv2/core/cuda.hpp>
 #include <Aquila/rcc/external_includes/cv_core.hpp>
 #include <Aquila/rcc/external_includes/cv_highgui.hpp>
 
 #include <string>
-
-#if _WIN32
-    #if _DEBUG
-        RUNTIME_COMPILER_LINKLIBRARY("aquila_cored.lib")
-    #else
-        RUNTIME_COMPILER_LINKLIBRARY("aquila_core.lib")
-    #endif
-#else
-    RUNTIME_COMPILER_LINKLIBRARY("-laquila_core")
-#endif
 
 #define SCOPED_PROFILE_NODE mo::scoped_profile COMBINE(scoped_profile, __LINE__)((this->getTreeName() + "::" + __FUNCTION__), nullptr, nullptr, cudaStream());
 #define LOG_NODE(severity) BOOST_LOG_TRIVIAL(severity) << "[" << this->getTreeName() << "::" << __FUNCTION__ <<  "] - "
