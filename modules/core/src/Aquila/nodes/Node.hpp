@@ -53,6 +53,16 @@
 
 #include <string>
 
+#if _WIN32
+    #if _DEBUG
+        RUNTIME_COMPILER_LINKLIBRARY("aquila_cored.lib")
+    #else
+        RUNTIME_COMPILER_LINKLIBRARY("aquila_core.lib")
+    #endif
+#else
+    RUNTIME_COMPILER_LINKLIBRARY("-laquila_core")
+#endif
+
 #define SCOPED_PROFILE_NODE mo::scoped_profile COMBINE(scoped_profile, __LINE__)((this->getTreeName() + "::" + __FUNCTION__), nullptr, nullptr, cudaStream());
 #define LOG_NODE(severity) BOOST_LOG_TRIVIAL(severity) << "[" << this->getTreeName() << "::" << __FUNCTION__ <<  "] - "
 

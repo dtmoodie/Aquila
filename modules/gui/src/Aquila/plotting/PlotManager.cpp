@@ -1,9 +1,9 @@
-#include "Aquila/plotters/PlotManager.h"
+#include "Aquila/plotting/PlotManager.h"
 #include "RuntimeObjectSystem/IObjectState.hpp"
-#include <MetaObject/Logging/Log.hpp>
-#include "Aquila/plotters/PlotInfo.hpp"
-#include "MetaObject/Parameters/detail/TypedInputParameterPtrImpl.hpp"
-#include "MetaObject/Parameters/detail/TypedParameterPtrImpl.hpp"
+#include <MetaObject/logging/logging.hpp>
+#include "Aquila/plotting/PlotInfo.hpp"
+#include "MetaObject/params/detail/TInputParamPtrImpl.hpp"
+#include "MetaObject/params/detail/TParamPtrImpl.hpp"
 using namespace aq;
 
 
@@ -13,9 +13,9 @@ PlotManager* PlotManager::Instance()
     return &instance;
 }
 
-rcc::shared_ptr<Plotter> PlotManager::GetPlot(const std::string& plotName)
+rcc::shared_ptr<Plotter> PlotManager::getPlot(const std::string& plotName)
 {
-    auto pConstructor = mo::MetaObjectFactory::Instance()->GetConstructor(plotName.c_str());
+    auto pConstructor = mo::MetaObjectFactory::instance()->getConstructor(plotName.c_str());
     //IObjectConstructor* pConstructor = ObjectManager::Instance().m_pRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor(plotName.c_str());
     if (pConstructor && pConstructor->GetInterfaceId() == Plotter::s_interfaceID)
     {
@@ -29,35 +29,35 @@ rcc::shared_ptr<Plotter> PlotManager::GetPlot(const std::string& plotName)
                 if (plotter)
                 {
                     plotter->Init(true);
-                    LOG(info) << "[ PlotManager ] successfully generating plot " << plotName;
+                    MO_LOG(info) << "[ PlotManager ] successfully generating plot " << plotName;
                     return rcc::shared_ptr<Plotter>(plotter);
                 }
                 else
                 {
-                    LOG(warning) << "[ PlotManager ] failed to cast to plotter object " << plotName;
+                    MO_LOG(warning) << "[ PlotManager ] failed to cast to plotter object " << plotName;
                 }
             }
             else
             {
-                LOG(warning) << "[ PlotManager ] incorrect interface " << plotName;
+                MO_LOG(warning) << "[ PlotManager ] incorrect interface " << plotName;
             }
         }
         else
         {
-            LOG(warning) << "[ PlotManager ] failed to construct plot " << plotName;
+            MO_LOG(warning) << "[ PlotManager ] failed to construct plot " << plotName;
         }
     }
     else
     {
-        LOG(warning) << "[ PlotManager ] failed to get constructor " << plotName;
+        MO_LOG(warning) << "[ PlotManager ] failed to get constructor " << plotName;
     }
     return rcc::shared_ptr<Plotter>();
 }
 
-std::vector<std::string> PlotManager::GetAvailablePlots()
+std::vector<std::string> PlotManager::getAvailablePlots()
 {
     std::vector<std::string> output;
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(Plotter::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(Plotter::s_interfaceID);
     
     for (size_t i = 0; i < constructors.size(); ++i)
     {
@@ -65,10 +65,10 @@ std::vector<std::string> PlotManager::GetAvailablePlots()
     }
     return output;
 }
-std::vector<std::string> PlotManager::GetAcceptablePlotters(mo::IParameter* param)
+std::vector<std::string> PlotManager::getAcceptablePlotters(mo::IParam* param)
 {
     std::vector<std::string> output;
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(Plotter::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(Plotter::s_interfaceID);
     
     for(auto& constructor : constructors)
     {
@@ -87,9 +87,9 @@ std::vector<std::string> PlotManager::GetAcceptablePlotters(mo::IParameter* para
     }
     return output;
 }
-bool PlotManager::CanPlotParameter(mo::IParameter* param)
+bool PlotManager::canPlotParameter(mo::IParam* param)
 {
-    auto constructors = mo::MetaObjectFactory::Instance()->GetConstructors(Plotter::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(Plotter::s_interfaceID);
     //auto constructors = ObjectManager::Instance().GetConstructorsForInterface(IID_Plotter);
     for(auto& constructor : constructors)
     {

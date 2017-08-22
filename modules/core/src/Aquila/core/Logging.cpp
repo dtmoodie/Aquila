@@ -56,6 +56,7 @@ void aq::SetupLogging(const std::string& log_dir)
     char* buffer = new char[1024];
     auto len = GetTempPathA(1024, buffer);
     logging_path = buffer;
+    logging_path += "\\logs";
 #else
     logging_path = "/tmp/logs";
 #endif
@@ -99,11 +100,8 @@ void aq::SetupLogging(const std::string& log_dir)
 
     // File sink
     boost::log::formatter logFmt =
-        boost::log::expressions::format("[%1%] (%2%) [%3%] [%4%] %5%")
-        % fmtTimeStamp
-        % fmtThreadId
+        boost::log::expressions::format("[%1%] %2%")
         % fmtSeverity
-        % fmtScope
         % boost::log::expressions::smessage;
 
 
