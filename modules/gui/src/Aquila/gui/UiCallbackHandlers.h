@@ -22,7 +22,11 @@ RUNTIME_COMPILER_LINKLIBRARY("aquila_guid.lib")
 RUNTIME_COMPILER_LINKLIBRARY("aquila_gui.lib")
 #endif
 #else
+#ifdef NDEBUG
 RUNTIME_COMPILER_LINKLIBRARY("-laquila_gui")
+#else
+RUNTIME_COMPILER_LINKLIBRARY("-laquila_guid")
+#endif
 #endif
 
 namespace aq
