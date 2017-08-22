@@ -12,7 +12,11 @@ RUNTIME_COMPILER_LINKLIBRARY("aquila_typesd.lib")
 RUNTIME_COMPILER_LINKLIBRARY("aquila_types.lib")
 #endif
 #else
-RUNTIME_COMPILER_LINKLIBRARY("-laquila_types")
+    #ifdef NDEBUG
+        RUNTIME_COMPILER_LINKLIBRARY("-laquila_types")
+    #else
+        RUNTIME_COMPILER_LINKLIBRARY("-laquila_typesd")
+    #endif
 #endif
 
 namespace aq {
