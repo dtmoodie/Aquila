@@ -8,6 +8,22 @@ set(CMAKE_DEBUG_POSTFIX d)
 include(cmake/utilities.cmake)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 option(BUILD_DEPENDENCIES "Build dependencies within the AquilOS family" ON)
+
+message (STATUS)
+message (STATUS "Building EagleEye... Environments:")
+message (STATUS "========================================")
+message (STATUS "CMAKE_SYSTEM=${CMAKE_SYSTEM}")
+message (STATUS "CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
+message (STATUS "CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}")
+message (STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+message (STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+message (STATUS "========================================")
+message (STATUS)
+
+if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
+  message(STATUS "Hot dayyum! Bruh, you are on AArch64! Note: EagleEye's AArch64 support is still experimental.")
+endif ()
+
 IF(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_WIN32)
@@ -84,6 +100,19 @@ find_package(OpenCV 3.0 QUIET COMPONENTS
 )
 
 find_package(Gstreamer QUIET)
+
+find_package(GccAtomic)
+
+if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
+  # gcc-aarch64 doesn't support -mcx16. We use gcc's libatomic instead.
+  # You must make sure you have libatomic.so.
+  if (NOT GCCLIBATOMIC_FOUND)
+    message(SEND_ERROR "ERROR: Aquila on AArch64 needs gcc's libatomic.so. We couldn't find it.")
+  endif ()
+else ()
+  # Enable GCC's built-in 128bit CAS via -mcx16. We don't need libatomic.so on x86.
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcx16")
+endif ()
 
 find_package(CUDA REQUIRED)
   set(CUDA_ARCH_NAME "Manual")
