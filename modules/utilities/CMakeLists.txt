@@ -2,6 +2,6 @@ IF(UNIX)
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)
   set(CUDA_NVCC_FLAGS "-std=c++11;--expt-relaxed-constexpr;${CUDA_NVCC_FLAGS}")
 ENDIF()
-aquila_declare_module(NAME utilities DEPENDS opencv_core aquila_core opencv_imgproc pplx CXX_STANDARD 11)
+#INCLUDE_DIRECTORIES(${aquila_module_includes})
+aquila_declare_module(NAME utilities DEPENDS opencv_core aquila_core opencv_imgproc CXX_STANDARD 14)
 set_target_properties(aquila_utilities PROPERTIES CXX_STANDARD_REQUIRED ON)
-
