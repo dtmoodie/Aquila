@@ -70,7 +70,7 @@ struct test_input_node : public Node
 	MO_END;
 	bool processImpl()
 	{
-        auto ts = (*value_param.getTimestamp());
+        //auto ts = (*value_param.getTimestamp());
         // TODO update
         //BOOST_REQUIRE_EQUAL((*value), ts * 10);
 		++process_count;

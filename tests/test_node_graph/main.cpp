@@ -210,21 +210,18 @@ struct GlobalFixture
             }
         }
         g_allocator = mo::Allocator::getThreadSafeAllocator();
-        cv::cuda::GpuMat::setDefaultAllocator(g_allocator);
-        cv::Mat::setDefaultAllocator(g_allocator);
+        cv::cuda::GpuMat::setDefaultAllocator(g_allocator.get());
+        cv::Mat::setDefaultAllocator(g_allocator.get());
         g_allocator->setName("Global Allocator");
-        mo::GpuThreadAllocatorSetter<cv::cuda::GpuMat>::Set(g_allocator);
-        mo::CpuThreadAllocatorSetter<cv::Mat>::Set(g_allocator);
-        //boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::trace);
     }
+
     ~GlobalFixture()
     {
         mo::ThreadPool::instance()->cleanup();
         mo::ThreadSpecificQueue::cleanup();
-        mo::Allocator::cleanupThreadSpecificAllocator();
-        delete g_allocator;
     }
-    mo::Allocator* g_allocator;
+
+    mo::Allocator::Ptr g_allocator;
     SystemTable table;
 };
 BOOST_GLOBAL_FIXTURE(GlobalFixture);
@@ -719,5 +716,4 @@ BOOST_AUTO_TEST_CASE(finish)
 {
     mo::ThreadSpecificQueue::cleanup();
     mo::ThreadPool::instance()->cleanup();
-    mo::Allocator::cleanupThreadSpecificAllocator();
 }
