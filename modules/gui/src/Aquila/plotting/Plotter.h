@@ -4,7 +4,7 @@
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
 #include <MetaObject/signals/detail/SlotMacros.hpp>
 #include <MetaObject/params/ParamMacros.hpp>
-#include <IObjectInfo.h>
+#include <RuntimeObjectSystem/IObjectInfo.h>
 #include <list>
 
 // Aquila only contains the interface for the plotting mechanisms, actual implementations will be handled inside of
