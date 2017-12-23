@@ -3,7 +3,6 @@
 #include "Aquila/core/detail/Export.hpp"
 #include "Aquila/utilities/ObjectPool.hpp"
 #include <opencv2/core/cuda.hpp>
-#include <pplx/pplxtasks.h>
 #include <boost/log/trivial.hpp>
 #include <iostream>
 #include <functional>
@@ -129,24 +128,25 @@ namespace aq{
 
         // Lambda functions
         template<typename _Ty> auto
-            enqueue_callback_async(_Ty function, cv::cuda::Stream& stream)->std::future<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>{
-            auto fc = new LambdaCallback<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>(function);
+            enqueue_callback_async(_Ty function, cv::cuda::Stream& stream)->std::future<decltype (function())>{
+            auto fc = new LambdaCallback<decltype (function())>(function);
             auto future = fc->promise.get_future();
             stream.enqueueHostCallback(&ICallback::cb_func_async, fc);
             return future;
         }
 
         template<typename _Ty> auto
-            enqueue_callback(_Ty function, cv::cuda::Stream& stream)->std::future<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>{
-            auto fc = new LambdaCallback<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>(function);
+            enqueue_callback(_Ty function, cv::cuda::Stream& stream)->std::future<decltype (function())>{
+            auto fc = new LambdaCallback<decltype (function())>(function);
             auto future = fc->promise.get_future();
             stream.enqueueHostCallback(&ICallback::cb_func, fc);
             return future;
         }
 
         template<typename _Ty>
-        auto enqueue_callback_async(_Ty function, size_t thread, cv::cuda::Stream& stream)->std::future<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>{
-            auto fc = new LambdaCallbackEvent<typename pplx::details::_TaskTypeFromParam<_Ty>::_Type>(function);
+        auto enqueue_callback_async(_Ty function, size_t thread, cv::cuda::Stream& stream)->std::future<decltype (function())>
+        {
+            auto fc = new LambdaCallbackEvent<decltype (function())>(function);
             fc->event_loop_thread_id = thread;
             auto future = fc->promise.get_future();
             stream.enqueueHostCallback(&ICallback::cb_func_async_event_loop, fc);

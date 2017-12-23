@@ -31,22 +31,6 @@ void aq::cuda::ICallback::cb_func_async(int status, void* user_data)
     {
         cb->run();
     }, cb->event_loop_thread_id);
-#ifdef _MSC_VER
-    /*pplx::create_task([user_data]()->void
-    {
-        auto cb = static_cast<ICallback*>(user_data);
-        auto start = clock();
-        cb->run();
-        MO_LOG(trace) << "Callback execution time: " << clock() - start << " ms";
-        delete cb;
-    });*/
-#else
-    /*auto cb = static_cast<ICallback*>(user_data);
-    auto start = clock();
-    cb->run();
-    MO_LOG(trace) << "Callback execution time: " << clock() - start << " ms";
-    delete cb;*/
-#endif
 }
 void aq::cuda::ICallback::cb_func(int status, void* user_data)
 {
