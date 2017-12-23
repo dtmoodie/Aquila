@@ -37,8 +37,8 @@
 #include <MetaObject/object/MetaObject.hpp>
 
 // RCC includes
-#include <IObject.h>
-#include <IObjectInfo.h>
+#include <RuntimeObjectSystem/IObject.h>
+#include <RuntimeObjectSystem/IObjectInfo.h>
 #include <RuntimeObjectSystem/ObjectInterfacePerModule.h>
 #include <RuntimeObjectSystem/RuntimeLinkLibrary.h>
 #include <RuntimeObjectSystem/shared_ptr.hpp>

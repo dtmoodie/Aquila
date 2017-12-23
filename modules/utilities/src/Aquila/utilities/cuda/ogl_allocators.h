@@ -7,7 +7,7 @@
 #include "GpuMatAllocators.h"
 #include <boost/thread.hpp>
 #include <Aquila/utilities/ObjectPool.hpp>
-#include <IObject.h>
+#include <RuntimeObjectSystem/IObject.h>
 
 #include <list>
 #include <map>

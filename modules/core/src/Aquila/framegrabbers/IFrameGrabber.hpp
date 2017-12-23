@@ -1,7 +1,4 @@
 #pragma once
-#include "IObject.h"
-#include "IObjectInfo.h"
-
 #include "Aquila/nodes/Node.hpp"
 #include "Aquila/nodes/NodeInfo.hpp"
 
@@ -27,8 +24,10 @@
 RUNTIME_MODIFIABLE_INCLUDE
 RUNTIME_COMPILER_SOURCEDEPENDENCY
 
-namespace aq {
-namespace nodes {
+namespace aq
+{
+namespace nodes
+{
     class IFrameGrabber;
     class FrameGrabberInfo;
     class Grabber;
@@ -36,9 +35,12 @@ namespace nodes {
 }
 }
 
-namespace aq {
+namespace aq
+{
 class IDataStream;
-namespace nodes {
+
+namespace nodes
+{
 
     class AQUILA_EXPORTS GrabberInfo : virtual public mo::IMetaObjectInfo {
     public:
@@ -46,6 +48,7 @@ namespace nodes {
         virtual void listPaths(std::vector<std::string>& paths) const;
         virtual int timeout() const;
     };
+
     class AQUILA_EXPORTS IGrabber : public TInterface<IGrabber, Algorithm> {
     public:
         typedef GrabberInfo InterfaceInfo;

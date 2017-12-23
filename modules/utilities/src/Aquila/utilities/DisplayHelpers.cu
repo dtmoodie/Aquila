@@ -1,7 +1,7 @@
-#include "Aquila/utilities/DisplayHelpers.cuh"
+//#include "Aquila/utilities/DisplayHelpers.cuh"
 
-#include <opencv2/core/cuda/vec_traits.hpp>
-#include <opencv2/core/cuda_stream_accessor.hpp> 
+//#include <opencv2/core/cuda/vec_traits.hpp>
+//#include <opencv2/core/cuda_stream_accessor.hpp>
 /*
 template<typename T> 
 __global__ void colormap_image(cv::cuda::PtrStepSz<T> image, double alpha, double beta, 
