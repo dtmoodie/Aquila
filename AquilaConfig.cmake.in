@@ -58,10 +58,6 @@ if(NOT RCC_INCLUDE_DIRS)
     find_package(RCC REQUIRED)
 endif(NOT RCC_INCLUDE_DIRS)
 
-if(NOT TARGET pplx)
-    find_package(pplx REQUIRED)
-endif()
-
 if(Aquila_FIND_COMPONENTS)
     foreach(PLUGIN ${Aquila_FIND_COMPONENTS})
         if(NOT TARGET ${PLUGIN} AND NOT TARGET aquila_${PLUGIN})
