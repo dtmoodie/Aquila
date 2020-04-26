@@ -1,377 +1,550 @@
 #include "Aquila/types/SyncedMemory.hpp"
-//#include <Aquila/utilities/GpuMatAllocators.h>
-//#include <Aquila/utilities/cuda/CudaCallbacks.hpp>
-
 #include <MetaObject/logging/logging.hpp>
 #include <boost/lexical_cast.hpp>
+#include <ct/reflect/print.hpp>
 
-using namespace aq;
+namespace aq
+{
 
-SyncedMemory::SyncedMemory()
-    : _pimpl(new impl) {
-}
-
-SyncedMemory::SyncedMemory(const cv::Mat& h_mat)
-    : _pimpl(new impl) {
-    _pimpl->h_data.resize(1, h_mat);
-    _pimpl->d_data.resize(1);
-    _pimpl->sync_flags.resize(1, HOST_UPDATED);
-}
-
-SyncedMemory::SyncedMemory(const cv::cuda::GpuMat& d_mat)
-    : _pimpl(new impl) {
-    _pimpl->h_data.resize(1);
-    _pimpl->d_data.resize(1, d_mat);
-    _pimpl->sync_flags.resize(1, DEVICE_UPDATED);
-}
-
-SyncedMemory::SyncedMemory(const cv::Mat& h_mat, const cv::cuda::GpuMat& d_mat)
-    : _pimpl(new impl) {
-    _pimpl->h_data.resize(1, h_mat);
-    _pimpl->d_data.resize(1, d_mat);
-    _pimpl->sync_flags.resize(1, SYNCED);
-}
-
-SyncedMemory::SyncedMemory(const std::vector<cv::cuda::GpuMat>& d_mats)
-    : _pimpl(new impl) {
-    _pimpl->d_data = d_mats;
-    _pimpl->sync_flags.resize(d_mats.size(), DEVICE_UPDATED);
-}
-
-SyncedMemory::SyncedMemory(const std::vector<cv::Mat>& h_mats)
-    : _pimpl(new impl) {
-    _pimpl->h_data = h_mats;
-    _pimpl->sync_flags.resize(h_mats.size(), HOST_UPDATED);
-}
-
-SyncedMemory::SyncedMemory(const std::vector<cv::Mat>& h_mat, const std::vector<cv::cuda::GpuMat>& d_mat, SYNC_STATE state)
-    : _pimpl(new impl) {
-    CV_Assert(h_mat.size() == d_mat.size());
-    _pimpl->sync_flags.resize(h_mat.size(), state);
-    _pimpl->h_data = h_mat;
-    _pimpl->d_data = d_mat;
-}
-SyncedMemory::SyncedMemory(const std::vector<cv::Mat>& h_mat, const std::vector<cv::cuda::GpuMat>& d_mat, const std::vector<SYNC_STATE> state)
-    : _pimpl(new impl) {
-    CV_Assert(h_mat.size() == d_mat.size());
-    for (int i = 0; i < h_mat.size(); ++i) {
-        /*CV_Assert(h_mat[i].empty() == d_mat[i].empty());
-        CV_Assert(h_mat[i].size() == d_mat[i].size());
-        CV_Assert(h_mat[i].type() == d_mat[i].type());*/
-    }
-    _pimpl->sync_flags = state;
-    _pimpl->h_data     = h_mat;
-    _pimpl->d_data     = d_mat;
-}
-
-SyncedMemory::SyncedMemory(cv::MatAllocator* cpu_allocator, cv::cuda::GpuMat::Allocator* gpu_allocator)
-    : _pimpl(new impl) {
-    _pimpl->h_data              = std::vector<cv::Mat>(1, cv::Mat());
-    _pimpl->d_data              = std::vector<cv::cuda::GpuMat>(1, cv::cuda::GpuMat(gpu_allocator));
-    _pimpl->sync_flags          = std::vector<SYNC_STATE>(1, SYNCED);
-    _pimpl->h_data[0].allocator = cpu_allocator;
-}
-
-const cv::Mat&
-SyncedMemory::getMat(cv::cuda::Stream& stream, int index) const {
-    if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
-        THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
-    if (_pimpl->sync_flags[index] == DO_NOT_SYNC)
-        return _pimpl->h_data[index];
-    if (_pimpl->sync_flags[index] == DEVICE_UPDATED) {
-        _pimpl->d_data[index].download(_pimpl->h_data[index], stream);
-        _pimpl->sync_flags[index] = SYNCED;
-    }
-    return _pimpl->h_data[index];
-}
-
-cv::Mat&
-SyncedMemory::getMatMutable(cv::cuda::Stream& stream, int index) {
-    if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
-        THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
-    if (_pimpl->sync_flags[index] == DO_NOT_SYNC)
-        return _pimpl->h_data[index];
-    if (_pimpl->sync_flags[index] == DEVICE_UPDATED)
-        _pimpl->d_data[index].download(_pimpl->h_data[index], stream);
-    _pimpl->sync_flags[index] = HOST_UPDATED;
-    return _pimpl->h_data[index];
-}
-
-const cv::Mat&
-SyncedMemory::getMatNoSync(int idx) const {
-    if (idx < 0 || idx >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
-        THROW(debug) << "Index (" << idx << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
-    return _pimpl->h_data[idx];
-}
-
-const cv::cuda::GpuMat&
-SyncedMemory::getGpuMat(cv::cuda::Stream& stream, int index) const {
-    if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
-        THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
-    CV_DbgAssert(_pimpl);
-    MO_ASSERT_EQ(_pimpl->h_data.size(), _pimpl->d_data.size());
-    MO_ASSERT_EQ(_pimpl->h_data.size(), _pimpl->sync_flags.size());
-    if (_pimpl->sync_flags[index] == DO_NOT_SYNC)
-        return _pimpl->d_data[index];
-    if (_pimpl->sync_flags[index] == HOST_UPDATED) {
-        _pimpl->d_data[index].upload(_pimpl->h_data[index], stream);
-        _pimpl->sync_flags[index] = SYNCED;
-    }
-    if (_pimpl->d_data.empty() && !_pimpl->h_data.empty()) {
-        // Something went wrong, probably set incorrectly by external program
-    }
-    return _pimpl->d_data[index];
-}
-
-cv::cuda::GpuMat&
-SyncedMemory::getGpuMatMutable(cv::cuda::Stream& stream, int index) {
-    if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
-        THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
-    if (_pimpl->sync_flags[index] == DO_NOT_SYNC)
-        return _pimpl->d_data[index];
-    if (_pimpl->sync_flags[index] == HOST_UPDATED)
-        _pimpl->d_data[index].upload(_pimpl->h_data[index], stream);
-    _pimpl->sync_flags[index] = DEVICE_UPDATED;
-    return _pimpl->d_data[index];
-}
-
-const cv::cuda::GpuMat&
-SyncedMemory::getGpuMatNoSync(int index) const {
-    if (index < 0 || index >= std::max(_pimpl->h_data.size(), _pimpl->d_data.size()))
-        THROW(debug) << "Index (" << index << ") out of range [0," << std::max(_pimpl->h_data.size(), _pimpl->d_data.size()) << "]";
-    return _pimpl->d_data[index];
-}
-
-const std::vector<cv::Mat>&
-SyncedMemory::getMatVec(cv::cuda::Stream& stream) const {
-    if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
-        return _pimpl->h_data;
-    for (int i = 0; i < _pimpl->sync_flags.size(); ++i) {
-        if (_pimpl->sync_flags[i] == DEVICE_UPDATED)
-            _pimpl->d_data[i].download(_pimpl->h_data[i], stream);
-    }
-    return _pimpl->h_data;
-}
-
-std::vector<cv::Mat>&
-SyncedMemory::getMatVecMutable(cv::cuda::Stream& stream) {
-    if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
-        return _pimpl->h_data;
-    for (int i = 0; i < _pimpl->sync_flags.size(); ++i) {
-        if (_pimpl->sync_flags[i] == DEVICE_UPDATED)
-            _pimpl->d_data[i].download(_pimpl->h_data[i], stream);
-        _pimpl->sync_flags[i] = HOST_UPDATED;
-    }
-
-    return _pimpl->h_data;
-}
-
-const std::vector<cv::cuda::GpuMat>&
-SyncedMemory::getGpuMatVec(cv::cuda::Stream& stream) const {
-    if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
-        return _pimpl->d_data;
-    for (int i = 0; i < _pimpl->sync_flags.size(); ++i) {
-        if (_pimpl->sync_flags[i] == HOST_UPDATED)
-            _pimpl->d_data[i].upload(_pimpl->h_data[i], stream);
-    }
-    return _pimpl->d_data;
-}
-
-std::vector<cv::cuda::GpuMat>&
-SyncedMemory::getGpuMatVecMutable(cv::cuda::Stream& stream) {
-    if (_pimpl->sync_flags.size() && _pimpl->sync_flags[0] == DO_NOT_SYNC)
-        return _pimpl->d_data;
-    for (int i = 0; i < _pimpl->sync_flags.size(); ++i) {
-        if (_pimpl->sync_flags[i] == HOST_UPDATED)
-            _pimpl->d_data[i].upload(_pimpl->h_data[i], stream);
-        _pimpl->sync_flags[i] = DEVICE_UPDATED;
-    }
-    return _pimpl->d_data;
-}
-void SyncedMemory::resizeNumMats(int new_size) {
-    _pimpl->h_data.resize(new_size);
-    _pimpl->d_data.resize(new_size);
-    _pimpl->sync_flags.resize(new_size);
-}
-
-SyncedMemory SyncedMemory::clone(cv::cuda::Stream& stream) const {
-    SyncedMemory output;
-    output._pimpl->h_data.resize(_pimpl->h_data.size());
-    output._pimpl->d_data.resize(_pimpl->d_data.size());
-    for (int i = 0; i < _pimpl->h_data.size(); ++i) {
-        output._pimpl->h_data[i] = _pimpl->h_data[i].clone();
-        _pimpl->d_data[i].copyTo(output._pimpl->d_data[i], stream);
-    }
-    output._pimpl->sync_flags = _pimpl->sync_flags;
-    return output;
-}
-int SyncedMemory::getNumMats() const {
-    if (_pimpl->h_data.size() == 0)
-        return _pimpl->d_data.size();
-    return _pimpl->h_data.size();
-}
-bool SyncedMemory::empty() const {
-    if (_pimpl->h_data.size() && _pimpl->d_data.size())
-        return _pimpl->h_data[0].empty() && _pimpl->d_data[0].empty();
-    if (_pimpl->h_data.size() && _pimpl->d_data.size() == 0)
-        return _pimpl->h_data[0].empty();
-    if (_pimpl->d_data.size() && _pimpl->h_data.size() == 0)
-        return _pimpl->d_data[0].empty();
-    return true;
-}
-
-bool SyncedMemory::clone(cv::Mat& dest, cv::cuda::Stream& stream, int idx) const {
-    CV_Assert(_pimpl->sync_flags.size() > idx);
-    if (_pimpl->sync_flags[idx] < DEVICE_UPDATED || _pimpl->sync_flags[idx] == DO_NOT_SYNC) {
-        _pimpl->h_data[idx].copyTo(dest);
-        return false;
-    } else {
-        _pimpl->d_data[idx].download(dest, stream);
-        return true;
-    }
-}
-
-bool SyncedMemory::clone(cv::cuda::GpuMat& dest, cv::cuda::Stream& stream, int idx) const {
-    CV_Assert(_pimpl->sync_flags.size() > idx);
-    if (_pimpl->sync_flags[idx] < DEVICE_UPDATED || _pimpl->sync_flags[idx] == DO_NOT_SYNC) {
-        dest.upload(_pimpl->h_data[idx], stream);
-        if (_pimpl->sync_flags[idx] != DO_NOT_SYNC) {
-            dest.copyTo(_pimpl->d_data[idx], stream);
-            _pimpl->sync_flags[idx] = SYNCED;
-        }
-        return true;
-    } else {
-        _pimpl->d_data[idx].copyTo(dest, stream);
-        return true;
-    }
-}
-
-void SyncedMemory::synchronize(cv::cuda::Stream& stream) const {
-    for (int i = 0; i < _pimpl->h_data.size(); ++i) {
-        if (_pimpl->sync_flags[i] == DO_NOT_SYNC)
-            continue;
-        if (_pimpl->sync_flags[i] == HOST_UPDATED)
-            _pimpl->d_data[i].upload(_pimpl->h_data[i], stream);
-        else if (_pimpl->sync_flags[i] == DEVICE_UPDATED)
-            _pimpl->d_data[i].download(_pimpl->h_data[i], stream);
-        _pimpl->sync_flags[i] = SYNCED;
-    }
-}
-
-void SyncedMemory::releaseGpu(cv::cuda::Stream& stream) {
-    for (int i = 0; i < _pimpl->d_data.size(); ++i) {
-        if (_pimpl->sync_flags[i] == DEVICE_UPDATED)
-            _pimpl->d_data[i].download(_pimpl->h_data[i], stream);
-    }
-    /*if(dynamic_cast<DelayedDeallocator*>(cv::cuda::GpuMat::defaultAllocator()))
+    SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<void> data,
+                                        size_t elem_size,
+                                        std::shared_ptr<void> owning,
+                                        std::shared_ptr<mo::IDeviceStream> stream)
     {
-        aq::cuda::enqueue_callback([this]
-        {
-            for(int i = 0; i < _pimpl->d_data.size(); ++i)
-            {
-                _pimpl->d_data[i].release();
-            }
-        }, stream);
-    }else
-    {
-        for(int i = 0; i < _pimpl->d_data.size(); ++i)
-        {
-            _pimpl->d_data[i].release();
-        }
-    }*/
-    for (int i = 0; i < _pimpl->d_data.size(); ++i) {
-        _pimpl->d_data[i].release();
-    }
-}
-
-cv::Size SyncedMemory::getSize() const {
-    if (_pimpl->d_data.empty() || _pimpl->h_data.empty())
-        return cv::Size();
-    cv::Size output;
-    if (_pimpl->d_data[0].empty())
-        output = _pimpl->h_data[0].size();
-    else
-        output = _pimpl->d_data[0].size();
-    return output;
-}
-
-int SyncedMemory::getChannels() const {
-    if (_pimpl->d_data.empty() && _pimpl->h_data.empty())
-        return 0;
-    if (_pimpl->d_data.size() == 1 && !_pimpl->d_data[0].empty())
-        return _pimpl->d_data[0].channels();
-    if (_pimpl->h_data.size() == 1 && !_pimpl->h_data[0].empty())
-        return _pimpl->h_data[0].channels();
-    if (_pimpl->d_data.size() > 1 && _pimpl->d_data[0].channels() == 1)
-        return _pimpl->d_data.size();
-    if (_pimpl->h_data.size() > 1 && _pimpl->h_data[0].channels() == 1)
-        return _pimpl->h_data.size();
-    return 0;
-}
-
-std::vector<int> SyncedMemory::getShape() const {
-    std::vector<int> output;
-    output.push_back(std::max(_pimpl->d_data.size(), _pimpl->h_data.size()));
-    if (_pimpl->d_data.empty() && _pimpl->h_data.empty())
+        SyncedMemory output(data.size(), elem_size, stream);
+        output.m_owning = owning;
+        output.h_ptr = data.data();
+        output.m_state = SyncState::HOST_UPDATED;
+        output.h_flags = PointerFlags::UNOWNED;
         return output;
-    if (_pimpl->d_data.empty()) {
-        output.push_back(_pimpl->h_data[0].rows);
-        output.push_back(_pimpl->h_data[0].cols);
-        output.push_back(_pimpl->h_data[0].channels());
-    } else {
-        if (_pimpl->h_data.empty()) {
-            output.push_back(_pimpl->d_data[0].rows);
-            output.push_back(_pimpl->d_data[0].cols);
-            output.push_back(_pimpl->d_data[0].channels());
-        } else {
-            output.push_back(std::max(_pimpl->d_data[0].rows, _pimpl->h_data[0].rows));
-            output.push_back(std::max(_pimpl->d_data[0].cols, _pimpl->h_data[0].cols));
-            output.push_back(std::max(_pimpl->d_data[0].channels(), _pimpl->h_data[0].channels()));
+    }
+
+    SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<const void> data,
+                                        size_t elem_size,
+                                        std::shared_ptr<void> owning,
+                                        std::shared_ptr<mo::IDeviceStream> stream)
+    {
+        SyncedMemory output(data.size(), elem_size, stream);
+        output.m_owning = owning;
+        output.h_ptr = const_cast<void*>(data.data());
+        output.m_state = SyncState::HOST_UPDATED;
+        output.h_flags = PointerFlags::CONST | PointerFlags::UNOWNED;
+        return output;
+    }
+
+    SyncedMemory SyncedMemory::wrapDevice(ct::TArrayView<void> data,
+                                          size_t elem_size,
+                                          std::shared_ptr<void> owning,
+                                          std::shared_ptr<mo::IDeviceStream> stream)
+    {
+        SyncedMemory output(data.size(), elem_size, stream);
+        output.m_owning = owning;
+        output.h_ptr = data.data();
+        output.m_state = SyncState::DEVICE_UPDATED;
+        output.d_flags = PointerFlags::UNOWNED;
+        return output;
+    }
+
+    SyncedMemory SyncedMemory::wrapDevice(ct::TArrayView<const void> data,
+                                          size_t elem_size,
+                                          std::shared_ptr<void> owning,
+                                          std::shared_ptr<mo::IDeviceStream> stream)
+    {
+        SyncedMemory output(data.size(), elem_size, stream);
+        output.m_owning = owning;
+        output.d_ptr = const_cast<void*>(data.data());
+        output.m_state = SyncState::DEVICE_UPDATED;
+        output.d_flags = PointerFlags::CONST | PointerFlags::UNOWNED;
+        return output;
+    }
+
+    SyncedMemory::SyncedMemory(size_t size, size_t elem_size, std::shared_ptr<mo::IDeviceStream> stream)
+        : m_size(size)
+        , m_elem_size(elem_size)
+        , m_stream(stream)
+    {
+    }
+
+    SyncedMemory::SyncedMemory(const SyncedMemory& other)
+    {
+        if (other.m_state == SyncState::HOST_UPDATED || other.d_ptr == nullptr)
+        {
+            h_ptr = other.h_ptr;
+            h_flags = PointerFlags::CONST;
+            m_state = SyncState::HOST_UPDATED;
+        }
+        else
+        {
+            d_ptr = other.d_ptr;
+            d_flags = PointerFlags::CONST;
+            m_state = SyncState::DEVICE_UPDATED;
+        }
+        m_elem_size = other.m_elem_size;
+        m_size = other.m_size;
+        m_stream = other.m_stream;
+        m_owning = other.m_owning;
+    }
+
+    SyncedMemory::SyncedMemory(SyncedMemory&& other)
+        : m_state(other.m_state)
+        , d_ptr(other.d_ptr)
+        , h_ptr(other.h_ptr)
+        , h_flags(other.h_flags)
+        , d_flags(other.d_flags)
+        , m_size(other.m_size)
+        , m_elem_size(other.m_elem_size)
+        , m_stream(std::move(other.m_stream))
+        , m_owning(std::move(other.m_owning))
+    {
+        other.d_ptr = nullptr;
+        other.h_ptr = nullptr;
+    }
+
+    SyncedMemory::~SyncedMemory()
+    {
+        auto stream = m_stream.lock();
+        if (stream == nullptr)
+        {
+            return;
+        }
+        if (h_ptr && (h_flags & PointerFlags::OWNED))
+        {
+            auto alloc = stream->hostAllocator();
+            if (alloc == nullptr)
+            {
+                MO_LOG(error, "Allocator has already been destroyed, cannot cleanup host memory");
+            }
+            else
+            {
+                alloc->deallocate(h_ptr, m_size);
+            }
+        }
+        if (d_ptr && (d_flags & PointerFlags::OWNED))
+        {
+            auto alloc = stream->deviceAllocator();
+            if (alloc == nullptr)
+            {
+                MO_LOG(error, "Allocator has already been destroyed, cannot cleanup device memory");
+            }
+            else
+            {
+                alloc->deallocate(d_ptr, m_size);
+            }
         }
     }
-    return output;
-}
-int SyncedMemory::getDepth() const {
-    CV_Assert(_pimpl->d_data.size() || _pimpl->h_data.size());
-    if (_pimpl->d_data.size())
-        return _pimpl->d_data[0].depth();
-    return _pimpl->h_data[0].depth();
-}
 
-int SyncedMemory::getType() const {
-    CV_Assert(_pimpl->d_data.size() || _pimpl->h_data.size());
-    if (_pimpl->d_data.size())
-        return _pimpl->d_data[0].type();
-    return _pimpl->h_data[0].type();
-}
+    SyncedMemory& SyncedMemory::operator=(const SyncedMemory& other)
+    {
+        if (other.m_state == SyncState::HOST_UPDATED)
+        {
+            h_ptr = other.h_ptr;
+            h_flags = PointerFlags::CONST;
+            m_state = SyncState::HOST_UPDATED;
+        }
+        else
+        {
+            d_ptr = other.d_ptr;
+            d_flags = PointerFlags::CONST;
+            m_state = SyncState::DEVICE_UPDATED;
+        }
+        m_elem_size = other.m_elem_size;
+        m_size = other.m_size;
+        m_stream = other.m_stream;
+        m_owning = other.m_owning;
+        return *this;
+    }
 
-int SyncedMemory::getElemSize() const {
-    CV_Assert(_pimpl->d_data.size() || _pimpl->h_data.size());
-    if (_pimpl->d_data.size())
-        return _pimpl->d_data[0].elemSize();
-    return _pimpl->h_data[0].elemSize();
-}
+    SyncedMemory& SyncedMemory::operator=(SyncedMemory&& other)
+    {
+        m_state = other.m_state;
+        d_ptr = other.d_ptr;
+        h_ptr = other.h_ptr;
+        h_flags = other.h_flags;
+        d_flags = other.d_flags;
+        m_size = other.m_size;
+        m_elem_size = other.m_elem_size;
+        m_stream = std::move(other.m_stream);
+        m_owning = std::move(other.m_owning);
+        other.d_ptr = nullptr;
+        other.h_ptr = nullptr;
+        return *this;
+    }
 
-int SyncedMemory::getDim(int dim) const {
-    if (dim == 0)
-        return _pimpl->d_data.size();
-    if (dim == 1 && _pimpl->d_data.size())
-        return _pimpl->d_data[0].rows;
-    if (dim == 2 && _pimpl->d_data.size())
-        return _pimpl->d_data[0].cols;
-    if (dim == 3 && _pimpl->d_data.size())
-        return _pimpl->d_data[0].channels();
-    return 0;
-}
-SyncedMemory::SYNC_STATE SyncedMemory::getSyncState(int index) const {
-    MO_ASSERT(index < _pimpl->sync_flags.size() && index >= 0);
-    return _pimpl->sync_flags[index];
-}
+    size_t SyncedMemory::size() const
+    {
+        return m_size;
+    }
 
-mo::Context* SyncedMemory::getContext() const {
-    return _pimpl->_ctx;
-}
+    bool SyncedMemory::resize(size_t size_, size_t elem_size, mo::IDeviceStream* stream)
+    {
+        if (m_size == size_)
+            return false;
 
-void SyncedMemory::setContext(mo::Context* ctx) {
-    _pimpl->_ctx = ctx;
-}
+        void* old_host = h_ptr;
+        void* old_device = d_ptr;
+        size_t old_size = m_size;
+        m_elem_size = elem_size;
+
+        m_size = size_;
+        auto stream_ = m_stream.lock();
+
+        if (old_host || old_device)
+        {
+            if (m_state == SyncState::HOST_UPDATED)
+            {
+                auto alloc = stream_->hostAllocator();
+                MO_ASSERT(alloc != nullptr);
+                h_ptr = alloc->allocate(m_size, m_elem_size);
+                MO_ASSERT(h_ptr != nullptr);
+                MO_ASSERT(old_host != nullptr);
+                d_ptr = nullptr;
+                stream->hostToHost({h_ptr, m_size}, {old_host, old_size});
+                stream->pushWork(
+                    [old_host, old_size, alloc]() { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
+                if (old_device)
+                {
+                    auto alloc = stream_->deviceAllocator();
+                    MO_ASSERT(alloc);
+                    alloc->deallocate(ct::ptrCast<uint8_t>(old_device), old_size);
+                }
+                return true;
+            }
+            else
+            {
+                if (SyncState::DEVICE_UPDATED == m_state || SyncState::SYNCED == m_state)
+                {
+                    auto alloc = stream_->deviceAllocator();
+                    MO_ASSERT(alloc);
+                    d_ptr = alloc->allocate(m_size, m_elem_size);
+                    MO_ASSERT(d_ptr != nullptr);
+                    MO_ASSERT(old_device != nullptr);
+                    stream->deviceToDevice({d_ptr, m_size}, {old_device, old_size});
+                    stream->pushWork([old_device, old_size, alloc]() {
+                        alloc->deallocate(ct::ptrCast<uint8_t>(old_device), old_size);
+                    });
+                    if (old_host)
+                    {
+                        auto alloc = stream_->hostAllocator();
+                        MO_ASSERT(alloc);
+                        alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size);
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    ct::TArrayView<const void> SyncedMemory::host(mo::IDeviceStream* stream, bool* sync_required) const
+    {
+        auto stream_ = m_stream.lock();
+        if (!h_ptr)
+        {
+            MO_ASSERT(stream_);
+            auto alloc = stream_->hostAllocator();
+            h_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            h_flags = PointerFlags::OWNED;
+            if (d_ptr)
+            {
+                m_state = SyncState::DEVICE_UPDATED;
+            }
+        }
+
+        if (SyncState::DEVICE_UPDATED == m_state)
+        {
+            if (stream && stream != stream_.get())
+            {
+                stream->synchronize(stream_.get());
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                stream->deviceToHost({h_ptr, m_size}, {d_ptr, m_size});
+            }
+            else
+            {
+                MO_ASSERT_FMT(stream_, "No default stream available");
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                stream_->deviceToHost({h_ptr, m_size}, {d_ptr, m_size});
+            }
+
+            m_state = SyncState::SYNCED;
+            if (sync_required)
+            {
+                *sync_required = true;
+            }
+            else
+            {
+                // If sync_required not passed in, do a synchronization here
+                if (stream && stream != stream_.get())
+                {
+                    stream->synchronize();
+                }
+                else
+                {
+                    MO_ASSERT(stream_);
+                    stream_->synchronize();
+                }
+            }
+        }
+
+        return {h_ptr, m_size};
+    }
+
+    ct::TArrayView<const void> SyncedMemory::device(mo::IDeviceStream* stream, bool* sync_required) const
+    {
+        auto stream_ = m_stream.lock();
+        if (!d_ptr)
+        {
+            MO_ASSERT(stream_);
+            auto alloc = stream_->deviceAllocator();
+            d_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            d_flags = PointerFlags::OWNED;
+            if (h_ptr)
+            {
+                m_state = SyncState::HOST_UPDATED;
+            }
+        }
+
+        if (SyncState::HOST_UPDATED == m_state)
+        {
+            auto strm = m_stream.lock();
+            if (stream && stream != strm.get())
+            {
+                stream->synchronize(strm.get());
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                stream->hostToDevice({d_ptr, m_size}, {h_ptr, m_size});
+            }
+            else
+            {
+                MO_ASSERT(strm != nullptr);
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                strm->hostToDevice({d_ptr, m_size}, {h_ptr, m_size});
+            }
+
+            m_state = SyncState::SYNCED;
+            if (sync_required)
+            {
+                *sync_required = true;
+            }
+        }
+
+        return {d_ptr, m_size};
+    }
+
+    ct::TArrayView<void> SyncedMemory::mutableHost(mo::IDeviceStream* stream, bool* sync_required)
+    {
+        auto stream_ = m_stream.lock();
+        if (!h_ptr)
+        {
+            MO_ASSERT(stream_);
+            auto alloc = stream_->hostAllocator();
+            h_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            h_flags = PointerFlags::OWNED;
+            if (d_ptr)
+            {
+                m_state = SyncState::DEVICE_UPDATED;
+            }
+        }
+
+        // Copy on write semantics, we now allocate a new h_ptr and use that instead
+        if (h_flags & PointerFlags::CONST)
+        {
+            const auto old_ptr = h_ptr;
+            MO_ASSERT(stream_);
+            auto alloc = stream_->hostAllocator();
+            MO_ASSERT(alloc);
+            h_ptr = alloc->allocate(m_size, m_elem_size);
+            h_flags = PointerFlags::OWNED;
+            if (SyncState::HOST_UPDATED & m_state)
+            {
+                auto strm = m_stream.lock();
+                MO_ASSERT(h_ptr != nullptr);
+                MO_ASSERT(old_ptr != nullptr);
+                strm->hostToHost({h_ptr, m_size}, {old_ptr, m_size});
+            }
+        }
+
+        if (SyncState::DEVICE_UPDATED == m_state)
+        {
+            auto strm = m_stream.lock();
+            if (stream && stream != strm.get())
+            {
+                stream->synchronize(strm.get());
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                stream->deviceToHost({h_ptr, m_size}, {d_ptr, m_size});
+            }
+            else
+            {
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                strm->deviceToHost({h_ptr, m_size}, {d_ptr, m_size});
+            }
+
+            if (sync_required)
+            {
+                *sync_required = true;
+            }
+            else
+            {
+                // If sync_required not passed in, do a synchronization here
+                if (stream && stream != strm.get())
+                {
+                    stream->synchronize();
+                }
+                else
+                {
+                    strm->synchronize();
+                }
+            }
+        }
+        m_state = SyncState::HOST_UPDATED;
+        return {h_ptr, m_size};
+    }
+
+    ct::TArrayView<void> SyncedMemory::mutableDevice(mo::IDeviceStream* stream, bool* sync_required)
+    {
+        auto stream_ = m_stream.lock();
+        if (!d_ptr)
+        {
+            MO_ASSERT(stream_);
+            auto alloc = stream_->deviceAllocator();
+            d_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            d_flags = PointerFlags::OWNED;
+            if (h_ptr)
+            {
+                m_state = SyncState::HOST_UPDATED;
+            }
+        }
+
+        // Copy on write semantics, we now allocate a new h_ptr and use that instead
+        if (d_flags & PointerFlags::CONST)
+        {
+            const auto old_ptr = d_ptr;
+            MO_ASSERT(stream_);
+            auto alloc = stream_->deviceAllocator();
+            MO_ASSERT(alloc);
+            d_ptr = alloc->allocate(m_size, m_elem_size);
+            d_flags = PointerFlags::OWNED;
+            if (SyncState::HOST_UPDATED & m_state)
+            {
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(old_ptr != nullptr);
+                stream_->deviceToDevice({d_ptr, m_size}, {old_ptr, m_size});
+            }
+        }
+
+        if (SyncState::HOST_UPDATED == m_state)
+        {
+            auto strm = m_stream.lock();
+            MO_ASSERT(strm);
+            if (stream && stream != strm.get())
+            {
+                // setup an event to sync between m_stream and stream
+                stream->synchronize(strm.get());
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                stream->hostToDevice({d_ptr, m_size}, {h_ptr, m_size});
+            }
+            else
+            {
+                MO_ASSERT(d_ptr != nullptr);
+                MO_ASSERT(h_ptr != nullptr);
+                strm->hostToDevice({d_ptr, m_size}, {h_ptr, m_size});
+            }
+
+            if (sync_required)
+            {
+                *sync_required = true;
+            }
+        }
+        m_state = SyncState::DEVICE_UPDATED;
+        return {d_ptr, m_size};
+    }
+
+    SyncedMemory::SyncState SyncedMemory::state() const
+    {
+        return m_state;
+    }
+
+    std::weak_ptr<mo::IDeviceStream> SyncedMemory::stream() const
+    {
+        return m_stream;
+    }
+
+    void SyncedMemory::setStream(std::shared_ptr<mo::IDeviceStream> stream)
+    {
+        auto strm = m_stream.lock();
+        if (strm.get() == stream.get())
+        {
+            return;
+        }
+        MO_ASSERT((h_ptr == nullptr) && (d_ptr == nullptr));
+        m_stream = std::move(stream);
+    }
+
+    bool SyncedMemory::operator==(const SyncedMemory& other) const
+    {
+        if ((m_size == other.m_size) && (m_elem_size == other.m_elem_size))
+        {
+            if ((h_ptr == other.h_ptr) && (d_ptr == other.d_ptr))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::ostream& operator<<(std::ostream& os, const SyncedMemory& memory)
+    {
+        os << memory.state() << " " << memory.size();
+        return os;
+    }
+
+    SyncedView SyncedMemory::syncedView(mo::IDeviceStream*)
+    {
+        // TODO do the sync
+        return SyncedView(h_ptr, d_ptr, m_size);
+    }
+
+    ConstSyncedView SyncedMemory::syncedView(mo::IDeviceStream*) const
+    {
+        // TODO do the sync
+        return ConstSyncedView(h_ptr, d_ptr, m_size);
+    }
+} // namespace aq
+
+namespace ct
+{
+    ct::TArrayView<const void> hostDefault(const aq::SyncedMemory& mem)
+    {
+        return mem.host();
+    }
+
+    ct::TArrayView<void> mutableHostDefault(aq::SyncedMemory& mem)
+    {
+        return mem.mutableHost();
+    }
+
+    TArrayView<const void> makeArrayView(ce::shared_ptr<const aq::SyncedMemory> mem, size_t sz)
+    {
+        if (mem)
+        {
+            MO_ASSERT_EQ(mem->size(), sz);
+            return mem->host();
+        }
+        return {};
+    }
+
+    TArrayView<void> makeArrayView(ce::shared_ptr<aq::SyncedMemory> mem, size_t sz)
+    {
+        if (mem)
+        {
+            MO_ASSERT_EQ(mem->size(), sz);
+            return mem->mutableHost();
+        }
+        return {};
+    }
+} // namespace ct

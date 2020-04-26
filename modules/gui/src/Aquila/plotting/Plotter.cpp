@@ -1,8 +1,8 @@
 #include "Aquila/plotting/Plotter.h"
-#include <MetaObject/params/IParam.hpp>
-#include <MetaObject/object/detail/IMetaObjectImpl.hpp>
 #include "MetaObject/params/detail/TInputParamPtrImpl.hpp"
 #include "MetaObject/params/detail/TParamPtrImpl.hpp"
+#include <MetaObject/object/detail/IMetaObjectImpl.hpp>
+#include <MetaObject/params/IParam.hpp>
 #include <RuntimeObjectSystem/ISimpleSerializer.h>
 #include <map>
 using namespace aq;
@@ -10,20 +10,19 @@ using namespace aq;
 void Plotter::Init(bool firstInit)
 {
     plotInit(firstInit);
-    IMetaObject::Init(firstInit);
+    MetaObject::Init(firstInit);
     if (!firstInit)
     {
         setInput(parameter);
         if (parameter)
         {
-            //param->RegisterUpdateNotifier(GetSlot<void(mo::Context*, mo::IParameter*)>("on_parameter_update"));
+            // param->RegisterUpdateNotifier(GetSlot<void(mo::IAsyncStream*, mo::IParameter*)>("on_parameter_update"));
         }
     }
 }
 
 void Plotter::plotInit(bool firstInit)
 {
-
 }
 
 void Plotter::setInput(mo::IParam* param_)
@@ -31,14 +30,15 @@ void Plotter::setInput(mo::IParam* param_)
     parameter = param_;
     if (parameter)
     {
-        //_connections[&param->update_signal] = param->RegisterNotifier(std::bind(&Plotter::OnParameterUpdate, this, std::placeholders::_1));
-        //_connections[&param->delete_signal] = param->RegisterDeleteNotifier(std::bind(&Plotter::on_param_delete, this, std::placeholders::_1));
+        //_connections[&param->update_signal] = param->RegisterNotifier(std::bind(&Plotter::OnParameterUpdate, this,
+        //std::placeholders::_1));
+        //_connections[&param->delete_signal] = param->RegisterDeleteNotifier(std::bind(&Plotter::on_param_delete, this,
+        //std::placeholders::_1));
     }
 }
 
-void Plotter::on_parameter_update(mo::Context* ctx, mo::IParam* param)
+void Plotter::on_parameter_update(mo::IAsyncStream* ctx, mo::IParam* param)
 {
-
 }
 
 void Plotter::on_parameter_delete(mo::IParam const* param)
@@ -55,14 +55,14 @@ void QtPlotter::AddPlot(QWidget* plot_)
 #define Qt5_FOUND
 #define HAVE_OPENCV
 
-#include <MetaObject/Parameters/UI/WidgetFactory.hpp>
-#include <MetaObject/Parameters/UI/Qt/IParameterProxy.hpp>
 #include "qgridlayout.h"
 #include "qwidget.h"
+#include <MetaObject/Parameters/UI/Qt/IParameterProxy.hpp>
+#include <MetaObject/Parameters/UI/WidgetFactory.hpp>
 
 class QtPlotter::impl
 {
-public:
+  public:
     std::map<std::string, std::shared_ptr<mo::UI::qt::IParameterProxy>> parameter_proxies;
     QGridLayout* control_layout;
     QWidget* parent;
@@ -71,16 +71,16 @@ public:
 QWidget* QtPlotter::GetControlWidget(QWidget* parent)
 {
     auto parameters = GetParameters();
-    if(parameters.size())
+    if (parameters.size())
     {
-        if(_pimpl == nullptr)
+        if (_pimpl == nullptr)
         {
             _pimpl.reset(new impl());
         }
         QWidget* control_widget = new QWidget(parent);
         QGridLayout* layout = new QGridLayout();
         control_widget->setLayout(layout);
-        for(auto param : parameters)
+        for (auto param : parameters)
         {
             auto proxy = mo::UI::qt::WidgetFactory::Instance()->CreateProxy(param);
             auto param_widget = proxy->GetParameterWidget(parent);
@@ -90,7 +90,8 @@ QWidget* QtPlotter::GetControlWidget(QWidget* parent)
         _pimpl->control_layout = layout;
         _pimpl->parent = parent;
         return control_widget;
-    }else
+    }
+    else
     {
         return nullptr;
     }
@@ -98,43 +99,45 @@ QWidget* QtPlotter::GetControlWidget(QWidget* parent)
 
 mo::IParameter* QtPlotter::addParameter(mo::IParameter* param)
 {
-    //auto ret = Plotter::addParameter(param);
-    if(_pimpl)
+    // auto ret = Plotter::addParameter(param);
+    if (_pimpl)
     {
         auto itr = _pimpl->parameter_proxies.find(param->GetTreeName());
-        if(itr == _pimpl->parameter_proxies.end())
+        if (itr == _pimpl->parameter_proxies.end())
         {
             auto proxy = mo::UI::qt::WidgetFactory::Instance()->CreateProxy(param);
             auto param_widget = proxy->GetParameterWidget(_pimpl->parent);
             _pimpl->control_layout->addWidget(param_widget);
             _pimpl->parameter_proxies[param->GetTreeName()] = proxy;
-        }else
+        }
+        else
         {
             itr->second->SetParameter(param);
         }
     }
-    //return ret;
+    // return ret;
     return param;
 }
 
 mo::IParameter* QtPlotter::addParameter(std::shared_ptr<mo::IParameter> param)
 {
-    //auto ret = Plotter::addParameter(param);
-    if(_pimpl)
+    // auto ret = Plotter::addParameter(param);
+    if (_pimpl)
     {
         auto itr = _pimpl->parameter_proxies.find(param->GetTreeName());
-        if(itr == _pimpl->parameter_proxies.end())
+        if (itr == _pimpl->parameter_proxies.end())
         {
             auto proxy = mo::UI::qt::WidgetFactory::Instance()->CreateProxy(param.get());
             auto param_widget = proxy->GetParameterWidget(_pimpl->parent);
             _pimpl->control_layout->addWidget(param_widget);
             _pimpl->parameter_proxies[param->GetTreeName()] = proxy;
-        }else
+        }
+        else
         {
             itr->second->SetParameter(param.get());
         }
     }
-    //return ret;
+    // return ret;
     return param.get();
 }
 #else

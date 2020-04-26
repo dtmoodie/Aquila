@@ -3,7 +3,6 @@
 #include "RuntimeObjectSystem/shared_ptr.hpp"
 #include "serialize.hpp"
 #include <MetaObject/logging/logging.hpp>
-#include <MetaObject/serialization/Serializer.hpp>
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
@@ -11,7 +10,8 @@
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
 
-namespace cereal {
+namespace cereal
+{
 
 /*template<class AR, class T> void save(AR& ar, rcc::shared_ptr<T> const & m)
     {

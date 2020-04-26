@@ -1,8 +1,8 @@
 #pragma once
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #include "parameters/Parameter.hpp"
-#if _WIN32
-#if _DEBUG
+#ifdef _WIN32
+#ifdef _DEBUG
 RUNTIME_COMPILER_LINKLIBRARY("parametersd.lib")
 #else
 RUNTIME_COMPILER_LINKLIBRARY("parameters.lib")

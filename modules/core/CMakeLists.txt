@@ -6,8 +6,8 @@ aquila_declare_module(NAME core SRC src
         metaobject_object
         metaobject_serialization
         metaobject_params
-        aquila_gui
         aquila_rcc
+        aquila_utilities
         metaobject_metaparams
 )
 
@@ -15,9 +15,11 @@ aquila_declare_module(NAME core SRC src
 target_include_directories(aquila_core
     PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../utilities/src
 )
+
 target_include_directories(aquila_core
     PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../serialization/src
 )
+
 IF(WIN32)
 set_target_properties(aquila_core
     PROPERTIES
@@ -29,12 +31,23 @@ ENDIF()
 
 RCC_TARGET_CONFIG(aquila_core libraries_deb libraries_rel)
 
-if(UNIX)
-    # This is needed so that the objects inside of core are loaded into the object factory
-    IF(CMAKE_BUILD_TYPE MATCHES Debug)
-        add_custom_command(TARGET aquila_core POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin/Plugins && ln -sf ../../libaquila_cored.so libaquila_cored.so)
+
+SUBDIRLIST(tests "${CMAKE_CURRENT_LIST_DIR}/tests")
+foreach(test ${tests})
+    file(GLOB_RECURSE test_srcs "tests/${test}/*.cpp")
+    file(GLOB_RECURSE test_knl "tests/${test}/*.cu")
+    LIST(LENGTH test_knl num_knl)
+    set(test_name test_aq_${test})
+    IF(${num_knl} GREATER 0)
+        cuda_add_executable(${test_name} ${test_srcs} ${test_knl})
     else()
-        add_custom_command(TARGET aquila_core POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin/Plugins && ln -sf ../../libaquila_core.so libaquila_core.so)
+        add_executable(${test_name} ${test_srcs})
     endif()
-    add_custom_command(TARGET aquila_core POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin/Plugins && ln -sf ../../aquila_core_config.txt aquila_core_config.txt)
-endif()
+    TARGET_LINK_LIBRARIES(${test_name} ${MetaObject_LIBRARIES}  aquila_core gtest gtest_main)
+    set_target_properties(${test_name} PROPERTIES FOLDER Tests/Aquila)
+    add_test(${test_name} ${test_name})
+    if(MSVC)
+      CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/Aquila/${test}.vcxproj.user @ONLY)
+      CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)
+    endif()
+endforeach()

@@ -1,11 +1,11 @@
 #include <Aquila/core/Algorithm.hpp>
-#include <Aquila/core/detail/AlgorithmImpl.hpp>
+#include <Aquila/utilities/container.hpp>
 
 #include <MetaObject/params/IParam.hpp>
-#include <MetaObject/params/InputParam.hpp>
+#include <MetaObject/params/ISubscriber.hpp>
 #include <MetaObject/params/buffers/IBuffer.hpp>
-#include <MetaObject/serialization/CerealMemory.hpp>
-#include <MetaObject/serialization/CerealPolicy.hpp>
+
+#include <RuntimeObjectSystem/ISimpleSerializer.h>
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
@@ -14,426 +14,1023 @@
 using namespace mo;
 using namespace aq;
 
-Algorithm::Algorithm() {
-    _pimpl               = new impl();
-    _enabled             = true;
-    _pimpl->_sync_method = SyncEvery;
+Algorithm::Algorithm()
+{
+    m_logger = mo::getLogger();
 }
 
-Algorithm::~Algorithm() {
-    delete _pimpl;
-    _pimpl = nullptr;
+void Algorithm::setEnabled(bool value)
+{
+    m_enabled = value;
 }
 
-void Algorithm::setEnabled(bool value) {
-    _enabled = value;
+bool Algorithm::getEnabled() const
+{
+    return m_enabled;
 }
 
-bool Algorithm::getEnabled() const {
-    return _enabled;
-}
-std::vector<mo::IParam*> Algorithm::getComponentParams(const std::string& filter) const {
-    std::vector<mo::IParam*> output; // = mo::IMetaObject::getParams(filter);
-    for (auto& component : _algorithm_components) {
-        if (component) {
-            std::vector<mo::IParam*> output2 = component->getParams(filter);
-            output.insert(output.end(), output2.begin(), output2.end());
-        }
-    }
-    return output;
-}
-std::vector<mo::IParam*> Algorithm::getAllParams(const std::string& filter) const {
-    std::vector<mo::IParam*> output = mo::IMetaObject::getParams(filter);
-    for (auto& component : _algorithm_components) {
-        if (component) {
-            std::vector<mo::IParam*> output2 = component->getParams(filter);
-            output.insert(output.end(), output2.begin(), output2.end());
-        }
-    }
-    return output;
-}
-bool Algorithm::process() {
-    mo::Mutex_t::scoped_lock lock(*_mtx);
-    if (_enabled == false)
-        return false;
-    if (checkInputs() == NoneValid) {
-        return false;
-    }
-    if (processImpl()) {
-        /*_pimpl->last_ts = _pimpl->ts;
-        if(_pimpl->sync_input == nullptr && _pimpl->ts != -1)
-            ++_pimpl->ts;
-        if(_pimpl->_sync_method == SyncEvery && _pimpl->sync_input)
+mo::ConstParamVec_t Algorithm::getComponentParams(const std::string& filter) const
+{
+    mo::ConstParamVec_t output; // = mo::IMetaObject::getParams(filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
         {
-            if(_pimpl->_ts_processing_queue.size() && _pimpl->ts == _pimpl->_ts_processing_queue.front())
+            auto output2 = shared->getParams(filter);
+            output.insert(output.end(), output2.begin(), output2.end());
+        }
+    }
+    return output;
+}
+
+mo::ParamVec_t Algorithm::getComponentParams(const std::string& filter)
+{
+    mo::ParamVec_t output; // = mo::IMetaObject::getParams(filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            auto output2 = shared->getParams(filter);
+            output.insert(output.end(), output2.begin(), output2.end());
+        }
+    }
+    return output;
+}
+
+mo::ParamVec_t Algorithm::getParams(const std::string& filter)
+{
+    mo::ParamVec_t output = mo::MetaObject::getParams(filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            auto output2 = shared->getParams(filter);
+            output.insert(output.end(), output2.begin(), output2.end());
+        }
+    }
+    return output;
+}
+
+mo::ConstParamVec_t Algorithm::getParams(const std::string& filter) const
+{
+    mo::ConstParamVec_t output = mo::MetaObject::getParams(filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            auto output2 = shared->getParams(filter);
+            output.insert(output.end(), output2.begin(), output2.end());
+        }
+    }
+    return output;
+}
+
+const mo::IControlParam* Algorithm::getParam(const std::string& name) const
+{
+    auto output = IAlgorithm::getParam(name);
+    if (output)
+    {
+        return output;
+    }
+
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            output = shared->getParam(name);
+            if (output)
             {
-                _pimpl->_ts_processing_queue.pop();
+                return output;
             }
-        }*/
+        }
+    }
+    return output;
+}
+
+mo::IControlParam* Algorithm::getParam(const std::string& name)
+{
+    auto output = IAlgorithm::getParam(name);
+    if (output)
+    {
+        return output;
+    }
+
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            output = shared->getParam(name);
+            if (output)
+            {
+                return output;
+            }
+        }
+    }
+    return output;
+}
+
+bool Algorithm::process()
+{
+    mo::Lock_t lock(getMutex());
+    if (m_enabled == false)
+    {
+        return false;
+    }
+    if (checkInputs() == InputState::kNONE_VALID)
+    {
+        return false;
+    }
+    if (processImpl())
+    {
+        clearModifiedInputs();
         return true;
     }
     return false;
 }
-mo::IParam* Algorithm::getOutput(const std::string& name) const {
-    auto output = mo::IMetaObject::getOutput(name);
+
+const mo::IPublisher* Algorithm::getOutput(const std::string& name) const
+{
+    auto output = mo::MetaObject::getOutput(name);
     if (output)
+    {
         return output;
-    if (!output) {
-        for (auto& component : _algorithm_components) {
-            if (component) {
-                output = component->getOutput(name);
+    }
+    if (!output)
+    {
+        for (auto& component : m_algorithm_components)
+        {
+            auto shared = component.lock();
+            if (shared)
+            {
+                output = shared->getOutput(name);
                 if (output)
+                {
                     return output;
+                }
             }
         }
     }
     return nullptr;
 }
 
-std::vector<mo::IParam*> Algorithm::getOutputs(const std::string& name_filter) const{
-    auto outputs = mo::IMetaObject::getOutputs(name_filter);
-    for(auto& component : _algorithm_components){
-        auto comp_outputs = component->getOutputs(name_filter);
-        outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
+mo::IPublisher* Algorithm::getOutput(const std::string& name)
+{
+    auto output = mo::MetaObject::getOutput(name);
+    if (output)
+    {
+        return output;
+    }
+    if (!output)
+    {
+        for (auto& component : m_algorithm_components)
+        {
+            auto shared = component.lock();
+            if (shared)
+            {
+                output = shared->getOutput(name);
+                if (output)
+                {
+                    return output;
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
+IMetaObject::PublisherVec_t Algorithm::getOutputs(const std::string& name_filter)
+{
+    auto outputs = mo::MetaObject::getOutputs(name_filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            auto comp_outputs = shared->getOutputs(name_filter);
+            outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
+        }
     }
     return outputs;
 }
-std::vector<mo::IParam*> Algorithm::getOutputs(const mo::TypeInfo& type_filter, const std::string& name_filter) const{
-    auto outputs = mo::IMetaObject::getOutputs(type_filter, name_filter);
-    for (auto& component : _algorithm_components) {
-        auto comp_outputs = component->getOutputs(type_filter, name_filter);
-        outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
+
+IMetaObject::ConstPublisherVec_t Algorithm::getOutputs(const std::string& name_filter) const
+{
+    auto outputs = mo::MetaObject::getOutputs(name_filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            auto comp_outputs = shared->getOutputs(name_filter);
+            outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
+        }
     }
     return outputs;
 }
-Algorithm::InputState Algorithm::checkInputs() {
-    auto inputs = this->getInputs();
-    if (inputs.size() == 0)
-        return AllValid;
-    for (auto input : inputs) {
-        if (!input->isInputSet() && !input->checkFlags(mo::ParamFlags::Optional_e)) {
-            MO_LOG(trace) << "Required input (" << input->getTreeName() << ") is not set to anything";
-            return NoneValid;
+
+IMetaObject::PublisherVec_t Algorithm::getOutputs(const mo::TypeInfo& type_filter, const std::string& name_filter)
+{
+    auto outputs = mo::MetaObject::getOutputs(type_filter, name_filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            auto comp_outputs = shared->getOutputs(type_filter, name_filter);
+            outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
         }
     }
-    boost::optional<mo::Time_t> ts;
-    boost::optional<size_t>     fn;
-// First check to see if we have a sync input, if we do then use its synchronizatio method
-// TODO: Handle processing queue
-#ifdef _DEBUG
-    struct DbgInputState {
-        DbgInputState(const std::string&                 name_,
-                      const boost::optional<mo::Time_t>& ts_,
-                      size_t                             fn_)
-            : name(name_)
-            , ts(ts_)
-            , fn(fn_) {}
-        std::string                 name;
-        boost::optional<mo::Time_t> ts;
-        size_t                      fn;
-    };
+    return outputs;
+}
 
-    std::vector<DbgInputState> input_states;
-#endif
-    bool buffered = false;
-    if (_pimpl->sync_input) {
-        boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
-        auto input_param = _pimpl->sync_input->getInputParam();
-#ifdef _DEBUG
-        for (auto input : inputs) {
-            IParam* input_param = input->getInputParam();
-            if(input_param){
-                auto in_ts = input_param->getTimestamp();
-                input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
-            }
+IMetaObject::ConstPublisherVec_t Algorithm::getOutputs(const mo::TypeInfo& type_filter,
+                                                       const std::string& name_filter) const
+{
+    auto outputs = mo::MetaObject::getOutputs(type_filter, name_filter);
+    for (auto& component : m_algorithm_components)
+    {
+        auto shared = component.lock();
+        if (shared)
+        {
+            auto comp_outputs = shared->getOutputs(type_filter, name_filter);
+            outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
         }
-#endif
-        if(input_param && input_param->checkFlags(mo::ParamFlags::Buffer_e)){
-            if(_pimpl->_ts_processing_queue.size()){
-                if(_pimpl->_sync_method == SyncEvery){
-                    ts = _pimpl->_ts_processing_queue.front();
-                }else{
-                    ts = _pimpl->_ts_processing_queue.back();
-                }
-                _pimpl->_ts_processing_queue.pop();
-            }
+    }
+    return outputs;
+}
 
-        }else{
-            ts = _pimpl->sync_input->getInputTimestamp();
-            if (!ts)
-                fn = _pimpl->sync_input->getInputFrameNumber();
+bool Algorithm::checkModified(const std::vector<mo::ISubscriber*>& inputs) const
+{
+    for (auto input : inputs)
+    {
+        if (input->hasNewData())
+        {
+            LOG_ALGO(trace, "param {} has new data", input->getName());
+            return true;
         }
-    } else {
-        // first look for any direct connections, if so use the timestamp from them
-        for (auto input : inputs) {
-            IParam* input_param = input->getInputParam();
-            if (input_param) {
-                if (!input_param->checkFlags(mo::ParamFlags::Buffer_e) && !input_param->checkFlags(mo::ParamFlags::Unstamped_e)) {
-                    auto in_ts = input_param->getTimestamp();
-#ifdef _DEBUG
-                    input_states.emplace_back(input->getTreeName(), in_ts, input_param->getFrameNumber());
-#endif
-                    if (in_ts) {
-                        if (!ts) {
-                            ts = in_ts;
-                            continue;
-                        } else
-                            ts = std::min<mo::Time_t>(*ts, *in_ts);
-                    }
-                } else {
-                    buffered = true;
+    }
+    return false;
+}
+
+bool Algorithm::checkModifiedControlParams() const
+{
+    auto params = this->getParams();
+    for (auto param : params)
+    {
+        if (param->checkFlags(mo::ParamFlags::kCONTROL))
+        {
+            if (auto control = static_cast<const mo::IControlParam*>(param))
+            {
+                if (control->getModified())
+                {
+                    LOG_ALGO(trace, "control param {} has been modified", param->getName());
+                    return true;
                 }
             }
         }
-        if(!ts && buffered){
-            boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
-            if (_pimpl->_buffer_timing_data.size()) {
-                // Search for the smallest timestamp common to all buffers
-                std::vector<mo::Time_t> tss;
-                for (const auto& itr : _pimpl->_buffer_timing_data) {
-                    if (itr.second.size()) {
-                        if (itr.second.front().ts)
-                            tss.push_back(*(itr.second.front().ts));
+    }
+    return false;
+}
+
+Algorithm::InputState Algorithm::syncTimestamp(const mo::Time& ts, const std::vector<mo::ISubscriber*>& inputs)
+{
+    if (m_ts && (*m_ts == ts))
+    {
+        // return InputState::kNOT_UPDATED;
+        if (!checkModified(inputs) && !checkModifiedControlParams())
+        {
+            LOG_ALGO(debug, "Timestamp already processed and no inputs have been modified");
+            return InputState::kNOT_UPDATED;
+        }
+    }
+    FrameNumber fn;
+    mo::Header header(ts);
+    for (auto input : inputs)
+    {
+        auto data = input->getData(&header);
+        if (data)
+        {
+            LOG_ALGO(trace,
+                     "Got data at {} when requesting data at {} from input {}",
+                     data->getHeader().timestamp,
+                     ts,
+                     input->getName());
+        }
+        else
+        {
+            if (input->checkFlags(mo::ParamFlags::kDESYNCED))
+            {
+                data = input->getData();
+                if (data != nullptr)
+                {
+                    continue;
+                }
+            }
+            if (input->checkFlags(mo::ParamFlags::kOPTIONAL))
+            {
+                // If the input isn't set and it's optional then this is ok
+                if (auto input_param = input->getPublisher())
+                {
+                    // Input is optional and set, but couldn't get the right timestamp, error
+                    if (auto buf_ptr = dynamic_cast<mo::buffer::IBuffer*>(input_param))
+                    {
+                        mo::OptionalTime start, end;
+                        buf_ptr->getTimestampRange(start, end);
+                        LOG_ALGO(debug,
+                                 "Failed to get input '{}' at timestamp {} buffer range [{}, {}]",
+                                 input->getTreeName(),
+                                 ts,
+                                 start,
+                                 end);
+                    }
+                    else
+                    {
+                        LOG_ALGO(debug, "Failed to get input '{}' at timestamp {}", input->getTreeName(), ts);
                     }
                 }
-                // assuming time only moves forward, pick the largest of the min timestamps
-                if (tss.size()) {
-                    auto max_elem  = std::max_element(tss.begin(), tss.end());
-                    bool all_found = true;
-                    // Check if the value is in the other timing buffers
-                    for (const auto& itr : _pimpl->_buffer_timing_data) {
-                        bool found = false;
-                        for (const auto& itr2 : itr.second) {
-                            if (itr2.ts && *(itr2.ts) == *max_elem) {
-                                found = true;
-                                break;
+                else
+                {
+                    LOG_ALGO(trace, "Optional input not set '{}'", input->getTreeName());
+                }
+            }
+            else
+            {
+                // Input is not optional
+                if (auto param = input->getPublisher())
+                {
+                    if (param->checkFlags(mo::ParamFlags::kUNSTAMPED))
+                    {
+                        continue;
+                    }
+                    if (param->checkFlags(mo::ParamFlags::kBUFFER))
+                    {
+                        auto buffer = dynamic_cast<mo::buffer::IBuffer*>(param);
+                        mo::OptionalTime begin, end;
+                        if (buffer->getTimestampRange(begin, end))
+                        {
+                            if (begin && end)
+                            {
+                                LOG_ALGO(trace,
+                                         "Failed to get input for '{}' ({}) at timestamp {}, input buffer: {} -> {}",
+                                         input->getTreeName(),
+                                         param->getTreeName(),
+                                         ts,
+                                         *begin,
+                                         *end);
+                            }
+                            else
+                            {
+                                LOG_ALGO(trace,
+                                         "Failed to get input for '{}' ({}) at timestamp {}, input buffer is empty",
+                                         input->getTreeName(),
+                                         param->getTreeName(),
+                                         ts);
                             }
                         }
-                        if (!found) {
-                            all_found = false;
-                            break;
+                    }
+                    else
+                    {
+                        auto data = param->getData();
+                        if (data)
+                        {
+                            LOG_ALGO(trace,
+                                     "Failed to get input for '{}' ({}) at timestamp {}, input contains {}",
+                                     input->getTreeName(),
+                                     param->getTreeName(),
+                                     ts,
+                                     data->getHeader());
+                        }
+                        else
+                        {
+                            LOG_ALGO(trace,
+                                     "Failed to get input for '{}' ({}) at timestamp {}, input is empty",
+                                     input->getTreeName(),
+                                     param->getTreeName(),
+                                     ts);
                         }
                     }
-                    if (all_found) {
-                        ts = *max_elem;
+
+                    return InputState::kNONE_VALID;
+                }
+
+                LOG_ALGO(trace, "Input not set '{}'", input->getTreeName());
+
+                return InputState::kNONE_VALID;
+            }
+        }
+    }
+    m_ts = ts;
+    m_fn = fn;
+    LOG_ALGO(debug, "All inputs pass, ready to process");
+    return Algorithm::InputState::kALL_VALID;
+}
+
+Algorithm::InputState Algorithm::syncFrameNumber(size_t fn, const std::vector<mo::ISubscriber*>& inputs)
+{
+    boost::optional<mo::Time> ts;
+    std::vector<mo::OptionalTime> tss;
+    mo::Header header(fn);
+    for (auto input : inputs)
+    {
+        if (!input->isInputSet() && !input->checkFlags(mo::ParamFlags::kOPTIONAL))
+        {
+            MO_LOG(trace, "Input not set '{}'", input->getTreeName());
+            return InputState::kNONE_VALID;
+        }
+        auto data = input->getData(&header);
+        if (data)
+        {
+            tss.push_back(data->getHeader().timestamp);
+        }
+        else
+        {
+            if (input->checkFlags(mo::ParamFlags::kDESYNCED))
+            {
+                continue;
+            }
+            if (input->checkFlags(mo::ParamFlags::kOPTIONAL))
+            {
+                // If the input isn't set and it's optional then this is ok
+                if (input->isInputSet())
+                {
+                    // Input is optional and set, but couldn't get the right timestamp, error
+                    MO_LOG(
+                        debug, "Input is set to \"{}\" but could not get at frame number {}", input->getTreeName(), fn);
+                }
+                else
+                {
+                    MO_LOG(trace, "Optional input not set '{}'", input->getTreeName());
+                }
+            }
+            else
+            {
+                // Input is not optional
+                if (auto param = input->getPublisher())
+                {
+                    if (param->checkFlags(mo::ParamFlags::kBUFFER))
+                    {
+                        auto buffer = dynamic_cast<mo::buffer::IBuffer*>(param);
+                        uint64_t begin, end;
+                        if (buffer->getFrameNumberRange(begin, end))
+                        {
+                            LOG_ALGO(trace,
+                                     "Failed to get input for '{}' ({}) at framenumber {}, input buffer: {} -> {}",
+                                     input->getTreeName(),
+                                     param->getTreeName(),
+                                     fn,
+                                     begin,
+                                     end);
+                        }
                     }
+                    else
+                    {
+                        auto data = param->getData();
+                        if (data)
+                        {
+                            LOG_ALGO(trace,
+                                     "Failed to get input for '{}' ({}) at timestamp {}, input contains {}",
+                                     input->getTreeName(),
+                                     param->getTreeName(),
+                                     fn,
+                                     data->getHeader());
+                        }
+                        else
+                        {
+                            LOG_ALGO(trace,
+                                     "Failed to get input for '{}' ({}) at timestamp {}, input is empty",
+                                     input->getTreeName(),
+                                     param->getTreeName(),
+                                     fn);
+                        }
+                    }
+                    return InputState::kNONE_VALID;
+                }
+                else
+                {
+                    MO_LOG(trace, "Input not set for '{}'", input->getTreeName());
                 }
             }
         }
-        if (!ts) {
-            fn = -1;
-            for (int i = 0; i < inputs.size(); ++i) {
-                if (inputs[i]->isInputSet()) {
-                    auto in_fn = inputs[i]->getInputFrameNumber();
-                    fn         = std::min<size_t>(*fn, in_fn);
-#ifdef _DEBUG
-                    input_states.emplace_back(inputs[i]->getTreeName(), boost::optional<mo::Time_t>(), in_fn);
-#endif
+    }
+    if (m_fn == fn)
+    {
+        if (!checkModified(inputs))
+        {
+            return InputState::kNOT_UPDATED;
+        }
+    }
+    if (m_ts)
+    {
+        if (std::count(tss.begin(), tss.end(), m_ts) == tss.size())
+        {
+            return InputState::kNOT_UPDATED;
+        }
+    }
+    if (ts)
+    {
+        m_ts = ts;
+    }
+    m_fn = fn;
+    return InputState::kALL_VALID;
+}
+
+void Algorithm::removeTimestampFromBuffer(const mo::Time& ts)
+{
+    mo::Lock_t lock(m_mtx);
+    for (auto& itr : m_buffer_timing_data)
+    {
+        auto itr2 = std::find_if(itr.second.begin(), itr.second.end(), [ts](const SyncData& st) {
+            if (st.ts)
+            {
+                return *st.ts == ts;
+            }
+            return false;
+        });
+        if (itr2 != itr.second.end())
+        {
+            itr.second.erase(itr2);
+        }
+    }
+}
+
+void Algorithm::removeFrameNumberFromBuffer(size_t fn)
+{
+    mo::Lock_t lock(m_mtx);
+    for (auto& itr : m_buffer_timing_data)
+    {
+        auto itr2 = std::find_if(itr.second.begin(), itr.second.end(), [fn](const SyncData& st) {
+            if (st.ts)
+            {
+                return st.fn == fn;
+            }
+            return false;
+        });
+        if (itr2 != itr.second.end())
+        {
+            itr.second.erase(itr2);
+        }
+    }
+}
+
+mo::OptionalTime Algorithm::findBufferedTimestamp()
+{
+    mo::Lock_t lock(m_mtx);
+    if (!m_buffer_timing_data.empty())
+    {
+        // Search for the smallest timestamp common to all buffers
+        std::vector<mo::Time> tss;
+        for (const auto& itr : m_buffer_timing_data)
+        {
+            if (!itr.second.empty())
+            {
+                auto& ts = itr.second.front().ts;
+                if (ts)
+                {
+                    tss.push_back(*ts);
+                }
+            }
+        }
+        // assuming time only moves forward, pick the largest of the min timestamps
+        if (!tss.empty())
+        {
+            auto max_elem = std::max_element(tss.begin(), tss.end());
+            bool all_found = true;
+            // Check if the value is in the other timing buffers
+            for (const auto& itr : m_buffer_timing_data)
+            {
+                bool found = false;
+                for (const auto& itr2 : itr.second)
+                {
+                    if (itr2.ts && *(itr2.ts) == *max_elem)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    all_found = false;
+                    break;
+                }
+            }
+            if (all_found)
+            {
+                return *max_elem;
+            }
+        }
+    }
+    return {};
+}
+
+mo::OptionalTime Algorithm::findDirectTimestamp(bool& buffered, const std::vector<ISubscriber*>& inputs)
+{
+    mo::OptionalTime ts;
+    for (auto input : inputs)
+    {
+        auto input_param = input->getPublisher();
+        if (input_param)
+        {
+            const auto buffered_flag = input_param->checkFlags(mo::ParamFlags::kBUFFER);
+            const auto unstamped_flag = input_param->checkFlags(mo::ParamFlags::kUNSTAMPED);
+            const auto modified_flag = input->hasNewData();
+            if (!buffered_flag && !unstamped_flag)
+            {
+                if (modified_flag)
+                {
+                    auto headers = input_param->getAvailableHeaders();
+                    if (!headers.empty())
+                    {
+                        auto in_ts = headers.back().timestamp;
+                        if (in_ts)
+                        {
+                            if (!ts)
+                            {
+                                ts = in_ts;
+                                continue;
+                            }
+                            ts = std::min<mo::Time>(*ts, *in_ts);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                buffered = true;
+            }
+        }
+    }
+    return ts;
+}
+
+Algorithm::InputState Algorithm::checkInputs()
+{
+    auto inputs = this->getInputs();
+    if (inputs.empty())
+    {
+        return InputState::kALL_VALID;
+    }
+    for (auto input : inputs)
+    {
+        if (!input->isInputSet() && !input->checkFlags(mo::ParamFlags::kOPTIONAL))
+        {
+            LOG_ALGO(trace, "Required input ({}) is not connected", input->getTreeName());
+            return InputState::kNONE_VALID;
+        }
+    }
+    boost::optional<mo::Time> ts;
+    FrameNumber fn;
+    // First check to see if we have a sync input, if we do then use its synchronizatio method
+    // TODO: Handle processing queue
+    bool buffered = false;
+    if (m_sync_input)
+    {
+        mo::Lock_t lock(m_mtx);
+        auto input_param = m_sync_input->getPublisher();
+        if (input_param && input_param->checkFlags(mo::ParamFlags::kBUFFER))
+        {
+            if (!m_ts_processing_queue.empty())
+            {
+                if (m_sync_method == SyncMethod::kEVERY)
+                {
+                    ts = m_ts_processing_queue.front();
+                }
+                else
+                {
+                    ts = m_ts_processing_queue.back();
+                }
+                m_ts_processing_queue.pop();
+            }
+        }
+        else
+        {
+            auto header = m_sync_input->getNewestHeader();
+            if (header && !header->timestamp)
+            {
+                fn = header->frame_number;
+            }
+        }
+    }
+    else
+    {
+        // first look for any direct connections, if so use the timestamp from them
+        ts = findDirectTimestamp(buffered, inputs);
+        if (!ts && buffered)
+        {
+            ts = findBufferedTimestamp();
+        }
+        if (!ts)
+        {
+            for (auto input : inputs)
+            {
+                if (input->isInputSet())
+                {
+                    auto header = input->getNewestHeader();
+                    if (header)
+                    {
+                        auto in_fn = header->frame_number;
+                        fn = std::min(fn.val, in_fn.val);
+                    }
                 }
             }
         }
     }
     // Synchronizing on timestamp
 
-    if (ts) {
-        size_t fn;
-        for (auto input : inputs) {
-            if (!input->getInput(ts, &fn)) {
-                if (input->checkFlags(mo::ParamFlags::Desynced_e))
-                    if (input->getInput(boost::optional<mo::Time_t>(), &fn))
-                        continue;
-                if (input->checkFlags(mo::ParamFlags::Optional_e)) {
-                    // If the input isn't set and it's optional then this is ok
-                    if (auto input_param = input->getInputParam()) {
-                        // Input is optional and set, but couldn't get the right timestamp, error
-                        if(auto buf_ptr = dynamic_cast<mo::Buffer::IBuffer*>(input_param)){
-                            mo::Time_t start, end;
-                            buf_ptr->getTimestampRange(start, end);
-                            MO_LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts << " buffer range [" << start << ", " << end << "]";
-                        }else{
-                            MO_LOG(debug) << "Failed to get input \"" << input->getTreeName() << "\" at timestamp " << ts;
-                        }
-                        
-                    } else {
-                        MO_LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
-                    }
-                } else {
-                    // Input is not optional
-                    if (auto param = input->getInputParam()) {
-                        if (param->checkFlags(mo::ParamFlags::Unstamped_e))
-                            continue;
-                        MO_LOG(trace) << "Failed to get input for \"" << input->getTreeName() << "\" (" << param->getTreeName() << ") at timestamp " << ts;
-                        return NoneValid;
-                    } else {
-                        MO_LOG(trace) << "Input not set \"" << input->getTreeName() << "\"";
-                        return NoneValid;
-                    }
-                }
+    if (ts)
+    {
+        auto ret = syncTimestamp(*ts, inputs);
+        if (ret == InputState::kALL_VALID)
+        {
+            LOG_ALGO(trace, "Syncing to {}", *ts);
+            if (buffered)
+            {
+                removeTimestampFromBuffer(*ts);
             }
         }
-        if (_pimpl->ts == ts)
-            return NotUpdated;
-        if (buffered && ts) {
-            for (auto& itr : _pimpl->_buffer_timing_data) {
-                auto itr2 = std::find_if(itr.second.begin(), itr.second.end(), [ts](const impl::SyncData& st) { if(st.ts) return *st.ts == *ts; return false; });
-                if (itr2 != itr.second.end()) {
-                    itr.second.erase(itr2);
-                }
-            }
+        else
+        {
+            LOG_ALGO(debug, "Unable to sync timestamp to {} due to {}", *ts, ct::toString(ret));
         }
-        _pimpl->ts = ts;
-        _pimpl->fn = fn;
-        return AllValid;
+        return ret;
     }
-    if (fn && *fn != std::numeric_limits<size_t>::max()) {
-        boost::optional<mo::Time_t> ts;
-        for (auto input : inputs) {
-            if (!input->isInputSet() && !input->checkFlags(mo::ParamFlags::Optional_e)) {
-                MO_LOG(trace) << "Input not set \"" << input->getTreeName() << "\"";
-                return NoneValid;
-            }
-            if (!input->getInput(*fn, &ts)) {
-                if (input->checkFlags(mo::ParamFlags::Desynced_e)) {
-                    continue;
-                }
-                if (input->checkFlags(mo::ParamFlags::Optional_e)) {
-                    // If the input isn't set and it's optional then this is ok
-                    if (input->isInputSet()) {
-                        // Input is optional and set, but couldn't get the right timestamp, error
-                        MO_LOG(debug) << "Input is set to \"" << input->getTreeName() << "\" but could not get at frame number " << *fn;
-                    } else {
-                        MO_LOG(trace) << "Optional input not set \"" << input->getTreeName() << "\"";
-                    }
-                } else {
-                    // Input is not optional
-                    if (auto param = input->getInputParam()) {
-                        MO_LOG(trace) << "Failed to get input for \"" << input->getTreeName() << "\" (" << param->getTreeName() << ") at framenumber "
-                                   << *fn << " actual frame number " << input->getFrameNumber();
-                        return NoneValid;
-                    }
-                }
+    if (fn.valid())
+    {
+        auto ret = syncFrameNumber(fn, inputs);
+        if (ret == InputState::kALL_VALID)
+        {
+            LOG_ALGO(trace, "Syncing to {}", fn);
+            if (buffered)
+            {
+                removeFrameNumberFromBuffer(fn);
             }
         }
-        if (_pimpl->fn == fn)
-            return NotUpdated;
-        if (ts)
-            _pimpl->ts = ts;
-        _pimpl->fn     = *fn;
-        return AllValid;
+        else
+        {
+            LOG_ALGO(debug, "Unable to sync frame number to {} due to {}", fn, ct::toString(ret));
+        }
+        return ret;
     }
-    return NoneValid;
+    LOG_ALGO(debug, "Nothing to sync to ");
+    return InputState::kNONE_VALID;
 }
 
-boost::optional<mo::Time_t> Algorithm::getTimestamp() {
-    return _pimpl->ts;
+void Algorithm::clearModifiedInputs()
+{
+    auto inputs = getInputs();
+    // TODO what do we do now after the refactor?
+    /*for (auto input : inputs)
+    {
+        input->modified(false);
+    }*/
 }
 
-void Algorithm::setSyncInput(const std::string& name) {
-    _pimpl->sync_input = getInput(name);
-    if (_pimpl->sync_input) {
-        MO_LOG(info) << "Updating sync parameter for " << this->GetTypeName() << " to " << name;
-    } else {
-        MO_LOG(warning) << "Unable to set sync input for " << this->GetTypeName() << " to " << name;
+void Algorithm::clearModifiedControlParams()
+{
+    auto params = this->getParams();
+    for (auto param : params)
+    {
+        if (param->checkFlags(mo::ParamFlags::kCONTROL))
+        {
+            param->setModified(false);
+        }
     }
 }
 
-int Algorithm::setupVariableManager(mo::IVariableManager* mgr) {
-    int count = mo::IMetaObject::setupVariableManager(mgr);
-    for (auto& child : _algorithm_components) {
-        count += child->setupVariableManager(mgr);
+boost::optional<mo::Time> Algorithm::getTimestamp()
+{
+    return m_ts;
+}
+
+void Algorithm::setSyncInput(const std::string& name)
+{
+    m_sync_input = getInput(name);
+    if (m_sync_input)
+    {
+        LOG_ALGO(info, "Updating sync parameter for {} to {}", this->GetTypeName(), name);
+    }
+    else
+    {
+        LOG_ALGO(warn, "Unable to set sync input for {} to {}", this->GetTypeName(), name);
+    }
+}
+
+int Algorithm::setupParamServer(const std::shared_ptr<mo::IParamServer>& mgr)
+{
+    int count = mo::MetaObject::setupParamServer(mgr);
+    for (auto& child : m_algorithm_components)
+    {
+        auto shared = child.lock();
+        if (shared)
+        {
+            count += shared->setupParamServer(mgr);
+        }
     }
     return count;
 }
 
-void Algorithm::setSyncMethod(SyncMethod _method) {
-    if (_pimpl->_sync_method == SyncEvery && _method != SyncEvery) {
-        //std::swap(_pimpl->_ts_processing_queue, std::queue<long long>());
-        _pimpl->_ts_processing_queue = std::queue<mo::Time_t>();
+int Algorithm::setupSignals(const std::shared_ptr<mo::RelayManager>& mgr)
+{
+    int cnt = IAlgorithm::setupSignals(mgr);
+    for (const auto& cmp : m_algorithm_components)
+    {
+        auto shared = cmp.lock();
+        if (shared)
+        {
+            cnt += shared->setupSignals(mgr);
+        }
     }
-    _pimpl->_sync_method = _method;
+    return cnt;
 }
 
-void Algorithm::onParamUpdate(mo::IParam* param, mo::Context* ctx, mo::OptionalTime_t ts, size_t fn, const std::shared_ptr<mo::ICoordinateSystem>& cs, mo::UpdateFlags fg) {
-    mo::IMetaObject::onParamUpdate(param, ctx, ts, fn, cs, fg);
-    if (_pimpl->_sync_method == SyncEvery) {
-        if (param == _pimpl->sync_input) {
-            boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
-            auto input_param = _pimpl->sync_input->getInputParam();
-            if (input_param && input_param->checkFlags(mo::ParamFlags::Buffer_e)) {
-                if (ts) {
-                    if(_pimpl->_ts_processing_queue.empty() || _pimpl->_ts_processing_queue.back() != *ts)
-                        _pimpl->_ts_processing_queue.push(*ts);
-                } else {
-                    auto fn = _pimpl->sync_input->getInputFrameNumber();
-                    if(_pimpl->_fn_processing_queue.empty() || _pimpl->_fn_processing_queue.back() != fn)
-                        _pimpl->_fn_processing_queue.push(fn);
+void Algorithm::setSyncMethod(SyncMethod _method)
+{
+    if (m_sync_method == SyncMethod::kEVERY && _method != SyncMethod::kEVERY)
+    {
+        // std::swap(_ts_processing_queue, std::queue<long long>());
+        m_ts_processing_queue = std::queue<mo::Time>();
+    }
+    m_sync_method = _method;
+}
+
+void Algorithm::onParamUpdate(const mo::IParam& param, mo::Header hdr, mo::UpdateFlags fg, IAsyncStream& stream)
+{
+    mo::MetaObject::onParamUpdate(param, hdr, fg, stream);
+    if (param.checkFlags(mo::ParamFlags::kSOURCE))
+    {
+        sig_update();
+    }
+    auto ts = hdr.timestamp;
+    auto fn = hdr.frame_number;
+    if (m_sync_method == SyncMethod::kEVERY)
+    {
+        if (&param == m_sync_input)
+        {
+            auto input_param = m_sync_input->getPublisher();
+            mo::Lock_t lock(m_mtx);
+            if (input_param && input_param->checkFlags(mo::ParamFlags::kBUFFER))
+            {
+                if (ts)
+                {
+                    if (m_ts_processing_queue.empty() || m_ts_processing_queue.back() != *ts)
+                        m_ts_processing_queue.push(*ts);
+                }
+                else
+                {
+                    if (m_fn_processing_queue.empty() || m_fn_processing_queue.back() != fn)
+                        m_fn_processing_queue.push(fn);
                 }
             }
         }
-    } else if (_pimpl->_sync_method == SyncNewest) {
-        if (param == _pimpl->sync_input) {
-            _pimpl->ts = param->getTimestamp();
-        }
     }
-    if (fg == mo::BufferUpdated_e) {
-        boost::recursive_mutex::scoped_lock lock(_pimpl->_mtx);
-        mo::InputParam*                     in_param = dynamic_cast<mo::InputParam*>(param);
-        auto                                itr      = _pimpl->_buffer_timing_data.find(in_param);
-        if (itr == _pimpl->_buffer_timing_data.end()) {
-            mo::Buffer::IBuffer* buf = dynamic_cast<mo::Buffer::IBuffer*>(in_param->getInputParam());
-            _pimpl->_buffer_timing_data[in_param].set_capacity(100);
-            if (buf) {
-                auto capacity = buf->getFrameBufferCapacity();
-                if (capacity)
-                    _pimpl->_buffer_timing_data[in_param].set_capacity(*capacity);
+    if (fg & ct::value(UpdateFlags::kBUFFER_UPDATED))
+    {
+        auto in_param = dynamic_cast<const mo::ISubscriber*>(&param);
+        auto buf = dynamic_cast<mo::buffer::IBuffer*>(in_param->getPublisher());
+
+        if (in_param)
+        {
+            mo::Lock_t lock(m_mtx);
+            auto itr = m_buffer_timing_data.find(in_param);
+            if (itr == m_buffer_timing_data.end())
+            {
+                boost::circular_buffer<SyncData> data_buffer;
+                data_buffer.set_capacity(100);
+                if (buf)
+                {
+                    auto capacity = buf->getFrameBufferCapacity();
+                    if (capacity)
+                    {
+                        data_buffer.set_capacity(*capacity);
+                    }
+                }
+                auto result = m_buffer_timing_data.insert(std::make_pair(in_param, std::move(data_buffer)));
+                if (result.second)
+                {
+                    itr = result.first;
+                }
+            }
+            SyncData data(ts, fn);
+            if (itr->second.empty() || itr->second.back() != data)
+            {
+                itr->second.push_back(std::move(data));
             }
         }
-        if(_pimpl->_buffer_timing_data[in_param].size() == 0 || _pimpl->_buffer_timing_data[in_param].back() != impl::SyncData(ts, fn))
-            _pimpl->_buffer_timing_data[in_param].push_back(impl::SyncData(ts, fn));
     }
 }
 
-void Algorithm::setContext(const mo::ContextPtr_t& ctx, bool overwrite) {
-    mo::IMetaObject::setContext(ctx, overwrite);
-    for (auto& child : _algorithm_components) {
-        child->setContext(ctx, overwrite);
-    }
-}
-
-void Algorithm::postSerializeInit() {
-    for (auto& child : _algorithm_components) {
-        child->setContext(this->_ctx);
-        child->postSerializeInit();
-    }
-}
-
-void Algorithm::Init(bool first_init){
-    if(!first_init){
-        for(auto& cmp : _algorithm_components){
-            cmp->Init(first_init);
-            this->addComponent(cmp);
+void Algorithm::setStream(const mo::IAsyncStreamPtr_t& ctx)
+{
+    mo::MetaObject::setStream(ctx);
+    for (auto& child : m_algorithm_components)
+    {
+        auto shared = child.lock();
+        if (shared)
+        {
+            shared->setStream(ctx);
         }
     }
-    mo::IMetaObject::Init(first_init);
 }
 
-void Algorithm::addComponent(const rcc::weak_ptr<Algorithm>& component) {
-    auto ptr = component.get();
-    if(std::find(_algorithm_components.begin(), _algorithm_components.end(), component) == _algorithm_components.end())
-        _algorithm_components.push_back(component);
-    mo::ISlot* slot = this->getSlot("param_updated", mo::TypeInfo(typeid(void(IParam*, Context*, OptionalTime_t, size_t, const std::shared_ptr<ICoordinateSystem>&, UpdateFlags))));
-    if (slot) {
-        auto params = component->getParams();
-        for (auto param : params) {
-            param->registerUpdateNotifier(slot);
+void Algorithm::postSerializeInit()
+{
+    auto stream = getStream();
+    for (auto& child : m_algorithm_components)
+    {
+        auto shared = child.lock();
+        if (shared)
+        {
+            shared->setStream(stream);
+            shared->postSerializeInit();
         }
     }
-    if(this->_sig_manager)
-        component->setupSignals(this->_sig_manager);
+}
+
+void Algorithm::Init(bool first_init)
+{
+    if (!first_init)
+    {
+        for (auto& cmp : m_algorithm_components)
+        {
+            auto shared = cmp.lock();
+            if (shared)
+            {
+                shared->Init(first_init);
+                this->addComponent(cmp);
+            }
+        }
+    }
+    mo::MetaObject::Init(first_init);
+}
+
+void Algorithm::addComponent(const rcc::weak_ptr<IAlgorithm>& component)
+{
+    auto ptr = component.lock();
+    if (ptr == nullptr)
+    {
+        return;
+    }
+    if (!aq::contains(m_algorithm_components, component))
+    {
+        m_algorithm_components.push_back(component);
+    }
+    mo::ISlot* slot =
+        this->getSlot("param_updated", mo::TypeInfo::create<void(IParam*, Header, UpdateFlags, IAsyncStream&)>());
+    if (slot)
+    {
+        auto params = ptr->getParams();
+        for (auto param : params)
+        {
+            param->registerUpdateNotifier(*slot);
+        }
+    }
+    else
+    {
+        m_logger->warn("Unable to get param_updated slot from self");
+    }
+    auto manager = getRelayManager();
+    if (manager)
+    {
+        ptr->setupSignals(manager);
+    }
     sig_componentAdded(ptr);
 }
 
-void Algorithm::Serialize(ISimpleSerializer* pSerializer) {
-    mo::IMetaObject::Serialize(pSerializer);
-    SERIALIZE(_algorithm_components);
+std::vector<rcc::weak_ptr<IAlgorithm>> Algorithm::getComponents() const
+{
+    return m_algorithm_components;
+}
+
+void Algorithm::Serialize(ISimpleSerializer* pSerializer)
+{
+    mo::MetaObject::Serialize(pSerializer);
+    SERIALIZE(m_algorithm_components);
+}
+
+Algorithm::SyncData::SyncData(const boost::optional<mo::Time>& ts_, mo::FrameNumber fn_)
+    : ts(ts_)
+    , fn(fn_)
+{
+}
+
+bool Algorithm::SyncData::operator==(const SyncData& other)
+{
+    if (ts && other.ts)
+        return *ts == *other.ts;
+    return fn == other.fn;
+}
+
+bool Algorithm::SyncData::operator!=(const SyncData& other)
+{
+    return !(*this == other);
+}
+
+void Algorithm::setLogger(const std::shared_ptr<spdlog::logger>& logger)
+{
+    m_logger = logger;
 }

@@ -1,7 +1,8 @@
 #include "Aquila/nodes/ThreadedNode.hpp"
+#include "Aquila/nodes/NodeImpl.hpp"
 #include "Aquila/nodes/NodeInfo.hpp"
-#include <MetaObject/thread/InterThread.hpp>
-#include <MetaObject/thread/boost_thread.hpp>
+#include <MetaObject/core/AsyncStreamFactory.hpp>
+#include <MetaObject/thread/ThreadInfo.hpp>
 
 using namespace aq;
 using namespace aq::nodes;
@@ -45,34 +46,30 @@ bool ThreadedNode::process()
     return true;
 }
 
-Node::Ptr ThreadedNode::addChild(Node* child)
+void ThreadedNode::addChild(Ptr child)
 {
-    auto ptr = Node::addChild(child);
-    child->setContext(_thread_ctx, true);
-    return ptr;
-}
-
-Node::Ptr ThreadedNode::addChild(Node::Ptr child)
-{
-    auto ptr = Node::addChild(child);
-    child->setContext(_thread_ctx);
-    return ptr;
+    Node::addChild(child);
+    child->setStream(_thread_ctx);
 }
 
 void ThreadedNode::processingFunction()
 {
-    _thread_ctx = mo::Context::create("ThreadedNodeContext");
-    while(!boost::this_thread::interruption_requested())
+
+    _thread_ctx = mo::AsyncStreamFactory::instance()->create("ThreadedNodeStream");
+    while (!boost::this_thread::interruption_requested())
     {
-        if(_run)
+        if (_run)
         {
-            mo::ThreadSpecificQueue::run(mo::getThisThread());
-            mo::Mutex_t::scoped_lock lock(*_mtx);
-            for(auto& child : _children)
+            // TODO
+            // mo::ThreadSpecificQueue::run(mo::getThisThread());
+            // mo::Mutex_t::scoped_lock lock(getMutex());
+            auto children = getChildren();
+            for (auto& child : children)
             {
                 child->process();
             }
-        }else
+        }
+        else
         {
             boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
         }

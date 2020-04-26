@@ -1,7 +1,7 @@
 #pragma once
 /*
-#include "opencv2/hal.hpp"
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
+#include "opencv2/hal.hpp"
 #ifdef _MSC_VER // Windows
 
 #ifdef _DEBUG

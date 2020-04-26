@@ -1,6 +1,6 @@
 #pragma once
 #include <Aquila/core/detail/Export.hpp>
-#include <MetaObject/object/IMetaObject.hpp>
+#include <MetaObject/object/MetaObject.hpp>
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
 #include <MetaObject/signals/detail/SlotMacros.hpp>
 #include <MetaObject/params/ParamMacros.hpp>
@@ -29,7 +29,7 @@ namespace mo
 namespace aq
 {
     class PlotterInfo;
-    class AQUILA_EXPORTS Plotter : public TInterface<Plotter, mo::IMetaObject>
+    class AQUILA_EXPORTS Plotter : public TInterface<Plotter, mo::MetaObject>
     {
     public:
         typedef PlotterInfo InterfaceInfo;
@@ -42,9 +42,9 @@ namespace aq
         virtual bool acceptsParameter(mo::IParam* param) = 0;
 
         MO_BEGIN(Plotter)
-            MO_SLOT(void, on_parameter_update, mo::Context*, mo::IParam*);
+            MO_SLOT(void, on_parameter_update, mo::IAsyncStream*, mo::IParam*);
             MO_SLOT(void, on_parameter_delete, mo::IParam const*);
-            PROPERTY(mo::IParam*, parameter, nullptr);
+            STATE(mo::IParam*, parameter, nullptr);
         MO_END;
     protected:
     };

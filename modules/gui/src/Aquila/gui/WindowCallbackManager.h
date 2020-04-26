@@ -18,7 +18,7 @@ namespace aq
             MO_SIGNAL(void, on_left, std::string)
             MO_SIGNAL(void, on_rect, std::string, int, cv::Rect2f)
             MO_SIGNAL(void, on_points, std::string, int, std::vector<cv::Point2f>)
-        MO_END
+        MO_END;
 
         void imshow(const std::string& name, const cv::Mat& mat);
         void imshow(const std::string& name, cv::cuda::GpuMat& mat, cv::cuda::Stream& stream);

@@ -1,7 +1,7 @@
 #pragma once
+#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #include "cv_link_config.hpp"
 #include "opencv2/features2d.hpp"
-#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #ifdef _MSC_VER // Windows
 
 #ifdef _DEBUG

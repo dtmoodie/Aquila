@@ -1,6 +1,6 @@
 #pragma once
 #include <Aquila/core/detail/Export.hpp>
-#include <MetaObject/object/IMetaObject.hpp>
+#include <MetaObject/object/MetaObject.hpp>
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
 #include <MetaObject/signals/detail/SignalMacros.hpp>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
@@ -15,8 +15,8 @@
 #include <set>
 #include <memory>
 
-#if _WIN32
-#if _DEBUG
+#ifdef _WIN32
+#ifdef _DEBUG
 RUNTIME_COMPILER_LINKLIBRARY("aquila_guid.lib")
 #else
 RUNTIME_COMPILER_LINKLIBRARY("aquila_gui.lib")
@@ -31,9 +31,9 @@ RUNTIME_COMPILER_LINKLIBRARY("-laquila_guid")
 
 namespace aq
 {
-    class IDataStream;
+    class IGraph;
     // Single instance per stream
-    class AQUILA_EXPORTS WindowCallbackHandler: public TInterface<WindowCallbackHandler,mo::IMetaObject>
+    class AQUILA_EXPORTS WindowCallbackHandler: public TInterface<WindowCallbackHandler,mo::MetaObject>
     {
     public:
         enum
@@ -55,7 +55,8 @@ namespace aq
             MO_SIGNAL(void, select_rect, std::string, cv::Rect, int, cv::Mat)
             MO_SIGNAL(void, select_points, std::string, std::vector<cv::Point>, int, cv::Mat)
             MO_SIGNAL(void, on_key, int)
-        MO_END
+            MO_SIGNAL(void, mouseDrag, std::string, cv::Point, cv::Point, int, cv::Mat)
+        MO_END;
 
         struct AQUILA_EXPORTS EventLoop
         {

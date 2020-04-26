@@ -1,1 +1,0 @@
-aquila_declare_module(NAME metatypes DEPENDS aquila_serialization aquila_types aquila_core)

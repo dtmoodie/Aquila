@@ -1,3 +1,6 @@
 [submodule "dependencies/MetaObject"]
 	path = dependencies/MetaObject
 	url = ../MetaObject
+[submodule "dependencies/cache-engine"]
+	path = dependencies/cache-engine
+	url = ../cache-engine

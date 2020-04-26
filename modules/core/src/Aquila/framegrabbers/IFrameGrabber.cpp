@@ -1,7 +1,7 @@
 #include "Aquila/framegrabbers/IFrameGrabber.hpp"
-#include "Aquila/core/IDataStream.hpp"
+#include "Aquila/core/IGraph.hpp"
 #include "Aquila/framegrabbers//FrameGrabberInfo.hpp"
-#include "Aquila/utilities/cuda/sorting.hpp"
+#include "Aquila/utilities/sorting.hpp"
 #include "RuntimeObjectSystem/ISimpleSerializer.h"
 #include <MetaObject/logging/logging.hpp>
 #include <MetaObject/logging/profiling.hpp>
@@ -14,56 +14,77 @@
 using namespace aq;
 using namespace aq::nodes;
 
-int GrabberInfo::canLoad(const std::string& path) const {
+int GrabberInfo::canLoad(const std::string& /*path*/) const
+{
     return 0;
 }
-void GrabberInfo::listPaths(std::vector<std::string>& paths) const {
+
+void GrabberInfo::listPaths(std::vector<std::string>& /*paths*/) const
+{
     return;
 }
-int GrabberInfo::timeout() const {
-    return 1000;
-}
-bool IGrabber::processImpl() {
-    return grab();
-}
-int FrameGrabberInfo::loadTimeout() const {
+
+int GrabberInfo::timeout() const
+{
     return 1000;
 }
 
-int FrameGrabberInfo::canLoadPath(const std::string& path) const {
+bool IGrabber::processImpl()
+{
+    return grab();
+}
+
+int FrameGrabberInfo::loadTimeout() const
+{
+    return 1000;
+}
+
+int FrameGrabberInfo::canLoadPath(const std::string& path) const
+{
     // Check all grabbers
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::s_interfaceID);
-    int  max          = 0;
-    for (auto constructor : constructors) {
-        max = std::max(max, dynamic_cast<GrabberInfo*>(constructor->GetObjectInfo())->canLoad(path));
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
+    int max = 0;
+    for (auto constructor : constructors)
+    {
+        max = std::max(max, dynamic_cast<const GrabberInfo*>(constructor->GetObjectInfo())->canLoad(path));
     }
     return max;
 }
 
-std::vector<std::string> FrameGrabberInfo::listLoadablePaths() const {
+std::vector<std::string> FrameGrabberInfo::listLoadablePaths() const
+{
     return std::vector<std::string>();
 }
-std::string FrameGrabberInfo::Print(IObjectInfo::Verbosity verbosity) const {
+
+std::string FrameGrabberInfo::Print(IObjectInfo::Verbosity verbosity) const
+{
     std::stringstream ss;
     ss << NodeInfo::Print(verbosity);
     auto docs = listLoadablePaths();
-    if (docs.size()) {
+    if (docs.size())
+    {
         ss << "-- Loadable paths \n";
     }
-    for (const auto& doc : docs) {
+    for (const auto& doc : docs)
+    {
         ss << doc << "\n";
     }
     return ss.str();
 }
-std::vector<std::pair<std::string, std::string> > IFrameGrabber::listAllLoadableDocuments() {
-    std::vector<std::pair<std::string, std::string> > output;
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::s_interfaceID);
-    for (auto constructor : constructors) {
+
+std::vector<std::pair<std::string, std::string>> IFrameGrabber::listAllLoadableDocuments()
+{
+    std::vector<std::pair<std::string, std::string>> output;
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::getHash());
+    for (auto constructor : constructors)
+    {
         auto info = constructor->GetObjectInfo();
-        if (auto fg_info = dynamic_cast<FrameGrabberInfo*>(info)) {
+        if (auto fg_info = dynamic_cast<const FrameGrabberInfo*>(info))
+        {
             auto docs = fg_info->listLoadablePaths();
-            //output.insert(output.end(), devices.begin(), devices.end());
-            for (const auto& doc : docs) {
+            // output.insert(output.end(), devices.begin(), devices.end());
+            for (const auto& doc : docs)
+            {
                 output.emplace_back(doc, std::string(fg_info->GetObjectName()));
             }
         }
@@ -71,199 +92,250 @@ std::vector<std::pair<std::string, std::string> > IFrameGrabber::listAllLoadable
     return output;
 }
 
-rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri,
-    const std::string&                                                  preferred_loader) {
-    auto                             constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::s_interfaceID);
+rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, const std::string& preferred_loader)
+{
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::getHash());
     std::vector<IObjectConstructor*> valid_constructors;
-    std::vector<int>                 valid_constructor_priority;
-    for (auto constructor : constructors) {
+    std::vector<int> valid_constructor_priority;
+    for (auto constructor : constructors)
+    {
         auto info = constructor->GetObjectInfo();
-        if (auto fg_info = dynamic_cast<FrameGrabberInfo*>(info)) {
+        if (auto fg_info = dynamic_cast<const FrameGrabberInfo*>(info))
+        {
             int priority = fg_info->canLoadPath(uri);
-            MO_LOG(debug) << fg_info->getDisplayName() << " priority: " << priority;
-            if (priority != 0) {
+            MO_LOG(debug, "{} priority: {}", fg_info->getDisplayName(), priority);
+            if (priority != 0)
+            {
                 valid_constructors.push_back(constructor);
                 valid_constructor_priority.push_back(priority);
             }
         }
     }
-    if (valid_constructors.empty()) {
+    if (valid_constructors.empty())
+    {
         auto f = [&constructors]() -> std::string {
             std::stringstream ss;
-            for (auto& constructor : constructors) {
+            for (auto& constructor : constructors)
+            {
                 ss << constructor->GetName() << ", ";
             }
             return ss.str();
         };
 
-        MO_LOG(warning) << "No valid frame grabbers for " << uri
-                        << " framegrabbers: " << f();
+        MO_LOG(warn, "No valid frame grabbers for {} framegrabbers: {}", uri, f());
         return rcc::shared_ptr<IFrameGrabber>();
     }
 
-    auto idx = sort_index_descending(valid_constructor_priority);
-    if (preferred_loader.size()) {
-        for (int i = 0; i < valid_constructors.size(); ++i) {
-            if (preferred_loader == valid_constructors[i]->GetName()) {
+    const bool descending = true;
+    auto idx = indexSort(valid_constructor_priority, descending);
+    if (preferred_loader.size())
+    {
+        for (size_t i = 0; i < valid_constructors.size(); ++i)
+        {
+            if (preferred_loader == valid_constructors[i]->GetName())
+            {
                 idx.insert(idx.begin(), i);
                 break;
             }
         }
     }
 
-    for (int i = 0; i < idx.size(); ++i) {
-        auto fg      = rcc::shared_ptr<IFrameGrabber>(valid_constructors[idx[i]]->Construct());
-        auto fg_info = dynamic_cast<FrameGrabberInfo*>(valid_constructors[idx[i]]->GetObjectInfo());
+    for (size_t i = 0; i < idx.size(); ++i)
+    {
+        auto fg = rcc::shared_ptr<IFrameGrabber>(valid_constructors[idx[i]]->Construct());
+        auto fg_info = dynamic_cast<const FrameGrabberInfo*>(valid_constructors[idx[i]]->GetObjectInfo());
         fg->Init(true);
 
-        struct thread_load_object {
-            std::promise<bool>             promise;
+        struct thread_load_object
+        {
+            std::promise<bool> promise;
             rcc::shared_ptr<IFrameGrabber> fg;
-            std::string                    document;
-            void                           load() {
+            std::string document;
+            void load()
+            {
                 promise.set_value(fg->loadData(document));
             }
         };
 
-        auto obj                                  = new thread_load_object();
-        obj->fg                                   = fg;
-        obj->document                             = uri;
-        auto                               future = obj->promise.get_future();
+        auto obj = new thread_load_object();
+        obj->fg = fg;
+        obj->document = uri;
+        auto future = obj->promise.get_future();
         static std::vector<boost::thread*> connection_threads;
         // TODO cleanup the connection threads
 
         boost::thread* connection_thread = new boost::thread([obj]() -> void {
-            try {
+            try
+            {
                 obj->load();
-            } catch (cv::Exception& e) {
-                MO_LOG(debug) << e.what();
+            }
+            catch (cv::Exception& e)
+            {
+                MO_LOG(debug, e.what());
             }
 
             delete obj;
         });
 
-        if (connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->loadTimeout()))) {
-            if (future.get()) {
-                MO_LOG(info) << "Loading " << uri << " with frame_grabber: " << fg->GetTypeName() << " with priority: " << valid_constructor_priority[idx[i]];
+        if (connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->loadTimeout())))
+        {
+            if (future.get())
+            {
+                MO_LOG(info,
+                       "Loading {} with frame_grabber: {} with priority: {}",
+                       uri,
+                       fg->GetTypeName(),
+                       valid_constructor_priority[idx[static_cast<size_t>(i)]]);
                 delete connection_thread;
                 fg->loaded_document.push_back(uri);
                 return fg; // successful load
-            } else // unsuccessful load
-            {
-                MO_LOG(warning) << "Unable to load " << uri << " with " << fg_info->GetObjectName();
             }
-        } else // timeout
+
+            MO_LOG(warn, "Unable to load {} with {}", uri, fg_info->GetObjectName());
+        }
+        else // timeout
         {
-            MO_LOG(warning) << "Timeout while loading " << uri << " with " << fg_info->GetObjectName() << " after waiting " << fg_info->loadTimeout() << " ms";
+            MO_LOG(warn,
+                   "Timeout while loading {} with {}  after waiting {} ms",
+                   uri,
+                   fg_info->GetObjectName(),
+                   fg_info->loadTimeout());
             connection_threads.push_back(connection_thread);
         }
     }
     return rcc::shared_ptr<IFrameGrabber>();
 }
 
-void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Context*, mo::OptionalTime_t, size_t, const std::shared_ptr<mo::ICoordinateSystem>&, mo::UpdateFlags) {
+void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Header, mo::UpdateFlags)
+{
     loadData(loaded_document);
 }
 
-void IFrameGrabber::Restart() {
+void IFrameGrabber::restart()
+{
     auto docs = loaded_document;
     Init(true);
     loadData(docs);
 }
 
-bool IFrameGrabber::loadData(std::string path) {
+bool IFrameGrabber::loadData(std::string /*path*/)
+{
     return false;
 }
 
-bool IFrameGrabber::loadData(std::vector<std::string> path) {
-    for (const auto& p : path) {
+bool IFrameGrabber::loadData(std::vector<std::string> path)
+{
+    for (const auto& p : path)
+    {
         loadData(p);
     }
     return false;
 }
-//MO_REGISTER_CLASS(IFrameGrabber)
+// MO_REGISTER_CLASS(IFrameGrabber)
 
-class FrameGrabber : public IFrameGrabber {
-public:
+class FrameGrabber : virtual public IFrameGrabber
+{
+  public:
     static std::vector<std::string> listLoadablePaths();
-    static int                      loadTimeout();
+    static int loadTimeout();
     MO_DERIVE(FrameGrabber, IFrameGrabber)
     MO_SLOT(bool, loadData, std::string)
     MO_END;
-    bool processImpl();
-    void addComponent(const rcc::weak_ptr<Algorithm>& component);
+    bool processImpl() override;
+    void addComponent(const rcc::weak_ptr<IAlgorithm>& component) override;
 
-protected:
+  protected:
     std::vector<IGrabber::Ptr> _grabbers;
 };
 
-void FrameGrabber::addComponent(const rcc::weak_ptr<Algorithm>& component) {
-    Node::addComponent(component);
-    auto typed = component.DynamicCast<IGrabber>();
-    if (typed) {
+void FrameGrabber::addComponent(const rcc::weak_ptr<IAlgorithm>& component)
+{
+    IFrameGrabber::addComponent(component);
+    auto typed = component.lock().DynamicCast<IGrabber>();
+    if (typed)
+    {
         _grabbers.push_back(typed);
     }
 }
 
-bool FrameGrabber::loadData(std::string path) {
-    for (auto& grabber : _grabbers) {
-        GrabberInfo* ptr = dynamic_cast<GrabberInfo*>(grabber->GetConstructor()->GetObjectInfo());
-        if (ptr->canLoad(path) > 0) {
+bool FrameGrabber::loadData(std::string path)
+{
+    for (auto& grabber : _grabbers)
+    {
+        const GrabberInfo* ptr = dynamic_cast<const GrabberInfo*>(grabber->GetConstructor()->GetObjectInfo());
+        if (ptr->canLoad(path) > 0)
+        {
             return grabber->loadData(path);
         }
     }
     // find a new grabber to load this
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::s_interfaceID);
+    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
     std::map<int, IObjectConstructor*> priorities;
-    for (auto constructor : constructors) {
-        if (GrabberInfo* ptr = dynamic_cast<GrabberInfo*>(constructor->GetObjectInfo())) {
+    for (auto constructor : constructors)
+    {
+        if (const GrabberInfo* ptr = dynamic_cast<const GrabberInfo*>(constructor->GetObjectInfo()))
+        {
             int p = ptr->canLoad(path);
-            if (p > 0) {
+            if (p > 0)
+            {
                 priorities[p] = constructor;
             }
         }
     }
-    if (priorities.size()) {
-        IObject* obj = priorities.rbegin()->second->Construct();
-        if (obj) {
-            IGrabber* typed = dynamic_cast<IGrabber*>(obj);
+    if (priorities.size())
+    {
+        rcc::shared_ptr<IObject> obj = priorities.rbegin()->second->Construct();
+        if (obj)
+        {
+            auto typed = obj.DynamicCast<IGrabber>();
             typed->Init(true);
-            if (typed) {
-                if (typed->loadData(path)) {
+            if (typed)
+            {
+                if (typed->loadData(path))
+                {
                     addComponent(typed);
                     return true;
                 }
-            } else {
-                delete typed;
             }
         }
     }
     return false;
 }
-bool FrameGrabber::processImpl() {
-    for (auto& grabber : _grabbers) {
+
+bool FrameGrabber::processImpl()
+{
+    for (auto& grabber : _grabbers)
+    {
         grabber->grab();
     }
+    this->setModified();
     return true;
 }
 
-std::vector<std::string> FrameGrabber::listLoadablePaths() {
-    auto                     ctrs = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::s_interfaceID);
+std::vector<std::string> FrameGrabber::listLoadablePaths()
+{
+    auto ctrs = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
     std::vector<std::string> output;
-    for (auto ctr : ctrs) {
-        auto ptr = dynamic_cast<IGrabber::InterfaceInfo*>(ctr->GetObjectInfo());
-        if (ptr) {
+    for (auto ctr : ctrs)
+    {
+        auto ptr = dynamic_cast<const IGrabber::InterfaceInfo*>(ctr->GetObjectInfo());
+        if (ptr)
+        {
             ptr->listPaths(output);
         }
     }
     return output;
 }
-int FrameGrabber::loadTimeout() {
-    auto ctrs = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::s_interfaceID);
-    int  max  = 0;
-    for (auto ctr : ctrs) {
-        auto ptr = dynamic_cast<IGrabber::InterfaceInfo*>(ctr->GetObjectInfo());
-        if (ptr) {
+
+int FrameGrabber::loadTimeout()
+{
+    auto ctrs = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
+    int max = 0;
+    for (auto ctr : ctrs)
+    {
+        auto ptr = dynamic_cast<const IGrabber::InterfaceInfo*>(ctr->GetObjectInfo());
+        if (ptr)
+        {
             max = std::max<int>(max, ptr->timeout());
         }
     }

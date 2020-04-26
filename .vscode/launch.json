@@ -1,0 +1,586 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "variadic_typedef",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_variadic_typedef",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "type_traits",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_type_traits",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "string_static",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_string_static",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "string_runtime",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_string_runtime",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "string_hash",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_string_hash",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "ct_static_checks",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_static_checks",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "reflect_print",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_reflect_print",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "reflect_hash",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_reflect_hash",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "reflect_compare",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_reflect_compare",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "reflect_access",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_reflect_access",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "get_name",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_get_name",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "enum_cuda",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_enum_cuda",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "enum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ct_enum",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "object",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_mo_object",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "core",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_mo_core",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "params",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_mo_params",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "cuda",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_mo_cuda",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "runtime_reflection",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_mo_runtime_reflection",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "serialization",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_mo_serialization",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "small_vec",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_mo_small_vec",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "algorithm",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_aq_algorithm",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "node",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_aq_node",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "node_graph",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_aq_node_graph",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "aq_types",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_aq_types",
+            "args": [
+                "--gtest_filter=image_serialization*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

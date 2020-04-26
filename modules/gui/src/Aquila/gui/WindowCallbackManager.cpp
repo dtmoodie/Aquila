@@ -1,7 +1,7 @@
 #include "Aquila/gui/WindowCallbackManager.h"
 #include "Aquila/gui/UiCallbackHandlers.h"
+#include "MetaObject/core/SystemTable.hpp"
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
-#include "Aquila/rcc/SystemTable.hpp"
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -106,4 +106,3 @@ void WindowCallbackHandler::imshow(const std::string& name, const SyncedMemory& 
     }
 }
 */
-

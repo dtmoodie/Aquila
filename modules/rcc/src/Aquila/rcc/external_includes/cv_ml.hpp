@@ -1,9 +1,9 @@
 #pragma once
-#include "cv_link_config.hpp"
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
+#include "cv_link_config.hpp"
 #include <opencv2/ml.hpp>
-#if _WIN32
-#if _DEBUG
+#ifdef _WIN32
+#ifdef _DEBUG
 RUNTIME_COMPILER_LINKLIBRARY("opencv_ml" CV_VERSION_ "d.lib")
 #else
 RUNTIME_COMPILER_LINKLIBRARY("opencv_ml" CV_VERSION_ ".lib")

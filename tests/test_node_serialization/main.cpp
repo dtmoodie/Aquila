@@ -1,11 +1,4 @@
 #define BOOST_TEST_MAIN
-#include <Aquila/core/IDataStream.hpp>
-#include <Aquila/serialization/cereal/JsonArchive.hpp>
-#include <Aquila/core/DataStream.hpp>
-
-#include <MetaObject/thread/ThreadPool.hpp>
-#include <MetaObject/object/MetaObject.hpp>
-#include <MetaObject/serialization/SerializationFactory.hpp>
 
 #ifdef _MSC_VER
 #include <boost/test/unit_test.hpp>
@@ -13,15 +6,28 @@
 #define BOOST_TEST_MODULE __FILE__
 #include <boost/test/included/unit_test.hpp>
 #endif
-#include <Aquila/types/SyncedMemory.hpp>
-#include <boost/thread.hpp>
+
+#include <Aquila/types/SyncedImage.hpp>
+
+#include <Aquila/core/Graph.hpp>
+#include <Aquila/core/IGraph.hpp>
+
+#include <MetaObject/object/MetaObject.hpp>
+#include <MetaObject/runtime_reflection.hpp>
+#include <MetaObject/serialization/JSONPrinter.hpp>
+#include <MetaObject/thread/ThreadPool.hpp>
+
 #include <boost/filesystem.hpp>
-#include <iostream>
+#include <boost/thread.hpp>
+
+#include <opencv2/core.hpp>
+
 #include <fstream>
+#include <iostream>
 
 using namespace mo;
 
-//MO_REGISTER_OBJECT(serializable_object);
+// MO_REGISTER_OBJECT(serializable_object);
 BOOST_AUTO_TEST_CASE(initialize)
 {
     boost::filesystem::path currentDir = boost::filesystem::current_path();
@@ -34,7 +40,7 @@ BOOST_AUTO_TEST_CASE(initialize)
 #else
     currentDir = boost::filesystem::path(currentDir.string() + "/Plugins");
 #endif
-    MO_LOG(info) << "Looking for plugins in: " << currentDir.string();
+    MO_LOG(info, "Looking for plugins in: {}", currentDir.string());
     boost::filesystem::directory_iterator end_itr;
     if (boost::filesystem::is_directory(currentDir))
     {
@@ -58,43 +64,39 @@ BOOST_AUTO_TEST_CASE(initialize)
 
 BOOST_AUTO_TEST_CASE(synced_mem_to_json)
 {
-    aq::SyncedMemory synced_mem(cv::Mat(320,240, CV_32FC3));
-    
-    mo::TParamPtr<aq::SyncedMemory> param;
+    aq::SyncedImage synced_mem(cv::Mat(320, 240, CV_32FC3));
+
+    mo::TParamPtr<aq::SyncedImage> param;
     param.setName("Matrix");
     param.updatePtr(&synced_mem);
-    auto func = mo::SerializationFactory::instance()->getJsonSerializationFunction(param.getTypeInfo());
-    BOOST_REQUIRE(func);
+
+    // TODO reimplement test for json serialization using dynamic visitation
     std::ofstream ofs("synced_memory_json.json");
     BOOST_REQUIRE(ofs.is_open());
-    aq::JSONOutputArchive ar(ofs);
-    func(&param,ar);
+    mo::JSONSaver saver(ofs);
+    param.save(saver);
 }
 
-BOOST_AUTO_TEST_CASE(datastream)
+BOOST_AUTO_TEST_CASE(Graph)
 {
-    auto ds = aq::IDataStream::create("", "TestFrameGrabber");
-    std::ofstream ofs("datastream.json");
+    auto ds = aq::IGraph::create("", "TestFrameGrabber");
+    std::ofstream ofs("Graph.json");
     BOOST_REQUIRE(ofs.is_open());
-    aq::JSONOutputArchive ar(ofs);
+
+    /*aq::JSONOutputArchive ar(ofs);
     ds->addNode("QtImageDisplay");
     auto disp = ds->getNode("QtImageDisplay0");
     auto fg = ds->getNode("TestFrameGrabber0");
     disp->connectInput(fg, "current_frame", "image");
-    ar(ds);
+    ar(ds);*/
 }
 
-BOOST_AUTO_TEST_CASE(read_datastream)
+BOOST_AUTO_TEST_CASE(read_Graph)
 {
-    rcc::shared_ptr<aq::IDataStream> stream = rcc::shared_ptr<aq::DataStream>::create();
-    std::ifstream ifs("datastream.json");
+    rcc::shared_ptr<aq::IGraph> stream = rcc::shared_ptr<aq::Graph>::create();
+    std::ifstream ifs("Graph.json");
     BOOST_REQUIRE(ifs.is_open());
-    std::map<std::string, std::string> dummy;
+    /*std::map<std::string, std::string> dummy;
     aq::JSONInputArchive ar(ifs, dummy, dummy);
-    ar(stream);
+    ar(stream);*/
 }
-
-/*BOOST_AUTO_TEST_CASE(cleanup)
-{
-    mo::ThreadPool::instance()->cleanup();
-}*/

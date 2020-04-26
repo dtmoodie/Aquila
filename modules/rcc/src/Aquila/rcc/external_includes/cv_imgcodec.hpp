@@ -1,10 +1,10 @@
 #pragma once
-#include "cv_link_config.hpp"
-#include "cv_core.hpp"
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
+#include "cv_core.hpp"
+#include "cv_link_config.hpp"
 #include <opencv2/imgcodecs.hpp>
-#if _WIN32
-#if _DEBUG
+#ifdef _WIN32
+#ifdef _DEBUG
 RUNTIME_COMPILER_LINKLIBRARY("opencv_imgcodecs" CV_VERSION_ "d.lib")
 #else
 RUNTIME_COMPILER_LINKLIBRARY("opencv_imgcodecs" CV_VERSION_ ".lib")

@@ -1,3 +1,7 @@
 build
 build_debug
 build_release
+CMakeLists.txt.*
+**/*.autosave
+dependencies/build-*
+.vscode/

@@ -1,39 +1,43 @@
 cmake_minimum_required(VERSION 2.8)
 CMAKE_POLICY(SET CMP0048 NEW)
 project(Aquila
-    VERSION 0.1)
+    VERSION 0.1
+    LANGUAGES CXX)
 CMAKE_POLICY(SET CMP0020 NEW)
+CMAKE_POLICY(SET CMP0048 NEW)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_DEBUG_POSTFIX d)
 include(cmake/utilities.cmake)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+list(REVERSE CMAKE_MODULE_PATH)
+
 option(BUILD_DEPENDENCIES "Build dependencies within the AquilOS family" ON)
+
 IF(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_WIN32)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
   ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
   ADD_DEFINITIONS(-D_WIN32_WINNT=0x0601)
   ADD_DEFINITIONS(-D_ENABLE_ATOMIC_ALIGNMENT_FIX)
 ELSE(WIN32)
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-reorder -Wno-sign-compare -Wl,--no-as-needed -O0")
   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -g")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -g -ftemplate-backtrace-limit=0")
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_STANDARD 14)
-  SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}" CACHE PATH "Library output path" FORCE)
-  SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Executable output path" FORCE)
+  set(CMAKE_CXX_STANDARD 11)  
 ENDIF(WIN32)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 if(NOT BUILD_DEPENDENCIES)
     find_package(MetaObject REQUIRED)
     include_directories(${MetaObject_INCLUDE_DIRS})
 else()
-    ADD_SUBDIRECTORY("dependencies/MetaObject")
-    #set(MetaObject_LIBRARIES MetaObject RuntimeObjectSystem RuntimeCompiler)
-    
+    add_subdirectory("dependencies/MetaObject")
+    add_subdirectory("dependencies/cache-engine")
+    LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/dependencies/MetaObject/cmake")
     set_target_properties(RuntimeCompiler
         PROPERTIES
             CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
@@ -59,28 +63,23 @@ set(RCC_PERMODULE_INTERFACE_SOURCE
     CACHE PATH "" FORCE
 )
 
-
 include(cmake/configure_bin_dirs.cmake)
 find_package(OpenCV 3.0 QUIET COMPONENTS
     core
-    imgproc
-    highgui
-    cudaimgproc
-    cudawarping
-    cudafeatures2d
-    cudaoptflow
-    cudacodec
-    cudabgsegm
 )
 
 find_package(Gstreamer QUIET)
 
-find_package(CUDA REQUIRED)
+set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
+find_package(CUDA QUIET)
+if(CUDA_FOUND)
   set(CUDA_ARCH_NAME "Manual")
   set(CUDA_ARCH_BIN "30 35 50 60")
   set(CUDA_ARCH_PTX "30 35 50 60")
-get_filename_component(_cuda_lib_dir "${CUDA_CUDART_LIBRARY}" DIRECTORY)
-link_directories(${_cuda_lib_dir})
+  get_filename_component(_cuda_lib_dir "${CUDA_CUDART_LIBRARY}" DIRECTORY)
+  link_directories(${_cuda_lib_dir})
+endif(CUDA_FOUND)
+
 find_package(Qt5 QUIET COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
@@ -123,26 +122,6 @@ set(Boost_USE_STATIC_RUNTIME     OFF)
 ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 find_package(Boost 1.47.0 QUIET COMPONENTS ${BOOST_REQUIRED_MODULES})
 
-find_package(mxnet QUIET)
-if(${MXNET_FOUND})
-  INCLUDE_DIRECTORIES(${MXNET_INCLUDE_DIRS})
-  add_definitions(-DHAVE_MXNET)
-  add_definitions(-DMSHADOW_USE_CBLAS=1)
-  add_definitions(-DMSHADOW_USE_CUDA=1)
-  add_definitions(-DMSHADOW_USE_MKL=0)
-  add_definitions(-DMSHADOW_USE_CUDNN=1)
-endif()
-
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/dependencies/MetaObject/dependencies/cereal/include")
-
-INCLUDE_DIRECTORIES(
-    ${OpenCV_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
-    ${CUDA_INCLUDE_DIRS}
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    ${CMAKE_CURRENT_SOURCE_DIR}/remotery/lib
-)
-
 foreach(lib ${MetaObject_LIBRARIES})
     set_target_properties(${lib} PROPERTIES FOLDER MetaObject)
 endforeach()
@@ -178,35 +157,6 @@ endforeach()
 # using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
 set(Aquila_INCLUDE_DIRS "${aquila_module_includes};${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS}" CACHE PATH "" FORCE)
 set(Aquila_LIBRARIES "${aquila_modules};${MetaObject_LIBRARIES}" CACHE INTERNAL "" FORCE)
-
-# ---------------------------------------------------
-# unit tests
-if(Boost_UNIT_TEST_FRAMEWORK_FOUND AND BUILD_TESTS)
-    include(CTest)
-    enable_testing()
-    IF(UNIX)
-      set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-      set(CUDA_NVCC_FLAGS "-std=c++11;--expt-relaxed-constexpr;${CUDA_NVCC_FLAGS}")
-    ENDIF()
-    SUBDIRLIST(tests "${CMAKE_CURRENT_LIST_DIR}/tests")
-    foreach(test ${tests})
-        file(GLOB_RECURSE test_srcs "tests/${test}/*.cpp")
-        file(GLOB_RECURSE test_knl "tests/${test}/*.cu")
-        LIST(LENGTH test_knl num_knl)
-        IF(${num_knl} GREATER 0)
-            cuda_add_executable(${test} ${test_srcs} ${test_knl})
-        else()
-            add_executable(${test} ${test_srcs})
-        endif()
-        TARGET_LINK_LIBRARIES(${test} ${MetaObject_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${aquila_modules})
-        set_target_properties(${test} PROPERTIES FOLDER Tests/Aquila)
-        add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
-        if(MSVC)
-          CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/Aquila/${test}.vcxproj.user @ONLY)
-          CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)
-        endif()
-    endforeach()
-endif()
 
 # ----------------- Install
 if(Qt5_FOUND)

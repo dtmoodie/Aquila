@@ -1,7 +1,7 @@
 #pragma once
-#include "cv_link_config.hpp"
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #include "cv_core.hpp"
+#include "cv_link_config.hpp"
 #include <opencv2/videoio.hpp>
 
 #ifdef _MSC_VER // Windows

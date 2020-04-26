@@ -14,5 +14,3 @@ RUNTIME_COMPILER_LINKLIBRARY("cublas.lib")
 RUNTIME_COMPILER_LINKLIBRARY("-lcudart")
 #define CALL
 #endif
-
-

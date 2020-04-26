@@ -1,8 +1,10 @@
 #pragma once
-#include "cv_link_config.hpp"
-#include "cv_core.hpp"
-#include "opencv2/cudacodec.hpp"
+#include <MetaObject/core/metaobject_config.hpp>
+#if MO_OPENCV_HAVE_CUDA
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
+#include "cv_core.hpp"
+#include "cv_link_config.hpp"
+#include "opencv2/cudacodec.hpp"
 #ifdef _MSC_VER // Windows
 
 #ifdef _DEBUG
@@ -14,4 +16,5 @@ RUNTIME_COMPILER_LINKLIBRARY("opencv_cudacodec" CV_VERSION_ ".lib")
 #else // Linux
 RUNTIME_COMPILER_LINKLIBRARY("-lopencv_cudacodec")
 #define CALL
+#endif
 #endif
