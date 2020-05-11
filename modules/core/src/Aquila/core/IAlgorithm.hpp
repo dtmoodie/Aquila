@@ -12,7 +12,7 @@ namespace aq
     class AQUILA_EXPORTS IAlgorithm : virtual public TInterface<IAlgorithm, mo::MetaObject>
     {
       public:
-        MO_BEGIN(IAlgorithm)
+        MO_DERIVE(IAlgorithm, mo::MetaObject)
             MO_SIGNAL(void, componentAdded, IAlgorithm*)
             MO_SIGNAL(void, update)
         MO_END;
