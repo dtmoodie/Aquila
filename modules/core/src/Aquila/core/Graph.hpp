@@ -4,7 +4,6 @@
 #include <MetaObject/core/SystemTable.hpp>
 #include <MetaObject/object/MetaObject.hpp>
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
-#include <MetaObject/object/detail/MetaObjectMacrosImpl.hpp>
 #include <MetaObject/signals/detail/SignalMacros.hpp>
 #include <MetaObject/signals/detail/SlotMacros.hpp>
 #include <MetaObject/thread/ThreadHandle.hpp>
@@ -17,10 +16,9 @@ namespace aq
     class AQUILA_EXPORTS Graph : public IGraph
     {
       public:
-        using ParentClass = ct::VariadicTypedef<IGraph>;
         Graph();
         ~Graph() override;
-        MO_BEGIN(Graph)
+        MO_DERIVE(Graph, IGraph)
             MO_SIGNAL(void, StartThreads)
             MO_SIGNAL(void, StopThreads)
 
