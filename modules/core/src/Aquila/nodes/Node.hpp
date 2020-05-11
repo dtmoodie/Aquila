@@ -80,7 +80,9 @@ namespace aq
         class AQUILA_EXPORTS Node : virtual public INode
         {
           public:
-            using ParentClass = ct::VariadicTypedef<INode>;
+            MO_DERIVE(Node, INode)
+            MO_END;
+
             Node();
 
             ~Node() override;
