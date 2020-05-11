@@ -110,6 +110,12 @@ MO_REGISTER_OBJECT(int_output);
 MO_REGISTER_OBJECT(int_input);
 MO_REGISTER_OBJECT(multi_input);
 
+TEST(algorithm, reflection)
+{
+    ct::Reflect<aq::Algorithm>::printHierarchy(std::cout);
+    ct::printStructInfo<aq::Algorithm>(std::cout);
+}
+
 TEST(algorithm, no_input)
 {
     auto ctx = mo::AsyncStreamFactory::instance()->create();
