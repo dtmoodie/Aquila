@@ -10,6 +10,8 @@
 #include <Eigen/Geometry>
 #include <opencv2/core/types.hpp>
 
+#include <ct/extensions/DataTable.hpp>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -20,6 +22,36 @@ namespace aq
     AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f& bb, cv::Size size);
     AQUILA_EXPORTS void normalizeBoundingBox(cv::Rect2f& bb, cv::Size size);
     AQUILA_EXPORTS void clipNormalizedBoundingBox(cv::Rect2f& bb);
+
+    namespace detection
+    {
+        struct BoundingBox2d : ct::ext::Component, cv::Rect2f
+        {
+        };
+
+        struct Confidence : ct::ext::Component
+        {
+            float value = 0.0f;
+        };
+
+        struct Classification : ct::ext::Component
+        {
+            mo::SmallVec<aq::Classification, 5> classifications;
+        };
+
+        struct Id : ct::ext::Component
+        {
+            uint32_t id = 0;
+        };
+
+        struct Size3d : Eigen::Vector3f, ct::ext::Component
+        {
+        };
+
+        struct Pose3d : Eigen::Affine3f, ct::ext::Component
+        {
+        };
+    } // namespace detection
 
     //////////////////////////////////////////
     /// DetectedObject
@@ -101,7 +133,7 @@ namespace aq
         CategorySet::ConstPtr cat_set;
     };
     using DetectedObjectSet = TDetectedObjectSet<DetectedObject>;
-}
+} // namespace aq
 
 namespace ct
 {
@@ -120,4 +152,8 @@ namespace ct
         PUBLIC_ACCESS(id)
         PUBLIC_ACCESS(confidence)
     REFLECT_END;
-}
+
+    REFLECT_TEMPLATED_BEGIN(aq::TDetectedObjectSet)
+        PROPERTY(cats, &DataType::getCatSet, &DataType::setCatSet)
+    REFLECT_END;
+} // namespace ct
