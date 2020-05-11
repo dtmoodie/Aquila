@@ -1034,3 +1034,8 @@ void Algorithm::setLogger(const std::shared_ptr<spdlog::logger>& logger)
 {
     m_logger = logger;
 }
+
+spdlog::logger& Algorithm::getLogger() const
+{
+    return *m_logger;
+}

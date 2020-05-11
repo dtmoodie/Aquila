@@ -14,13 +14,17 @@
 #define STRINGIFY_(X) #X
 #define STRINGIFY(X) STRINGIFY_(X)
 
-#define LOG_ALGO(LEVEL, ...) m_logger->LEVEL(__FILE__ ":" STRINGIFY(__LINE__) " " __VA_ARGS__)
+#define LOG_ALGO(LEVEL, ...) this->getLogger().LEVEL(__FILE__ ":" STRINGIFY(__LINE__) " " __VA_ARGS__)
 
 namespace aq
 {
     class AQUILA_EXPORTS Algorithm : virtual public IAlgorithm
     {
       public:
+        MO_DERIVE(Algorithm, IAlgorithm)
+
+        MO_END;
+
         Algorithm();
         bool process() override;
 
@@ -65,6 +69,8 @@ namespace aq
 
         void setLogger(const std::shared_ptr<spdlog::logger>& logger) override;
 
+        spdlog::logger& getLogger() const;
+
       protected:
         void clearModifiedInputs();
         void clearModifiedControlParams();
@@ -83,8 +89,6 @@ namespace aq
 
         void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&) override;
 
-        std::shared_ptr<spdlog::logger> m_logger;
-
         struct SyncData
         {
             SyncData(const boost::optional<mo::Time>& ts_, mo::FrameNumber fn);
@@ -98,6 +102,7 @@ namespace aq
         };
 
       private:
+        std::shared_ptr<spdlog::logger> m_logger;
         mo::FrameNumber m_fn;
         mo::OptionalTime m_ts;
         mo::OptionalTime m_last_ts;
