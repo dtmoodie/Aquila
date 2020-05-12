@@ -5,7 +5,6 @@
 #include "RuntimeObjectSystem/ISimpleSerializer.h"
 #include <MetaObject/logging/logging.hpp>
 #include <MetaObject/logging/profiling.hpp>
-#include <MetaObject/logging/profiling.hpp>
 #include <MetaObject/object/MetaObjectFactory.hpp>
 #include <MetaObject/object/detail/IMetaObjectImpl.hpp>
 #include <cereal/types/string.hpp>
@@ -206,7 +205,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
     return rcc::shared_ptr<IFrameGrabber>();
 }
 
-void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Header, mo::UpdateFlags)
+void IFrameGrabber::on_loaded_document_modified(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&)
 {
     loadData(loaded_document);
 }
@@ -239,7 +238,7 @@ class FrameGrabber : virtual public IFrameGrabber
     static std::vector<std::string> listLoadablePaths();
     static int loadTimeout();
     MO_DERIVE(FrameGrabber, IFrameGrabber)
-    MO_SLOT(bool, loadData, std::string)
+        MO_SLOT(bool, loadData, std::string)
     MO_END;
     bool processImpl() override;
     void addComponent(const rcc::weak_ptr<IAlgorithm>& component) override;
