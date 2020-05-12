@@ -69,6 +69,14 @@ namespace aq
         m_component_providers.push_back(std::move(provider));
     }
 
+    void EntityComponentSystem::erase(uint32_t entity_id)
+    {
+        for (auto& provider : m_component_providers)
+        {
+            provider->erase(entity_id);
+        }
+    }
+
     uint32_t EntityComponentSystem::append()
     {
         uint32_t num_entities = 0;

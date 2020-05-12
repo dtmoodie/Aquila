@@ -15,8 +15,7 @@ namespace aq
     struct AQUILA_EXPORTS IDynamicProvider : virtual ct::ext::IComponentProvider
     {
         virtual void resize(uint32_t) = 0;
-
-        virtual std::shared_ptr<IDynamicProvider> clone() const = 0;
+        virtual void erase(uint32_t) = 0;
     };
 
     template <class T>
@@ -34,7 +33,7 @@ namespace aq
         const ct::ext::IComponentProvider* getProvider(const std::type_info&) const override;
         size_t getNumEntities() const override;
 
-        std::shared_ptr<IDynamicProvider> clone() const;
+        void erase(uint32_t) override;
 
       private:
         ct::ext::DataTableStorage<T> m_data;
@@ -101,6 +100,8 @@ namespace aq
             }
             return view;
         }
+
+        void erase(uint32_t entity_id);
 
       private:
         std::vector<ce::shared_ptr<IDynamicProvider>> m_component_providers;
@@ -244,23 +245,11 @@ namespace aq
     }
 
     template <class T>
-    std::shared_ptr<IDynamicProvider> TComponentProvider<T>::clone() const
+    void TComponentProvider<T>::erase(uint32_t id)
     {
-        return std::make_shared<TComponentProvider<T>>(*this);
+        m_data.erase(id);
     }
 
 } // namespace aq
-
-namespace ce
-{
-    template <>
-    struct SharedPtrCopy<aq::IDynamicProvider, void>
-    {
-        static std::shared_ptr<aq::IDynamicProvider> copy(const aq::IDynamicProvider& data)
-        {
-            return data.clone();
-        }
-    };
-} // namespace ce
 
 #endif // AQ_TYPES_ENTITY_COMPONENT_SYSTEM_HPP

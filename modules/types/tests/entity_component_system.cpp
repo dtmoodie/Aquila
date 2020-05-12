@@ -104,4 +104,28 @@ TEST(entity_component_system, erase)
 
     auto new_obj = ecs.get<GameObject>(0);
     ASSERT_EQ(GameObject::init(0), new_obj);
+
+    ecs.erase(5);
+    ASSERT_EQ(ecs.getNumEntities(), 9);
+    new_obj = ecs.get<GameObject>(5);
+    ASSERT_EQ(new_obj, GameObject::init(6));
+}
+
+TEST(entity_component_system, copy_on_write)
+{
+    aq::EntityComponentSystem ecs;
+
+    for (size_t i = 0; i < 10; ++i)
+    {
+        auto obj = GameObject::init(i);
+        ecs.push_back(obj);
+    }
+
+    aq::EntityComponentSystem copy(ecs);
+
+    EXPECT_EQ(copy.getComponent<Sphere>().data(), ecs.getComponent<Sphere>().data());
+
+    copy.getComponentMutable<Sphere>();
+
+    EXPECT_EQ(copy.getComponent<Sphere>().data(), ecs.getComponent<Sphere>().data());
 }
