@@ -12,28 +12,31 @@
 #include <memory>
 namespace aq
 {
-    struct AQUILA_EXPORTS IDynamicProvider : virtual ct::ext::IComponentProvider
+    struct AQUILA_EXPORTS IComonentProvider
     {
+        virtual ~IComonentProvider() = default;
         virtual void resize(uint32_t) = 0;
         virtual void erase(uint32_t) = 0;
+        virtual size_t getNumEntities() const = 0;
+
+        virtual bool providesComponent(mo::TypeInfo info) const = 0;
+        virtual mo::TypeInfo getComponentType() const = 0;
     };
 
     template <class T>
-    struct TComponentProvider : ct::ext::TComponentProvider<T>, virtual IDynamicProvider
+    struct TComponentProvider : IComonentProvider
     {
         void resize(uint32_t) override;
-        bool providesComponent(const std::type_info& info) const override;
-        void getComponentMutable(ct::TArrayView<T>&) override;
-        void getComponent(ct::TArrayView<const T>&) const override;
-
-        uint32_t getNumComponents() const override;
-        const std::type_info* getComponentType(uint32_t idx) const override;
-
-        ct::ext::IComponentProvider* getProvider(const std::type_info&) override;
-        const ct::ext::IComponentProvider* getProvider(const std::type_info&) const override;
-        size_t getNumEntities() const override;
-
         void erase(uint32_t) override;
+
+        bool providesComponent(mo::TypeInfo info) const override;
+
+        ct::TArrayView<T> getComponentMutable();
+        ct::TArrayView<const T> getComponent() const;
+
+        mo::TypeInfo getComponentType() const override;
+
+        size_t getNumEntities() const override;
 
       private:
         ct::ext::DataTableStorage<T> m_data;
@@ -41,12 +44,18 @@ namespace aq
 
     struct AQUILA_EXPORTS EntityComponentSystem
     {
-        uint32_t getNumComponents() const;
-        const std::type_info* getComponentType(uint32_t idx) const;
+        EntityComponentSystem() = default;
+        EntityComponentSystem(const EntityComponentSystem& other);
+        EntityComponentSystem(EntityComponentSystem&& other) = default;
+        EntityComponentSystem& operator=(EntityComponentSystem&& other) = default;
+        EntityComponentSystem& operator=(const EntityComponentSystem& other);
 
-        ct::ext::IComponentProvider* getProvider(const std::type_info& type);
-        const ct::ext::IComponentProvider* getProvider(const std::type_info& type) const;
-        void addProvider(ce::shared_ptr<IDynamicProvider>);
+        uint32_t getNumComponents() const;
+        mo::TypeInfo getComponentType(uint32_t idx) const;
+
+        IComonentProvider* getProvider(mo::TypeInfo type);
+        const IComonentProvider* getProvider(mo::TypeInfo type) const;
+        void addProvider(ce::shared_ptr<IComonentProvider>);
 
         uint32_t getNumEntities() const;
 
@@ -78,11 +87,11 @@ namespace aq
         ct::TArrayView<T> getComponentMutable()
         {
             ct::TArrayView<T> view;
-            auto provider = getProvider(typeid(T));
+            auto provider = getProvider(mo::TypeInfo::create<T>());
             if (provider)
             {
-                auto typed = static_cast<ct::ext::TComponentProvider<T>*>(provider);
-                typed->getComponentMutable(view);
+                auto typed = static_cast<TComponentProvider<T>*>(provider);
+                view = typed->getComponentMutable();
             }
 
             return view;
@@ -92,11 +101,11 @@ namespace aq
         ct::TArrayView<const T> getComponent() const
         {
             ct::TArrayView<const T> view;
-            auto provider = getProvider(typeid(T));
+            auto provider = getProvider(mo::TypeInfo::create<T>());
             if (provider)
             {
-                auto typed = static_cast<const ct::ext::TComponentProvider<T>*>(provider);
-                typed->getComponent(view);
+                auto typed = static_cast<const TComponentProvider<T>*>(provider);
+                view = typed->getComponent();
             }
             return view;
         }
@@ -104,7 +113,7 @@ namespace aq
         void erase(uint32_t entity_id);
 
       private:
-        std::vector<ce::shared_ptr<IDynamicProvider>> m_component_providers;
+        std::vector<ce::shared_ptr<IComonentProvider>> m_component_providers;
 
         uint32_t append();
 
@@ -113,21 +122,22 @@ namespace aq
         {
             auto ptr = ct::Reflect<T>::getPtr(field_index);
             using Component_t = typename decltype(ptr)::Data_t;
-            auto provider = getProvider(typeid(Component_t));
+            auto provider = getProvider(mo::TypeInfo::create<Component_t>());
             if (!provider)
             {
                 MO_ASSERT_EQ(id, 0);
                 // create a provider
                 auto new_provider = ce::shared_ptr<TComponentProvider<Component_t>>::create();
                 new_provider->resize(1);
-                addProvider(ce::shared_ptr<IDynamicProvider>(std::move(new_provider)));
-                provider = getProvider(typeid(Component_t));
+                addProvider(ce::shared_ptr<IComonentProvider>(std::move(new_provider)));
+                provider = getProvider(mo::TypeInfo::create<Component_t>());
             }
             MO_ASSERT(provider);
-            auto typed = static_cast<ct::ext::TComponentProvider<Component_t>*>(provider);
+            auto typed = static_cast<TComponentProvider<Component_t>*>(provider);
             MO_ASSERT(typed);
-            ct::TArrayView<Component_t> view;
-            MO_ASSERT(provider->getComponentMutable(view));
+            ct::TArrayView<Component_t> view = typed->getComponentMutable();
+
+            MO_ASSERT(view.size());
             MO_ASSERT(id < view.size());
             view[id] = ptr.get(obj);
         }
@@ -151,12 +161,12 @@ namespace aq
         {
             auto ptr = ct::Reflect<T>::getPtr(field_index);
             using Component_t = typename decltype(ptr)::Data_t;
-            auto provider = getProvider(typeid(Component_t));
+            auto provider = getProvider(mo::TypeInfo::create<Component_t>());
             MO_ASSERT(provider);
-            auto typed = static_cast<const ct::ext::TComponentProvider<Component_t>*>(provider);
+            auto typed = static_cast<const TComponentProvider<Component_t>*>(provider);
             MO_ASSERT(typed);
-            ct::TArrayView<const Component_t> view;
-            typed->getComponent(view);
+            ct::TArrayView<const Component_t> view = typed->getComponent();
+
             MO_ASSERT(entity_id < view.size());
             ptr.set(obj, view[entity_id]);
         }
@@ -185,59 +195,28 @@ namespace aq
     }
 
     template <class T>
-    bool TComponentProvider<T>::providesComponent(const std::type_info& info) const
+    bool TComponentProvider<T>::providesComponent(mo::TypeInfo info) const
     {
-        return &info == &typeid(T);
+        return info.template isType<T>();
     }
 
     template <class T>
-    void TComponentProvider<T>::getComponentMutable(ct::TArrayView<T>& out)
+    ct::TArrayView<T> TComponentProvider<T>::getComponentMutable()
     {
-        out = ct::TArrayView<T>(m_data.data(0).begin, m_data.size());
+        return ct::TArrayView<T>(m_data.data(0).begin, m_data.size());
     }
 
     template <class T>
-    void TComponentProvider<T>::getComponent(ct::TArrayView<const T>& out) const
+    ct::TArrayView<const T> TComponentProvider<T>::getComponent() const
     {
-        out = ct::TArrayView<const T>(m_data.data(0).begin, m_data.size());
+        return ct::TArrayView<const T>(m_data.data(0).begin, m_data.size());
     }
 
     template <class T>
-    uint32_t TComponentProvider<T>::getNumComponents() const
+    mo::TypeInfo TComponentProvider<T>::getComponentType() const
     {
-        return 1;
+        return mo::TypeInfo::create<T>();
     }
-
-    template <class T>
-    const std::type_info* TComponentProvider<T>::getComponentType(uint32_t idx) const
-    {
-        if (idx == 0)
-        {
-            return &typeid(T);
-        }
-        return nullptr;
-    }
-
-    template <class T>
-    ct::ext::IComponentProvider* TComponentProvider<T>::getProvider(const std::type_info& type)
-    {
-        if (&type == &typeid(T))
-        {
-            return static_cast<ct::ext::TComponentProvider<T>*>(this);
-        }
-        return nullptr;
-    }
-
-    template <class T>
-    const ct::ext::IComponentProvider* TComponentProvider<T>::getProvider(const std::type_info& type) const
-    {
-        if (&type == &typeid(T))
-        {
-            return static_cast<const ct::ext::TComponentProvider<T>*>(this);
-        }
-        return nullptr;
-    }
-
     template <class T>
     size_t TComponentProvider<T>::getNumEntities() const
     {

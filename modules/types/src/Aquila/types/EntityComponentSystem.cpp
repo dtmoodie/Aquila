@@ -3,6 +3,28 @@
 
 namespace aq
 {
+
+    EntityComponentSystem::EntityComponentSystem(const EntityComponentSystem& other)
+    {
+        auto providers = other.m_component_providers;
+        for (auto& provider : providers)
+        {
+            provider.setConst();
+        }
+        m_component_providers = std::move(providers);
+    }
+
+    EntityComponentSystem& EntityComponentSystem::operator=(const EntityComponentSystem& other)
+    {
+        auto providers = other.m_component_providers;
+        for (auto& provider : providers)
+        {
+            provider.setConst();
+        }
+        m_component_providers = std::move(providers);
+        return *this;
+    }
+
     uint32_t EntityComponentSystem::getNumComponents() const
     {
         return m_component_providers.size();
@@ -31,40 +53,40 @@ namespace aq
         return *num_entities;
     }
 
-    const std::type_info* EntityComponentSystem::getComponentType(uint32_t idx) const
+    mo::TypeInfo EntityComponentSystem::getComponentType(uint32_t idx) const
     {
         if (idx < m_component_providers.size())
         {
-            return m_component_providers[idx]->getComponentType(0);
+            return m_component_providers[idx]->getComponentType();
         }
-        return nullptr;
+        return mo::TypeInfo::Void();
     }
 
-    ct::ext::IComponentProvider* EntityComponentSystem::getProvider(const std::type_info& type)
+    IComonentProvider* EntityComponentSystem::getProvider(const mo::TypeInfo type)
     {
         for (auto& provider : m_component_providers)
         {
             if (provider->providesComponent(type))
             {
-                return provider->getProvider(type);
+                return provider.get();
             }
         }
         return nullptr;
     }
 
-    const ct::ext::IComponentProvider* EntityComponentSystem::getProvider(const std::type_info& type) const
+    const IComonentProvider* EntityComponentSystem::getProvider(mo::TypeInfo type) const
     {
         for (auto& provider : m_component_providers)
         {
             if (provider->providesComponent(type))
             {
-                return provider->getProvider(type);
+                return provider.get();
             }
         }
         return nullptr;
     }
 
-    void EntityComponentSystem::addProvider(ce::shared_ptr<IDynamicProvider> provider)
+    void EntityComponentSystem::addProvider(ce::shared_ptr<IComonentProvider> provider)
     {
         m_component_providers.push_back(std::move(provider));
     }

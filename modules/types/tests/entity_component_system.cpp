@@ -123,9 +123,19 @@ TEST(entity_component_system, copy_on_write)
 
     aq::EntityComponentSystem copy(ecs);
 
-    EXPECT_EQ(copy.getComponent<Sphere>().data(), ecs.getComponent<Sphere>().data());
+    EXPECT_EQ(copy.getComponent<Orientation>().data(), ecs.getComponent<Orientation>().data());
+    EXPECT_EQ(copy.getComponent<Velocity>().data(), ecs.getComponent<Velocity>().data());
+    EXPECT_EQ(copy.getComponent<Position>().data(), ecs.getComponent<Position>().data());
 
-    copy.getComponentMutable<Sphere>();
+    copy.getComponentMutable<Orientation>();
 
-    EXPECT_EQ(copy.getComponent<Sphere>().data(), ecs.getComponent<Sphere>().data());
+    EXPECT_NE(copy.getComponent<Orientation>().data(), ecs.getComponent<Orientation>().data());
+    EXPECT_EQ(copy.getComponent<Velocity>().data(), ecs.getComponent<Velocity>().data());
+    EXPECT_EQ(copy.getComponent<Position>().data(), ecs.getComponent<Position>().data());
+
+    copy.erase(4);
+
+    EXPECT_NE(copy.getComponent<Orientation>().data(), ecs.getComponent<Orientation>().data());
+    EXPECT_NE(copy.getComponent<Velocity>().data(), ecs.getComponent<Velocity>().data());
+    EXPECT_NE(copy.getComponent<Position>().data(), ecs.getComponent<Position>().data());
 }
