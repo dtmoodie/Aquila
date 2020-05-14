@@ -1,8 +1,11 @@
 #pragma once
+#include <ct/types/opencv.hpp>
+
 #include "Classification.hpp"
 #include <Aquila/core/detail/Export.hpp>
 #include <cereal/cereal.hpp>
 #include <ct/reflect.hpp>
+
 #include <map>
 #include <memory>
 #include <opencv2/core/matx.hpp>
@@ -14,7 +17,7 @@ namespace aq
     {
         Category(const std::string& name = "",
                  cv::Vec3b color = cv::Vec3b(),
-                 const Category* parent = nullptr,
+                 int32_t parent = -1,
                  unsigned int idx = 0);
 
         Classification operator()() const;
@@ -23,7 +26,7 @@ namespace aq
 
         const std::string& getName() const;
 
-        const Category* parent = nullptr;
+        int32_t parent;
         std::string name;
         unsigned int index;
         cv::Vec3b color;
@@ -61,7 +64,7 @@ namespace aq
         void hierarchy(const std::vector<int>& tree);
         Category& operator()(const std::string& name);
     };
-}
+} // namespace aq
 
 namespace ct
 {
@@ -71,4 +74,9 @@ namespace ct
         PUBLIC_ACCESS(parent)
         PUBLIC_ACCESS(index)
     REFLECT_END;
-}
+
+    REFLECT_BEGIN(aq::CategorySet)
+        MEMBER_FUNCTION(getByName,
+                        constFunctionCast<const aq::Category&, const std::string&>(&aq::CategorySet::operator()))
+    REFLECT_END;
+} // namespace ct

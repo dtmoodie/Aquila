@@ -6,7 +6,7 @@
 
 namespace aq
 {
-    Category::Category(const std::string& name_, cv::Vec3b color_, const Category* parent_, unsigned int idx)
+    Category::Category(const std::string& name_, cv::Vec3b color_, int32_t parent_, unsigned int idx)
         : parent(parent_)
         , name(name_)
         , index(idx)
@@ -111,7 +111,7 @@ namespace aq
         {
             if (tree[i] >= 0)
             {
-                (*this)[i].parent = &(*this)[static_cast<size_t>(tree[i])];
+                (*this)[i].parent = i;
             }
         }
     }
