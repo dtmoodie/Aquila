@@ -87,7 +87,7 @@ namespace aq
         const void* d_ptr = nullptr;
         size_t m_size = 0;
     };
-}
+} // namespace aq
 
 namespace ct
 {
@@ -100,6 +100,6 @@ namespace ct
         PROPERTY(data, &aq::ConstSyncedView::host, nullptr)
         PROPERTY(size, &aq::ConstSyncedView::size, nullptr)
     REFLECT_END;
-}
+} // namespace ct
 
 #endif // AQUILA_SYNCED_VIEW_HPP
