@@ -1,8 +1,7 @@
+#include <Aquila/types/ObjectDetection.hpp>
+
 #include <ct/extensions/DataTable.hpp>
 #include <ct/reflect/print.hpp>
-
-
-#include <Aquila/types/ObjectDetection.hpp>
 
 #include <gtest/gtest.h>
 
