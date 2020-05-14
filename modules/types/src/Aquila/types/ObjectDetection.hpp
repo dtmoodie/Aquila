@@ -34,9 +34,8 @@ namespace aq
             float value = 0.0f;
         };
 
-        struct Classification : ct::ext::Component
+        struct Classification : ct::ext::Component, mo::SmallVec<aq::Classification, 5>
         {
-            mo::SmallVec<aq::Classification, 5> classifications;
         };
 
         struct Id : ct::ext::Component
@@ -51,6 +50,7 @@ namespace aq
         struct Pose3d : Eigen::Affine3f, ct::ext::Component
         {
         };
+
     } // namespace detection
 
     //////////////////////////////////////////
