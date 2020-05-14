@@ -1,20 +1,20 @@
 #pragma once
-#include <Aquila/types/ObjectDetection.hpp>
 #include <Aquila/types/TSyncedMemory.hpp>
+
+#include <Aquila/types/ObjectDetection.hpp>
 
 namespace aq
 {
+
     struct AQUILA_EXPORTS DetectionDescription : public DetectedObject
     {
-
     };
 
-    struct AQUILA_EXPORTS DetectionDescriptionPatch: public DetectionDescription
+    struct AQUILA_EXPORTS DetectionDescriptionPatch : public DetectionDescription
     {
-
     };
 
-    struct AQUILA_EXPORTS LandmarkDetection: public DetectedObject
+    struct AQUILA_EXPORTS LandmarkDetection : public DetectedObject
     {
         LandmarkDetection() = default;
         LandmarkDetection(const DetectedObject&);
@@ -23,7 +23,7 @@ namespace aq
     using DetectionDescriptionSet = TDetectedObjectSet<DetectionDescription>;
     using DetectionDescriptionPatchSet = TDetectedObjectSet<DetectionDescriptionPatch>;
     using LandmarkDetectionSet = TDetectedObjectSet<LandmarkDetection>;
-}
+} // namespace aq
 
 namespace ct
 {
@@ -38,4 +38,4 @@ namespace ct
     REFLECT_DERIVED(aq::LandmarkDetection, aq::DetectedObject)
         //PUBLIC_ACCESS(landmark_keypoints)
     REFLECT_END;*/
-}
+} // namespace ct
