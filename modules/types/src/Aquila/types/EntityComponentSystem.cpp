@@ -117,4 +117,22 @@ namespace aq
         }
         return num_entities;
     }
+
+    void EntityComponentSystem::setProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers)
+    {
+        m_component_providers = providers;
+    }
+
+    std::vector<ce::shared_ptr<IComonentProvider>>
+    EntityComponentSystem::getProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers) const
+    {
+        std::vector<ce::shared_ptr<IComonentProvider>> out;
+        for (const auto& provider : m_component_providers)
+        {
+            auto tmp = provider;
+            tmp.setConst();
+            out.push_back(tmp);
+        }
+        return out;
+    }
 } // namespace aq

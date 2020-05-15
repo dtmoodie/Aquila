@@ -41,9 +41,11 @@ namespace aq
       private:
         ct::ext::DataTableStorage<T> m_data;
     };
-
+    template <class T, class E = void>
+    struct TEntityComponentSystem;
     struct AQUILA_EXPORTS EntityComponentSystem
     {
+
         EntityComponentSystem() = default;
         EntityComponentSystem(const EntityComponentSystem& other);
         EntityComponentSystem(EntityComponentSystem&& other) = default;
@@ -55,7 +57,12 @@ namespace aq
 
         IComonentProvider* getProvider(mo::TypeInfo type);
         const IComonentProvider* getProvider(mo::TypeInfo type) const;
+
         void addProvider(ce::shared_ptr<IComonentProvider>);
+        void setProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers);
+
+        std::vector<ce::shared_ptr<IComonentProvider>>
+        getProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers) const;
 
         uint32_t getNumEntities() const;
 
@@ -111,6 +118,14 @@ namespace aq
         }
 
         void erase(uint32_t entity_id);
+
+        REFLECT_INTERNAL_BEGIN(EntityComponentSystem)
+            INTERNAL_PROPERTY(providers, &EntityComponentSystem::getProviders, &EntityComponentSystem::setProviders)
+            MEMBER_FUNCTION(getNumComponents)
+            MEMBER_FUNCTION(getNumEntities)
+            MEMBER_FUNCTION(getComponentType)
+            MEMBER_FUNCTION(erase)
+        REFLECT_INTERNAL_END;
 
       private:
         std::vector<ce::shared_ptr<IComonentProvider>> m_component_providers;
@@ -185,6 +200,55 @@ namespace aq
             getRecurse(obj, entity_id, next_field);
         }
     };
+
+    template <class T>
+    void addComponents(EntityComponentSystem& ecs, ct::VariadicTypedef<T>)
+    {
+        auto ptr = ce::make_shared<TComponentProvider<T>>();
+        MO_ASSERT(ptr);
+        ecs.addProvider(std::move(ptr));
+    }
+
+    template <class T, class... Ts>
+    void addComponents(EntityComponentSystem& ecs,
+                       ct::VariadicTypedef<T, Ts...>,
+                       ct::EnableIf<sizeof...(Ts) != 0, int32_t> = 0)
+    {
+        auto ptr = ce::make_shared<TComponentProvider<T>>();
+        MO_ASSERT(ptr);
+        ecs.addProvider(std::move(ptr));
+        addComponents(ecs, ct::VariadicTypedef<Ts...>());
+    }
+
+    template <class T, class E>
+    struct TEntityComponentSystem : EntityComponentSystem
+    {
+        TEntityComponentSystem()
+        {
+            addComponents(*this, ct::VariadicTypedef<T>{});
+        }
+    };
+
+    template <class T>
+    struct TEntityComponentSystem<T, ct::EnableIfReflected<T>> : EntityComponentSystem
+    {
+        TEntityComponentSystem()
+        {
+            using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
+            using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
+            addComponents(*this, Components_t{});
+        }
+    };
+
+    template <class... T>
+    struct TEntityComponentSystem<ct::VariadicTypedef<T...>, void> : EntityComponentSystem
+    {
+        TEntityComponentSystem()
+        {
+            addComponents(*this, ct::VariadicTypedef<T...>{});
+        }
+    };
+
     ////////////////////////////////////////////////////////////////////////////////
     // Implementation
     ////////////////////////////////////////////////////////////////////////////////
