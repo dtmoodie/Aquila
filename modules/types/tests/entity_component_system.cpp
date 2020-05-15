@@ -139,3 +139,23 @@ TEST(entity_component_system, copy_on_write)
     EXPECT_NE(copy.getComponent<Velocity>().data(), ecs.getComponent<Velocity>().data());
     EXPECT_NE(copy.getComponent<Position>().data(), ecs.getComponent<Position>().data());
 }
+
+TEST(entity_component_system, typed_ecs)
+{
+    aq::TEntityComponentSystem<Sphere> ecs;
+    ecs.push_back(Sphere{});
+
+    auto velocity = ecs.getComponent<Velocity>();
+    ASSERT_EQ(velocity.size(), 1);
+}
+
+TEST(entity_component_system, type_erase)
+{
+    aq::TEntityComponentSystem<Sphere> tecs;
+    tecs.push_back(Sphere{});
+
+    aq::EntityComponentSystem ecs(tecs);
+
+    auto velocity = ecs.getComponent<Velocity>();
+    ASSERT_EQ(velocity.size(), 1);
+}
