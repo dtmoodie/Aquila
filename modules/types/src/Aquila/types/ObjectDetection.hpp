@@ -1,7 +1,9 @@
 #pragma once
 #include "detection/Category.hpp"
 #include "detection/Classification.hpp"
+
 #include <Aquila/core/detail/Export.hpp>
+#include <Aquila/types/EntityComponentSystem.hpp>
 
 #include <MetaObject/types/small_vec.hpp>
 
@@ -27,28 +29,58 @@ namespace aq
     {
         struct BoundingBox2d : ct::ext::Component, cv::Rect2f
         {
+            template <class... ARGS>
+            BoundingBox2d(ARGS&&... args)
+                : cv::Rect2f(std::forward<ARGS>(args)...)
+            {
+            }
         };
 
         struct Confidence : ct::ext::Component
         {
-            float value = 0.0f;
+            Confidence(float v = 0.0F)
+                : value(v)
+            {
+            }
+
+            float value;
         };
 
         struct Classification : ct::ext::Component, mo::SmallVec<aq::Classification, 5>
         {
+            template <class... ARGS>
+            Classification(ARGS&&... args)
+                : mo::SmallVec<aq::Classification, 5>(std::forward<ARGS>(args)...)
+            {
+            }
         };
 
         struct Id : ct::ext::Component
         {
-            uint32_t id = 0;
+            Id(uint32_t v = 0)
+                : value(v)
+            {
+            }
+
+            uint32_t value;
         };
 
         struct Size3d : Eigen::Vector3f, ct::ext::Component
         {
+            template <class... ARGS>
+            Size3d(ARGS&&... args)
+                : Eigen::Vector3f(std::forward<ARGS>(args)...)
+            {
+            }
         };
 
         struct Pose3d : Eigen::Affine3f, ct::ext::Component
         {
+            template <class... ARGS>
+            Pose3d(ARGS&&... args)
+                : Eigen::Affine3f(std::forward<ARGS>(args)...)
+            {
+            }
         };
 
     } // namespace detection
@@ -65,10 +97,10 @@ namespace aq
 
         void classify(Classification&& cls);
 
-        cv::Rect2f bounding_box;
-        mo::SmallVec<Classification, 5> classifications;
-        unsigned int id = 0;
-        float confidence = 0.0f;
+        detection::BoundingBox2d bounding_box;
+        detection::Classification classifications;
+        detection::Id id;
+        detection::Confidence confidence;
     };
 
     bool operator==(const DetectedObject& lhs, const DetectedObject& rhs);
@@ -91,7 +123,7 @@ namespace aq
     /// TDetectedObjectSet
     //////////////////////////////////////////
     template <class DetType>
-    struct AQUILA_EXPORTS TDetectedObjectSet : public std::vector<DetType>
+    struct AQUILA_EXPORTS TDetectedObjectSet : public TEntityComponentSystem<DetType>
     {
         template <class... Args>
         TDetectedObjectSet(const CategorySet::ConstPtr& cats = CategorySet::ConstPtr())
@@ -101,29 +133,22 @@ namespace aq
 
         template <class... Args>
         TDetectedObjectSet(CategorySet::ConstPtr& cats, Args&&... args)
-            : std::vector<DetType>(std::forward<Args>(args)...)
+            : TEntityComponentSystem<DetType>(std::forward<Args>(args)...)
             , cat_set(cats)
         {
         }
 
         template <class... Args>
         TDetectedObjectSet(Args&&... args)
-            : std::vector<DetType>(std::forward<Args>(args)...)
+            : TEntityComponentSystem<DetType>(std::forward<Args>(args)...)
         {
         }
 
         void setCatSet(const CategorySet::ConstPtr& cats)
         {
             cat_set = cats;
-            std::vector<DetType>::clear();
+            TEntityComponentSystem<DetType>::clear();
         }
-
-        /*template <class AR>
-        void serialize(AR& ar)
-        {
-            ar(cereal::make_nvp("detections", static_cast<std::vector<DetType>&>(*this)));
-            ar(CEREAL_NVP(cat_set));
-        }*/
 
         CategorySet::ConstPtr getCatSet() const
         {
@@ -137,7 +162,6 @@ namespace aq
 
 namespace ct
 {
-
     REFLECT_BEGIN(aq::DetectedObject)
         PUBLIC_ACCESS(bounding_box)
         PUBLIC_ACCESS(classifications)
@@ -153,7 +177,7 @@ namespace ct
         PUBLIC_ACCESS(confidence)
     REFLECT_END;
 
-    REFLECT_TEMPLATED_BEGIN(aq::TDetectedObjectSet)
+    REFLECT_TEMPLATED_DERIVED(aq::TDetectedObjectSet, aq::TEntityComponentSystem<Args...>)
         PROPERTY(cats, &DataType::getCatSet, &DataType::setCatSet)
     REFLECT_END;
 } // namespace ct

@@ -7,52 +7,56 @@
 namespace aq
 {
 
-bool operator==(const DetectedObject& lhs, const DetectedObject& rhs)
-{
-    return lhs.bounding_box == rhs.bounding_box && lhs.id == rhs.id && lhs.confidence == rhs.confidence;
-}
-
-void boundingBoxToPixels(cv::Rect2f& bb, cv::Size size)
-{
-    if (bb.width <= 1.f && bb.height <= 1.f)
+    bool operator==(const DetectedObject& lhs, const DetectedObject& rhs)
     {
-        bb.x *= size.width;
-        bb.y *= size.height;
-        bb.width *= size.width;
-        bb.height *= size.height;
+        return lhs.bounding_box == rhs.bounding_box && lhs.id.value == rhs.id.value &&
+               lhs.confidence.value == rhs.confidence.value;
     }
-}
 
-void normalizeBoundingBox(cv::Rect2f& bb, cv::Size size)
-{
-    if (bb.width > 1)
+    void boundingBoxToPixels(cv::Rect2f& bb, cv::Size size)
     {
-        bb.x /= size.width;
-        bb.y /= size.height;
-        bb.width /= size.width;
-        bb.height /= size.height;
+        if (bb.width <= 1.f && bb.height <= 1.f)
+        {
+            bb.x *= size.width;
+            bb.y *= size.height;
+            bb.width *= size.width;
+            bb.height *= size.height;
+        }
     }
-}
 
-void clipNormalizedBoundingBox(cv::Rect2f& bb)
-{
-    bb.x = std::min(1.0f, std::max<float>(bb.x, 0.0f));
-    bb.y = std::min(1.0f, std::max<float>(bb.y, 0.0f));
-    bb.width = std::min(1.0f, std::max<float>(bb.width, 0.0f));
-    bb.height = std::min(1.0f, std::max<float>(bb.height, 0.0f));
-}
+    void normalizeBoundingBox(cv::Rect2f& bb, cv::Size size)
+    {
+        if (bb.width > 1)
+        {
+            bb.x /= size.width;
+            bb.y /= size.height;
+            bb.width /= size.width;
+            bb.height /= size.height;
+        }
+    }
 
-DetectedObject::DetectedObject(const cv::Rect2f& rect,
-                               const mo::SmallVec<Classification, 5>& cls,
-                               unsigned int id_,
-                               float conf)
-    : bounding_box(rect), classifications(cls), id(id_), confidence(conf)
-{
-}
+    void clipNormalizedBoundingBox(cv::Rect2f& bb)
+    {
+        bb.x = std::min(1.0f, std::max<float>(bb.x, 0.0f));
+        bb.y = std::min(1.0f, std::max<float>(bb.y, 0.0f));
+        bb.width = std::min(1.0f, std::max<float>(bb.width, 0.0f));
+        bb.height = std::min(1.0f, std::max<float>(bb.height, 0.0f));
+    }
 
-void DetectedObject::classify(Classification&& cls)
-{
-    classifications.append(std::move(cls));
-}
+    DetectedObject::DetectedObject(const cv::Rect2f& rect,
+                                   const mo::SmallVec<Classification, 5>& cls,
+                                   unsigned int id_,
+                                   float conf)
+        : bounding_box(rect)
+        , classifications(cls)
+        , id(id_)
+        , confidence(conf)
+    {
+    }
+
+    void DetectedObject::classify(Classification&& cls)
+    {
+        classifications.append(std::move(cls));
+    }
 
 } // namespace aq
