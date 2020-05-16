@@ -1,3 +1,4 @@
+#include <Aquila/types/EntityComponentSystem.hpp>
 #include <Aquila/types/ObjectDetection.hpp>
 
 #include <ct/extensions/DataTable.hpp>
@@ -23,7 +24,7 @@ TEST(object_detection, detected_object)
     }
 
     aq::DetectedObjectSet dets(cats);
-    dets.emplace_back(cv::Rect2f(0.0f, 0.0f, 1.0f, 1.0f), cls, 5);
+    dets.push_back(aq::DetectedObject(cv::Rect2f(0.0f, 0.0f, 1.0f, 1.0f), cls, 5));
 }
 
 TEST(object_detection, detected_object_data_table)
