@@ -17,6 +17,8 @@ namespace aq
         virtual ~IComonentProvider() = default;
         virtual void resize(uint32_t) = 0;
         virtual void erase(uint32_t) = 0;
+        virtual void clear() = 0;
+
         virtual size_t getNumEntities() const = 0;
 
         virtual bool providesComponent(mo::TypeInfo info) const = 0;
@@ -28,6 +30,7 @@ namespace aq
     {
         void resize(uint32_t) override;
         void erase(uint32_t) override;
+        void clear() override;
 
         bool providesComponent(mo::TypeInfo info) const override;
 
@@ -118,14 +121,7 @@ namespace aq
         }
 
         void erase(uint32_t entity_id);
-
-        REFLECT_INTERNAL_BEGIN(EntityComponentSystem)
-            INTERNAL_PROPERTY(providers, &EntityComponentSystem::getProviders, &EntityComponentSystem::setProviders)
-            MEMBER_FUNCTION(getNumComponents)
-            MEMBER_FUNCTION(getNumEntities)
-            MEMBER_FUNCTION(getComponentType)
-            MEMBER_FUNCTION(erase)
-        REFLECT_INTERNAL_END;
+        void clear();
 
       private:
         std::vector<ce::shared_ptr<IComonentProvider>> m_component_providers;
@@ -223,6 +219,12 @@ namespace aq
     template <class T, class E>
     struct TEntityComponentSystem : EntityComponentSystem
     {
+        template <class U>
+        TEntityComponentSystem(const TEntityComponentSystem<U, void>& other)
+            : EntityComponentSystem(other)
+        {
+        }
+
         TEntityComponentSystem()
         {
             addComponents(*this, ct::VariadicTypedef<T>{});
@@ -232,6 +234,12 @@ namespace aq
     template <class T>
     struct TEntityComponentSystem<T, ct::EnableIfReflected<T>> : EntityComponentSystem
     {
+        template <class U>
+        TEntityComponentSystem(const TEntityComponentSystem<U, void>& other)
+            : EntityComponentSystem(other)
+        {
+        }
+
         TEntityComponentSystem()
         {
             using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
@@ -243,6 +251,12 @@ namespace aq
     template <class... T>
     struct TEntityComponentSystem<ct::VariadicTypedef<T...>, void> : EntityComponentSystem
     {
+        template <class U>
+        TEntityComponentSystem(const TEntityComponentSystem<U, void>& other)
+            : EntityComponentSystem(other)
+        {
+        }
+
         TEntityComponentSystem()
         {
             addComponents(*this, ct::VariadicTypedef<T...>{});
@@ -293,6 +307,26 @@ namespace aq
         m_data.erase(id);
     }
 
+    template <class T>
+    void TComponentProvider<T>::clear()
+    {
+        m_data.clear();
+    }
+
 } // namespace aq
+
+namespace ct
+{
+    REFLECT_BEGIN(aq::EntityComponentSystem)
+        PROPERTY(providers, &DataType::getProviders, &DataType::setProviders)
+        MEMBER_FUNCTION(getNumComponents)
+        MEMBER_FUNCTION(getNumEntities)
+        MEMBER_FUNCTION(getComponentType)
+        MEMBER_FUNCTION(erase)
+    REFLECT_END;
+
+    REFLECT_TEMPLATED_BEGIN(aq::TEntityComponentSystem)
+    REFLECT_END;
+} // namespace ct
 
 #endif // AQ_TYPES_ENTITY_COMPONENT_SYSTEM_HPP
