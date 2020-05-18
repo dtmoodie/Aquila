@@ -1,9 +1,13 @@
 #ifndef AQ_TYPES_ENTITY_COMPONENT_SYSTEM_HPP
 #define AQ_TYPES_ENTITY_COMPONENT_SYSTEM_HPP
+#include "ComponentFactory.hpp"
+
 #include <Aquila/core/detail/Export.hpp>
+
 #include <MetaObject/core/IAsyncStream.hpp>
 #include <MetaObject/detail/TypeInfo.hpp>
 #include <MetaObject/logging/logging.hpp>
+#include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
 
 #include <ct/extensions/DataTable.hpp>
 #include <ct/static_asserts.hpp>
@@ -12,6 +16,8 @@
 #include <memory>
 namespace aq
 {
+    struct ComponentFactory;
+
     struct AQUILA_EXPORTS IComonentProvider
     {
         virtual ~IComonentProvider() = default;
@@ -64,8 +70,7 @@ namespace aq
         void addProvider(ce::shared_ptr<IComonentProvider>);
         void setProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers);
 
-        std::vector<ce::shared_ptr<IComonentProvider>>
-        getProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers) const;
+        std::vector<ce::shared_ptr<IComonentProvider>> getProviders() const;
 
         uint32_t getNumEntities() const;
 
@@ -229,6 +234,11 @@ namespace aq
         {
             addComponents(*this, ct::VariadicTypedef<T>{});
         }
+
+        T get(uint32_t id) const
+        {
+            return EntityComponentSystem::template get<T>(id);
+        }
     };
 
     template <class T>
@@ -246,6 +256,11 @@ namespace aq
             using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
             addComponents(*this, Components_t{});
         }
+
+        T get(uint32_t id) const
+        {
+            return EntityComponentSystem::template get<T>(id);
+        }
     };
 
     template <class... T>
@@ -261,6 +276,8 @@ namespace aq
         {
             addComponents(*this, ct::VariadicTypedef<T...>{});
         }
+
+        // TODO get returning a std::tuple<T...>
     };
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -315,17 +332,82 @@ namespace aq
 
 } // namespace aq
 
+namespace mo
+{
+    void loadPointer(ILoadVisitor& visitor, ce::shared_ptr<aq::IComonentProvider>& val)
+    {
+        uint32_t id = 0;
+        visitor(&id, "id");
+        TypeInfo type;
+        visitor(&type, "type");
+        id = id & (~0x80000000);
+        if (id != 0)
+        {
+            auto ptr = visitor.getPointer<aq::IComonentProvider>(id);
+            if (!ptr)
+            {
+                val = aq::ComponentFactory::instance()->createComponent(type);
+                // val = ce::make_shared<aq::IComonentProvider>();
+                visitor(val.get(), "data");
+                visitor.setSerializedPointer(val.get(), id);
+                auto cache_ptr = val;
+                visitor.pushCach(std::move(cache_ptr),
+                                 std::string("shared_ptr ") + TypeInfo::create<aq::IComonentProvider>().name(),
+                                 id);
+            }
+            else
+            {
+                std::shared_ptr<aq::IComonentProvider> cache_ptr;
+                const auto success = visitor.tryPopCache(
+                    cache_ptr, std::string("shared_ptr ") + TypeInfo::create<aq::IComonentProvider>().name(), id);
+                if (success && cache_ptr)
+                {
+                    val = cache_ptr;
+                }
+            }
+        }
+    }
+
+    void savePointer(ISaveVisitor& visitor, const ce::shared_ptr<aq::IComonentProvider>& val)
+    {
+        uint32_t id = visitor.getPointerId(TypeInfo::create<aq::IComonentProvider>(), val.get());
+
+        auto ptr = visitor.getPointer<aq::IComonentProvider>(id);
+        visitor(&id, "id");
+        if (val && ptr == nullptr)
+        {
+            visitor(val.get(), "data");
+            visitor.setSerializedPointer(val.get(), id);
+        }
+    }
+} // namespace mo
+
 namespace ct
 {
+    REFLECT_BEGIN(aq::IComonentProvider)
+        MEMBER_FUNCTION(getComponentType)
+        MEMBER_FUNCTION(getNumEntities)
+        MEMBER_FUNCTION(clear)
+        MEMBER_FUNCTION(resize)
+        MEMBER_FUNCTION(erase)
+        MEMBER_FUNCTION(providesComponent)
+    REFLECT_END;
+
+    REFLECT_TEMPLATED_DERIVED(aq::TComponentProvider, aq::IComonentProvider)
+        PROPERTY(data, &DataType::getComponent, &DataType::getComponentMutable)
+    REFLECT_END;
+
     REFLECT_BEGIN(aq::EntityComponentSystem)
         PROPERTY(providers, &DataType::getProviders, &DataType::setProviders)
         MEMBER_FUNCTION(getNumComponents)
         MEMBER_FUNCTION(getNumEntities)
         MEMBER_FUNCTION(getComponentType)
         MEMBER_FUNCTION(erase)
+        MEMBER_FUNCTION(clear)
     REFLECT_END;
 
-    REFLECT_TEMPLATED_BEGIN(aq::TEntityComponentSystem)
+    REFLECT_TEMPLATED_DERIVED(aq::TEntityComponentSystem, aq::EntityComponentSystem)
+        MEMBER_FUNCTION(get, &DataType::get)
     REFLECT_END;
 } // namespace ct
 

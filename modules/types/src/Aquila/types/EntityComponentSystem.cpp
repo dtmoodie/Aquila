@@ -123,8 +123,7 @@ namespace aq
         m_component_providers = providers;
     }
 
-    std::vector<ce::shared_ptr<IComonentProvider>>
-    EntityComponentSystem::getProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers) const
+    std::vector<ce::shared_ptr<IComonentProvider>> EntityComponentSystem::getProviders() const
     {
         std::vector<ce::shared_ptr<IComonentProvider>> out;
         for (const auto& provider : m_component_providers)
@@ -134,5 +133,13 @@ namespace aq
             out.push_back(tmp);
         }
         return out;
+    }
+
+    void EntityComponentSystem::clear()
+    {
+        for (auto& provider : m_component_providers)
+        {
+            provider->clear();
+        }
     }
 } // namespace aq
