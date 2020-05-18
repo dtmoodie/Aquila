@@ -1,6 +1,13 @@
 #include <Aquila/types/EntityComponentSystem.hpp>
+
 #include <ct/reflect/compare.hpp>
 #include <ct/reflect/print.hpp>
+
+#include <MetaObject/runtime_reflection/TraitInterface.hpp>
+#include <MetaObject/runtime_reflection/VisitorTraits.hpp>
+#include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
+#include <MetaObject/runtime_reflection/visitor_traits/vector.hpp>
+#include <MetaObject/serialization/JSONPrinter.hpp>
 
 #include <gtest/gtest.h>
 
@@ -158,4 +165,22 @@ TEST(entity_component_system, type_erase)
 
     auto velocity = ecs.getComponent<Velocity>();
     ASSERT_EQ(velocity.size(), 1);
+}
+
+TEST(entity_component_system, serialization)
+{
+    aq::EntityComponentSystem ecs;
+
+    for (size_t i = 0; i < 10; ++i)
+    {
+        auto obj = GameObject::init(i);
+        ecs.push_back(obj);
+    }
+
+    std::stringstream ss;
+    {
+        mo::JSONSaver saver(ss);
+        saver(&ecs, "ecs");
+    }
+    std::cout << ss.str() << std::endl;
 }
