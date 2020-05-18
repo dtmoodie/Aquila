@@ -3,6 +3,7 @@
 
 #include <ct/extensions/DataTable.hpp>
 #include <ct/reflect/print.hpp>
+#include <ct/static_asserts.hpp>
 
 #include <gtest/gtest.h>
 
@@ -32,9 +33,21 @@ TEST(object_detection, detected_object_data_table)
     ct::ext::DataTable<aq::DetectedObject> table;
 }
 
-TEST(object_detection, reflect)
+TEST(object_detection, reflect_object)
 {
     std::stringstream ss;
     ct::printStructInfo<aq::DetectedObject>(ss);
+    std::cout << ss.str() << std::endl;
+}
+
+TEST(object_detection, reflect_ecs)
+{
+    using Bases_t = typename ct::ReflectImpl<aq::DetectedObjectSet>::BaseTypes;
+    ct::StaticEqualTypes<Bases_t, ct::VariadicTypedef<aq::TEntityComponentSystem<aq::DetectedObject>>>{};
+    std::vector<std::string> cat_names({"cat0", "cat1", "cat2", "cat3", "cat4", "cat5"});
+    aq::CategorySet::ConstPtr cats = std::make_shared<aq::CategorySet>(cat_names);
+    aq::DetectedObjectSet set(cats);
+    std::stringstream ss;
+    ct::printStructInfo<aq::DetectedObjectSet>(ss);
     std::cout << ss.str() << std::endl;
 }
