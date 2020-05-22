@@ -10,7 +10,7 @@ namespace aq
     {
         std::unordered_map<mo::TypeInfo, FactoryFunc_t> m_ctr_map;
 
-        ce::shared_ptr<IComonentProvider> createComponent(mo::TypeInfo type) const override
+        ce::shared_ptr<IComponentProvider> createComponent(mo::TypeInfo type) const override
         {
             auto itr = m_ctr_map.find(type);
             if (itr != m_ctr_map.end())
