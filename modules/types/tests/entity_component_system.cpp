@@ -183,4 +183,27 @@ TEST(entity_component_system, serialization)
         saver(&ecs, "ecs");
     }
     std::cout << ss.str() << std::endl;
+    {
+        mo::JSONLoader loader(ss);
+        aq::EntityComponentSystem loaded_ecs;
+        loader(&loaded_ecs, "ecs");
+        ASSERT_EQ(loaded_ecs.getNumComponents(), 3);
+
+        auto providers = loaded_ecs.getProviders();
+
+        ASSERT_TRUE(std::count_if(providers.begin(), providers.end(), [](auto provider) {
+            return provider->getComponentType().template isType<Velocity>();
+        }));
+
+        ASSERT_TRUE(std::count_if(providers.begin(), providers.end(), [](auto provider) {
+            return provider->getComponentType().template isType<Position>();
+        }));
+
+        ASSERT_TRUE(std::count_if(providers.begin(), providers.end(), [](auto provider) {
+            return provider->getComponentType().template isType<Orientation>();
+        }));
+
+        auto velocity = loaded_ecs.getComponent<Velocity>();
+        ASSERT_EQ(velocity.size(), 10);
+    }
 }
