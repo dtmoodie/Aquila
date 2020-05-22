@@ -29,6 +29,30 @@
             ]
         },
         {
+            "name": "cow_ptr",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_ce_shared_ptr",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all-exceptions",
+                    "text": "catch throw",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "type_traits",
             "type": "cppdbg",
             "request": "launch",
@@ -561,14 +585,14 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test_aq_types",
-            "args": [
-                "--gtest_filter=image_serialization*"
-            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "args": [
+                "--gtest_filter=entity_component_system*"
+            ],
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
