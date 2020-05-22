@@ -62,7 +62,7 @@ namespace aq
         return mo::TypeInfo::Void();
     }
 
-    IComonentProvider* EntityComponentSystem::getProvider(const mo::TypeInfo type)
+    IComponentProvider* EntityComponentSystem::getProvider(const mo::TypeInfo type)
     {
         for (auto& provider : m_component_providers)
         {
@@ -74,7 +74,7 @@ namespace aq
         return nullptr;
     }
 
-    const IComonentProvider* EntityComponentSystem::getProvider(mo::TypeInfo type) const
+    const IComponentProvider* EntityComponentSystem::getProvider(mo::TypeInfo type) const
     {
         for (auto& provider : m_component_providers)
         {
@@ -86,7 +86,7 @@ namespace aq
         return nullptr;
     }
 
-    void EntityComponentSystem::addProvider(ce::shared_ptr<IComonentProvider> provider)
+    void EntityComponentSystem::addProvider(ce::shared_ptr<IComponentProvider> provider)
     {
         m_component_providers.push_back(std::move(provider));
     }
@@ -118,14 +118,14 @@ namespace aq
         return num_entities;
     }
 
-    void EntityComponentSystem::setProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers)
+    void EntityComponentSystem::setProviders(std::vector<ce::shared_ptr<IComponentProvider>> providers)
     {
         m_component_providers = providers;
     }
 
-    std::vector<ce::shared_ptr<IComonentProvider>> EntityComponentSystem::getProviders() const
+    std::vector<ce::shared_ptr<IComponentProvider>> EntityComponentSystem::getProviders() const
     {
-        std::vector<ce::shared_ptr<IComonentProvider>> out;
+        std::vector<ce::shared_ptr<IComponentProvider>> out;
         for (const auto& provider : m_component_providers)
         {
             auto tmp = provider;

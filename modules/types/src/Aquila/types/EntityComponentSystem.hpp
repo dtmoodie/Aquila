@@ -7,7 +7,9 @@
 #include <MetaObject/core/IAsyncStream.hpp>
 #include <MetaObject/detail/TypeInfo.hpp>
 #include <MetaObject/logging/logging.hpp>
+#include <MetaObject/runtime_reflection/visitor_traits/TypeInfo.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
+#include <MetaObject/runtime_reflection/visitor_traits/string.hpp>
 
 #include <ct/extensions/DataTable.hpp>
 #include <ct/static_asserts.hpp>
@@ -18,9 +20,9 @@ namespace aq
 {
     struct ComponentFactory;
 
-    struct AQUILA_EXPORTS IComonentProvider
+    struct AQUILA_EXPORTS IComponentProvider
     {
-        virtual ~IComonentProvider() = default;
+        virtual ~IComponentProvider() = default;
         virtual void resize(uint32_t) = 0;
         virtual void erase(uint32_t) = 0;
         virtual void clear() = 0;
@@ -29,11 +31,17 @@ namespace aq
 
         virtual bool providesComponent(mo::TypeInfo info) const = 0;
         virtual mo::TypeInfo getComponentType() const = 0;
+
+        virtual std::shared_ptr<IComponentProvider> clone() const = 0;
+
+        virtual void save(mo::ISaveVisitor& visitor, const std::string& name) const = 0;
+        virtual void load(mo::ILoadVisitor& visitor, const std::string& name) = 0;
     };
 
     template <class T>
-    struct TComponentProvider : IComonentProvider
+    struct TComponentProvider : IComponentProvider
     {
+        TComponentProvider();
         void resize(uint32_t) override;
         void erase(uint32_t) override;
         void clear() override;
@@ -46,6 +54,11 @@ namespace aq
         mo::TypeInfo getComponentType() const override;
 
         size_t getNumEntities() const override;
+
+        std::shared_ptr<IComponentProvider> clone() const override;
+
+        void save(mo::ISaveVisitor& visitor, const std::string& name) const override;
+        void load(mo::ILoadVisitor& visitor, const std::string& name) override;
 
       private:
         ct::ext::DataTableStorage<T> m_data;
@@ -64,13 +77,13 @@ namespace aq
         uint32_t getNumComponents() const;
         mo::TypeInfo getComponentType(uint32_t idx) const;
 
-        IComonentProvider* getProvider(mo::TypeInfo type);
-        const IComonentProvider* getProvider(mo::TypeInfo type) const;
+        IComponentProvider* getProvider(mo::TypeInfo type);
+        const IComponentProvider* getProvider(mo::TypeInfo type) const;
 
-        void addProvider(ce::shared_ptr<IComonentProvider>);
-        void setProviders(std::vector<ce::shared_ptr<IComonentProvider>> providers);
+        void addProvider(ce::shared_ptr<IComponentProvider>);
+        void setProviders(std::vector<ce::shared_ptr<IComponentProvider>> providers);
 
-        std::vector<ce::shared_ptr<IComonentProvider>> getProviders() const;
+        std::vector<ce::shared_ptr<IComponentProvider>> getProviders() const;
 
         uint32_t getNumEntities() const;
 
@@ -129,7 +142,7 @@ namespace aq
         void clear();
 
       private:
-        std::vector<ce::shared_ptr<IComonentProvider>> m_component_providers;
+        std::vector<ce::shared_ptr<IComponentProvider>> m_component_providers;
 
         uint32_t append();
 
@@ -145,7 +158,7 @@ namespace aq
                 // create a provider
                 auto new_provider = ce::shared_ptr<TComponentProvider<Component_t>>::create();
                 new_provider->resize(1);
-                addProvider(ce::shared_ptr<IComonentProvider>(std::move(new_provider)));
+                addProvider(ce::shared_ptr<IComponentProvider>(std::move(new_provider)));
                 provider = getProvider(mo::TypeInfo::create<Component_t>());
             }
             MO_ASSERT(provider);
@@ -283,6 +296,23 @@ namespace aq
     ////////////////////////////////////////////////////////////////////////////////
     // Implementation
     ////////////////////////////////////////////////////////////////////////////////
+
+    template <class T>
+    TComponentProvider<T>::TComponentProvider()
+    {
+        static bool registered = false;
+        if (!registered)
+        {
+            auto factory_instance = ComponentFactory::instance();
+            MO_ASSERT(factory_instance);
+            const auto type = mo::TypeInfo::create<T>();
+            auto factory_func = []() -> ce::shared_ptr<IComponentProvider> {
+                return ce::make_shared<TComponentProvider<T>>();
+            };
+
+            factory_instance->registerConstructor(type, std::move(factory_func));
+        }
+    }
     template <class T>
     void TComponentProvider<T>::resize(uint32_t size)
     {
@@ -330,61 +360,77 @@ namespace aq
         m_data.clear();
     }
 
+    template <class T>
+    std::shared_ptr<IComponentProvider> TComponentProvider<T>::clone() const
+    {
+        return std::make_shared<TComponentProvider<T>>(*this);
+    }
+
+    template <class T>
+    void TComponentProvider<T>::save(mo::ISaveVisitor& visitor, const std::string& name) const
+    {
+        visitor(&m_data, name);
+    }
+
+    template <class T>
+    void TComponentProvider<T>::load(mo::ILoadVisitor& visitor, const std::string& name)
+    {
+        visitor(&m_data, name);
+    }
+
 } // namespace aq
 
 namespace mo
 {
-    void loadPointer(ILoadVisitor& visitor, ce::shared_ptr<aq::IComonentProvider>& val)
+    template <>
+    struct PolymorphicSerializationHelper<aq::IComponentProvider>
     {
-        uint32_t id = 0;
-        visitor(&id, "id");
-        TypeInfo type;
-        visitor(&type, "type");
-        id = id & (~0x80000000);
-        if (id != 0)
+        template <class Ptr_t>
+        static void load(ILoadVisitor& visitor, Ptr_t& ptr)
         {
-            auto ptr = visitor.getPointer<aq::IComonentProvider>(id);
-            if (!ptr)
-            {
-                val = aq::ComponentFactory::instance()->createComponent(type);
-                // val = ce::make_shared<aq::IComonentProvider>();
-                visitor(val.get(), "data");
-                visitor.setSerializedPointer(val.get(), id);
-                auto cache_ptr = val;
-                visitor.pushCach(std::move(cache_ptr),
-                                 std::string("shared_ptr ") + TypeInfo::create<aq::IComonentProvider>().name(),
-                                 id);
-            }
-            else
-            {
-                std::shared_ptr<aq::IComonentProvider> cache_ptr;
-                const auto success = visitor.tryPopCache(
-                    cache_ptr, std::string("shared_ptr ") + TypeInfo::create<aq::IComonentProvider>().name(), id);
-                if (success && cache_ptr)
-                {
-                    val = cache_ptr;
-                }
-            }
+            mo::TypeInfo type;
+            visitor(&type, "type");
+            auto component_factory = aq::ComponentFactory::instance();
+            auto newly_created_component = component_factory->createComponent(type);
+            MO_ASSERT(newly_created_component);
+            ptr = newly_created_component;
         }
-    }
+        template <class Ptr_t>
+        static void save(ISaveVisitor& visitor, const Ptr_t& val)
+        {
+            const auto type = val->getComponentType();
+            visitor(&type, "type");
+        }
+    };
 
-    void savePointer(ISaveVisitor& visitor, const ce::shared_ptr<aq::IComonentProvider>& val)
+    template <class T>
+    struct TTraits<ce::shared_ptr<T>, 4> : virtual StructBase<ce::shared_ptr<T>>
     {
-        uint32_t id = visitor.getPointerId(TypeInfo::create<aq::IComonentProvider>(), val.get());
-
-        auto ptr = visitor.getPointer<aq::IComonentProvider>(id);
-        visitor(&id, "id");
-        if (val && ptr == nullptr)
+        void load(ILoadVisitor& visitor, void* inst, const std::string&, size_t cnt) const override
         {
-            visitor(val.get(), "data");
-            visitor.setSerializedPointer(val.get(), id);
+            MO_ASSERT_EQ(cnt, 1);
+            auto& ref = this->ref(inst);
+            SharedPointerHelper<T>::load(visitor, ref);
         }
-    }
+
+        void save(ISaveVisitor& visitor, const void* inst, const std::string&, size_t cnt) const override
+        {
+            MO_ASSERT_EQ(cnt, 1);
+            auto& ref = this->ref(inst);
+            SharedPointerHelper<T>::save(visitor, ref);
+        }
+
+        void visit(StaticVisitor& visitor, const std::string&) const override
+        {
+            visitor.template visit<T>("ptr");
+        }
+    };
+
 } // namespace mo
 
 namespace ct
 {
-    REFLECT_BEGIN(aq::IComonentProvider)
+    REFLECT_BEGIN(aq::IComponentProvider)
         MEMBER_FUNCTION(getComponentType)
         MEMBER_FUNCTION(getNumEntities)
         MEMBER_FUNCTION(clear)
@@ -393,7 +439,7 @@ namespace ct
         MEMBER_FUNCTION(providesComponent)
     REFLECT_END;
 
-    REFLECT_TEMPLATED_DERIVED(aq::TComponentProvider, aq::IComonentProvider)
+    REFLECT_TEMPLATED_DERIVED(aq::TComponentProvider, aq::IComponentProvider)
         PROPERTY(data, &DataType::getComponent, &DataType::getComponentMutable)
     REFLECT_END;
 
