@@ -169,6 +169,10 @@ TEST(entity_component_system, type_erase)
 
 TEST(entity_component_system, serialization)
 {
+
+    static_assert(mo::HasMemberLoad<aq::IComponentProvider>::value, "");
+    static_assert(mo::HasMemberSave<aq::IComponentProvider>::value, "");
+
     aq::EntityComponentSystem ecs;
 
     for (size_t i = 0; i < 10; ++i)
