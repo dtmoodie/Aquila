@@ -8,6 +8,7 @@
 #include <MetaObject/detail/TypeInfo.hpp>
 #include <MetaObject/logging/logging.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/TypeInfo.hpp>
+#include <MetaObject/runtime_reflection/visitor_traits/array_adapter.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/string.hpp>
 
