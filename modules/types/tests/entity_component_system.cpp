@@ -7,6 +7,8 @@
 #include <MetaObject/runtime_reflection/VisitorTraits.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/vector.hpp>
+#include <MetaObject/serialization/BinaryLoader.hpp>
+#include <MetaObject/serialization/BinarySaver.hpp>
 #include <MetaObject/serialization/JSONPrinter.hpp>
 
 #include <gtest/gtest.h>
@@ -167,7 +169,7 @@ TEST(entity_component_system, type_erase)
     ASSERT_EQ(velocity.size(), 1);
 }
 
-TEST(entity_component_system, serialization)
+TEST(entity_component_system, serialization_json)
 {
 
     static_assert(mo::HasMemberLoad<aq::IComponentProvider>::value, "");
@@ -186,9 +188,49 @@ TEST(entity_component_system, serialization)
         mo::JSONSaver saver(ss);
         saver(&ecs, "ecs");
     }
-    std::cout << ss.str() << std::endl;
     {
         mo::JSONLoader loader(ss);
+        aq::EntityComponentSystem loaded_ecs;
+        loader(&loaded_ecs, "ecs");
+        ASSERT_EQ(loaded_ecs.getNumComponents(), 3);
+
+        auto providers = loaded_ecs.getProviders();
+
+        ASSERT_TRUE(std::count_if(providers.begin(), providers.end(), [](auto provider) {
+            return provider->getComponentType().template isType<Velocity>();
+        }));
+
+        ASSERT_TRUE(std::count_if(providers.begin(), providers.end(), [](auto provider) {
+            return provider->getComponentType().template isType<Position>();
+        }));
+
+        ASSERT_TRUE(std::count_if(providers.begin(), providers.end(), [](auto provider) {
+            return provider->getComponentType().template isType<Orientation>();
+        }));
+
+        auto velocity = loaded_ecs.getComponent<Velocity>();
+        ASSERT_EQ(velocity.size(), 10);
+    }
+}
+
+TEST(entity_component_system, serialization_binary)
+{
+
+    aq::EntityComponentSystem ecs;
+
+    for (size_t i = 0; i < 10; ++i)
+    {
+        auto obj = GameObject::init(i);
+        ecs.push_back(obj);
+    }
+
+    std::stringstream ss;
+    {
+        mo::BinarySaver saver(ss);
+        saver(&ecs, "ecs");
+    }
+    {
+        mo::BinaryLoader loader(ss);
         aq::EntityComponentSystem loaded_ecs;
         loader(&loaded_ecs, "ecs");
         ASSERT_EQ(loaded_ecs.getNumComponents(), 3);
