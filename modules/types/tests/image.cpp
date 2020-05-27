@@ -134,6 +134,7 @@ TEST(synced_image_opencv, sync_data)
     EXPECT_EQ(gpu_mat.channels(), 3);
     gpu_mat.setTo(cv::Scalar::all(100));
     const auto cpu_mat = image.mat();
+    stream->synchronize();
 
     EXPECT_EQ(cv::countNonZero(cpu_mat == 100), 1024 * 1024 * 3);
 }
