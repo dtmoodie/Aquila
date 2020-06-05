@@ -178,6 +178,32 @@ namespace ct
     REFLECT_END;
 
     REFLECT_TEMPLATED_DERIVED(aq::TDetectedObjectSet, aq::TEntityComponentSystem<Args...>)
-        PROPERTY(cats, &DataType::getCatSet, &DataType::setCatSet)
+        static void setCats(DataType & obj, aq::CategorySet::Ptr cats)
+        {
+            obj.setCatSet(std::move(cats));
+        }
+        PROPERTY(cats, &DataType::getCatSet, &setCats)
     REFLECT_END;
+
+    REFLECT_DERIVED(aq::detection::BoundingBox2d, cv::Rect2f)
+    REFLECT_END;
+
+    REFLECT_BEGIN(aq::detection::Confidence)
+        PUBLIC_ACCESS(value)
+    REFLECT_END;
+
+    REFLECT_DERIVED(aq::detection::Classification, mo::SmallVec<aq::Classification, 5>)
+        MEMBER_FUNCTION(erase)
+    REFLECT_END;
+
+    REFLECT_BEGIN(aq::detection::Id)
+        PUBLIC_ACCESS(value)
+    REFLECT_END;
+
+    REFLECT_DERIVED(aq::detection::Size3d, Eigen::Vector3f)
+    REFLECT_END;
+
+    REFLECT_DERIVED(aq::detection::Pose3d, Eigen::Affine3f)
+    REFLECT_END;
+
 } // namespace ct
