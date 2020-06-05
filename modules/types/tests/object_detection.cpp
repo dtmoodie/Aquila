@@ -1,5 +1,6 @@
-#include <Aquila/types/EntityComponentSystem.hpp>
 #include <Aquila/types/ObjectDetection.hpp>
+
+#include <Aquila/types/EntityComponentSystem.hpp>
 
 #include <ct/extensions/DataTable.hpp>
 #include <ct/reflect/print.hpp>
