@@ -75,8 +75,8 @@ namespace ct
         PUBLIC_ACCESS(index)
     REFLECT_END;
 
-    REFLECT_BEGIN(aq::CategorySet)
-        MEMBER_FUNCTION(getByName,
-                        constFunctionCast<const aq::Category&, const std::string&>(&aq::CategorySet::operator()))
+    REFLECT_DERIVED(aq::CategorySet, std::vector<aq::Category>)
+        /*MEMBER_FUNCTION(getByName,
+                        constFunctionCast<const aq::Category&, const std::string&>(&aq::CategorySet::operator()))*/
     REFLECT_END;
 } // namespace ct
