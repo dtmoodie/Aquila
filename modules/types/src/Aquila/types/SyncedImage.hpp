@@ -122,9 +122,9 @@ namespace aq
         Shape<2> m_shape;
     };
 
-///////////////////////////////////////////////////////////////////////////////////////////
-///    IMPLEMENTATION
-///////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    ///    IMPLEMENTATION
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef HAVE_OPENCV
     SyncedImage::SyncedImage(const cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IDeviceStream> stream)
@@ -282,11 +282,11 @@ namespace aq
         auto device_memory = m_data->deviceAs<PIXEL>(stream, sync_required);
         return ConstMatrix<PIXEL>(device_memory.data(), rows(), cols());
     }
-}
+} // namespace aq
 
 namespace ct
 {
-    aq::Shape<2> getImageShape(const aq::SyncedImage&);
+    AQUILA_EXPORTS aq::Shape<2> getImageShape(const aq::SyncedImage&);
     REFLECT_BEGIN(aq::SyncedImage)
         PROPERTY(
             data,
@@ -297,6 +297,6 @@ namespace ct
     REFLECT_END;
 
     TArrayView<void> makeArrayView(AccessToken<void (aq::SyncedImage::*)(ce::shared_ptr<aq::SyncedMemory>)>&&, size_t);
-}
+} // namespace ct
 
 #endif // AQ_TYPES_SYNCED_IMAGE_HPP
