@@ -143,3 +143,21 @@ namespace aq
         }
     }
 } // namespace aq
+
+namespace mo
+{
+
+    void TPublisher<aq::EntityComponentSystem>::getComponents(std::vector<TypeInfo>& out) const
+    {
+        auto data = this->getCurrentData();
+        if (data)
+        {
+            const auto num_components = data->data.getNumComponents();
+            out.reserve(out.size() + num_components);
+            for (size_t i = 0; i < num_components; ++i)
+            {
+                out.push_back(data->data.getComponentType(i));
+            }
+        }
+    }
+} // namespace mo

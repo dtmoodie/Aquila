@@ -7,10 +7,14 @@
 #include <MetaObject/core/IAsyncStream.hpp>
 #include <MetaObject/detail/TypeInfo.hpp>
 #include <MetaObject/logging/logging.hpp>
+
 #include <MetaObject/runtime_reflection/visitor_traits/TypeInfo.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/array_adapter.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/string.hpp>
+
+#include <MetaObject/params/TPublisher.hpp>
+#include <MetaObject/params/TSubscriber.hpp>
 
 #include <ct/extensions/DataTable.hpp>
 #include <ct/static_asserts.hpp>
@@ -424,6 +428,139 @@ namespace mo
         void visit(StaticVisitor& visitor, const std::string&) const override
         {
             visitor.template visit<T>("ptr");
+        }
+    };
+
+    // Overload for publishing and subscribing to an entity component system
+    struct IEntityComponentSystemPublisher
+    {
+        virtual ~IEntityComponentSystemPublisher() = default;
+        virtual void getComponents(std::vector<TypeInfo>& types) const = 0;
+    };
+
+    template <>
+    struct TPublisher<aq::EntityComponentSystem> : TPublisherImpl<aq::EntityComponentSystem>,
+                                                   IEntityComponentSystemPublisher
+    {
+        void getComponents(std::vector<TypeInfo>& types) const override;
+    };
+
+    template <class T>
+    void populateTypes(std::vector<TypeInfo>& types, ct::VariadicTypedef<T>)
+    {
+        types.push_back(TypeInfo::create<T>());
+    }
+
+    template <class T, class... Ts>
+    void populateTypes(std::vector<TypeInfo>& types, ct::VariadicTypedef<T, Ts...>)
+    {
+        types.push_back(TypeInfo::create<T>());
+        populateTypes(types, ct::VariadicTypedef<Ts...>());
+    }
+    template <class T>
+    struct TPublisher<aq::TEntityComponentSystem<T>> : TPublisherImpl<aq::EntityComponentSystem>,
+                                                       IEntityComponentSystemPublisher
+    {
+        void getComponents(std::vector<TypeInfo>& types) const override
+        {
+            using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
+            using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
+            types.reserve(Components_t::size());
+            populateTypes(types, Components_t{});
+        }
+    };
+
+    template <class... T>
+    struct TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>> : TPublisherImpl<aq::EntityComponentSystem>
+    {
+        void getComponents(std::vector<TypeInfo>& types) const override
+        {
+            types.reserve(sizeof...(T));
+            populateTypes(types, ct::VariadicTypedef<T...>{});
+        }
+    };
+
+    template <class T>
+    struct TSubscriber<aq::TEntityComponentSystem<T>> : TSubscriberImpl<aq::EntityComponentSystem>
+    {
+        using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
+        using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
+
+        bool setInput(IPublisher* publisher = nullptr) override
+        {
+            if (!acceptsPublisher(*publisher))
+            {
+                return false;
+            }
+            return TSubscriberImpl<aq::EntityComponentSystem>::setInput(publisher);
+        }
+
+        bool acceptsPublisher(const IPublisher& param) const override
+        {
+            if (TSubscriberImpl<aq::EntityComponentSystem>::acceptsPublisher(param))
+            {
+                const auto& tparam = dynamic_cast<const IEntityComponentSystemPublisher&>(param);
+                std::vector<TypeInfo> required_components;
+                populateTypes(required_components, Components_t());
+                std::vector<TypeInfo> published_components;
+                tparam.getComponents(published_components);
+                for (const auto& cmp : required_components)
+                {
+                    if (std::find(published_components.begin(), published_components.end(), cmp) ==
+                        published_components.end())
+                    {
+                        this->getLogger().info(
+                            "Unable to find required component {} provided from {} with the following components {}",
+                            cmp,
+                            param.getName(),
+                            published_components);
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+    };
+
+    template <class... T>
+    struct TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>>
+        : TSubscriberImpl<aq::EntityComponentSystem>
+    {
+        bool setInput(IPublisher* publisher = nullptr) override
+        {
+            if (!acceptsPublisher(*publisher))
+            {
+                return false;
+            }
+            return TSubscriberImpl<aq::EntityComponentSystem>::setInput(publisher);
+        }
+
+        bool acceptsPublisher(const IPublisher& param) const override
+        {
+            if (TSubscriberImpl<aq::EntityComponentSystem>::acceptsPublisher(param))
+            {
+                const auto& tparam = dynamic_cast<const IEntityComponentSystemPublisher&>(param);
+                std::vector<TypeInfo> required_components;
+                populateTypes(required_components, ct::VariadicTypedef<T...>());
+                std::vector<TypeInfo> published_components;
+                tparam.getComponents(published_components);
+                for (const auto& cmp : required_components)
+                {
+                    if (std::find(published_components.begin(), published_components.end(), cmp) ==
+                        published_components.end())
+                    {
+                        this->getLogger().info(
+                            "Unable to find required component {} provided from {} with the following components {}",
+                            cmp,
+                            param.getName(),
+                            published_components);
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
         }
     };
 

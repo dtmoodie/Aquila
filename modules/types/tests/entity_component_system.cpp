@@ -253,3 +253,26 @@ TEST(entity_component_system, serialization_binary)
         ASSERT_EQ(velocity.size(), 10);
     }
 }
+
+TEST(entity_component_system, pub_sub_subscription)
+{
+    auto stream = mo::IAsyncStream::create();
+    mo::TPublisher<aq::TEntityComponentSystem<GameObject>> pub;
+    {
+        mo::TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Position, Orientation>>> sub;
+        ASSERT_TRUE(sub.setInput(&pub));
+    }
+    {
+        mo::TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Position>>> sub;
+        ASSERT_TRUE(sub.setInput(&pub));
+    }
+
+    {
+        mo::TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity>>> sub;
+        ASSERT_TRUE(sub.setInput(&pub));
+    }
+    {
+        mo::TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<float>>> sub;
+        ASSERT_FALSE(sub.setInput(&pub));
+    }
+}
