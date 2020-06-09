@@ -2,6 +2,8 @@
 
 #include <Aquila/types/EntityComponentSystem.hpp>
 
+#include <MetaObject/serialization/JSONPrinter.hpp>
+
 #include <ct/extensions/DataTable.hpp>
 #include <ct/reflect/print.hpp>
 #include <ct/static_asserts.hpp>
@@ -51,4 +53,22 @@ TEST(object_detection, reflect_ecs)
     std::stringstream ss;
     ct::printStructInfo<aq::DetectedObjectSet>(ss);
     std::cout << ss.str() << std::endl;
+    std::cout << set << std::endl;
+}
+
+TEST(object_detection, serialize_ecs)
+{
+    std::vector<std::string> cat_names({"cat0", "cat1", "cat2", "cat3", "cat4", "cat5"});
+    aq::CategorySet::ConstPtr cats = std::make_shared<aq::CategorySet>(cat_names);
+    aq::DetectedObjectSet set(cats);
+    std::stringstream ss;
+    std::stringstream ss1;
+    {
+        mo::JSONSaver saver(ss1);
+        saver(&set, "objects");
+    }
+
+    aq::DetectedObjectSet loaded;
+    mo::JSONLoader loader(ss1);
+    loader(&loaded, "objects");
 }
