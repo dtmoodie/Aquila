@@ -254,7 +254,7 @@ TEST(entity_component_system, serialization_binary)
     }
 }
 
-TEST(entity_component_system, pub_sub_subscription)
+TEST(entity_component_system, pub_sub_subscription_single_components)
 {
     auto stream = mo::IAsyncStream::create();
     mo::TPublisher<aq::TEntityComponentSystem<GameObject>> pub;
@@ -275,4 +275,36 @@ TEST(entity_component_system, pub_sub_subscription)
         mo::TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<float>>> sub;
         ASSERT_FALSE(sub.setInput(&pub));
     }
+}
+
+TEST(entity_component_system, pub_sub_composite_object)
+{
+    auto stream = mo::IAsyncStream::create();
+    mo::TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Position, Orientation>>> pub;
+    {
+        mo::TSubscriber<aq::TEntityComponentSystem<GameObject>> sub;
+        ASSERT_TRUE(sub.setInput(&pub));
+    }
+}
+
+TEST(entity_component_system, pub_sub_data)
+{
+    auto stream = mo::IAsyncStream::create();
+    mo::TPublisher<aq::TEntityComponentSystem<GameObject>> pub;
+    mo::TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Position, Orientation>>> sub;
+    ASSERT_TRUE(sub.setInput(&pub));
+
+    aq::EntityComponentSystem ecs;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        auto obj = GameObject::init(i);
+        ecs.push_back(obj);
+    }
+
+    pub.publish(std::move(ecs));
+
+    auto data = sub.getTypedData();
+    ASSERT_TRUE(data);
+    auto velocity = data->data.getComponent<Velocity>();
+    ASSERT_EQ(velocity.size(), 10);
 }
