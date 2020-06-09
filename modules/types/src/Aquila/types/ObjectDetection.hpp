@@ -125,7 +125,7 @@ namespace aq
     template <class DetType>
     struct AQUILA_EXPORTS TDetectedObjectSet : public TEntityComponentSystem<DetType>
     {
-        template <class... Args>
+
         TDetectedObjectSet(const CategorySet::ConstPtr& cats = CategorySet::ConstPtr())
             : cat_set(cats)
         {
@@ -178,11 +178,7 @@ namespace ct
     REFLECT_END;
 
     REFLECT_TEMPLATED_DERIVED(aq::TDetectedObjectSet, aq::TEntityComponentSystem<Args...>)
-        static void setCats(DataType & obj, aq::CategorySet::Ptr cats)
-        {
-            obj.setCatSet(std::move(cats));
-        }
-        PROPERTY(cats, &DataType::getCatSet, &setCats)
+        PROPERTY(cats, &DataType::getCatSet, &DataType::setCatSet)
     REFLECT_END;
 
     REFLECT_DERIVED(aq::detection::BoundingBox2d, cv::Rect2f)
