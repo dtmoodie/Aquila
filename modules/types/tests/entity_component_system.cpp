@@ -307,4 +307,10 @@ TEST(entity_component_system, pub_sub_data)
     ASSERT_TRUE(data);
     auto velocity = data->data.getComponent<Velocity>();
     ASSERT_EQ(velocity.size(), 10);
+
+    auto position = data->data.getComponent<Position>();
+    ASSERT_EQ(position.size(), 10);
+
+    auto orientation = data->data.getComponent<Orientation>();
+    ASSERT_EQ(orientation.size(), 10);
 }
