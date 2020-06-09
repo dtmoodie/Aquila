@@ -471,7 +471,8 @@ namespace mo
     };
 
     template <class... T>
-    struct TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>> : TPublisherImpl<aq::EntityComponentSystem>
+    struct TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>>
+        : TPublisherImpl<aq::EntityComponentSystem>, IEntityComponentSystemPublisher
     {
         void getComponents(std::vector<TypeInfo>& types) const override
         {
