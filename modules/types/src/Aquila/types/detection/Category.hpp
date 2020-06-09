@@ -5,6 +5,7 @@
 #include <Aquila/core/detail/Export.hpp>
 #include <cereal/cereal.hpp>
 #include <ct/reflect.hpp>
+#include <ct/types/vector.hpp>
 
 #include <map>
 #include <memory>
