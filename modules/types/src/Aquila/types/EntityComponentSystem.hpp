@@ -92,14 +92,14 @@ namespace aq
 
         uint32_t getNumEntities() const;
 
-        template <class T>
-        void push_back(const T& obj)
+        template <class U>
+        void push_back(const U& obj)
         {
             using Components_t = typename ct::ext::SelectComponents<typename ct::GlobMemberObjects<T>::types>::type;
             using Objects_t = typename ct::GlobMemberObjects<T>::types;
             ct::StaticEqualTypes<Components_t, Objects_t>{};
             const uint32_t new_id = append();
-            const auto idx = ct::Reflect<T>::end();
+            const auto idx = ct::Reflect<U>::end();
             pushRecurse(obj, new_id, idx);
         }
 
