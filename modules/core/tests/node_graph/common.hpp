@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Aquila/nodes/Node.hpp"
-#include "Aquila/nodes/NodeInfo.hpp"
-#include "Aquila/nodes/ThreadedNode.hpp"
 #include <Aquila/core.hpp>
 #include <Aquila/core/IGraph.hpp>
+#include <Aquila/nodes/Node.hpp>
+#include <Aquila/nodes/NodeInfo.hpp>
+#include <Aquila/nodes/ThreadedNode.hpp>
 
 #include "MetaObject/object/MetaObjectFactory.hpp"
 #include "MetaObject/object/detail/MetaObjectMacros.hpp"
