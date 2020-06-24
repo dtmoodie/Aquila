@@ -8,8 +8,6 @@
 #include <MetaObject/params/detail/MetaParamImpl.hpp>
 #include <MetaObject/python/PythonAllocator.hpp>
 
-#include <ct/reflect/cerealize.hpp>
-
 #include <cereal/types/string.hpp>
 
 #ifdef MO_HAVE_PYTHON
@@ -146,18 +144,11 @@ namespace aq
             INSTANTIATE_META_PARAM(SyncedMemory, table);
             INSTANTIATE_META_PARAM(vector<SyncedMemory>, table);
             INSTANTIATE_META_PARAM(cv::Mat, table);
-            // INSTANTIATE_META_PARAM(vector<cv::Mat>, table);
             INSTANTIATE_META_PARAM(Category, table);
             INSTANTIATE_META_PARAM(Classification, table);
             INSTANTIATE_META_PARAM(DetectedObject, table);
             INSTANTIATE_META_PARAM(DetectedObjectSet, table);
-            // INSTANTIATE_META_PARAM(LandmarkDetection, table);
             INSTANTIATE_META_PARAM(CategorySet, table);
-            // INSTANTIATE_META_PARAM(DetectionDescription, table);
-            // INSTANTIATE_META_PARAM(DetectionDescriptionPatch, table);
-            INSTANTIATE_META_PARAM(DetectionDescriptionSet, table);
-            INSTANTIATE_META_PARAM(DetectionDescriptionPatchSet, table);
-            INSTANTIATE_META_PARAM(LandmarkDetectionSet, table);
         }
     } // namespace serialization
 } // namespace aq
