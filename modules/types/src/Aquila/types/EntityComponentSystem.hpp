@@ -53,8 +53,8 @@ namespace aq
 
         bool providesComponent(mo::TypeInfo info) const override;
 
-        mt::Tensor<T, 1> getComponentMutable();
-        mt::Tensor<const T, 1> getComponent() const;
+        typename ct::ext::DataDimensionality<T>::TensorView getComponentMutable();
+        typename ct::ext::DataDimensionality<T>::ConstTensorView getComponent() const;
 
         mo::TypeInfo getComponentType() const override;
 
@@ -71,33 +71,6 @@ namespace aq
         ct::ext::DataTableStorage<T> m_data;
     };
 
-    template <class T>
-    struct TComponentProvider<ct::TArrayView<T>> : IComponentProvider
-    {
-        TComponentProvider();
-        void resize(uint32_t) override;
-        void erase(uint32_t) override;
-        void clear() override;
-
-        bool providesComponent(mo::TypeInfo info) const override;
-
-        mt::Tensor<T, 2> getComponentMutable();
-        mt::Tensor<const T, 2> getComponent() const;
-
-        mo::TypeInfo getComponentType() const override;
-
-        size_t getNumEntities() const override;
-
-        std::shared_ptr<IComponentProvider> clone() const override;
-
-        void assign(uint32_t idx, const ct::TArrayView<T>& val);
-
-        void save(mo::ISaveVisitor& visitor, const std::string& name) const override;
-        void load(mo::ILoadVisitor& visitor, const std::string& name) override;
-
-      private:
-        ct::ext::DataTableStorage<ct::TArrayView<T>> m_data;
-    };
     template <class T, class E = void>
     struct TEntityComponentSystem;
 
@@ -142,9 +115,9 @@ namespace aq
         }
 
         template <class T>
-        mt::Tensor<T, 1> getComponentMutable()
+        typename ct::ext::DataDimensionality<T>::TensorView getComponentMutable()
         {
-            mt::Tensor<T, 1> view;
+            typename ct::ext::DataDimensionality<T>::TensorView view;
             auto provider = getProvider(mo::TypeInfo::create<T>());
             if (provider)
             {
@@ -156,9 +129,9 @@ namespace aq
         }
 
         template <class T>
-        mt::Tensor<const T, 1> getComponent() const
+        typename ct::ext::DataDimensionality<T>::ConstTensorView getComponent() const
         {
-            mt::Tensor<const T, 1> view;
+            typename ct::ext::DataDimensionality<T>::ConstTensorView view;
             auto provider = getProvider(mo::TypeInfo::create<T>());
             if (provider)
             {
@@ -397,13 +370,13 @@ namespace aq
     }
 
     template <class T>
-    mt::Tensor<T, 1> TComponentProvider<T>::getComponentMutable()
+    typename ct::ext::DataDimensionality<T>::TensorView TComponentProvider<T>::getComponentMutable()
     {
         return m_data.data(0);
     }
 
     template <class T>
-    mt::Tensor<const T, 1> TComponentProvider<T>::getComponent() const
+    typename ct::ext::DataDimensionality<T>::ConstTensorView TComponentProvider<T>::getComponent() const
     {
         return m_data.data(0);
     }
@@ -451,93 +424,6 @@ namespace aq
 
     template <class T>
     void TComponentProvider<T>::load(mo::ILoadVisitor& visitor, const std::string& name)
-    {
-        visitor(&m_data, name);
-    }
-
-    template <class T>
-    TComponentProvider<ct::TArrayView<T>>::TComponentProvider()
-    {
-        static bool registered = false;
-        if (!registered)
-        {
-            auto factory_instance = ComponentFactory::instance();
-            MO_ASSERT(factory_instance);
-            const auto type = mo::TypeInfo::create<ct::TArrayView<T>>();
-            auto factory_func = []() -> ce::shared_ptr<IComponentProvider> {
-                return ce::make_shared<TComponentProvider<ct::TArrayView<T>>>();
-            };
-
-            factory_instance->registerConstructor(type, std::move(factory_func));
-        }
-    }
-    template <class T>
-    void TComponentProvider<ct::TArrayView<T>>::resize(uint32_t size)
-    {
-        m_data.resize(size);
-    }
-
-    template <class T>
-    bool TComponentProvider<ct::TArrayView<T>>::providesComponent(mo::TypeInfo info) const
-    {
-        return info.template isType<ct::TArrayView<T>>();
-    }
-
-    template <class T>
-    mt::Tensor<T, 2> TComponentProvider<ct::TArrayView<T>>::getComponentMutable()
-    {
-        return m_data.data(0);
-    }
-
-    template <class T>
-    mt::Tensor<const T, 2> TComponentProvider<ct::TArrayView<T>>::getComponent() const
-    {
-        return m_data.data(0);
-    }
-
-    template <class T>
-    mo::TypeInfo TComponentProvider<ct::TArrayView<T>>::getComponentType() const
-    {
-        return mo::TypeInfo::create<T>();
-    }
-    template <class T>
-    size_t TComponentProvider<ct::TArrayView<T>>::getNumEntities() const
-    {
-        return m_data.size();
-    }
-
-    template <class T>
-    void TComponentProvider<ct::TArrayView<T>>::erase(uint32_t id)
-    {
-        m_data.erase(id);
-    }
-
-    template <class T>
-    void TComponentProvider<ct::TArrayView<T>>::clear()
-    {
-        m_data.clear();
-    }
-
-    template <class T>
-    std::shared_ptr<IComponentProvider> TComponentProvider<ct::TArrayView<T>>::clone() const
-    {
-        return std::make_shared<TComponentProvider<ct::TArrayView<T>>>(*this);
-    }
-
-    template <class T>
-    void TComponentProvider<ct::TArrayView<T>>::assign(uint32_t idx, const ct::TArrayView<T>& val)
-    {
-        m_data.assign(idx, val);
-    }
-
-    template <class T>
-    void TComponentProvider<ct::TArrayView<T>>::save(mo::ISaveVisitor& visitor, const std::string& name) const
-    {
-        visitor(&m_data, name);
-    }
-
-    template <class T>
-    void TComponentProvider<ct::TArrayView<T>>::load(mo::ILoadVisitor& visitor, const std::string& name)
     {
         visitor(&m_data, name);
     }
