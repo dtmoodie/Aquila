@@ -30,7 +30,11 @@
         "chrono": "cpp",
         "ostream": "cpp",
         "ratio": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "string_view": "cpp",
+        "bitset": "cpp",
+        "initializer_list": "cpp",
+        "regex": "cpp"
     },
     "editor.tokenColorCustomizations": {
         "textMateRules": [
@@ -65,5 +69,5 @@
         "algorithm"
     ],
     "gtest-adapter.supportLocation": true,
-    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
