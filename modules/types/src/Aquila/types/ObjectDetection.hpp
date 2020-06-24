@@ -27,61 +27,12 @@ namespace aq
 
     namespace detection
     {
-        struct BoundingBox2d : ct::ext::Component, cv::Rect2f
-        {
-            template <class... ARGS>
-            BoundingBox2d(ARGS&&... args)
-                : cv::Rect2f(std::forward<ARGS>(args)...)
-            {
-            }
-        };
-
-        struct Confidence : ct::ext::Component
-        {
-            Confidence(float v = 0.0F)
-                : value(v)
-            {
-            }
-
-            float value;
-        };
-
-        struct Classification : ct::ext::Component, mo::SmallVec<aq::Classification, 5>
-        {
-            template <class... ARGS>
-            Classification(ARGS&&... args)
-                : mo::SmallVec<aq::Classification, 5>(std::forward<ARGS>(args)...)
-            {
-            }
-        };
-
-        struct Id : ct::ext::Component
-        {
-            Id(uint32_t v = 0)
-                : value(v)
-            {
-            }
-
-            uint32_t value;
-        };
-
-        struct Size3d : Eigen::Vector3f, ct::ext::Component
-        {
-            template <class... ARGS>
-            Size3d(ARGS&&... args)
-                : Eigen::Vector3f(std::forward<ARGS>(args)...)
-            {
-            }
-        };
-
-        struct Pose3d : Eigen::Affine3f, ct::ext::Component
-        {
-            template <class... ARGS>
-            Pose3d(ARGS&&... args)
-                : Eigen::Affine3f(std::forward<ARGS>(args)...)
-            {
-            }
-        };
+        using BoundingBox2d = cv::Rect2f;
+        using Confidence = float;
+        using Classification = mo::SmallVec<aq::Classification, 5>;
+        using Id = uint32_t;
+        using Size3d = Eigen::Vector3f;
+        using Pose3d = Eigen::Affine3f;
 
     } // namespace detection
 
@@ -123,7 +74,7 @@ namespace aq
     /// TDetectedObjectSet
     //////////////////////////////////////////
     template <class DetType>
-    struct AQUILA_EXPORTS TDetectedObjectSet : public TEntityComponentSystem<DetType>
+    struct AQUILA_EXPORTS TDetectedObjectSet : TEntityComponentSystem<DetType>
     {
 
         TDetectedObjectSet(const CategorySet::ConstPtr& cats = CategorySet::ConstPtr())
@@ -180,26 +131,4 @@ namespace ct
     REFLECT_TEMPLATED_DERIVED(aq::TDetectedObjectSet, aq::TEntityComponentSystem<Args...>)
         PROPERTY(cats, &DataType::getCatSet, &DataType::setCatSet)
     REFLECT_END;
-
-    REFLECT_DERIVED(aq::detection::BoundingBox2d, cv::Rect2f)
-    REFLECT_END;
-
-    REFLECT_BEGIN(aq::detection::Confidence)
-        PUBLIC_ACCESS(value)
-    REFLECT_END;
-
-    REFLECT_DERIVED(aq::detection::Classification, mo::SmallVec<aq::Classification, 5>)
-        MEMBER_FUNCTION(erase)
-    REFLECT_END;
-
-    REFLECT_BEGIN(aq::detection::Id)
-        PUBLIC_ACCESS(value)
-    REFLECT_END;
-
-    REFLECT_DERIVED(aq::detection::Size3d, Eigen::Vector3f)
-    REFLECT_END;
-
-    REFLECT_DERIVED(aq::detection::Pose3d, Eigen::Affine3f)
-    REFLECT_END;
-
 } // namespace ct

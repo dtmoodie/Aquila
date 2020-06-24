@@ -90,6 +90,8 @@ namespace aq
         void setData(ce::shared_ptr<SyncedMemory>);
         bool empty() const;
 
+        SyncedMemory::SyncState state() const;
+
 #ifdef HAVE_OPENCV
         inline SyncedImage(const cv::Mat& mat,
                            PixelFormat = PixelFormat::kBGR,
@@ -103,16 +105,19 @@ namespace aq
         inline SyncedImage(cv::cuda::GpuMat& mat,
                            PixelFormat = PixelFormat::kBGR,
                            std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
-        inline cv::Mat mutableMat();
+
+        inline cv::Mat mutableMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr);
+        inline cv::cuda::GpuMat mutableGpuMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr);
+        inline const cv::Mat mat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr) const;
+        inline const cv::cuda::GpuMat gpuMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr) const;
+
         inline operator cv::Mat();
-        inline cv::cuda::GpuMat mutableGpuMat();
         inline operator cv::cuda::GpuMat();
-
-        inline const cv::Mat mat() const;
         inline operator const cv::Mat() const;
-
-        inline const cv::cuda::GpuMat gpuMat() const;
         inline operator const cv::cuda::GpuMat() const;
+
+        inline void copyTo(cv::cuda::GpuMat& mat, mo::IDeviceStream* stream = nullptr) const;
+        inline void copyTo(cv::Mat& mat, mo::IDeviceStream* stream = nullptr) const;
 #endif
 
       private:
@@ -195,12 +200,39 @@ namespace aq
         m_shape(1) = static_cast<uint32_t>(mat.cols);
     }
 
-    cv::Mat SyncedImage::mutableMat()
+    cv::Mat SyncedImage::mutableMat(mo::IDeviceStream* stream, bool* sync)
     {
-        return cv::Mat(static_cast<int>(rows()),
-                       static_cast<int>(cols()),
-                       CV_MAKETYPE(toCvDepth(dataType()), channels()),
-                       m_data->mutableHost().data());
+        const auto height = static_cast<int>(rows());
+        const auto width = static_cast<int>(cols());
+        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto data = m_data->mutableHost(stream, sync).data();
+        return cv::Mat(height, width, type, data);
+    }
+
+    cv::cuda::GpuMat SyncedImage::mutableGpuMat(mo::IDeviceStream* stream, bool* sync)
+    {
+        const auto height = static_cast<int>(rows());
+        const auto width = static_cast<int>(cols());
+        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto data = m_data->mutableDevice(stream, sync).data();
+        return cv::cuda::GpuMat(height, width, type, data);
+    }
+    const cv::Mat SyncedImage::mat(mo::IDeviceStream* stream, bool* sync) const
+    {
+        const auto height = static_cast<int>(rows());
+        const auto width = static_cast<int>(cols());
+        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto data = const_cast<void*>(m_data->host(stream, sync).data());
+        return cv::Mat(height, width, type, data);
+    }
+
+    const cv::cuda::GpuMat SyncedImage::gpuMat(mo::IDeviceStream* stream, bool* sync) const
+    {
+        const auto height = static_cast<int>(rows());
+        const auto width = static_cast<int>(cols());
+        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto data = const_cast<void*>(m_data->device(stream, sync).data());
+        return cv::cuda::GpuMat(height, width, type, data);
     }
 
     SyncedImage::operator cv::Mat()
@@ -208,42 +240,54 @@ namespace aq
         return mutableMat();
     }
 
-    cv::cuda::GpuMat SyncedImage::mutableGpuMat()
-    {
-        return cv::cuda::GpuMat(static_cast<int>(rows()),
-                                static_cast<int>(cols()),
-                                CV_MAKETYPE(toCvDepth(dataType()), channels()),
-                                m_data->mutableDevice().data());
-    }
-
     SyncedImage::operator cv::cuda::GpuMat()
     {
         return mutableGpuMat();
     }
 
-    const cv::Mat SyncedImage::mat() const
-    {
-        return cv::Mat(static_cast<int>(rows()),
-                       static_cast<int>(cols()),
-                       CV_MAKETYPE(toCvDepth(dataType()), channels()),
-                       const_cast<void*>(m_data->host().data()));
-    }
     SyncedImage::operator const cv::Mat() const
     {
         return mat();
     }
 
-    const cv::cuda::GpuMat SyncedImage::gpuMat() const
-    {
-        return cv::cuda::GpuMat(static_cast<int>(rows()),
-                                static_cast<int>(cols()),
-                                CV_MAKETYPE(toCvDepth(dataType()), channels()),
-                                const_cast<void*>(m_data->device().data()));
-    }
-
     SyncedImage::operator const cv::cuda::GpuMat() const
     {
         return gpuMat();
+    }
+
+    void SyncedImage::copyTo(cv::cuda::GpuMat& mat, mo::IDeviceStream* stream) const
+    {
+        const auto height = static_cast<int>(rows());
+        const auto width = static_cast<int>(cols());
+        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto src_view = m_data->device(stream);
+        mat.create(height, width, type);
+        ct::TArrayView<void> dst_view(mat.datastart, mat.size().area() * mat.elemSize());
+        MO_ASSERT(dst_view.size() == src_view.size());
+        if (stream)
+        {
+            stream->deviceToDevice(dst_view, src_view);
+        }
+    }
+
+    void SyncedImage::copyTo(cv::Mat& mat, mo::IDeviceStream* stream) const
+    {
+        bool sync = false;
+        cv::Mat tmp = this->mat(stream, &sync);
+        if (sync)
+        {
+            if (stream)
+            {
+                stream->synchronize();
+            }
+            else
+            {
+                auto stream = m_data->stream().lock();
+                stream->synchronize();
+            }
+        }
+
+        tmp.copyTo(mat);
     }
 #endif // HAVE_OPENCV
 

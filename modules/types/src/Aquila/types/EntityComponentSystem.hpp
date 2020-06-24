@@ -53,8 +53,8 @@ namespace aq
 
         bool providesComponent(mo::TypeInfo info) const override;
 
-        ct::TArrayView<T> getComponentMutable();
-        ct::TArrayView<const T> getComponent() const;
+        mt::Tensor<T, 1> getComponentMutable();
+        mt::Tensor<const T, 1> getComponent() const;
 
         mo::TypeInfo getComponentType() const override;
 
@@ -62,14 +62,45 @@ namespace aq
 
         std::shared_ptr<IComponentProvider> clone() const override;
 
+        void assign(uint32_t idx, const T& val);
+
         void save(mo::ISaveVisitor& visitor, const std::string& name) const override;
         void load(mo::ILoadVisitor& visitor, const std::string& name) override;
 
       private:
         ct::ext::DataTableStorage<T> m_data;
     };
+
+    template <class T>
+    struct TComponentProvider<ct::TArrayView<T>> : IComponentProvider
+    {
+        TComponentProvider();
+        void resize(uint32_t) override;
+        void erase(uint32_t) override;
+        void clear() override;
+
+        bool providesComponent(mo::TypeInfo info) const override;
+
+        mt::Tensor<T, 2> getComponentMutable();
+        mt::Tensor<const T, 2> getComponent() const;
+
+        mo::TypeInfo getComponentType() const override;
+
+        size_t getNumEntities() const override;
+
+        std::shared_ptr<IComponentProvider> clone() const override;
+
+        void assign(uint32_t idx, const ct::TArrayView<T>& val);
+
+        void save(mo::ISaveVisitor& visitor, const std::string& name) const override;
+        void load(mo::ILoadVisitor& visitor, const std::string& name) override;
+
+      private:
+        ct::ext::DataTableStorage<ct::TArrayView<T>> m_data;
+    };
     template <class T, class E = void>
     struct TEntityComponentSystem;
+
     struct AQUILA_EXPORTS EntityComponentSystem
     {
 
@@ -95,20 +126,14 @@ namespace aq
         template <class T>
         void push_back(const T& obj)
         {
-            using Components_t = typename ct::ext::SelectComponents<typename ct::GlobMemberObjects<T>::types>::type;
-            using Objects_t = typename ct::GlobMemberObjects<T>::types;
-            ct::StaticEqualTypes<Components_t, Objects_t>{};
             const uint32_t new_id = append();
             const auto idx = ct::Reflect<T>::end();
             pushRecurse(obj, new_id, idx);
         }
 
         template <class T>
-        T get(uint32_t id) const
+        T at(uint32_t id) const
         {
-            using Components_t = typename ct::ext::SelectComponents<typename ct::GlobMemberObjects<T>::types>::type;
-            using Objects_t = typename ct::GlobMemberObjects<T>::types;
-            ct::StaticEqualTypes<Components_t, Objects_t>{};
             // Assemble an object by copying component data out
             T out;
             const auto idx = ct::Reflect<T>::end();
@@ -117,9 +142,9 @@ namespace aq
         }
 
         template <class T>
-        ct::TArrayView<T> getComponentMutable()
+        mt::Tensor<T, 1> getComponentMutable()
         {
-            ct::TArrayView<T> view;
+            mt::Tensor<T, 1> view;
             auto provider = getProvider(mo::TypeInfo::create<T>());
             if (provider)
             {
@@ -131,9 +156,9 @@ namespace aq
         }
 
         template <class T>
-        ct::TArrayView<const T> getComponent() const
+        mt::Tensor<const T, 1> getComponent() const
         {
-            ct::TArrayView<const T> view;
+            mt::Tensor<const T, 1> view;
             auto provider = getProvider(mo::TypeInfo::create<T>());
             if (provider)
             {
@@ -146,16 +171,10 @@ namespace aq
         void erase(uint32_t entity_id);
         void clear();
 
-      private:
-        std::vector<ce::shared_ptr<IComponentProvider>> m_component_providers;
-
-        uint32_t append();
-
-        template <class T, ct::index_t I>
-        void pushImpl(const T& obj, const uint32_t id, ct::Indexer<I> field_index)
+      protected:
+        template <class Component_t>
+        void pushComponent(const Component_t& obj, const uint32_t id)
         {
-            auto ptr = ct::Reflect<T>::getPtr(field_index);
-            using Component_t = typename decltype(ptr)::Data_t;
             auto provider = getProvider(mo::TypeInfo::create<Component_t>());
             if (!provider)
             {
@@ -169,11 +188,37 @@ namespace aq
             MO_ASSERT(provider);
             auto typed = static_cast<TComponentProvider<Component_t>*>(provider);
             MO_ASSERT(typed);
-            ct::TArrayView<Component_t> view = typed->getComponentMutable();
+            typed->assign(id, obj);
+        }
 
-            MO_ASSERT(view.size());
-            MO_ASSERT(id < view.size());
-            view[id] = ptr.get(obj);
+        template <class T>
+        void pushComponent(const ct::TArrayView<T>& obj, const uint32_t id)
+        {
+            auto provider = getProvider(mo::TypeInfo::create<ct::TArrayView<T>>());
+            if (!provider)
+            {
+                MO_ASSERT_EQ(id, 0);
+                // create a provider
+                auto new_provider = ce::shared_ptr<TComponentProvider<ct::TArrayView<T>>>::create();
+                new_provider->resize(1);
+                addProvider(ce::shared_ptr<IComponentProvider>(std::move(new_provider)));
+                provider = getProvider(mo::TypeInfo::create<ct::TArrayView<T>>());
+            }
+            MO_ASSERT(provider);
+            auto typed = static_cast<TComponentProvider<ct::TArrayView<T>>*>(provider);
+            MO_ASSERT(typed);
+            typed->assign(id, obj);
+        }
+
+      protected:
+        uint32_t append();
+
+        template <class T, ct::index_t I>
+        void pushImpl(const T& obj, const uint32_t id, ct::Indexer<I> field_index)
+        {
+            auto ptr = ct::Reflect<T>::getPtr(field_index);
+            using Component_t = typename decltype(ptr)::Data_t;
+            pushComponent<Component_t>(ptr.get(obj), id);
         }
 
         template <class T>
@@ -199,9 +244,9 @@ namespace aq
             MO_ASSERT(provider);
             auto typed = static_cast<const TComponentProvider<Component_t>*>(provider);
             MO_ASSERT(typed);
-            ct::TArrayView<const Component_t> view = typed->getComponent();
+            auto view = typed->getComponent();
 
-            MO_ASSERT(entity_id < view.size());
+            MO_ASSERT(entity_id < view.getShape()[0]);
             ptr.set(obj, view[entity_id]);
         }
 
@@ -218,6 +263,9 @@ namespace aq
             const auto next_field = --field_index;
             getRecurse(obj, entity_id, next_field);
         }
+
+      private:
+        std::vector<ce::shared_ptr<IComponentProvider>> m_component_providers;
     };
 
     template <class T>
@@ -253,9 +301,9 @@ namespace aq
             addComponents(*this, ct::VariadicTypedef<T>{});
         }
 
-        T get(uint32_t id) const
+        T at(uint32_t id) const
         {
-            return EntityComponentSystem::template get<T>(id);
+            return EntityComponentSystem::template at<T>(id);
         }
     };
 
@@ -271,13 +319,12 @@ namespace aq
         TEntityComponentSystem()
         {
             using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
-            using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
-            addComponents(*this, Components_t{});
+            addComponents(*this, MemberObjects_t{});
         }
 
-        T get(uint32_t id) const
+        T at(uint32_t id) const
         {
-            return EntityComponentSystem::template get<T>(id);
+            return EntityComponentSystem::template at<T>(id);
         }
     };
 
@@ -295,6 +342,25 @@ namespace aq
             addComponents(*this, ct::VariadicTypedef<T...>{});
         }
 
+        void push_back(const T&... data)
+        {
+            const uint32_t new_id = append();
+            pushRecurse(new_id, data...);
+        }
+
+      private:
+        template <class U>
+        void pushRecurse(uint32_t id, const U& head)
+        {
+            EntityComponentSystem::pushComponent(head, id);
+        }
+
+        template <class U, class... Us>
+        ct::EnableIf<sizeof...(Us) != 0> pushRecurse(uint32_t id, const U& head, const Us&... tail)
+        {
+            EntityComponentSystem::pushComponent(head, id);
+            pushRecurse(id, tail...);
+        }
         // TODO get returning a std::tuple<T...>
     };
 
@@ -331,15 +397,15 @@ namespace aq
     }
 
     template <class T>
-    ct::TArrayView<T> TComponentProvider<T>::getComponentMutable()
+    mt::Tensor<T, 1> TComponentProvider<T>::getComponentMutable()
     {
-        return ct::TArrayView<T>(m_data.data(0).begin, m_data.size());
+        return m_data.data(0);
     }
 
     template <class T>
-    ct::TArrayView<const T> TComponentProvider<T>::getComponent() const
+    mt::Tensor<const T, 1> TComponentProvider<T>::getComponent() const
     {
-        return ct::TArrayView<const T>(m_data.data(0).begin, m_data.size());
+        return m_data.data(0);
     }
 
     template <class T>
@@ -372,6 +438,12 @@ namespace aq
     }
 
     template <class T>
+    void TComponentProvider<T>::assign(uint32_t idx, const T& val)
+    {
+        m_data.assign(idx, val);
+    }
+
+    template <class T>
     void TComponentProvider<T>::save(mo::ISaveVisitor& visitor, const std::string& name) const
     {
         visitor(&m_data, name);
@@ -379,6 +451,93 @@ namespace aq
 
     template <class T>
     void TComponentProvider<T>::load(mo::ILoadVisitor& visitor, const std::string& name)
+    {
+        visitor(&m_data, name);
+    }
+
+    template <class T>
+    TComponentProvider<ct::TArrayView<T>>::TComponentProvider()
+    {
+        static bool registered = false;
+        if (!registered)
+        {
+            auto factory_instance = ComponentFactory::instance();
+            MO_ASSERT(factory_instance);
+            const auto type = mo::TypeInfo::create<ct::TArrayView<T>>();
+            auto factory_func = []() -> ce::shared_ptr<IComponentProvider> {
+                return ce::make_shared<TComponentProvider<ct::TArrayView<T>>>();
+            };
+
+            factory_instance->registerConstructor(type, std::move(factory_func));
+        }
+    }
+    template <class T>
+    void TComponentProvider<ct::TArrayView<T>>::resize(uint32_t size)
+    {
+        m_data.resize(size);
+    }
+
+    template <class T>
+    bool TComponentProvider<ct::TArrayView<T>>::providesComponent(mo::TypeInfo info) const
+    {
+        return info.template isType<ct::TArrayView<T>>();
+    }
+
+    template <class T>
+    mt::Tensor<T, 2> TComponentProvider<ct::TArrayView<T>>::getComponentMutable()
+    {
+        return m_data.data(0);
+    }
+
+    template <class T>
+    mt::Tensor<const T, 2> TComponentProvider<ct::TArrayView<T>>::getComponent() const
+    {
+        return m_data.data(0);
+    }
+
+    template <class T>
+    mo::TypeInfo TComponentProvider<ct::TArrayView<T>>::getComponentType() const
+    {
+        return mo::TypeInfo::create<T>();
+    }
+    template <class T>
+    size_t TComponentProvider<ct::TArrayView<T>>::getNumEntities() const
+    {
+        return m_data.size();
+    }
+
+    template <class T>
+    void TComponentProvider<ct::TArrayView<T>>::erase(uint32_t id)
+    {
+        m_data.erase(id);
+    }
+
+    template <class T>
+    void TComponentProvider<ct::TArrayView<T>>::clear()
+    {
+        m_data.clear();
+    }
+
+    template <class T>
+    std::shared_ptr<IComponentProvider> TComponentProvider<ct::TArrayView<T>>::clone() const
+    {
+        return std::make_shared<TComponentProvider<ct::TArrayView<T>>>(*this);
+    }
+
+    template <class T>
+    void TComponentProvider<ct::TArrayView<T>>::assign(uint32_t idx, const ct::TArrayView<T>& val)
+    {
+        m_data.assign(idx, val);
+    }
+
+    template <class T>
+    void TComponentProvider<ct::TArrayView<T>>::save(mo::ISaveVisitor& visitor, const std::string& name) const
+    {
+        visitor(&m_data, name);
+    }
+
+    template <class T>
+    void TComponentProvider<ct::TArrayView<T>>::load(mo::ILoadVisitor& visitor, const std::string& name)
     {
         visitor(&m_data, name);
     }
@@ -592,7 +751,7 @@ namespace ct
     REFLECT_END;
 
     REFLECT_TEMPLATED_DERIVED(aq::TEntityComponentSystem, aq::EntityComponentSystem)
-        MEMBER_FUNCTION(get, &DataType::get)
+        // MEMBER_FUNCTION(at, &DataType::at)
     REFLECT_END;
 } // namespace ct
 

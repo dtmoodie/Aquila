@@ -84,7 +84,7 @@ namespace aq
         setHash(other.hash());
         m_data.setConst();
         auto current = static_cast<const ce::shared_ptr<SyncedMemory>&>(m_data)->stream().lock();
-        if(current != stream)
+        if (current != stream)
         {
             setStream(stream);
         }
@@ -189,7 +189,16 @@ namespace aq
     {
         return m_shape.numel() == 0;
     }
-}
+
+    SyncedMemory::SyncState SyncedImage::state() const
+    {
+        if (m_data)
+        {
+            return m_data->state();
+        }
+        return SyncedMemory::SyncState::SYNCED;
+    }
+} // namespace aq
 
 namespace ct
 {
@@ -203,4 +212,4 @@ namespace ct
     {
         return view.operator ce::shared_ptr<aq::SyncedMemory>&()->mutableHost();
     }
-}
+} // namespace ct

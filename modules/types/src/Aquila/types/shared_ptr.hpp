@@ -1,12 +1,12 @@
 #ifndef AQ_TYPES_SHARED_PTR_HPP
 #define AQ_TYPES_SHARED_PTR_HPP
-#include <MetaObject/runtime_reflection/TraitInterface.hpp>
-#include <MetaObject/runtime_reflection/StructTraits.hpp>
-#include <MetaObject/runtime_reflection/IDynamicVisitor.hpp>
 #include <MetaObject/logging/logging.hpp>
+#include <MetaObject/runtime_reflection/IDynamicVisitor.hpp>
+#include <MetaObject/runtime_reflection/StructTraits.hpp>
+#include <MetaObject/runtime_reflection/TraitInterface.hpp>
+#include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
 
 #include <ce/shared_ptr.hpp>
-#include <cereal/types/memory.hpp>
 
 namespace mo
 {
@@ -24,7 +24,8 @@ namespace mo
                 auto ptr = visitor.getPointer<T>(id);
                 if (!ptr)
                 {
-                    *val = ce::shared_ptr<T>::create();
+                    PolymorphicSerializationHelper<T>::load(visitor, *val);
+                    //*val = ce::shared_ptr<T>::create();
                     visitor(val->get(), "data");
                     visitor.setSerializedPointer(val->get(), id);
                     auto cache_ptr = *val;
@@ -42,7 +43,7 @@ namespace mo
             }
         }
 
-        void save(ISaveVisitor& visitor, const void* inst, const std::string& , size_t cnt) const override
+        void save(ISaveVisitor& visitor, const void* inst, const std::string&, size_t cnt) const override
         {
             MO_ASSERT_EQ(cnt, 1);
             auto val = this->ptr(inst);
@@ -86,7 +87,7 @@ namespace mo
             }
         }
 
-        void save(ISaveVisitor& visitor, const void* inst, const std::string& , size_t cnt) const override
+        void save(ISaveVisitor& visitor, const void* inst, const std::string&, size_t cnt) const override
         {
             MO_ASSERT_EQ(cnt, 1);
             auto val = this->ptr(inst);
@@ -105,24 +106,24 @@ namespace mo
             visitor.template visit<T>("data");
         }
     };
-}
+} // namespace mo
 
 namespace ce
 {
-    template<class AR, class T>
+    template <class AR, class T>
     void save(AR& ar, const ce::shared_ptr<T>& val)
     {
         std::shared_ptr<T> ptr = val;
         ar(ptr);
     }
 
-    template<class AR, class T>
+    template <class AR, class T>
     void load(AR& ar, ce::shared_ptr<T>& val)
     {
         std::shared_ptr<T> ptr;
         ar(ptr);
         val = ptr;
     }
-}
+} // namespace ce
 
 #endif // AQ_TYPES_SHARED_PTR_HPP

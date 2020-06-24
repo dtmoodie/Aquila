@@ -9,8 +9,7 @@ namespace aq
 
     bool operator==(const DetectedObject& lhs, const DetectedObject& rhs)
     {
-        return lhs.bounding_box == rhs.bounding_box && lhs.id.value == rhs.id.value &&
-               lhs.confidence.value == rhs.confidence.value;
+        return lhs.bounding_box == rhs.bounding_box && lhs.id == rhs.id && lhs.confidence == rhs.confidence;
     }
 
     void boundingBoxToPixels(cv::Rect2f& bb, cv::Size size)

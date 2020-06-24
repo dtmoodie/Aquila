@@ -84,19 +84,19 @@ TEST(entity_component_system, initialization)
     ASSERT_EQ(ecs.getNumComponents(), 3);
     ASSERT_EQ(ecs.getNumEntities(), 10);
 
-    auto new_obj = ecs.get<GameObject>(0);
+    auto new_obj = ecs.at<GameObject>(0);
     ASSERT_EQ(obj, new_obj);
 
-    auto sphere = ecs.get<Sphere>(0);
+    auto sphere = ecs.at<Sphere>(0);
     ASSERT_EQ(sphere.velocity, new_obj.velocity);
     ASSERT_EQ(sphere.position, new_obj.position);
 
     auto view = ecs.getComponent<Orientation>();
-    ASSERT_EQ(view.size(), 10);
+    ASSERT_EQ(view.getShape()[0], 10);
     ASSERT_EQ(view[0], new_obj.orientation);
 
     auto sphere_view = ecs.getComponent<Sphere>();
-    ASSERT_FALSE(sphere_view.size());
+    ASSERT_FALSE(sphere_view.getShape()[0]);
 }
 
 TEST(entity_component_system, erase)
@@ -111,12 +111,12 @@ TEST(entity_component_system, erase)
     ASSERT_EQ(ecs.getNumComponents(), 3);
     ASSERT_EQ(ecs.getNumEntities(), 10);
 
-    auto new_obj = ecs.get<GameObject>(0);
+    auto new_obj = ecs.at<GameObject>(0);
     ASSERT_EQ(GameObject::init(0), new_obj);
 
     ecs.erase(5);
     ASSERT_EQ(ecs.getNumEntities(), 9);
-    new_obj = ecs.get<GameObject>(5);
+    new_obj = ecs.at<GameObject>(5);
     ASSERT_EQ(new_obj, GameObject::init(6));
 }
 
@@ -155,7 +155,7 @@ TEST(entity_component_system, typed_ecs)
     ecs.push_back(Sphere{});
 
     auto velocity = ecs.getComponent<Velocity>();
-    ASSERT_EQ(velocity.size(), 1);
+    ASSERT_EQ(velocity.getShape()[0], 1);
 }
 
 TEST(entity_component_system, type_erase)
@@ -166,7 +166,7 @@ TEST(entity_component_system, type_erase)
     aq::EntityComponentSystem ecs(tecs);
 
     auto velocity = ecs.getComponent<Velocity>();
-    ASSERT_EQ(velocity.size(), 1);
+    ASSERT_EQ(velocity.getShape()[0], 1);
 }
 
 TEST(entity_component_system, serialization_json)
@@ -209,7 +209,7 @@ TEST(entity_component_system, serialization_json)
         }));
 
         auto velocity = loaded_ecs.getComponent<Velocity>();
-        ASSERT_EQ(velocity.size(), 10);
+        ASSERT_EQ(velocity.getShape()[0], 10);
     }
 }
 
@@ -250,7 +250,7 @@ TEST(entity_component_system, serialization_binary)
         }));
 
         auto velocity = loaded_ecs.getComponent<Velocity>();
-        ASSERT_EQ(velocity.size(), 10);
+        ASSERT_EQ(velocity.getShape()[0], 10);
     }
 }
 
@@ -306,11 +306,11 @@ TEST(entity_component_system, pub_sub_data)
     auto data = sub.getTypedData();
     ASSERT_TRUE(data);
     auto velocity = data->data.getComponent<Velocity>();
-    ASSERT_EQ(velocity.size(), 10);
+    ASSERT_EQ(velocity.getShape()[0], 10);
 
     auto position = data->data.getComponent<Position>();
-    ASSERT_EQ(position.size(), 10);
+    ASSERT_EQ(position.getShape()[0], 10);
 
     auto orientation = data->data.getComponent<Orientation>();
-    ASSERT_EQ(orientation.size(), 10);
+    ASSERT_EQ(orientation.getShape()[0], 10);
 }

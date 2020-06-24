@@ -1,3 +1,5 @@
+#include <Aquila/types/DetectionDescription.hpp>
+
 #include <Aquila/types/ObjectDetection.hpp>
 
 #include <Aquila/types/EntityComponentSystem.hpp>
@@ -71,4 +73,26 @@ TEST(object_detection, serialize_ecs)
     aq::DetectedObjectSet loaded;
     mo::JSONLoader loader(ss1);
     loader(&loaded, "objects");
+}
+
+TEST(object_detection, detection_descriptor)
+{
+    std::vector<std::string> cat_names({"cat0", "cat1", "cat2", "cat3", "cat4", "cat5"});
+    aq::CategorySet::ConstPtr cats = std::make_shared<aq::CategorySet>(cat_names);
+    using Components_t = ct::VariadicTypedef<aq::detection::BoundingBox2d, aq::detection::Descriptor>;
+    aq::TDetectedObjectSet<Components_t> set(cats);
+
+    std::vector<float> descriptor_holder(20);
+
+    for (size_t i = 0; i < 10; ++i)
+    {
+        aq::detection::BoundingBox2d bb(0.0, 0.1 * i, 0.2 * i, 0.3 * i);
+        std::transform(descriptor_holder.begin(), descriptor_holder.end(), descriptor_holder.begin(), [](float) {
+            return std::rand() / RAND_MAX;
+        });
+
+        set.push_back(bb, aq::detection::Descriptor(descriptor_holder.data(), descriptor_holder.size()));
+    }
+    std::cout << set << std::endl;
+    auto descriptors = set.getComponent<aq::detection::Descriptor>();
 }
