@@ -11,10 +11,10 @@ namespace aq
     class AQUILA_EXPORTS PlotterInfo : public mo::IMetaObjectInfo
     {
       public:
-        virtual bool AcceptsParameter(mo::IParam* parameter) = 0;
+        virtual bool acceptsParameter(mo::IParam* parameter) const = 0;
         // std::string Print() const;
     };
-}
+} // namespace aq
 
 namespace mo
 {
@@ -22,6 +22,9 @@ namespace mo
     template <class Type>
     struct MetaObjectInfoImpl<Type, aq::PlotterInfo> : public aq::PlotterInfo
     {
-        bool AcceptsParameter(mo::IParam* parameter) { return Type::AcceptsParameter(parameter); }
+        bool acceptsParameter(mo::IParam* parameter) const override
+        {
+            return Type::AcceptsParameter(parameter);
+        }
     };
-}
+} // namespace mo

@@ -13,9 +13,11 @@ void Plotter::Init(bool firstInit)
     MetaObject::Init(firstInit);
     if (!firstInit)
     {
-        setInput(parameter);
-        if (parameter)
+        setInput(m_parameter);
+        if (m_parameter)
         {
+            auto update_slot = this->getSlot_param_updated();
+            m_parameter->registerUpdateNotifier(*update_slot);
             // param->RegisterUpdateNotifier(GetSlot<void(mo::IAsyncStream*, mo::IParameter*)>("on_parameter_update"));
         }
     }
@@ -27,17 +29,17 @@ void Plotter::plotInit(bool firstInit)
 
 void Plotter::setInput(mo::IParam* param_)
 {
-    parameter = param_;
-    if (parameter)
+    m_parameter = param_;
+    if (m_parameter)
     {
         //_connections[&param->update_signal] = param->RegisterNotifier(std::bind(&Plotter::OnParameterUpdate, this,
-        //std::placeholders::_1));
+        // std::placeholders::_1));
         //_connections[&param->delete_signal] = param->RegisterDeleteNotifier(std::bind(&Plotter::on_param_delete, this,
-        //std::placeholders::_1));
+        // std::placeholders::_1));
     }
 }
 
-void Plotter::on_parameter_update(mo::IAsyncStream* ctx, mo::IParam* param)
+void Plotter::on_parameter_modified(const mo::IParam& param, mo::Header, mo::UpdateFlags, mo::IAsyncStream& ctx)
 {
 }
 
@@ -145,12 +147,12 @@ QWidget* QtPlotter::getControlWidget(QWidget* parent)
 {
     return nullptr;
 }
-mo::IParam* QtPlotter::addParam(std::shared_ptr<mo::IParam> param)
+
+void QtPlotter::addParam(std::shared_ptr<mo::IParam> param)
 {
-    return param.get();
 }
-mo::IParam* QtPlotter::addParam(mo::IParam* param)
+
+void QtPlotter::addParam(mo::IParam* param)
 {
-    return param;
 }
 #endif

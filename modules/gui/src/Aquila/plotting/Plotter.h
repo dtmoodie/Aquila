@@ -2,8 +2,8 @@
 #include <Aquila/core/detail/Export.hpp>
 #include <MetaObject/object/MetaObject.hpp>
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
-#include <MetaObject/signals/detail/SlotMacros.hpp>
 #include <MetaObject/params/ParamMacros.hpp>
+#include <MetaObject/signals/detail/SlotMacros.hpp>
 #include <RuntimeObjectSystem/IObjectInfo.h>
 #include <list>
 
@@ -17,13 +17,11 @@ namespace mo
 {
     class IParam;
     class Context;
-}
+} // namespace mo
 /*
     A plotter object is a proxy that handles plotting a single parameter.  This object is created from
     the factory for a given parameter and it is installed into a plot.  A plot object handles rendering
     all plotters that have been installed in the plot.
-
-
 */
 
 namespace aq
@@ -31,10 +29,10 @@ namespace aq
     class PlotterInfo;
     class AQUILA_EXPORTS Plotter : public TInterface<Plotter, mo::MetaObject>
     {
-    public:
+      public:
         typedef PlotterInfo InterfaceInfo;
         typedef rcc::shared_ptr<Plotter> Ptr;
-        typedef rcc::weak_ptr<Plotter>   WeakPtr;
+        typedef rcc::weak_ptr<Plotter> WeakPtr;
 
         virtual void Init(bool firstInit);
         virtual void plotInit(bool firstInit);
@@ -42,35 +40,36 @@ namespace aq
         virtual bool acceptsParameter(mo::IParam* param) = 0;
 
         MO_BEGIN(Plotter)
-            MO_SLOT(void, on_parameter_update, mo::IAsyncStream*, mo::IParam*);
-            MO_SLOT(void, on_parameter_delete, mo::IParam const*);
-            STATE(mo::IParam*, parameter, nullptr);
+            PARAM_UPDATE_SLOT(parameter)
+            MO_SLOT(void, on_parameter_delete, mo::IParam const*)
         MO_END;
-    protected:
+
+      private:
+        mo::IParam* m_parameter = nullptr;
     };
 
     class AQUILA_EXPORTS QtPlotter : public Plotter
     {
-    public:
-        virtual mo::IParam* addParam(mo::IParam* param);
-        virtual mo::IParam* addParam(std::shared_ptr<mo::IParam> param);
+      public:
+        virtual void addParam(mo::IParam* param);
+        virtual void addParam(std::shared_ptr<mo::IParam> param);
         virtual void AddPlot(QWidget* plot_) = 0;
 
         virtual QWidget* createPlot(QWidget* parent) = 0;
         virtual QWidget* getControlWidget(QWidget* parent);
-    protected:
+
+      protected:
         std::list<QWidget*> plot_widgets;
-    public:
+
+      public:
         class impl;
         std::shared_ptr<impl> _pimpl;
     };
-    class AQUILA_EXPORTS vtkPlotter: public Plotter
+    class AQUILA_EXPORTS vtkPlotter : public Plotter
     {
-    public:
-
-    protected:
-
-    private:
+      public:
+      protected:
+      private:
     };
 
-}
+} // namespace aq

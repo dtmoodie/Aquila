@@ -22,7 +22,7 @@ rcc::shared_ptr<Plotter> PlotManager::getPlot(const std::string& plotName)
         IObject* obj = pConstructor->Construct();
         if (obj)
         {
-            obj = obj->GetInterface(Plotter::getHash());
+            obj = static_cast<IObject*>(obj->GetInterface(Plotter::getHash()));
             if (obj)
             {
                 Plotter* plotter = dynamic_cast<Plotter*>(obj);
@@ -30,7 +30,7 @@ rcc::shared_ptr<Plotter> PlotManager::getPlot(const std::string& plotName)
                 {
                     plotter->Init(true);
                     MO_LOG(info, "[ PlotManager ] successfully generating plot {}", plotName);
-                    return rcc::shared_ptr<Plotter>(plotter);
+                    return rcc::shared_ptr<Plotter>(*plotter);
                 }
                 else
                 {
@@ -69,17 +69,18 @@ std::vector<std::string> PlotManager::getAvailablePlots()
 std::vector<std::string> PlotManager::getAcceptablePlotters(mo::IParam* param)
 {
     std::vector<std::string> output;
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(Plotter::getHash());
+    std::vector<IObjectConstructor*> constructors =
+        mo::MetaObjectFactory::instance()->getConstructors(Plotter::getHash());
 
-    for (auto& constructor : constructors)
+    for (IObjectConstructor* constructor : constructors)
     {
-        auto object_info = constructor->GetObjectInfo();
+        const IObjectInfo* object_info = constructor->GetObjectInfo();
         if (object_info)
         {
-            auto plot_info = dynamic_cast<PlotterInfo*>(object_info);
+            const PlotterInfo* plot_info = dynamic_cast<const PlotterInfo*>(object_info);
             if (plot_info)
             {
-                if (plot_info->AcceptsParameter(param))
+                if (plot_info->acceptsParameter(param))
                 {
                     output.push_back(constructor->GetName());
                 }
@@ -91,17 +92,18 @@ std::vector<std::string> PlotManager::getAcceptablePlotters(mo::IParam* param)
 
 bool PlotManager::canPlotParameter(mo::IParam* param)
 {
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(Plotter::getHash());
+    std::vector<IObjectConstructor*> constructors =
+        mo::MetaObjectFactory::instance()->getConstructors(Plotter::getHash());
     // auto constructors = ObjectManager::Instance().GetConstructorsForInterface(IID_Plotter);
-    for (auto& constructor : constructors)
+    for (IObjectConstructor* constructor : constructors)
     {
-        auto object_info = constructor->GetObjectInfo();
+        const IObjectInfo* object_info = constructor->GetObjectInfo();
         if (object_info)
         {
-            auto plot_info = dynamic_cast<PlotterInfo*>(object_info);
+            const PlotterInfo* plot_info = dynamic_cast<const PlotterInfo*>(object_info);
             if (plot_info)
             {
-                if (plot_info->AcceptsParameter(param))
+                if (plot_info->acceptsParameter(param))
                 {
                     return true;
                 }
