@@ -5,15 +5,15 @@
 #include <MetaObject/signals/detail/SignalMacros.hpp>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 
-#include <opencv2/core/types.hpp>
-#include <opencv2/core/mat.hpp>
 #include <opencv2/core/cuda.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/core/opengl.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/highgui.hpp>
 
 #include <map>
-#include <set>
 #include <memory>
+#include <set>
 
 #ifdef _WIN32
 #ifdef _DEBUG
@@ -33,19 +33,22 @@ namespace aq
 {
     class IGraph;
     // Single instance per stream
-    class AQUILA_EXPORTS WindowCallbackHandler: public TInterface<WindowCallbackHandler,mo::MetaObject>
+    class AQUILA_EXPORTS WindowCallbackHandler : public TInterface<WindowCallbackHandler, mo::MetaObject>
     {
-    public:
+      public:
         enum
         {
             PAUSE_DRAG = 1 << 31
         };
         WindowCallbackHandler();
 
-        void imshow(const std::string& window_name, cv::Mat img, int flags =  1);
+        void imshow(const std::string& window_name, cv::Mat img, int flags = 1);
         void imshowd(const std::string& window_name, cv::cuda::GpuMat img, int flags = cv::WINDOW_OPENGL);
         void imshowb(const std::string& window_name, cv::ogl::Buffer buffer, int flags = cv::WINDOW_OPENGL);
         void Init(bool firstInit);
+
+        void setUiStream(std::shared_ptr<mo::IAsyncStream> stream);
+
         MO_BEGIN(WindowCallbackHandler)
             MO_SIGNAL(void, click_right, std::string, cv::Point, int, cv::Mat)
             MO_SIGNAL(void, click_left, std::string, cv::Point, int, cv::Mat)
@@ -60,17 +63,19 @@ namespace aq
 
         struct AQUILA_EXPORTS EventLoop
         {
-        public:
+          public:
             static EventLoop* Instance();
             void Register(WindowCallbackHandler*);
             void run();
-        private:
+
+          private:
             EventLoop();
             ~EventLoop();
-            std::vector<rcc::weak_ptr<WindowCallbackHandler>> handlers;
+            std::vector<rcc::weak_ptr<WindowCallbackHandler>> m_handlers;
             std::mutex mtx;
         };
-    private:
+
+      private:
         static void on_mouse_click(int event, int x, int y, int flags, void* callback_handler);
         struct AQUILA_EXPORTS WindowHandler
         {
@@ -83,5 +88,6 @@ namespace aq
             void on_mouse(int event, int x, int y, int flags);
         };
         std::map<std::string, std::shared_ptr<WindowHandler>> windows;
+        std::shared_ptr<mo::IAsyncStream> m_ui_stream;
     };
 } // namespace aq

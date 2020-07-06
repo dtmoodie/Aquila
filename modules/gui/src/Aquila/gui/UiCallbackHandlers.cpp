@@ -1,7 +1,7 @@
 #include "Aquila/gui/UiCallbackHandlers.h"
-#include "MetaObject/core/SystemTable.hpp"
 #include "Aquila/rcc/external_includes/cv_core.hpp"
 #include "Aquila/rcc/external_includes/cv_highgui.hpp"
+#include "MetaObject/core/SystemTable.hpp"
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 
 #include <MetaObject/thread/ThreadRegistry.hpp>
@@ -34,9 +34,13 @@ void WindowCallbackHandler::EventLoop::run()
     if (key != -1)
     {
         std::unique_lock<std::mutex> lock(mtx);
-        for (auto& itr : handlers)
+        for (rcc::weak_ptr<WindowCallbackHandler>& itr : m_handlers)
         {
-            itr->sig_on_key(key);
+            rcc::shared_ptr<WindowCallbackHandler> locked = itr.lock();
+            if (locked)
+            {
+                locked->sig_on_key(key);
+            }
         }
     }
 }
@@ -44,7 +48,7 @@ void WindowCallbackHandler::EventLoop::run()
 void WindowCallbackHandler::EventLoop::Register(WindowCallbackHandler* handler)
 {
     std::unique_lock<std::mutex> lock(mtx);
-    handlers.push_back(handler);
+    m_handlers.push_back(*handler);
 }
 
 void WindowCallbackHandler::on_mouse_click(int event, int x, int y, int flags, void* callback_handler)
@@ -53,13 +57,19 @@ void WindowCallbackHandler::on_mouse_click(int event, int x, int y, int flags, v
     ptr->on_mouse(event, x, y, flags);
 }
 
+void WindowCallbackHandler::setUiStream(std::shared_ptr<mo::IAsyncStream> stream)
+{
+    m_ui_stream = std::move(stream);
+}
+
 void WindowCallbackHandler::imshow(const std::string& window_name, cv::Mat img, int flags)
 {
-    auto gui_thread_id = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
-    if (mo::getThisThread() != gui_thread_id)
+    auto mystream = getStream();
+    if (mystream != m_ui_stream)
     {
-        mo::ThreadSpecificQueue::push(std::bind(&WindowCallbackHandler::imshow, this, window_name, img, flags),
-                                      gui_thread_id);
+        auto event = [this, window_name, img, flags]() { this->imshow(window_name, img, flags); };
+        // Push event?
+        m_ui_stream->pushWork(std::move(event));
         return;
     }
     std::shared_ptr<WindowHandler>& handler = windows[window_name];
@@ -86,11 +96,11 @@ void WindowCallbackHandler::imshow(const std::string& window_name, cv::Mat img, 
 
 void WindowCallbackHandler::imshowd(const std::string& window_name, cv::cuda::GpuMat img, int flags)
 {
-    auto gui_thread_id = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
-    if (mo::getThisThread() != gui_thread_id)
+    auto mystream = getStream();
+    if (mystream != m_ui_stream)
     {
-        mo::ThreadSpecificQueue::push(std::bind(&WindowCallbackHandler::imshowd, this, window_name, img, flags),
-                                      gui_thread_id);
+        auto event = [this, window_name, img, flags]() { this->imshowd(window_name, img, flags); };
+        m_ui_stream->pushWork(std::move(event));
         return;
     }
     std::shared_ptr<WindowHandler>& handler = windows[window_name];
@@ -114,11 +124,11 @@ void WindowCallbackHandler::imshowd(const std::string& window_name, cv::cuda::Gp
 }
 void WindowCallbackHandler::imshowb(const std::string& window_name, cv::ogl::Buffer buffer, int flags)
 {
-    auto gui_thread_id = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
-    if (mo::getThisThread() != gui_thread_id)
+    auto mystream = getStream();
+    if (mystream != m_ui_stream)
     {
-        mo::ThreadSpecificQueue::push(std::bind(&WindowCallbackHandler::imshowb, this, window_name, buffer, flags),
-                                      gui_thread_id);
+        auto event = [this, window_name, buffer, flags]() { this->imshowb(window_name, buffer, flags); };
+        m_ui_stream->pushWork(std::move(event));
         return;
     }
     std::shared_ptr<WindowHandler>& handler = windows[window_name];
@@ -144,6 +154,7 @@ void WindowCallbackHandler::imshowb(const std::string& window_name, cv::ogl::Buf
 WindowCallbackHandler::WindowCallbackHandler()
 {
 }
+
 void WindowCallbackHandler::Init(bool firstInit)
 {
     mo::MetaObject::Init(firstInit);

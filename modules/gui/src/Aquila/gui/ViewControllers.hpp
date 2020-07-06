@@ -1,19 +1,19 @@
 #pragma once
+#include <Aquila/core/detail/Export.hpp>
 #include <MetaObject/object/MetaObject.hpp>
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
 #include <MetaObject/params/ParamMacros.hpp>
 #include <MetaObject/signals/detail/SignalMacros.hpp>
 #include <MetaObject/signals/detail/SlotMacros.hpp>
-#include <Aquila/core/detail/Export.hpp>
 
 namespace aq
 {
     namespace gui
     {
         // This class emits void(void) signals based on keyboard key presses
-        class AQUILA_EXPORTS KeyboardSignalController: public mo::MetaObject
+        class AQUILA_EXPORTS KeyboardSignalController : public mo::MetaObject
         {
-        public:
+          public:
             using SignalMap_t = std::map<int, std::string>;
             MO_BEGIN(KeyboardSignalController)
                 MO_SLOT(void, on_key, int)
@@ -21,10 +21,10 @@ namespace aq
                 PARAM(SignalMap_t, signal_map, {})
                 PARAM_UPDATE_SLOT(signal_map)
             MO_END;
-        private:
+
+          private:
             std::map<std::string, std::unique_ptr<mo::TSignal<void(void)>>> m_signals;
             std::map<int, mo::TSignal<void(void)>*> m_key_map;
-
         };
-    }
-}
+    } // namespace gui
+} // namespace aq

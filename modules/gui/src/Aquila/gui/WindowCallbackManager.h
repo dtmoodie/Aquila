@@ -2,8 +2,8 @@
 #include "Aquila/core/detail/Export.hpp"
 #include "MetaObject/object/MetaObject.hpp"
 #include <RuntimeObjectSystem/shared_ptr.hpp>
-#include <vector>
 #include <opencv2/core/types.hpp>
+#include <vector>
 
 namespace aq
 {
@@ -42,6 +42,4 @@ namespace aq
 
         std::map<std::string, std::shared_ptr<WindowHandler>> _handlers;
     };*/
-
-
 }
