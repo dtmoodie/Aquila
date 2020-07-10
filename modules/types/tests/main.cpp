@@ -35,6 +35,7 @@ int main(int argc, char** argv)
         using DeviceAllocator = mo::DefaultAllocator<mo::cuda::CUDA>;
         table->getSingleton<mo::DeviceAllocator, DeviceAllocator>();
         mo::MetaObjectFactory::instance()->registerTranslationUnit();
+        // mo::MetaObjectFactory::loadStandardPlugins();
     }
 
     return RUN_ALL_TESTS();

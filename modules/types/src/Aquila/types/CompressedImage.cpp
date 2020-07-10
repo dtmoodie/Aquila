@@ -96,14 +96,14 @@ namespace aq
     CompressedImage& CompressedImage::operator=(const CompressedImage&) = default;
     CompressedImage& CompressedImage::operator=(CompressedImage&&) = default;
 
-    SyncedImage CompressedImage::image(rcc::shared_ptr<IImageDecompressor> decompressor) const
+    void CompressedImage::image(SyncedImage& img, rcc::shared_ptr<IImageDecompressor> decompressor) const
     {
         if (!decompressor)
         {
             decompressor = IImageDecompressor::create(m_enc);
         }
         MO_ASSERT(decompressor != nullptr);
-        return decompressor->decompress(*this);
+        decompressor->decompress(*this, img);
     }
 
     ct::TArrayView<const void> CompressedImage::data() const

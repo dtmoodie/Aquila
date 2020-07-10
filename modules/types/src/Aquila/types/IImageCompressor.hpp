@@ -19,10 +19,10 @@ namespace aq
 
         static Ptr_t create(ImageEncoding encoding);
 
-        CompressedImage compress(const SyncedImage&, ImageEncoding) const;
+        void compress(const SyncedImage&, CompressedImage& compressed, ImageEncoding = ImageEncoding::JPEG) const;
 
       protected:
-        virtual CompressedImage compressImpl(const SyncedImage&, ImageEncoding) const = 0;
+        virtual void compressImpl(const SyncedImage&, CompressedImage& compressed, ImageEncoding) const = 0;
         friend struct IImageDecompressor;
 
       private:
@@ -39,11 +39,11 @@ namespace aq
 
         static Ptr_t create(ImageEncoding encoding);
 
-        SyncedImage decompress(const CompressedImage& compressed) const;
+        void decompress(const CompressedImage& compressed, SyncedImage& img) const;
 
       protected:
         friend struct IImageCompressor;
-        virtual SyncedImage decompressImpl(const CompressedImage& compressed) const = 0;
+        virtual void decompressImpl(const CompressedImage& compressed, SyncedImage& img) const = 0;
     };
 
     struct AQUILA_EXPORTS ImageDecompressorInfo : mo::MetaObject::InterfaceInfo
@@ -55,7 +55,7 @@ namespace aq
     {
         virtual int32_t priority(ImageEncoding) const = 0;
     };
-}
+} // namespace aq
 
 namespace ce
 {
@@ -106,7 +106,7 @@ namespace ce
             return hasher(val);
         }
     };
-}
+} // namespace ce
 
 namespace mo
 {
@@ -127,6 +127,6 @@ namespace mo
             return T::priority(enc);
         }
     };
-}
+} // namespace mo
 
 #endif // AQ_TYPES_IMAGE_COMPRESSION_ENGINE_HPP

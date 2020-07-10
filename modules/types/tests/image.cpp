@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 #define private public
-#include "CvMatAllocatorWrapper.hpp"
+#include "cv_compression/CvMatAllocatorWrapper.hpp"
 #include <Aquila/types/CvMatAllocator.hpp>
 #include <Aquila/types/SyncedImage.hpp>
 
@@ -145,7 +145,7 @@ TEST(synced_image_opencv, wrapping_allocator)
     auto wrapped = cv::cuda::StreamAccessor::wrapStream(stream->getStream());
     auto img = std::make_shared<aq::SyncedImage>();
     img->setStream(stream);
-    auto mat = CvMatAllocatorWrapper::wrap(img);
+    auto mat = aq::wrap(img);
     mat.create(1024, 512, CV_32F);
     mat.setTo(cv::Scalar::all(150));
 

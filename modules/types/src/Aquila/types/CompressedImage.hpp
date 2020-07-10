@@ -33,6 +33,7 @@ namespace aq
         ENUM_VALUE(DNG, RAW + 1)
     ENUM_END;
 
+    // TODO use a copy on write shared pointer to the data from load, etc
     struct AQUILA_EXPORTS CompressedImage : ce::HashedBase
     {
         static std::shared_ptr<const CompressedImage> load(const boost::filesystem::path& path);
@@ -47,7 +48,7 @@ namespace aq
         CompressedImage& operator=(const CompressedImage&);
         CompressedImage& operator=(CompressedImage&&);
 
-        SyncedImage image(rcc::shared_ptr<IImageDecompressor> = rcc::shared_ptr<IImageDecompressor>()) const;
+        void image(SyncedImage& img, rcc::shared_ptr<IImageDecompressor> = rcc::shared_ptr<IImageDecompressor>()) const;
 
         ct::TArrayView<const void> data() const;
         ct::TArrayView<void> mutableData();

@@ -17,31 +17,31 @@ namespace aq
         return obj;
     }
 
-    CompressedImage IImageCompressor::compress(const SyncedImage& img, ImageEncoding enc) const
+    void IImageCompressor::compress(const SyncedImage& img, CompressedImage& ret, ImageEncoding enc) const
     {
         auto eng = ce::ICacheEngine::instance();
         MO_ASSERT(eng != nullptr);
-        auto ret = eng->exec(&IImageCompressor::compressImpl, ce::makeEmptyInput(*this), img, enc);
+        eng->exec(&IImageCompressor::compressImpl, ce::makeEmptyInput(*this), img, ce::makeOutput(ret), enc);
 
         size_t fhash, arghash;
         const auto compression_hit = eng->wasCacheUsedLast();
-        auto result =
-            eng->getCachedResult(fhash, arghash, &IImageDecompressor::decompressImpl, ce::makeEmptyInput(*this), ret);
+        SyncedImage decompressed = img;
+        auto result = eng->getCachedResult(fhash,
+                                           arghash,
+                                           &IImageDecompressor::decompressImpl,
+                                           ce::makeEmptyInput(*this),
+                                           ret,
+                                           ce::makeOutput(decompressed));
         eng->setCacheWasUsed(compression_hit);
-        if (result)
-        {
-            return ret;
-        }
+
         using PackType = typename decltype(result)::element_type;
         // ct::StaticEquality<int, PackType::OUTPUT_COUNT, 1>{};
         result = std::make_shared<PackType>();
         const auto combined = ce::combineHash(fhash, arghash);
-        auto copy = img;
         result->setHash(combined);
-        result->saveOutputs(copy, ret);
+        result->saveOutputs(ret, ce::makeOutput(decompressed));
         std::get<0>(result->values).setHash(img.hash());
         eng->pushCachedResult(std::move(result), fhash, arghash);
-        return ret;
     }
 
     auto IImageDecompressor::create(ImageEncoding encoding) -> Ptr_t
@@ -52,33 +52,39 @@ namespace aq
             s_interfaceID, [encoding](const ImageDecompressorInfo& info) { return info.priority(encoding); });
     }
 
-    SyncedImage IImageDecompressor::decompress(const CompressedImage& compressed) const
+    void IImageDecompressor::decompress(const CompressedImage& compressed, SyncedImage& img) const
     {
         auto eng = ce::ICacheEngine::instance();
 
-        auto ret = eng->exec(&IImageDecompressor::decompressImpl, ce::makeEmptyInput(*this), compressed);
+        eng->exec(&IImageDecompressor::decompressImpl, ce::makeEmptyInput(*this), compressed, ce::makeOutput(img));
 
         size_t fhash, arghash;
+        CompressedImage copy = compressed;
         auto enc = compressed.getEncoding();
         auto result = eng->getCachedResult(fhash,
                                            arghash,
                                            &IImageCompressor::compressImpl,
                                            ce::makeEmptyInput(*this),
-                                           static_cast<const SyncedImage&>(ret),
+                                           static_cast<const SyncedImage&>(img),
+                                           ce::makeOutput(copy),
                                            enc);
         if (result)
         {
-            return ret;
+            return;
         }
 
         auto combined = ce::combineHash(fhash, arghash);
         result = std::make_shared<typename decltype(result)::element_type>();
 
-        auto copy = compressed;
+        /*using T = const aq::SyncedImage&;
+        static_assert(ce::result_traits::DerivedFromHashedBase<T>::value, "");
+        ct::StaticEqualTypes<ce::result_traits::RemoveRef_t<T>, const aq::SyncedImage>{};
+        static_assert(ce::result_traits::IsConst<ce::result_traits::RemoveRef_t<T>>::value == true, "");
+        static_assert(ce::result_traits::IsOutput<T, T>::value == false, "");*/
+
         result->setHash(combined);
-        result->saveOutputs(copy, static_cast<const SyncedImage&>(ret), enc);
-        std::get<0>(result->values).setHash(compressed.hash());
+        result->saveOutputs(static_cast<const SyncedImage&>(img), ce::makeOutput(copy), enc);
+        // std::get<0>(result->values).setHash(compressed.hash());
         eng->pushCachedResult(result, fhash, arghash);
-        return ret;
     }
 } // namespace aq
