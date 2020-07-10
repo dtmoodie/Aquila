@@ -10,15 +10,17 @@ namespace aq
 
     void OpenCVDecompressor::decompressImpl(const aq::CompressedImage& compressed, aq::SyncedImage& ret) const
     {
+        MO_ASSERT(!compressed.empty());
         std::shared_ptr<aq::SyncedImage> out = std::make_shared<aq::SyncedImage>(ret);
 
-        auto compressed_data = compressed.data();
+        ce::shared_ptr<const SyncedMemory> compressed_data = compressed.getData();
         // OpenCV's api doesn't allow wrapping of const data, even though the decompress operation is a const
         // operation
-        cv::Mat wrap_data(compressed_data.size(),
-                          1,
-                          CV_8UC1,
-                          const_cast<uint8_t*>(static_cast<const uint8_t*>(compressed_data.data())));
+        ct::TArrayView<const void> host_view = compressed_data->host();
+        const uint8_t* ptr = ct::ptrCast<uint8_t>(host_view.data());
+
+        cv::Mat wrap_data(host_view.size(), 1, CV_8UC1, const_cast<uint8_t*>(ptr));
+
         auto wrapped = wrap(out);
         CvAllocatorContextManager ctx(wrapped.allocator);
         auto img = cv::imdecode(wrap_data, cv::IMREAD_UNCHANGED);

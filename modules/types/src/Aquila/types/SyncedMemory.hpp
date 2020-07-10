@@ -36,11 +36,11 @@ namespace aq
         static SyncedMemory wrapHost(ct::TArrayView<void>,
                                      size_t elem_size,
                                      std::shared_ptr<void> owning,
-                                     std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
+                                     std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
         static SyncedMemory wrapHost(ct::TArrayView<const void>,
                                      size_t elem_size,
                                      std::shared_ptr<void> owning,
-                                     std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
+                                     std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
         static SyncedMemory wrapDevice(ct::TArrayView<void>,
                                        size_t elem_size,
@@ -54,11 +54,11 @@ namespace aq
         template <class T>
         static SyncedMemory wrapHost(ct::TArrayView<T>,
                                      std::shared_ptr<void> owning,
-                                     std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
+                                     std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
         template <class T>
         static SyncedMemory wrapHost(ct::TArrayView<const T>,
                                      std::shared_ptr<void> owning,
-                                     std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
+                                     std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
         template <class T>
         static SyncedMemory wrapDevice(ct::TArrayView<T>,
@@ -71,7 +71,8 @@ namespace aq
 
         SyncedMemory(size_t size = 0,
                      size_t elem_size = 1,
-                     std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
+                     std::shared_ptr<mo::IAsyncStream> stream = mo::IDeviceStream::current());
+
         SyncedMemory(const SyncedMemory& other);
         SyncedMemory(SyncedMemory&& other);
         ~SyncedMemory();
@@ -80,27 +81,30 @@ namespace aq
         SyncedMemory& operator=(SyncedMemory&& other);
 
         size_t size() const;
-        bool resize(size_t size, size_t elem_size = 1, mo::IDeviceStream* stream = nullptr);
-        ct::TArrayView<const void> host(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr) const;
+        bool resize(size_t size, size_t elem_size = 1, std::shared_ptr<mo::IAsyncStream> = {});
+
+        ct::TArrayView<const void> host(mo::IAsyncStream* = nullptr, bool* sync_required = nullptr) const;
         ct::TArrayView<const void> device(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr) const;
 
-        ct::TArrayView<void> mutableHost(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
+        ct::TArrayView<void> mutableHost(mo::IAsyncStream* = nullptr, bool* sync_required = nullptr);
         ct::TArrayView<void> mutableDevice(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
 
         SyncState state() const;
 
+        bool empty() const;
+
         template <class T>
-        ct::TArrayView<const T> hostAs(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr) const;
+        ct::TArrayView<const T> hostAs(mo::IAsyncStream* = nullptr, bool* sync_required = nullptr) const;
         template <class T>
         ct::TArrayView<const T> deviceAs(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr) const;
 
         template <class T>
-        ct::TArrayView<T> mutableHostAs(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
+        ct::TArrayView<T> mutableHostAs(mo::IAsyncStream* = nullptr, bool* sync_required = nullptr);
         template <class T>
         ct::TArrayView<T> mutableDeviceAs(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
 
-        std::weak_ptr<mo::IDeviceStream> stream() const;
-        void setStream(std::shared_ptr<mo::IDeviceStream>);
+        std::weak_ptr<mo::IAsyncStream> getStream() const;
+        void setStream(std::shared_ptr<mo::IAsyncStream>);
 
         bool operator==(const SyncedMemory& other) const;
 
@@ -114,17 +118,21 @@ namespace aq
         mutable void* h_ptr = nullptr;
         mutable PointerFlags h_flags;
         mutable PointerFlags d_flags;
+        // number of elements
         size_t m_size;
+        // element size in bytes
         size_t m_elem_size = 0;
-        std::weak_ptr<mo::IDeviceStream> m_stream;
+        // max number of elements
+        size_t m_capacity;
+        std::weak_ptr<mo::IAsyncStream> m_stream;
         std::shared_ptr<void> m_owning;
-    }; // SyncedMemory
+    }; // namespace aq
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     ///    IMPLEMENTATION
     ///////////////////////////////////////////////////////////////////////////////////////////
     template <class T>
-    ct::TArrayView<const T> SyncedMemory::hostAs(mo::IDeviceStream* stream, bool* sync_required) const
+    ct::TArrayView<const T> SyncedMemory::hostAs(mo::IAsyncStream* stream, bool* sync_required) const
     {
         MO_ASSERT_EQ(m_elem_size, sizeof(T));
         return host(stream, sync_required);
@@ -138,7 +146,7 @@ namespace aq
     }
 
     template <class T>
-    ct::TArrayView<T> SyncedMemory::mutableHostAs(mo::IDeviceStream* stream, bool* sync_required)
+    ct::TArrayView<T> SyncedMemory::mutableHostAs(mo::IAsyncStream* stream, bool* sync_required)
     {
         MO_ASSERT_EQ(m_elem_size, sizeof(T));
         return mutableHost(stream, sync_required);
@@ -154,7 +162,7 @@ namespace aq
     template <class T>
     SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<T> data,
                                         std::shared_ptr<void> owning,
-                                        std::shared_ptr<mo::IDeviceStream> stream)
+                                        std::shared_ptr<mo::IAsyncStream> stream)
     {
         return wrapHost(ct::TArrayView<void>(std::move(data)), sizeof(T), owning, stream);
     }
@@ -162,7 +170,7 @@ namespace aq
     template <class T>
     SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<const T> data,
                                         std::shared_ptr<void> owning,
-                                        std::shared_ptr<mo::IDeviceStream> stream)
+                                        std::shared_ptr<mo::IAsyncStream> stream)
     {
         return wrapHost(ct::TArrayView<const void>(std::move(data)), sizeof(T), owning, stream);
     }

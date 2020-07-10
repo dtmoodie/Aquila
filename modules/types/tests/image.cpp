@@ -33,7 +33,7 @@ TEST(synced_image, constructor)
     EXPECT_EQ(synced_mem->size(), 0);
     EXPECT_EQ(synced_mem.get(), image->m_data.get());
 
-    auto strm = synced_mem->stream().lock();
+    auto strm = synced_mem->getStream().lock();
 
     EXPECT_EQ(strm.get(), stream.get());
 

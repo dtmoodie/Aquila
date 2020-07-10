@@ -95,4 +95,6 @@ TEST(object_detection, detection_descriptor)
     }
     std::cout << set << std::endl;
     auto descriptors = set.getComponent<aq::detection::Descriptor>();
+    EXPECT_EQ(descriptors.getShape()[0], 10);
+    EXPECT_EQ(descriptors.getShape()[1], 20);
 }

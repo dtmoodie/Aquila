@@ -58,8 +58,8 @@ namespace aq
                     PixelFormat fmt = PixelFormat::kUNCHANGED,
                     DataFlag type = DataFlag::kUINT8);
 
-        std::weak_ptr<mo::IDeviceStream> stream() const;
-        void setStream(std::shared_ptr<mo::IDeviceStream>);
+        std::weak_ptr<mo::IAsyncStream> getStream() const;
+        void setStream(std::shared_ptr<mo::IAsyncStream>);
 
         PixelType pixelType() const;
         PixelFormat pixelFormat() const;
@@ -133,12 +133,14 @@ namespace aq
 
 #ifdef HAVE_OPENCV
     SyncedImage::SyncedImage(const cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IDeviceStream> stream)
-        : m_data(std::make_shared<SyncedMemory>(SyncedMemory::wrapHost(
-              ct::TArrayView<const void>(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize()),
-              mat.elemSize(),
-              std::make_shared<cv::Mat>(mat),
-              stream)))
     {
+        ct::TArrayView<const void> data_view(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize());
+
+        SyncedMemory wrapped =
+            SyncedMemory::wrapHost(data_view, mat.elemSize(), std::make_shared<cv::Mat>(mat), stream);
+
+        m_data = std::make_shared<SyncedMemory>(std::move(wrapped));
+
         if (mat.channels() == 1 && fmt == PixelFormat::kBGR)
         {
             fmt = PixelFormat::kGRAY;
@@ -150,12 +152,13 @@ namespace aq
     }
 
     SyncedImage::SyncedImage(const cv::cuda::GpuMat& mat, PixelFormat fmt, std::shared_ptr<mo::IDeviceStream> stream)
-        : m_data(std::make_shared<SyncedMemory>(SyncedMemory::wrapDevice(
-              ct::TArrayView<const void>(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize()),
-              mat.elemSize(),
-              std::make_shared<cv::cuda::GpuMat>(mat),
-              stream)))
     {
+        ct::TArrayView<const void> data_view(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize());
+        SyncedMemory wrapped =
+            SyncedMemory::wrapDevice(data_view, mat.elemSize(), std::make_shared<cv::cuda::GpuMat>(mat), stream);
+
+        m_data = std::make_shared<SyncedMemory>(std::move(wrapped));
+
         if (mat.channels() == 1 && fmt == PixelFormat::kBGR)
         {
             fmt = PixelFormat::kGRAY;
@@ -167,12 +170,13 @@ namespace aq
     }
 
     SyncedImage::SyncedImage(cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IDeviceStream> stream)
-        : m_data(std::make_shared<SyncedMemory>(SyncedMemory::wrapHost(
-              ct::TArrayView<void>(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize()),
-              mat.elemSize(),
-              std::make_shared<cv::Mat>(mat),
-              stream)))
     {
+        ct::TArrayView<void> data_view(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize());
+        SyncedMemory wrapped =
+            SyncedMemory::wrapHost(data_view, mat.elemSize(), std::make_shared<cv::Mat>(mat), stream);
+
+        m_data = std::make_shared<SyncedMemory>(std::move(wrapped));
+
         if (mat.channels() == 1 && fmt == PixelFormat::kBGR)
         {
             fmt = PixelFormat::kGRAY;
@@ -184,12 +188,12 @@ namespace aq
     }
 
     SyncedImage::SyncedImage(cv::cuda::GpuMat& mat, PixelFormat fmt, std::shared_ptr<mo::IDeviceStream> stream)
-        : m_data(std::make_shared<SyncedMemory>(SyncedMemory::wrapDevice(
-              ct::TArrayView<void>(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize()),
-              mat.elemSize(),
-              std::make_shared<cv::cuda::GpuMat>(mat),
-              stream)))
     {
+        ct::TArrayView<void> data_view(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize());
+        SyncedMemory wrapped =
+            SyncedMemory::wrapDevice(data_view, mat.elemSize(), std::make_shared<cv::cuda::GpuMat>(mat), stream);
+        m_data = std::make_shared<SyncedMemory>(std::move(wrapped));
+
         if (mat.channels() == 1 && fmt == PixelFormat::kBGR)
         {
             fmt = PixelFormat::kGRAY;
@@ -270,20 +274,20 @@ namespace aq
         }
     }
 
-    void SyncedImage::copyTo(cv::Mat& mat, mo::IDeviceStream* stream) const
+    void SyncedImage::copyTo(cv::Mat& mat, mo::IDeviceStream* dst_stream) const
     {
         bool sync = false;
-        cv::Mat tmp = this->mat(stream, &sync);
+        cv::Mat tmp = this->mat(dst_stream, &sync);
         if (sync)
         {
-            if (stream)
+            if (dst_stream)
             {
-                stream->synchronize();
+                dst_stream->synchronize();
             }
             else
             {
-                auto stream = m_data->stream().lock();
-                stream->synchronize();
+                auto src_stream = getStream().lock();
+                src_stream->synchronize();
             }
         }
 

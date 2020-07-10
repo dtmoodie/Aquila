@@ -32,8 +32,9 @@ std::shared_ptr<const aq::CompressedImage> loadImage()
     }
     path = boost::filesystem::canonical(path);
 
-    auto compressed = aq::CompressedImage::load(path);
-    return compressed;
+    aq::CompressedImage img;
+    aq::CompressedImage::load(img, path);
+    return std::make_shared<aq::CompressedImage>(std::move(img));
 }
 
 TEST(image_serialization, compressed_json)
@@ -56,14 +57,21 @@ TEST(image_serialization, compressed_json)
         mo::JSONLoader loader(ifs);
         std::shared_ptr<aq::CompressedImage> loaded;
         loader(&loaded, "compressed_ptr");
+
         ASSERT_TRUE(loaded);
-        ASSERT_NE(loaded->data().begin(), compressed->data().begin());
-        ct::TArrayView<const uint8_t> loaded_data = loaded->data();
-        ct::TArrayView<const uint8_t> compressed_data = compressed->data();
-        ASSERT_EQ(loaded_data.size(), compressed_data.size());
-        for (size_t i = 0; i < loaded_data.size(); ++i)
+
+        ce::shared_ptr<const aq::SyncedMemory> loaded_data = loaded->getData();
+        ce::shared_ptr<const aq::SyncedMemory> compressed_data = compressed->getData();
+
+        ASSERT_NE(loaded_data->host().data(), compressed_data->host().data());
+
+        ct::TArrayView<const uint8_t> loaded_data_view = loaded_data->host();
+        ct::TArrayView<const uint8_t> compressed_data_view = compressed_data->host();
+
+        ASSERT_EQ(loaded_data_view.size(), compressed_data_view.size());
+        for (size_t i = 0; i < loaded_data_view.size(); ++i)
         {
-            ASSERT_EQ(loaded_data[i], compressed_data[i]) << i;
+            ASSERT_EQ(loaded_data_view[i], compressed_data_view[i]) << i;
         }
         auto original_encoding = compressed->getEncoding();
         auto loaded_encoding = loaded->getEncoding();
@@ -90,13 +98,18 @@ TEST(image_serialization, compressed_binary)
         std::shared_ptr<aq::CompressedImage> loaded;
         loader(&loaded, "compressed_ptr");
         ASSERT_TRUE(loaded);
-        ASSERT_NE(loaded->data().begin(), compressed->data().begin());
-        ct::TArrayView<const uint8_t> loaded_data = loaded->data();
-        ct::TArrayView<const uint8_t> compressed_data = compressed->data();
-        ASSERT_EQ(loaded_data.size(), compressed_data.size());
-        for (size_t i = 0; i < loaded_data.size(); ++i)
+
+        auto loaded_data = loaded->getData();
+        auto compressed_data = compressed->getData();
+
+        ASSERT_NE(loaded_data->host().data(), compressed_data->host().data());
+
+        ct::TArrayView<const uint8_t> loaded_data_view = loaded_data->host();
+        ct::TArrayView<const uint8_t> compressed_data_view = compressed_data->host();
+        ASSERT_EQ(loaded_data_view.size(), compressed_data_view.size());
+        for (size_t i = 0; i < loaded_data_view.size(); ++i)
         {
-            ASSERT_EQ(loaded_data[i], compressed_data[i]) << i;
+            ASSERT_EQ(loaded_data_view[i], compressed_data_view[i]) << i;
         }
         auto original_encoding = compressed->getEncoding();
         auto loaded_encoding = loaded->getEncoding();

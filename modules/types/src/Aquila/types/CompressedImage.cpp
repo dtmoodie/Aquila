@@ -9,41 +9,54 @@
 namespace aq
 {
 
-    ct::Result<mo::TDynArray<uint8_t, mo::Allocator>> binaryReadFromDisk(std::shared_ptr<mo::Allocator> allocator,
-                                                                         const boost::filesystem::path& path)
+    void binaryReadFromDisk(ce::shared_ptr<SyncedMemory>& out,
+                            const boost::filesystem::path& path,
+                            std::shared_ptr<mo::IAsyncStream> stream)
     {
         std::ifstream ifs(path.string(), std::ios::binary | std::ios::ate);
         if (!ifs.is_open())
         {
             MO_LOG(warn, "Unable to open {}", path);
-            return ct::error("Unable to open file");
+            return;
+            // return ct::error("Unable to open file");
         }
         const auto size = boost::filesystem::file_size(path);
         if (size == 0)
         {
             MO_LOG(warn, "Read an empty image {}", path);
-            return ct::error("Read an empty image");
+            return;
+            // return ct::error("Read an empty image");
         }
 
         ifs.seekg(0, std::ios::beg);
 
-        mo::TDynArray<uint8_t, mo::Allocator> arr(allocator, size);
-        ifs.read(ct::ptrCast<char>(arr.mutableView().begin()), static_cast<std::streamsize>(size));
+        if (!out)
+        {
+            out = ce::make_shared<SyncedMemory>(size, 1, stream);
+        }
+        else
+        {
+            out->resize(size, 1, stream);
+        }
+
+        bool sync_required = false;
+        ct::TArrayView<void> data = out->mutableHost(stream.get(), &sync_required);
+
+        ifs.read(ct::ptrCast<char>(data.begin()), static_cast<std::streamsize>(size));
         ifs.close();
-        return std::move(arr);
     }
 
-    std::shared_ptr<const CompressedImage> loadImpl(const boost::filesystem::path& path)
+    void loadImpl(CompressedImage& out, const boost::filesystem::path& path, std::shared_ptr<mo::IAsyncStream> stream)
     {
         if (!boost::filesystem::exists(path))
         {
             MO_LOG(warn, "File {} doesn't exist", path);
-            return {};
+            return;
         }
         if (!boost::filesystem::is_regular_file(path))
         {
             MO_LOG(warn, "File {} is not a regular file", path);
-            return {};
+            return;
         }
         const auto extension = path.extension();
         // extension includes the '.', whereas our extensions do not
@@ -52,20 +65,26 @@ namespace aq
         {
             MO_LOG(warn, "Unable to determine compression encoding from file path extension {}", path);
         }
-        auto alloc = mo::Allocator::getDefault();
-        if (alloc == nullptr)
+        std::shared_ptr<mo::Allocator> allocator = stream->hostAllocator();
+        if (allocator == nullptr)
+        {
+            allocator = mo::Allocator::getDefault();
+        }
+        if (allocator == nullptr)
         {
             MO_LOG(warn, "Unable to get default allocator");
-            return {};
+            return;
         }
-        auto result = ce::exec(&binaryReadFromDisk, alloc, path);
-        if (result.data.success())
+        ce::shared_ptr<SyncedMemory> memory;
+        ce::exec(&binaryReadFromDisk, ce::makeOutput(memory), path, stream);
+        if (memory)
         {
-            auto ret = std::make_shared<CompressedImage>(std::move(result.data.m_value), encoding);
-            ret->setHash(ce::combineHash(ce::generateHash(&loadImpl), ce::generateHash(path.string())));
-            return ret;
+            out = CompressedImage(std::move(memory), encoding);
+            const size_t fhash = ce::generateHash(&loadImpl);
+            const size_t arghash = ce::generateHash(path.string());
+            const size_t combined_hash = ce::combineHash(fhash, arghash);
+            out.setHash(combined_hash);
         }
-        return {};
     }
 
     CompressedImage::CompressedImage() = default;
@@ -73,12 +92,14 @@ namespace aq
     CompressedImage::CompressedImage(const CompressedImage&) = default;
     CompressedImage::CompressedImage(CompressedImage&&) = default;
 
-    std::shared_ptr<const CompressedImage> CompressedImage::load(const boost::filesystem::path& path)
+    void CompressedImage::load(CompressedImage& out,
+                               const boost::filesystem::path& path,
+                               std::shared_ptr<mo::IAsyncStream> stream)
     {
-        return ce::exec(&loadImpl, path);
+        return ce::exec(&loadImpl, ce::makeOutput(out), path, stream);
     }
 
-    CompressedImage::CompressedImage(mo::TDynArray<void, mo::Allocator>&& data, ImageEncoding enc)
+    CompressedImage::CompressedImage(ce::shared_ptr<SyncedMemory>&& data, ImageEncoding enc)
         : m_data(std::move(data))
         , m_enc(std::move(enc))
     {
@@ -86,9 +107,12 @@ namespace aq
 
     CompressedImage& CompressedImage::operator=(const std::vector<uint8_t>& data)
     {
-        // m_data = data;
-        m_data.resize(data.size());
-        auto view = m_data.mutableView();
+        if (!m_data)
+        {
+            m_data = ce::make_shared<SyncedMemory>();
+        }
+        m_data->resize(data.size(), 1);
+        ct::TArrayView<void> view = m_data->mutableHost();
         std::memcpy(view.begin(), data.data(), data.size());
         return *this;
     }
@@ -96,7 +120,7 @@ namespace aq
     CompressedImage& CompressedImage::operator=(const CompressedImage&) = default;
     CompressedImage& CompressedImage::operator=(CompressedImage&&) = default;
 
-    void CompressedImage::image(SyncedImage& img, rcc::shared_ptr<IImageDecompressor> decompressor) const
+    /*void CompressedImage::image(SyncedImage& img, rcc::shared_ptr<IImageDecompressor> decompressor) const
     {
         if (!decompressor)
         {
@@ -104,22 +128,37 @@ namespace aq
         }
         MO_ASSERT(decompressor != nullptr);
         decompressor->decompress(*this, img);
+    }*/
+
+    ct::TArrayView<const void> CompressedImage::host() const
+    {
+        ct::TArrayView<const void> out;
+        if (m_data)
+        {
+            out = m_data->host();
+        }
+        return out;
     }
 
-    ct::TArrayView<const void> CompressedImage::data() const
+    ct::TArrayView<void> CompressedImage::mutableHost()
     {
-        return m_data;
-    }
-
-    ct::TArrayView<void> CompressedImage::mutableData()
-    {
-        return m_data;
+        ct::TArrayView<void> out;
+        if (m_data)
+        {
+            out = m_data->mutableHost();
+        }
+        return out;
     }
 
     void CompressedImage::copyData(ct::TArrayView<const void> data)
     {
-        m_data.resize(data.size());
-        std::memcpy(m_data.mutableView().begin(), data.begin(), data.size());
+        if (!m_data)
+        {
+            m_data = ce::make_shared<SyncedMemory>();
+        }
+        m_data->resize(data.size(), 1);
+        ct::TArrayView<void> view = m_data->mutableHost();
+        std::memcpy(view.data(), data.begin(), data.size());
     }
 
     ImageEncoding CompressedImage::getEncoding() const
@@ -142,7 +181,11 @@ namespace aq
         {
             return false;
         }
-        auto view = m_data.view();
+        if (!m_data)
+        {
+            return false;
+        }
+        ct::TArrayView<const void> view = m_data->host();
         if (view.size() == 0)
         {
             return false;
@@ -156,13 +199,22 @@ namespace aq
         return true;
     }
 
-    void CompressedImage::setData(mo::TDynArray<void, mo::Allocator>&& data)
+    void CompressedImage::setData(ce::shared_ptr<SyncedMemory> data)
     {
         m_data = std::move(data);
     }
 
+    ce::shared_ptr<const SyncedMemory> CompressedImage::getData() const
+    {
+        return m_data;
+    }
+
     bool CompressedImage::empty() const
     {
-        return m_data.empty();
+        if (!m_data)
+        {
+            return true;
+        }
+        return m_data->empty();
     }
 } // namespace aq

@@ -83,7 +83,7 @@ namespace aq
     {
         setHash(other.hash());
         m_data.setConst();
-        auto current = static_cast<const ce::shared_ptr<SyncedMemory>&>(m_data)->stream().lock();
+        auto current = static_cast<const ce::shared_ptr<SyncedMemory>&>(m_data)->getStream().lock();
         if (current != stream)
         {
             setStream(stream);
@@ -136,17 +136,21 @@ namespace aq
         create({height, width}, fmt, type);
     }
 
-    std::weak_ptr<mo::IDeviceStream> SyncedImage::stream() const
+    std::weak_ptr<mo::IAsyncStream> SyncedImage::getStream() const
     {
-        return m_data->stream();
+        return m_data->getStream();
     }
 
     void SyncedImage::makeData()
     {
-        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current();
+        std::shared_ptr<mo::IAsyncStream> stream;
         if (m_data)
         {
-            stream = m_data->stream().lock();
+            stream = getStream().lock();
+        }
+        if (!stream)
+        {
+            stream = mo::IAsyncStream::current();
         }
 
         const auto num_pixels = m_shape.numel();
@@ -155,7 +159,7 @@ namespace aq
         m_data = ce::shared_ptr<SyncedMemory>::create(num_pixels * pixel_size, pixel_size, std::move(stream));
     }
 
-    void SyncedImage::setStream(std::shared_ptr<mo::IDeviceStream> stream)
+    void SyncedImage::setStream(std::shared_ptr<mo::IAsyncStream> stream)
     {
         if (!m_data)
         {

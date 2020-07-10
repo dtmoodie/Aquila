@@ -55,12 +55,22 @@ namespace aq
     void IImageDecompressor::decompress(const CompressedImage& compressed, SyncedImage& img) const
     {
         auto eng = ce::ICacheEngine::instance();
+        const size_t original_hash = compressed.hash();
 
         eng->exec(&IImageDecompressor::decompressImpl, ce::makeEmptyInput(*this), compressed, ce::makeOutput(img));
 
-        size_t fhash, arghash;
+        size_t fhash = 0;
+        size_t arghash = 0;
         CompressedImage copy = compressed;
         auto enc = compressed.getEncoding();
+        eng->calcHash(fhash,
+                      arghash,
+                      &IImageCompressor::compressImpl,
+                      ce::makeEmptyInput(*this),
+                      static_cast<const SyncedImage&>(img),
+                      ce::makeOutput(copy),
+                      enc);
+
         auto result = eng->getCachedResult(fhash,
                                            arghash,
                                            &IImageCompressor::compressImpl,
@@ -84,7 +94,7 @@ namespace aq
 
         result->setHash(combined);
         result->saveOutputs(static_cast<const SyncedImage&>(img), ce::makeOutput(copy), enc);
-        // std::get<0>(result->values).setHash(compressed.hash());
+        std::get<0>(result->values).setHash(original_hash);
         eng->pushCachedResult(result, fhash, arghash);
     }
 } // namespace aq

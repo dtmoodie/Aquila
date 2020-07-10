@@ -1,5 +1,6 @@
 #pragma once
 #include <Aquila/types.hpp>
+#include <Aquila/types/SyncedMemory.hpp>
 
 #include <MetaObject/core/detail/Allocator.hpp>
 #include <MetaObject/types/TDynArray.hpp>
@@ -7,6 +8,7 @@
 
 #include <ce/hash.hpp>
 #include <ce/output.hpp>
+#include <ce/shared_ptr.hpp>
 
 #include <ct/enum.hpp>
 #include <ct/reflect.hpp>
@@ -23,6 +25,10 @@ namespace aq
     struct IImageCompressor;
     struct IImageDecompressor;
 
+    void binaryReadFromDisk(ce::shared_ptr<SyncedMemory>&,
+                            const boost::filesystem::path& path,
+                            std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
+
     ENUM_BEGIN(ImageEncoding, uint8_t)
         ENUM_VALUE(JPEG, 0)
         ENUM_VALUE(JPG, JPEG)
@@ -36,32 +42,40 @@ namespace aq
     // TODO use a copy on write shared pointer to the data from load, etc
     struct AQUILA_EXPORTS CompressedImage : ce::HashedBase
     {
-        static std::shared_ptr<const CompressedImage> load(const boost::filesystem::path& path);
+        static void load(CompressedImage& out,
+                         const boost::filesystem::path& path,
+                         std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
         CompressedImage();
-        CompressedImage(mo::TDynArray<void, mo::Allocator>&& data, ImageEncoding enc);
+        CompressedImage(ce::shared_ptr<SyncedMemory>&& data, ImageEncoding enc);
+
         CompressedImage(const CompressedImage&);
         CompressedImage(CompressedImage&&);
+
         CompressedImage(boost::filesystem::path file_path);
 
         CompressedImage& operator=(const std::vector<uint8_t>& data);
         CompressedImage& operator=(const CompressedImage&);
         CompressedImage& operator=(CompressedImage&&);
 
-        void image(SyncedImage& img, rcc::shared_ptr<IImageDecompressor> = rcc::shared_ptr<IImageDecompressor>()) const;
+        ct::TArrayView<const void> host() const;
+        ct::TArrayView<void> mutableHost();
 
-        ct::TArrayView<const void> data() const;
-        ct::TArrayView<void> mutableData();
+        ct::TArrayView<const void> device() const;
+        ct::TArrayView<void> mutableDevice();
 
         void copyData(ct::TArrayView<const void>);
-        void setData(mo::TDynArray<void, mo::Allocator>&& data);
+        void setData(ce::shared_ptr<SyncedMemory>);
+        ce::shared_ptr<const SyncedMemory> getData() const;
+
         ImageEncoding getEncoding() const;
         void setEncoding(ImageEncoding);
+
         bool toDisk(boost::filesystem::path path = boost::filesystem::path()) const;
         bool empty() const;
 
       private:
-        mo::TDynArray<void, mo::Allocator> m_data;
+        ce::shared_ptr<SyncedMemory> m_data;
         ImageEncoding m_enc;
         boost::filesystem::path m_path;
     };
@@ -70,7 +84,7 @@ namespace aq
 namespace ct
 {
     REFLECT_BEGIN(aq::CompressedImage)
-        PROPERTY(data, &aq::CompressedImage::data, &aq::CompressedImage::setData)
+        PROPERTY(data, &aq::CompressedImage::getData, &aq::CompressedImage::setData)
         PROPERTY(encoding, &aq::CompressedImage::getEncoding, &aq::CompressedImage::setEncoding)
         MEMBER_FUNCTION(toDisk)
         MEMBER_FUNCTION(empty)

@@ -65,21 +65,25 @@ TEST(compressed_image, png_load)
     }
     ASSERT_TRUE(boost::filesystem::exists(path)) << "Cannot find data.png file used for unit test " << path;
     path = boost::filesystem::canonical(path);
-    auto compressed = aq::CompressedImage::load(path);
-    EXPECT_TRUE(compressed != nullptr) << "Unable to load image data from disk";
+    aq::CompressedImage compressed;
+    aq::CompressedImage::load(compressed, path);
+    EXPECT_TRUE(!compressed.empty()) << "Unable to load image data from disk";
     EXPECT_FALSE(eng->wasCacheUsedLast());
     {
         // additional loads of the same path should hit the cache
-        auto cmp = aq::CompressedImage::load(path);
+        aq::CompressedImage cmp;
+        aq::CompressedImage::load(cmp, path);
         EXPECT_TRUE(eng->wasCacheUsedLast());
-        EXPECT_EQ(cmp.get(), compressed.get());
+        EXPECT_EQ(cmp.getData(), compressed.getData());
     }
     eng->printDebug(true);
-    const auto initial_hash = compressed->hash();
+    const auto initial_hash = compressed.hash();
     std::cout << "png -> raw" << std::endl;
     aq::SyncedImage image;
-    compressed->image(image);
-    EXPECT_EQ(compressed->hash(), initial_hash)
+    rcc::shared_ptr<aq::IImageDecompressor> decompressor = aq::IImageDecompressor::create(compressed.getEncoding());
+    ASSERT_NE(decompressor, nullptr);
+    decompressor->decompress(compressed, image);
+    EXPECT_EQ(compressed.hash(), initial_hash)
         << "Hash of the compressed image should not change from decompressing it";
     EXPECT_FALSE(eng->wasCacheUsedLast()) << "We don't expect to hit the cache on first load of an image";
     EXPECT_FALSE(image.empty()) << "Unable to decompress image";
@@ -89,19 +93,19 @@ TEST(compressed_image, png_load)
     // Decompressing the same compressed image should hit the cache
     std::cout << "png -> raw" << std::endl;
     aq::SyncedImage img;
-    compressed->image(img);
+    decompressor->decompress(compressed, img);
     EXPECT_TRUE(eng->wasCacheUsedLast());
     EXPECT_EQ(image.hash(), img.hash());
 
     auto compressor = aq::IImageCompressor::create(aq::ImageEncoding::PNG);
-    EXPECT_NE(compressor, nullptr);
+    ASSERT_NE(compressor, nullptr);
 
     // Since we originally decoded a png, we shouldn't need to actually compress this image
     std::cout << "raw -> png" << std::endl;
     aq::CompressedImage recompressed;
     compressor->compress(img, recompressed, aq::ImageEncoding::PNG);
     EXPECT_TRUE(eng->wasCacheUsedLast());
-    EXPECT_EQ(recompressed.hash(), compressed->hash());
+    EXPECT_EQ(recompressed.hash(), compressed.hash());
 
     eng->clearCache();
     std::cout << "raw -> png" << std::endl;
@@ -114,7 +118,7 @@ TEST(compressed_image, png_load)
     // same
     // EXPECT_EQ(recompressed.hash(), compressed->hash());
     EXPECT_TRUE(recompressed.toDisk("test.png"));
-    recompressed.image(img);
+    decompressor->decompress(recompressed, img);
     // For the same reason above, these images aren't going to be exactly the same so there is no reason to expect
     // The hash to be the same
     // EXPECT_EQ(image.hash(), img.hash());
