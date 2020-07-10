@@ -18,10 +18,11 @@ int main(int argc, char** argv)
         logger->critical("Must pass in path to image file for test");
         return -1;
     }
+    aq::CompressedImage compressed;
 
-    std::shared_ptr<const aq::CompressedImage> compressed = aq::CompressedImage::load(argv[1]);
+    aq::CompressedImage::load(compressed, argv[1]);
 
-    if (compressed == nullptr)
+    if (compressed.empty())
     {
         logger->critical("Unable to load image from {}", argv[1]);
         return -1;
@@ -52,7 +53,9 @@ int main(int argc, char** argv)
     auto connection = signal->connect(slot);
 
     aq::SyncedImage image;
-    compressed->image(image);
+    rcc::shared_ptr<aq::IImageDecompressor> decompressor = aq::IImageDecompressor::create(compressed.getEncoding());
+    MO_ASSERT(decompressor);
+    decompressor->decompress(compressed, image);
     if (image.empty())
     {
         logger->critical("Unable to decompress image");
