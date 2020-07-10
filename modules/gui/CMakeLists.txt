@@ -20,3 +20,6 @@ aquila_declare_module(NAME gui
 #    endif()
 #    add_custom_command(TARGET aquila_gui POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin/plugins && ln -sf ../../aquila_gui_config.txt aquila_gui_config.txt)
 #endif()
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+ENDIF(BUILD_TESTS)

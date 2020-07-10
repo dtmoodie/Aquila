@@ -35,7 +35,8 @@ target_include_directories(aquila_types
 
 if(BUILD_TESTS)
     set(CUDA_NVCC_FLAGS "-std=c++11")
-    file(GLOB_RECURSE test_src "tests/*.cpp" "tests/*.cu")
+    file(GLOB test_src "tests/*.cpp" "tests/*.cu")
+    
 
     cuda_add_executable(test_aq_types ${test_src})
     target_link_libraries(test_aq_types PRIVATE aquila_types metaobject_cuda gtest gtest_main)
@@ -46,6 +47,12 @@ if(BUILD_TESTS)
         find_package(OpenCV REQUIRED COMPONENTS cudaarithm imgcodecs)
         target_compile_definitions(test_aq_types PUBLIC HAVE_OPENCV)
         target_link_libraries(test_aq_types PRIVATE ${OpenCV_LIBRARIES})
+        
+        file(GLOB plugin_src "tests/cv_compression/*.cpp" "tests/cv_compression/*.hpp")
+        add_library(aq_cv_compression SHARED ${plugin_src})
+        target_link_libraries(aq_cv_compression aquila_types)
+        metaobject_declare_plugin(aq_cv_compression)
+        target_link_libraries(test_aq_types aq_cv_compression)
     endif()
     file(COPY "data/data.png" DESTINATION "${CMAKE_BINARY_DIR}")
 endif()

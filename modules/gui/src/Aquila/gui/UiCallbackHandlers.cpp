@@ -161,8 +161,6 @@ void WindowCallbackHandler::Init(bool firstInit)
     EventLoop::Instance()->Register(this);
 }
 
-MO_REGISTER_OBJECT(WindowCallbackHandler);
-
 void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int flags)
 {
     cv::Point pt(x, y);
@@ -263,3 +261,4 @@ void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int
     }
     }
 }
+MO_REGISTER_OBJECT(WindowCallbackHandler);

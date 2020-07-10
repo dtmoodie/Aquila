@@ -1,0 +1,2 @@
+add_subdirectory(gui_click_callback)
+add_subdirectory(scalar_plot)

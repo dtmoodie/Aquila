@@ -101,5 +101,17 @@ namespace aq
         {
             return boost::thread(guiThreadFunc);
         }
+
+        struct StaticRegistration
+        {
+            static StaticRegistration g_inst;
+            StaticRegistration()
+            {
+                (void)&g_inst;
+                mo::MetaObjectFactory::Ptr_t instance = mo::MetaObjectFactory::instance();
+                initModule(instance.get());
+            }
+        };
+        StaticRegistration StaticRegistration::g_inst;
     } // namespace gui
 } // namespace aq
