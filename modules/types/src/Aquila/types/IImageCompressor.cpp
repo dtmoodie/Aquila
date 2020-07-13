@@ -30,16 +30,16 @@ namespace aq
                                            arghash,
                                            &IImageDecompressor::decompressImpl,
                                            ce::makeEmptyInput(*this),
-                                           ret,
+                                           ce::wrapInput(ret),
                                            ce::makeOutput(decompressed));
         eng->setCacheWasUsed(compression_hit);
 
         using PackType = typename decltype(result)::element_type;
-        // ct::StaticEquality<int, PackType::OUTPUT_COUNT, 1>{};
+        const size_t original_hash = ret.hash();
         result = std::make_shared<PackType>();
         const auto combined = ce::combineHash(fhash, arghash);
         result->setHash(combined);
-        result->saveOutputs(ret, ce::makeOutput(decompressed));
+        result->saveOutputs(ce::wrapInput(ret), ce::makeOutput(decompressed));
         std::get<0>(result->values).setHash(img.hash());
         eng->pushCachedResult(std::move(result), fhash, arghash);
     }
