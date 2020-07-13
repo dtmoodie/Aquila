@@ -294,8 +294,13 @@ namespace aq
         if (SyncState::DEVICE_UPDATED == m_state)
         {
             mo::IDeviceStream* src_device_stream = src_stream->getDeviceStream();
-            mo::IDeviceStream* dst_device_stream = dst_stream->getDeviceStream();
-            if (dst_stream && src_device_stream != dst_device_stream)
+
+            mo::IDeviceStream* dst_device_stream = src_device_stream;
+            if (dst_stream)
+            {
+                dst_device_stream = dst_stream->getDeviceStream();
+            }
+            if (dst_device_stream && src_device_stream != dst_device_stream)
             {
                 src_device_stream->synchronize(dst_device_stream);
                 MO_ASSERT(d_ptr != nullptr);
