@@ -204,6 +204,11 @@ namespace ct
     AQUILA_EXPORTS TArrayView<void> mutableHostDefault(aq::SyncedMemory&);
 
     REFLECT_BEGIN(aq::SyncedMemory)
+        static void setSize(aq::SyncedMemory & obj, size_t sz)
+        {
+            obj.resize(sz);
+        }
+        PROPERTY(size, &aq::SyncedMemory::size, &ct::ReflectImpl<DataType>::setSize)
         PROPERTY(host, &hostDefault, &mutableHostDefault)
     REFLECT_END;
 
