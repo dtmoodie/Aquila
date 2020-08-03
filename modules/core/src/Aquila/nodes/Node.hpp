@@ -47,16 +47,12 @@
 #include <MetaObject/params/ParamMacros.hpp>
 #include <MetaObject/signals/detail/SignalMacros.hpp>
 #include <MetaObject/signals/detail/SlotMacros.hpp>
+
 // RCC includes
 #include <RuntimeObjectSystem/IObject.h>
 #include <RuntimeObjectSystem/IObjectInfo.h>
 #include <RuntimeObjectSystem/ObjectInterfacePerModule.h>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
-
-// Dependent 3rd party libraries
-#include <Aquila/rcc/external_includes/cv_core.hpp>
-#include <Aquila/rcc/external_includes/cv_highgui.hpp>
-#include <opencv2/core/cuda.hpp>
 
 #include <string>
 
