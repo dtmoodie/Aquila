@@ -51,6 +51,18 @@ void WindowCallbackHandler::EventLoop::Register(WindowCallbackHandler* handler)
     m_handlers.push_back(*handler);
 }
 
+std::shared_ptr<mo::IAsyncStream> WindowCallbackHandler::getUiStream()
+{
+    std::shared_ptr<mo::IAsyncStream> output = m_ui_stream;
+    if (output == nullptr)
+    {
+        output = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
+        MO_ASSERT(output != nullptr);
+        m_ui_stream = output;
+    }
+    return output;
+}
+
 void WindowCallbackHandler::on_mouse_click(int event, int x, int y, int flags, void* callback_handler)
 {
     auto ptr = static_cast<WindowCallbackHandler::WindowHandler*>(callback_handler);
@@ -64,12 +76,13 @@ void WindowCallbackHandler::setUiStream(std::shared_ptr<mo::IAsyncStream> stream
 
 void WindowCallbackHandler::imshow(const std::string& window_name, cv::Mat img, int flags)
 {
-    auto mystream = getStream();
-    if (mystream != m_ui_stream)
+    std::shared_ptr<mo::IAsyncStream> mystream = mo::IAsyncStream::current();
+    std::shared_ptr<mo::IAsyncStream> ui_stream = getUiStream();
+    if (mystream != ui_stream)
     {
         auto event = [this, window_name, img, flags]() { this->imshow(window_name, img, flags); };
         // Push event?
-        m_ui_stream->pushWork(std::move(event));
+        ui_stream->pushWork(std::move(event));
         return;
     }
     std::shared_ptr<WindowHandler>& handler = windows[window_name];
@@ -96,11 +109,12 @@ void WindowCallbackHandler::imshow(const std::string& window_name, cv::Mat img, 
 
 void WindowCallbackHandler::imshowd(const std::string& window_name, cv::cuda::GpuMat img, int flags)
 {
-    auto mystream = getStream();
-    if (mystream != m_ui_stream)
+    std::shared_ptr<mo::IAsyncStream> mystream = mo::IAsyncStream::current();
+    std::shared_ptr<mo::IAsyncStream> ui_stream = getUiStream();
+    if (mystream != ui_stream)
     {
         auto event = [this, window_name, img, flags]() { this->imshowd(window_name, img, flags); };
-        m_ui_stream->pushWork(std::move(event));
+        ui_stream->pushWork(std::move(event));
         return;
     }
     std::shared_ptr<WindowHandler>& handler = windows[window_name];
@@ -124,11 +138,12 @@ void WindowCallbackHandler::imshowd(const std::string& window_name, cv::cuda::Gp
 }
 void WindowCallbackHandler::imshowb(const std::string& window_name, cv::ogl::Buffer buffer, int flags)
 {
-    auto mystream = getStream();
-    if (mystream != m_ui_stream)
+    std::shared_ptr<mo::IAsyncStream> mystream = mo::IAsyncStream::current();
+    std::shared_ptr<mo::IAsyncStream> ui_stream = getUiStream();
+    if (mystream != ui_stream)
     {
         auto event = [this, window_name, buffer, flags]() { this->imshowb(window_name, buffer, flags); };
-        m_ui_stream->pushWork(std::move(event));
+        ui_stream->pushWork(std::move(event));
         return;
     }
     std::shared_ptr<WindowHandler>& handler = windows[window_name];

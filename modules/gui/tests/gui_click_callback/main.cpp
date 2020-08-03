@@ -1,8 +1,10 @@
-#include <Aquila/core.hpp>
-#include <Aquila/gui.hpp>
+#include <Aquila/types/SyncedImage.hpp>
+
 #include <Aquila/types/CompressedImage.hpp>
 #include <Aquila/types/IImageCompressor.hpp>
-#include <Aquila/types/SyncedImage.hpp>
+
+#include <Aquila/core.hpp>
+#include <Aquila/gui.hpp>
 
 int main(int argc, char** argv)
 {
@@ -47,7 +49,14 @@ int main(int argc, char** argv)
 
     std::atomic<bool> signal_received;
     signal_received = false;
-    auto cb = [&signal_received](std::string, cv::Point, int, cv::Mat) { signal_received = true; };
+    // clang-format off
+    auto cb = [&signal_received, &logger](std::string, cv::Point pt, int, cv::Mat) 
+    { 
+        logger->info("received right click at {}", pt);
+        signal_received = true; 
+    };
+
+    // clang-format on
 
     mo::TSlot<void(std::string, cv::Point, int, cv::Mat)> slot(std::move(cb));
     auto connection = signal->connect(slot);
@@ -69,4 +78,6 @@ int main(int argc, char** argv)
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     logger->info("Signal received! Success!");
+    gui_thread.interrupt();
+    gui_thread.join();
 }

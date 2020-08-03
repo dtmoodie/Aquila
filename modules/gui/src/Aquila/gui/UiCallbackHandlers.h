@@ -75,6 +75,9 @@ namespace aq
             std::mutex mtx;
         };
 
+      protected:
+        std::shared_ptr<mo::IAsyncStream> getUiStream();
+
       private:
         static void on_mouse_click(int event, int x, int y, int flags, void* callback_handler);
         struct AQUILA_EXPORTS WindowHandler

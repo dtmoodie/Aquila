@@ -3,6 +3,8 @@
 #include <MetaObject/logging/logging.hpp>
 #include <MetaObject/logging/profiling.hpp>
 #include <MetaObject/object/MetaObjectFactory.cpp>
+#include <MetaObject/thread/ConditionVariable.hpp>
+#include <MetaObject/thread/Mutex.hpp>
 #include <MetaObject/thread/ThreadRegistry.hpp>
 
 #include <RuntimeObjectSystem/ObjectInterfacePerModule.h>
@@ -24,16 +26,16 @@ namespace aq
             std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::create();
             mo::ThreadRegistry::instance()->registerThread(mo::ThreadRegistry::GUI, stream);
             MO_LOG(info, "GUI thread {}", mo::getThisThread());
-            boost::mutex dummy_mtx; // needed for cv
-            boost::condition_variable cv;
-            // auto notifier = mo::ThreadSpecificQueue::registerNotifier([&cv]() { cv.notify_all(); });
+            mo::Mutex dummy_mtx; // needed for cv
+            mo::ConditionVariable cv;
+
             while (!boost::this_thread::interruption_requested())
             {
                 mo::setThisThreadName("Aquila GUI thread");
                 try
                 {
-                    boost::mutex::scoped_lock lock(dummy_mtx);
-                    cv.wait_for(lock, boost::chrono::milliseconds(30));
+                    mo::Mutex::Lock_t lock(dummy_mtx);
+                    cv.wait_for(lock, std::chrono::milliseconds(30));
                     // mo::ThreadSpecificQueue::run();
                 }
                 catch (boost::thread_interrupted& err)
