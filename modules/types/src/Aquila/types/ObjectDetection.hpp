@@ -7,8 +7,6 @@
 
 #include <MetaObject/types/small_vec.hpp>
 
-#include <ct/reflect.hpp>
-
 #include <Eigen/Geometry>
 #include <opencv2/core/types.hpp>
 
@@ -27,6 +25,7 @@ namespace aq
 
     namespace detection
     {
+        // Various commonly used components
         using BoundingBox2d = cv::Rect2f;
         using Confidence = float;
         using Classification = mo::SmallVec<aq::Classification, 5>;
