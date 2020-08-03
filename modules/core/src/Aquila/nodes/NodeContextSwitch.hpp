@@ -9,16 +9,17 @@ namespace aq
     namespace nodes
     {
         template <class N, class... Args>
-        void nodeStreamSwitch(N* node, mo::IAsyncStream& stream, Args&&... args)
+        auto nodeStreamSwitch(N* node, mo::IAsyncStream& stream, Args&&... args)
+            -> decltype(node->processImpl(stream, std::forward<Args>(args)...))
         {
             if (stream.isDeviceStream())
             {
-                auto device_stream = stream.getDeviceStream();
-                node->processImpl(*device_stream, std::forward<Args>(args)...);
+                mo::IDeviceStream* device_stream = stream.getDeviceStream();
+                return node->processImpl(*device_stream, std::forward<Args>(args)...);
             }
             else
             {
-                node->processImpl(stream, std::forward<Args>(args)...);
+                return node->processImpl(stream, std::forward<Args>(args)...);
             }
         }
 
