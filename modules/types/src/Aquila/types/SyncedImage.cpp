@@ -65,7 +65,7 @@ namespace aq
 
     /////////////////////////////////////////////////////////////////////////////
 
-    SyncedImage::SyncedImage(Shape<2> size, PixelFormat fmt, DataFlag type, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedImage::SyncedImage(Shape<2> size, PixelFormat fmt, DataFlag type, std::shared_ptr<mo::IAsyncStream> stream)
         : m_pixel_type{type, fmt}
         , m_shape(size)
     {
@@ -76,7 +76,18 @@ namespace aq
         setStream(stream);
     }
 
-    SyncedImage::SyncedImage(const SyncedImage& other, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedImage::SyncedImage(Shape<2> size, PixelType type, std::shared_ptr<mo::IAsyncStream> stream)
+        : m_pixel_type{type}
+        , m_shape(size)
+    {
+        if (size.numel())
+        {
+            create(size, type);
+        }
+        setStream(stream);
+    }
+
+    SyncedImage::SyncedImage(const SyncedImage& other, std::shared_ptr<mo::IAsyncStream> stream)
         : m_data(other.m_data)
         , m_pixel_type(other.m_pixel_type)
         , m_shape(other.m_shape)
@@ -90,22 +101,20 @@ namespace aq
         }
     }
 
-    SyncedImage::SyncedImage(SyncedImage&& other, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedImage::SyncedImage(SyncedImage&& other, std::shared_ptr<mo::IAsyncStream> stream)
         : m_data(other.m_data)
         , m_pixel_type(other.m_pixel_type)
         , m_shape(other.m_shape)
     {
         setHash(other.hash());
-        setStream(stream);
     }
 
-    SyncedImage::SyncedImage(SyncedImage& other, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedImage::SyncedImage(SyncedImage& other, std::shared_ptr<mo::IAsyncStream> stream)
         : m_data(other.m_data)
         , m_pixel_type(other.m_pixel_type)
         , m_shape(other.m_shape)
     {
         setHash(other.hash());
-        setStream(stream);
     }
 
     SyncedImage& SyncedImage::operator=(const SyncedImage&) = default;
@@ -126,6 +135,23 @@ namespace aq
         }
 
         m_pixel_type.data_type = type;
+
+        m_shape = std::move(size);
+        makeData();
+    }
+
+    void SyncedImage::create(Shape<2> size, PixelType type)
+    {
+        if (type.pixel_format == PixelFormat::kUNCHANGED)
+        {
+            MO_ASSERT(m_pixel_type.pixel_format != PixelFormat::kUNCHANGED);
+        }
+        else
+        {
+            m_pixel_type.pixel_format = type.pixel_format;
+        }
+
+        m_pixel_type.data_type = type.data_type;
 
         m_shape = std::move(size);
         makeData();
@@ -201,6 +227,12 @@ namespace aq
             return m_data->state();
         }
         return SyncedMemory::SyncState::SYNCED;
+    }
+
+    void SyncedImage::setOwning(std::shared_ptr<const void> owning)
+    {
+        MO_ASSERT(m_data.get() != nullptr);
+        m_data->setOwning(std::move(owning));
     }
 } // namespace aq
 

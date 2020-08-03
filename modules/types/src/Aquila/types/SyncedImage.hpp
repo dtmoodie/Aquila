@@ -1,17 +1,21 @@
 #ifndef AQ_TYPES_SYNCED_IMAGE_HPP
 #define AQ_TYPES_SYNCED_IMAGE_HPP
-#include "CompressedImage.hpp"
-#include "DataType.hpp"
-#include "Shape.hpp"
-#include "TSyncedMemory.hpp"
-#include "pixels.hpp"
 
 #if defined(HAVE_OPENCV) || defined(OPENCV_CORE_CUDA_HPP)
+#include <ct/types/opencv.hpp>
 #include <opencv2/core/cuda.hpp>
 #if !defined(HAVE_OPENCV)
 #define HAVE_OPENCV
 #endif
 #endif
+
+#include "CompressedImage.hpp"
+
+#include "Shape.hpp"
+#include "TSyncedMemory.hpp"
+#include "pixels.hpp"
+
+#include "DataType.hpp"
 
 namespace aq
 {
@@ -39,20 +43,25 @@ namespace aq
         template <class PIXEL>
         using ConstMatrix = Eigen::Map<const Eigen::Matrix<PIXEL, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 
+        // default ctr
         SyncedImage(Shape<2> size = Shape<2>(0, 0),
                     PixelFormat fmt = PixelFormat::kRGB,
                     DataFlag type = DataFlag::kUINT8,
-                    std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
-        // Copy on write
-        SyncedImage(const SyncedImage&, std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
+                    std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
 
-        SyncedImage(SyncedImage&, std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
-        SyncedImage(SyncedImage&&, std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
+        SyncedImage(Shape<2> size, PixelType type, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
+
+        // Copy on write
+        SyncedImage(const SyncedImage&, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
+
+        SyncedImage(SyncedImage&, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
+        SyncedImage(SyncedImage&&, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
         SyncedImage& operator=(const SyncedImage&);
         SyncedImage& operator=(SyncedImage&);
         SyncedImage& operator=(SyncedImage&&);
 
         void create(Shape<2> size, PixelFormat fmt = PixelFormat::kUNCHANGED, DataFlag type = DataFlag::kUINT8);
+        void create(Shape<2> size, PixelType type = {DataFlag::kUINT8, PixelFormat::kUNCHANGED});
         void create(uint32_t height,
                     uint32_t width,
                     PixelFormat fmt = PixelFormat::kUNCHANGED,
@@ -74,13 +83,13 @@ namespace aq
         size_t sizeBytes() const;
 
         template <class PIXEL>
-        Matrix<PIXEL> mutableHost(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
+        Matrix<PIXEL> mutableHost(mo::IAsyncStream* = nullptr, bool* sync_required = nullptr);
 
         template <class PIXEL>
         Matrix<PIXEL> mutableDevice(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
 
         template <class PIXEL>
-        ConstMatrix<PIXEL> host(mo::IDeviceStream* stream = nullptr, bool* sync_required = nullptr) const;
+        ConstMatrix<PIXEL> host(mo::IAsyncStream* stream = nullptr, bool* sync_required = nullptr) const;
 
         template <class PIXEL>
         ConstMatrix<PIXEL> device(mo::IDeviceStream* stream = nullptr, bool* sync_required = nullptr) const;
@@ -92,24 +101,31 @@ namespace aq
 
         SyncedMemory::SyncState state() const;
 
+        void setOwning(std::shared_ptr<const void>);
+
 #ifdef HAVE_OPENCV
         inline SyncedImage(const cv::Mat& mat,
                            PixelFormat = PixelFormat::kBGR,
-                           std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
+                           std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
         inline SyncedImage(const cv::cuda::GpuMat& mat,
                            PixelFormat = PixelFormat::kBGR,
                            std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
         inline SyncedImage(cv::Mat& mat,
                            PixelFormat = PixelFormat::kBGR,
-                           std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
+                           std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
         inline SyncedImage(cv::cuda::GpuMat& mat,
                            PixelFormat = PixelFormat::kBGR,
                            std::shared_ptr<mo::IDeviceStream> = mo::IDeviceStream::current());
 
-        inline cv::Mat mutableMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr);
+        inline cv::Mat mutableMat(mo::IAsyncStream* stream = nullptr, bool* sync = nullptr);
         inline cv::cuda::GpuMat mutableGpuMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr);
-        inline const cv::Mat mat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr) const;
+        inline const cv::Mat mat(mo::IAsyncStream* stream = nullptr, bool* sync = nullptr) const;
         inline const cv::cuda::GpuMat gpuMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr) const;
+
+        inline cv::Mat getMutableMat(mo::IAsyncStream* stream = nullptr, bool* sync = nullptr);
+        inline cv::cuda::GpuMat getMutableGpuMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr);
+        inline const cv::Mat getMat(mo::IAsyncStream* stream = nullptr, bool* sync = nullptr) const;
+        inline const cv::cuda::GpuMat getGpuMat(mo::IDeviceStream* stream = nullptr, bool* sync = nullptr) const;
 
         inline operator cv::Mat();
         inline operator cv::cuda::GpuMat();
@@ -132,7 +148,7 @@ namespace aq
     ///////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef HAVE_OPENCV
-    SyncedImage::SyncedImage(const cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedImage::SyncedImage(const cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IAsyncStream> stream)
     {
         ct::TArrayView<const void> data_view(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize());
 
@@ -169,7 +185,7 @@ namespace aq
         m_shape(1) = static_cast<uint32_t>(mat.cols);
     }
 
-    SyncedImage::SyncedImage(cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedImage::SyncedImage(cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IAsyncStream> stream)
     {
         ct::TArrayView<void> data_view(mat.data, static_cast<size_t>(mat.rows * mat.cols) * mat.elemSize());
         SyncedMemory wrapped =
@@ -204,7 +220,7 @@ namespace aq
         m_shape(1) = static_cast<uint32_t>(mat.cols);
     }
 
-    cv::Mat SyncedImage::mutableMat(mo::IDeviceStream* stream, bool* sync)
+    cv::Mat SyncedImage::mutableMat(mo::IAsyncStream* stream, bool* sync)
     {
         const auto height = static_cast<int>(rows());
         const auto width = static_cast<int>(cols());
@@ -221,7 +237,7 @@ namespace aq
         auto data = m_data->mutableDevice(stream, sync).data();
         return cv::cuda::GpuMat(height, width, type, data);
     }
-    const cv::Mat SyncedImage::mat(mo::IDeviceStream* stream, bool* sync) const
+    const cv::Mat SyncedImage::mat(mo::IAsyncStream* stream, bool* sync) const
     {
         const auto height = static_cast<int>(rows());
         const auto width = static_cast<int>(cols());
@@ -237,6 +253,25 @@ namespace aq
         const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
         auto data = const_cast<void*>(m_data->device(stream, sync).data());
         return cv::cuda::GpuMat(height, width, type, data);
+    }
+
+    cv::Mat SyncedImage::getMutableMat(mo::IAsyncStream* stream, bool* sync)
+    {
+        return mutableMat(stream, sync);
+    }
+
+    cv::cuda::GpuMat SyncedImage::getMutableGpuMat(mo::IDeviceStream* stream, bool* sync)
+    {
+        return mutableGpuMat(stream, sync);
+    }
+    const cv::Mat SyncedImage::getMat(mo::IAsyncStream* stream, bool* sync) const
+    {
+        return mat(stream, sync);
+    }
+
+    const cv::cuda::GpuMat SyncedImage::getGpuMat(mo::IDeviceStream* stream, bool* sync) const
+    {
+        return gpuMat(stream, sync);
     }
 
     SyncedImage::operator cv::Mat()
@@ -296,7 +331,7 @@ namespace aq
 #endif // HAVE_OPENCV
 
     template <class PIXEL>
-    SyncedImage::Matrix<PIXEL> SyncedImage::mutableHost(mo::IDeviceStream* stream, bool* sync_required)
+    SyncedImage::Matrix<PIXEL> SyncedImage::mutableHost(mo::IAsyncStream* stream, bool* sync_required)
     {
         MO_ASSERT_EQ(m_pixel_type.pixel_format, ct::value(PIXEL::pixel_format));
         MO_ASSERT_EQ(m_pixel_type.data_type, ct::value(DataType<typename PIXEL::Scalar_t>::depth_flag));
@@ -314,7 +349,7 @@ namespace aq
     }
 
     template <class PIXEL>
-    SyncedImage::ConstMatrix<PIXEL> SyncedImage::host(mo::IDeviceStream* stream, bool* sync_required) const
+    SyncedImage::ConstMatrix<PIXEL> SyncedImage::host(mo::IAsyncStream* stream, bool* sync_required) const
     {
         MO_ASSERT_EQ(m_pixel_type.pixel_format, ct::value(PIXEL::pixel_format));
         MO_ASSERT_EQ(m_pixel_type.data_type, ct::value(DataType<typename PIXEL::Scalar_t>::depth_flag));
