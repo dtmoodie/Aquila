@@ -135,7 +135,7 @@ namespace aq
             auto provider = getProvider(mo::TypeInfo::create<T>());
             if (provider)
             {
-                auto typed = static_cast<const TComponentProvider<T>*>(provider);
+                const TComponentProvider<T>* typed = static_cast<const TComponentProvider<T>*>(provider);
                 view = typed->getComponent();
             }
             return view;
@@ -143,6 +143,7 @@ namespace aq
 
         void erase(uint32_t entity_id);
         void clear();
+        void resize(uint32_t size);
 
       protected:
         template <class Component_t>

@@ -118,6 +118,14 @@ namespace aq
         return num_entities;
     }
 
+    void EntityComponentSystem::resize(uint32_t size)
+    {
+        for (auto& provider : m_component_providers)
+        {
+            provider->resize(size);
+        }
+    }
+
     void EntityComponentSystem::setProviders(std::vector<ce::shared_ptr<IComponentProvider>> providers)
     {
         m_component_providers = providers;
