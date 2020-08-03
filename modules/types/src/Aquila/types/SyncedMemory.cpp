@@ -533,8 +533,14 @@ namespace aq
         {
             return;
         }
+        // TODO copy?
         MO_ASSERT((h_ptr == nullptr) && (d_ptr == nullptr));
         m_stream = std::move(stream);
+    }
+
+    void SyncedMemory::setOwning(std::shared_ptr<const void> owning)
+    {
+        m_owning = std::move(owning);
     }
 
     bool SyncedMemory::operator==(const SyncedMemory& other) const

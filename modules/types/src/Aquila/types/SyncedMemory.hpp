@@ -106,6 +106,8 @@ namespace aq
         std::weak_ptr<mo::IAsyncStream> getStream() const;
         void setStream(std::shared_ptr<mo::IAsyncStream>);
 
+        void setOwning(std::shared_ptr<const void>);
+
         bool operator==(const SyncedMemory& other) const;
 
         // SynchronizesData and returns a view that is updated on both the CPU and GPU
@@ -125,7 +127,7 @@ namespace aq
         // max number of elements
         size_t m_capacity;
         std::weak_ptr<mo::IAsyncStream> m_stream;
-        std::shared_ptr<void> m_owning;
+        std::shared_ptr<const void> m_owning;
     }; // namespace aq
 
     ///////////////////////////////////////////////////////////////////////////////////////////
