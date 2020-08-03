@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <Aquila/types/CompressedImage.hpp>
 #include <Aquila/types/SyncedImage.hpp>
+
+#include <Aquila/types/CompressedImage.hpp>
 
 #include <MetaObject/cuda/AsyncStream.hpp>
 
