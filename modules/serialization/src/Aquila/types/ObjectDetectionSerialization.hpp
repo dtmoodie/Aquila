@@ -3,7 +3,6 @@
 #include <Aquila/serialization/cereal/eigen.hpp>
 
 #include <cereal/cereal.hpp>
-#include <cereal/types/boost/optional.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 
@@ -17,4 +16,4 @@ namespace aq
             ar(cereal::make_nvp("name", cat->name));
         }
     }
-}
+} // namespace aq
