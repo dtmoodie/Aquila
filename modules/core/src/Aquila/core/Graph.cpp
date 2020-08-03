@@ -297,7 +297,7 @@ bool Graph::loadDocument(const std::string& document, const std::string& prefere
             {
                 obj->load();
             }
-            catch (cv::Exception& e)
+            catch (std::exception& e)
             {
                 MO_LOG(debug, e.what());
             }
