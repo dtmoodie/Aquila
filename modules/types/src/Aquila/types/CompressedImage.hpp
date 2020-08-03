@@ -21,7 +21,6 @@
 
 namespace aq
 {
-    struct SyncedImage;
     struct IImageCompressor;
     struct IImageDecompressor;
 
