@@ -7,8 +7,10 @@
 #include <MetaObject/params/ISubscriber.hpp>
 
 #include "RuntimeCompiler/AUArray.h"
+
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
+
 using namespace aq;
 
 NodeFactory* NodeFactory::Instance()
@@ -78,7 +80,7 @@ rcc::shared_ptr<nodes::INode> NodeFactory::addNode(const std::string& node_name)
             {
                 interface->Init(true);
             }
-            catch (cv::Exception& e)
+            catch (std::exception& e)
             {
                 MO_LOG(error, "Failed to initialize node {} due to : {}", node_name, e.what());
                 return rcc::shared_ptr<nodes::Node>();
