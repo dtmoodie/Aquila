@@ -168,7 +168,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
             {
                 obj->load();
             }
-            catch (cv::Exception& e)
+            catch (std::exception& e)
             {
                 MO_LOG(debug, e.what());
             }
