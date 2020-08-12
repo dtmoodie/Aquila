@@ -136,7 +136,7 @@ namespace aq
             if (provider)
             {
                 const TComponentProvider<T>* typed = static_cast<const TComponentProvider<T>*>(provider);
-                view = typed->getComponent();
+                return typed->getComponent();
             }
             return view;
         }
