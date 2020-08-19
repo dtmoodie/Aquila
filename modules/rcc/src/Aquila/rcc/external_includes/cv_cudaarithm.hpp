@@ -1,6 +1,6 @@
 #pragma once
 #include <MetaObject/core/metaobject_config.hpp>
-#if MO_OPENCV_HAVE_CUDA
+
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
 #include "cv_link_config.hpp"
 #include "opencv2/cudaarithm.hpp"
@@ -15,5 +15,4 @@ RUNTIME_COMPILER_LINKLIBRARY("opencv_cudaarithm" CV_VERSION_ ".lib")
 #else // Linux
 RUNTIME_COMPILER_LINKLIBRARY("-lopencv_cudaarithm")
 #define CALL
-#endif
 #endif
