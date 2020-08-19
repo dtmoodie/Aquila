@@ -9,22 +9,6 @@
 namespace aq
 {
     using Contour = ct::TArrayView<cv::Point>;
-    /*{
-        template <class... ARGS>
-        Contour(ARGS&&... args)
-            : points(std::forward<ARGS>(args)...)
-        {
-        }
-
-         points;
-    };*/
 } // namespace aq
 
-/*namespace ct
-{
-    REFLECT_DERIVED(aq::Contour)
-        PUBLIC_ACCESS(points)
-    REFLECT_END;
-} // namespace ct
-*/
 #endif // AQUILA_CONTOUR_HPP
