@@ -83,6 +83,8 @@ namespace aq
         EntityComponentSystem& operator=(EntityComponentSystem&& other) = default;
         EntityComponentSystem& operator=(const EntityComponentSystem& other);
 
+        virtual ~EntityComponentSystem() = default;
+
         uint32_t getNumComponents() const;
         mo::TypeInfo getComponentType(uint32_t idx) const;
 
