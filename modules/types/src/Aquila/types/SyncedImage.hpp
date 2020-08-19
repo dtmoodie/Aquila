@@ -77,6 +77,7 @@ namespace aq
         DataFlag dataType() const;
         uint8_t channels() const;
         Shape<3> shape() const;
+        Shape<2> size() const;
         void reshape(Shape<2>);
         uint32_t rows() const;
         uint32_t cols() const;

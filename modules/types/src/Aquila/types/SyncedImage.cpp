@@ -47,6 +47,11 @@ namespace aq
         return {m_shape(0), m_shape(1), channels()};
     }
 
+    Shape<2> SyncedImage::size() const
+    {
+        return {m_shape(0), m_shape(1)};
+    }
+
     void SyncedImage::reshape(Shape<2> shape)
     {
         m_shape(0) = shape(0);
