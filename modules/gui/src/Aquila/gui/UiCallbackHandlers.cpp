@@ -11,9 +11,6 @@
 using namespace aq;
 WindowCallbackHandler::EventLoop::EventLoop()
 {
-    // size_t gui_thread_id = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
-
-    // mo::ThreadSpecificQueue::push(, gui_thread_id, this)
 }
 
 WindowCallbackHandler::EventLoop::~EventLoop()
@@ -136,6 +133,7 @@ void WindowCallbackHandler::imshowd(const std::string& window_name, cv::cuda::Gp
         sig_on_key(key);
     }
 }
+
 void WindowCallbackHandler::imshowb(const std::string& window_name, cv::ogl::Buffer buffer, int flags)
 {
     std::shared_ptr<mo::IAsyncStream> mystream = mo::IAsyncStream::current();
@@ -276,4 +274,5 @@ void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int
     }
     }
 }
+
 MO_REGISTER_OBJECT(WindowCallbackHandler);
