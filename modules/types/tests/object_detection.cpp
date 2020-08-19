@@ -21,16 +21,16 @@ TEST(object_detection, detected_object)
 
     auto cls = (*cats)[0]();
     cls = (*cats)[0](0.95);
-
+    std::vector<aq::Classification> classes{cls};
     {
         aq::DetectedObject det;
     }
     {
-        aq::DetectedObject det({}, cls);
+        aq::DetectedObject det(cv::Rect2f(), classes);
     }
 
     aq::DetectedObjectSet dets(cats);
-    dets.push_back(aq::DetectedObject(cv::Rect2f(0.0f, 0.0f, 1.0f, 1.0f), cls, 5));
+    dets.push_back(aq::DetectedObject(cv::Rect2f(0.0f, 0.0f, 1.0f, 1.0f), classes, 5));
 }
 
 TEST(object_detection, detected_object_data_table)

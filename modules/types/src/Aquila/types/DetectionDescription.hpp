@@ -8,7 +8,13 @@ namespace aq
 {
     namespace detection
     {
-        using Descriptor = ct::TArrayView<float>;
+        // using Descriptor = ct::TArrayView<float>;
+        struct Descriptor_;
+        using Descriptor = ArrayComponent<Descriptor_, float>;
+
+        struct LandmarkDetection_;
+
+        using LandmarkDetection = ArrayComponent<LandmarkDetection_, cv::Point2f>;
     } // namespace detection
 
 } // namespace aq

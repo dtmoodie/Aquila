@@ -43,7 +43,7 @@ namespace aq
     }
 
     DetectedObject::DetectedObject(const cv::Rect2f& rect,
-                                   const mo::SmallVec<Classification, 5>& cls,
+                                   const detection::Classifications& cls,
                                    unsigned int id_,
                                    float conf)
         : bounding_box(rect)
@@ -53,9 +53,18 @@ namespace aq
     {
     }
 
-    void DetectedObject::classify(Classification&& cls)
+    void DetectedObject::classify(const detection::Classifications& cls)
     {
-        classifications.append(std::move(cls));
+        const size_t min = std::min(classifications.size(), cls.size());
+        for (size_t i = 0; i < min; ++i)
+        {
+            classifications[i] = cls[i];
+        }
+    }
+
+    void DetectedObject::classify(const Classification& cls, uint32_t k)
+    {
+        classifications[k] = cls;
     }
 
 } // namespace aq

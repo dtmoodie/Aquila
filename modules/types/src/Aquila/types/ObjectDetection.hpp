@@ -28,7 +28,18 @@ namespace aq
         // Various commonly used components
         using BoundingBox2d = cv::Rect2f;
         using Confidence = float;
-        using Classification = mo::SmallVec<aq::Classification, 5>;
+        using Classifications = mo::SmallVec<aq::Classification, 5>;
+
+        template <class TAG, class DTYPE>
+        struct ArrayComponent : ct::TArrayView<DTYPE>
+        {
+            template <class... ARGS>
+            ArrayComponent(ARGS&&... args)
+                : ct::TArrayView<DTYPE>(std::forward<ARGS>(args)...)
+            {
+            }
+        };
+
         using Id = uint32_t;
         using Size3d = Eigen::Vector3f;
         using Pose3d = Eigen::Affine3f;
@@ -41,14 +52,15 @@ namespace aq
     struct AQUILA_EXPORTS DetectedObject
     {
         DetectedObject(const cv::Rect2f& rect = cv::Rect2f(),
-                       const mo::SmallVec<Classification, 5>& cls = mo::SmallVec<Classification, 5>(),
+                       const detection::Classifications& cls = detection::Classifications(),
                        unsigned int id = 0,
                        float confidence = 0.0);
 
-        void classify(Classification&& cls);
+        void classify(const detection::Classifications& cls);
+        void classify(const Classification&, uint32_t k = 0);
 
         detection::BoundingBox2d bounding_box;
-        detection::Classification classifications;
+        detection::Classifications classifications;
         detection::Id id;
         detection::Confidence confidence;
     };
