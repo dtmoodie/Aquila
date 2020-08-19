@@ -10,16 +10,6 @@ aquila_declare_module(NAME gui
         metaobject_types
 )
 
-#RCC_TARGET_CONFIG(aquila_gui libraries_deb libraries_rel)
-#if(UNIX)
-#    # This is needed so that the objects inside of core are loaded into the object factory
-#    IF(CMAKE_BUILD_TYPE MATCHES Debug)
-#        add_custom_command(TARGET aquila_gui POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin/plugins && ln -sf ../../libaquila_guid.so libaquila_guid.so)
-#    else()
-#        add_custom_command(TARGET aquila_gui POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin/plugins && ln -sf ../../libaquila_gui.so libaquila_gui.so)
-#    endif()
-#    add_custom_command(TARGET aquila_gui POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin/plugins && ln -sf ../../aquila_gui_config.txt aquila_gui_config.txt)
-#endif()
 if(BUILD_TESTS)
     add_subdirectory(tests)
 ENDIF(BUILD_TESTS)
