@@ -45,7 +45,13 @@ int FrameGrabberInfo::canLoadPath(const std::string& path) const
     int max = 0;
     for (auto constructor : constructors)
     {
-        max = std::max(max, dynamic_cast<const GrabberInfo*>(constructor->GetObjectInfo())->canLoad(path));
+        const IObjectInfo* info = constructor->GetObjectInfo();
+        const GrabberInfo* grabber_info = dynamic_cast<const GrabberInfo*>(info);
+        if (grabber_info)
+        {
+            int p = grabber_info->canLoad(path);
+            max = std::max(max, p);
+        }
     }
     return max;
 }
