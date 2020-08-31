@@ -1,17 +1,16 @@
-if(MO_HAVE_PYTHON)
-
+if(MO_HAVE_PYTHON2)
     file(GLOB_RECURSE src "src/*.cpp" "src/*.cu" "src/*.hpp")
     aquila_declare_module(NAME python SRC src DEPENDS
             metaobject_core
             metaobject_object
             metaobject_serialization
             metaobject_params
-            #aquila_gui
+            metaobject_metaparams
+            metaobject_python
+
             aquila_rcc
             aquila_types
             aquila_serialization
-            metaobject_metaparams
-            metaobject_python
     )
 
     if(UNIX)
@@ -34,4 +33,4 @@ if(MO_HAVE_PYTHON)
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
     )
 
-endif(MO_HAVE_PYTHON)
+endif(MO_HAVE_PYTHON2)
