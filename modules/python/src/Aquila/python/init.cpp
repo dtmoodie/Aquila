@@ -87,7 +87,8 @@ bool recompile(bool async = false)
 
 struct AqLibGuard
 {
-    AqLibGuard()
+    AqLibGuard(std::shared_ptr<SystemTable> table)
+        : m_table(std::move(table))
     {
         // gui_thread = aq::gui::createGuiThread();
     }
@@ -99,6 +100,7 @@ struct AqLibGuard
     }
 
     boost::thread gui_thread;
+    std::shared_ptr<SystemTable> m_table;
 };
 
 void readArgs(const boost::python::list& args)
@@ -111,10 +113,13 @@ void readArgs(const boost::python::list& args)
     aq::KeyValueStore::instance()->parseArgs(std::move(argv));
 }
 
+#define BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY
+
 BOOST_PYTHON_MODULE(aquila)
 {
+    auto table = mo::python::pythonSetup("aquila");
+    boost::shared_ptr<AqLibGuard> lib_guard(new AqLibGuard(table));
     mo::python::setLogLevel("debug");
-    boost::shared_ptr<AqLibGuard> lib_guard(new AqLibGuard());
     mo::python::RegisterInterface<aq::IAlgorithm> alg(&aq::python::setupAlgorithmInterface,
                                                       &aq::python::setupAlgorithmObjects);
     mo::python::RegisterInterface<aq::nodes::INode> node(&aq::python::setupNodeInterface,
@@ -123,7 +128,6 @@ BOOST_PYTHON_MODULE(aquila)
                                                                &aq::python::setupFrameGrabberObjects);
     mo::python::RegisterInterface<aq::IGraph> graph(&aq::python::setupGraphInterface, &aq::python::setupGraphObjects);
 
-    auto table = mo::python::pythonSetup("aquila");
     mo::initMetaParamsModule(table.get());
     auto factory = mo::MetaObjectFactory::instance(table.get());
     factory->registerTranslationUnit();
