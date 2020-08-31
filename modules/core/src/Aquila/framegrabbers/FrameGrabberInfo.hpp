@@ -7,13 +7,13 @@ namespace aq
     {
         class FrameGrabberInfo;
     }
-}
+} // namespace aq
 
 // I tried placing these as functions inside of the MetaObjectInfoImpl specialization, but msvc doesn't like that. :(
 template <class T>
 struct GetLoadablePathsHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasLoadablePaths, listLoadablePaths, std::vector<std::string> (*)(void));
+    DEFINE_HAS_STATIC_FUNCTION(HasLoadablePaths, listLoadablePaths, std::vector<std::string>, void);
     template <class U>
     static std::vector<std::string> helper(typename std::enable_if<HasLoadablePaths<U>::value, void>::type* = 0)
     {
@@ -34,7 +34,7 @@ struct GetLoadablePathsHelper
 template <class T>
 struct GetTimeoutHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasTimeout, loadTimeout, int (*)(void));
+    DEFINE_HAS_STATIC_FUNCTION(HasTimeout, loadTimeout, int, void);
     template <class U>
     static int helper(typename std::enable_if<HasTimeout<U>::value, void>::type* = 0)
     {
@@ -55,7 +55,7 @@ struct GetTimeoutHelper
 template <class T>
 struct GetCanLoadHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasCanLoad, canLoadPath, int (*)(const std::string&));
+    DEFINE_HAS_STATIC_FUNCTION(HasCanLoad, canLoadPath, int, const std::string&);
     template <class U>
     static int helper(const std::string& doc, typename std::enable_if<HasCanLoad<U>::value, void>::type* = 0)
     {
@@ -126,4 +126,4 @@ namespace mo
             return GetDepVarHelper<Type>::get(var_manager_);
         }
     };
-}
+} // namespace mo
