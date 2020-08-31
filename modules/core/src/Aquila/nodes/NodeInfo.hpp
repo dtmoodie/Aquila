@@ -14,12 +14,10 @@ namespace aq
 {
     namespace nodes
     {
-        template<class T>
-        struct TNodeInterfaceHelper: public mo::TMetaObjectInterfaceHelper<T>
+        template <class T>
+        struct TNodeInterfaceHelper : public mo::TMetaObjectInterfaceHelper<T>
         {
-
         };
-
 
         struct AQUILA_EXPORTS NodeInfo : virtual public mo::IMetaObjectInfo
         {
@@ -38,13 +36,13 @@ namespace aq
             // candidate nodes that provide those variables
             virtual std::vector<std::string> checkDependentVariables(mo::IParamServer* var_manager_) const = 0;
         };
-    }
-}
+    } // namespace nodes
+} // namespace aq
 
 template <class T>
 struct getNodeCategoryHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasNodeCategory, getNodeCategory, std::vector<std::string> (*)(void));
+    DEFINE_HAS_STATIC_FUNCTION(HasNodeCategory, getNodeCategory, std::vector<std::string>);
     template <class U>
     static std::vector<std::string> helper(typename std::enable_if<HasNodeCategory<U>::value, void>::type* = 0)
     {
@@ -56,13 +54,16 @@ struct getNodeCategoryHelper
         return std::vector<std::string>(1, std::string(U::GetTypeNameStatic()));
     }
 
-    static std::vector<std::string> get() { return helper<T>(); }
+    static std::vector<std::string> get()
+    {
+        return helper<T>();
+    }
 };
 
 template <class T>
 struct GetParentDepsHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasParentDeps, getParentalDependencies, std::vector<std::vector<std::string>> (*)(void));
+    DEFINE_HAS_STATIC_FUNCTION(HasParentDeps, getParentalDependencies, std::vector<std::vector<std::string>>);
     template <class U>
     static std::vector<std::vector<std::string>>
     helper(typename std::enable_if<HasParentDeps<U>::value, void>::type* = 0)
@@ -76,15 +77,16 @@ struct GetParentDepsHelper
         return std::vector<std::vector<std::string>>();
     }
 
-    static std::vector<std::vector<std::string>> get() { return helper<T>(); }
+    static std::vector<std::vector<std::string>> get()
+    {
+        return helper<T>();
+    }
 };
 
 template <class T>
 struct GetNonParentDepsHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasNonParentDeps,
-                               getNonParentalDependencies,
-                               std::vector<std::vector<std::string>> (*)(void));
+    DEFINE_HAS_STATIC_FUNCTION(HasNonParentDeps, getNonParentalDependencies, std::vector<std::vector<std::string>>);
     template <class U>
     static std::vector<std::vector<std::string>>
     helper(typename std::enable_if<HasNonParentDeps<U>::value, void>::type* = 0)
@@ -98,13 +100,16 @@ struct GetNonParentDepsHelper
         return std::vector<std::vector<std::string>>();
     }
 
-    static std::vector<std::vector<std::string>> get() { return helper<T>(); }
+    static std::vector<std::vector<std::string>> get()
+    {
+        return helper<T>();
+    }
 };
 
 template <class T>
 struct GetDepVarHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasDepVar, checkDependentVariables, std::vector<std::string> (*)(mo::IParamServer*));
+    DEFINE_HAS_STATIC_FUNCTION(HasDepVar, checkDependentVariables, std::vector<std::string>, mo::IParamServer*);
     template <class U>
     static std::vector<std::vector<std::string>> helper(mo::IParamServer* mgr,
                                                         typename std::enable_if<HasDepVar<U>::value, void>::type* = 0)
@@ -118,7 +123,10 @@ struct GetDepVarHelper
         return std::vector<std::string>();
     }
 
-    static std::vector<std::string> get(mo::IParamServer* mgr) { return helper<T>(mgr); }
+    static std::vector<std::string> get(mo::IParamServer* mgr)
+    {
+        return helper<T>(mgr);
+    }
 };
 
 namespace mo
@@ -127,7 +135,10 @@ namespace mo
     template <class Type>
     struct MetaObjectInfoImpl<Type, aq::nodes::NodeInfo> : public aq::nodes::NodeInfo
     {
-        std::vector<std::string> getNodeCategory() const { return getNodeCategoryHelper<Type>::get(); }
+        std::vector<std::string> getNodeCategory() const
+        {
+            return getNodeCategoryHelper<Type>::get();
+        }
 
         // List of nodes that need to be in the direct parental tree of this node, in required order
         std::vector<std::vector<std::string>> getParentalDependencies() const
@@ -149,4 +160,4 @@ namespace mo
             return GetDepVarHelper<Type>::get(var_manager_);
         }
     };
-}
+} // namespace mo
