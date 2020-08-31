@@ -99,7 +99,7 @@ namespace aq
         }
 
         template <class T>
-        void connectInput(T& obj, mo::IParam* input, const boost::python::object& bpobj)
+        void connectInput(T& obj, mo::ISubscriber* input, const boost::python::object& bpobj)
         {
             auto input_param = dynamic_cast<mo::ISubscriber*>(input);
             if (!input_param)
@@ -207,14 +207,8 @@ namespace aq
                 if (args[i])
                 {
                     mo::IControlParam* param = obj.obj->getParam(param_names[i]);
-
                     if (param)
                     {
-                        if (param->checkFlags(mo::ParamFlags::kINPUT))
-                        {
-                            connectInput(obj, param, args[i]);
-                            continue;
-                        }
                         auto setter = mo::python::DataConverterRegistry::instance()->getSetter(param->getTypeInfo());
                         if (setter)
                         {
@@ -233,7 +227,13 @@ namespace aq
                     }
                     else
                     {
-                        MO_LOG(debug, "No parameter named {}", param_names[i]);
+                        mo::ISubscriber* input = obj.obj->getInput(param_names[i]);
+                        if (input)
+                        {
+
+                            connectInput(obj, input, args[i]);
+                            continue;
+                        }
                     }
                 }
             }
