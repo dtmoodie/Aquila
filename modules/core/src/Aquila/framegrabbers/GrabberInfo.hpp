@@ -3,7 +3,7 @@
 #include "IFrameGrabber.hpp"
 namespace Grabbers
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasCanLoad, canLoad, int (*)(const std::string&));
+    DEFINE_HAS_STATIC_FUNCTION(HasCanLoad, canLoad, int, const std::string&);
     template <class U>
     int HasLoadHelper(const std::string& path, typename std::enable_if<HasCanLoad<U>::value, void>::type* = 0)
     {
@@ -12,10 +12,11 @@ namespace Grabbers
     template <class U>
     int HasLoadHelper(const std::string& path, typename std::enable_if<!HasCanLoad<U>::value, void>::type* = 0)
     {
+        MO_LOG(trace, "{} Does not have a canLoad function defined", U::GetTypeNameStatic());
         (void)path;
         return 0;
     }
-    DEFINE_HAS_STATIC_FUNCTION(HasListPaths, listPaths, void (*)(std::vector<std::string>&));
+    DEFINE_HAS_STATIC_FUNCTION(HasListPaths, listPaths, void, std::vector<std::string>&);
     template <class U>
     void HasListHelper(std::vector<std::string>& paths,
                        typename std::enable_if<HasListPaths<U>::value, void>::type* = 0)
@@ -28,7 +29,7 @@ namespace Grabbers
     {
         (void)path;
     }
-    DEFINE_HAS_STATIC_FUNCTION(HasTimeout, loadTimeout, int (*)(void));
+    DEFINE_HAS_STATIC_FUNCTION(HasTimeout, loadTimeout, int);
     template <class U>
     int HasTimeoutHelper(typename std::enable_if<HasTimeout<U>::value, void>::type* = 0)
     {
@@ -39,7 +40,7 @@ namespace Grabbers
     {
         return 1000;
     }
-}
+} // namespace Grabbers
 
 namespace mo
 {
@@ -52,8 +53,17 @@ namespace mo
             HAS_LISTPATHS = Grabbers::HasListPaths<Type>::value,
             HAS_TIMEOUT = Grabbers::HasTimeout<Type>::value
         };
-        int canLoad(const std::string& path) const { return Grabbers::HasLoadHelper<Type>(path); }
-        void listPaths(std::vector<std::string>& paths) const { Grabbers::HasListHelper<Type>(paths); }
-        int timeout() const { return Grabbers::HasTimeoutHelper<Type>(); }
+        int canLoad(const std::string& path) const
+        {
+            return Grabbers::HasLoadHelper<Type>(path);
+        }
+        void listPaths(std::vector<std::string>& paths) const
+        {
+            Grabbers::HasListHelper<Type>(paths);
+        }
+        int timeout() const
+        {
+            return Grabbers::HasTimeoutHelper<Type>();
+        }
     };
 } // namespace mo
