@@ -10,7 +10,7 @@
 
 #include <cereal/types/string.hpp>
 
-#ifdef MO_HAVE_PYTHON
+#ifdef MO_HAVE_PYTHON2
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
@@ -45,7 +45,7 @@ namespace cereal
     }
 } // namespace cereal
 
-#if MO_HAVE_PYTHON == 1
+#if MO_HAVE_PYTHON2 == 1
 
 namespace ct
 {
