@@ -22,11 +22,9 @@ namespace aq
             MO_SIGNAL(void, StartThreads)
             MO_SIGNAL(void, StopThreads)
 
-            MO_SLOT(void, startThread)
+            MO_SLOT(void, start)
             MO_SLOT(void, input_changed, nodes::INode*, mo::ISubscriber*)
-            MO_SLOT(void, stopThread)
-            MO_SLOT(void, pauseThread)
-            MO_SLOT(void, resumeThread)
+            MO_SLOT(void, stop)
 
             MO_SLOT(void, node_updated, nodes::INode*)
             MO_SLOT(void, update)

@@ -17,6 +17,8 @@
 
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 
+#include <ce/hash.hpp>
+
 #include <boost/chrono.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
@@ -84,7 +86,7 @@ Graph::Graph()
 Graph::~Graph()
 {
     MO_LOG(info, "Graph destructor");
-    stopThread();
+    stop();
     m_top_level_nodes.clear();
     MO_LOG(info, "End cleanup nodes");
     for (auto thread : m_connection_threads)
@@ -526,28 +528,36 @@ void Graph::removeVariableSink(IVariableSink* sink)
     });
 }
 
-void Graph::startThread()
+void graphLoop(rcc::shared_ptr<Graph> graph, IAsyncStreamPtr_t stream, const uint64_t event_id)
+{
+    graph->process();
+    stream->pushEvent([graph, stream, event_id]() mutable { graphLoop(graph, stream, event_id); }, event_id);
+}
+
+void Graph::start()
 {
     sig_StartThreads();
-    //_processing_thread.start();
+    mo::IAsyncStreamPtr_t stream = this->getStream();
+    MO_ASSERT(stream);
+
+    const auto object_id = this->GetObjectId();
+    const auto event_id = ce::combineHash(object_id.m_PerTypeId, object_id.m_ConstructorId);
+    rcc::shared_ptr<Graph> graph_ptr(*this);
+    auto event = [graph_ptr, stream, event_id]() { graphLoop(graph_ptr, stream, event_id); };
+    stream->pushEvent(std::move(event), event_id);
 }
 
-void Graph::stopThread()
+void Graph::stop()
 {
     sig_StopThreads();
-    //_processing_thread.stop();
-}
 
-void Graph::pauseThread()
-{
-    sig_StopThreads();
-    //_processing_thread.stop();
-}
+    mo::IAsyncStreamPtr_t stream = this->getStream();
+    MO_ASSERT(stream);
 
-void Graph::resumeThread()
-{
-    //_processing_thread.start();
-    // sig_StartThreads();
+    const auto object_id = this->GetObjectId();
+    const auto event_id = ce::combineHash(object_id.m_PerTypeId, object_id.m_ConstructorId);
+    auto event = []() {};
+    stream->pushEvent(std::move(event), event_id);
 }
 
 int Graph::process()

@@ -4,6 +4,8 @@
 #include <MetaObject/object/MetaObject.hpp>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 
+#include <ct/reflect.hpp>
+
 #include <map>
 #include <memory>
 #include <type_traits>
@@ -59,10 +61,8 @@ namespace aq
         virtual void removeNode(const nodes::INode* node) = 0;
         virtual rcc::shared_ptr<nodes::INode> getNode(const std::string& nodeName) = 0;
 
-        virtual void startThread() = 0;
-        virtual void stopThread() = 0;
-        virtual void pauseThread() = 0;
-        virtual void resumeThread() = 0;
+        virtual void start() = 0;
+        virtual void stop() = 0;
         virtual int process() = 0;
 
         virtual void addVariableSink(IVariableSink* sink) = 0;
