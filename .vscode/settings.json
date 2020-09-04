@@ -34,7 +34,8 @@
         "string_view": "cpp",
         "bitset": "cpp",
         "initializer_list": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "stdexcept": "cpp"
     },
     "editor.tokenColorCustomizations": {
         "textMateRules": [

@@ -4,4 +4,4 @@ build_release
 CMakeLists.txt.*
 **/*.autosave
 dependencies/build-*
-.vscode/
+.vscode/*
