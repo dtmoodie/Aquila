@@ -9,6 +9,7 @@ aquila_declare_module(NAME core SRC src
         aquila_rcc
         aquila_utilities
         metaobject_metaparams
+        ce
 )
 
 # privately need headers from these modules

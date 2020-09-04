@@ -131,8 +131,8 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
         return rcc::shared_ptr<IFrameGrabber>();
     }
 
-    const bool descending = true;
-    auto idx = indexSort(valid_constructor_priority, descending);
+    const bool ascending = false;
+    auto idx = indexSort(valid_constructor_priority, ascending);
     if (preferred_loader.size())
     {
         for (size_t i = 0; i < valid_constructors.size(); ++i)
@@ -168,7 +168,11 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
         auto future = obj->promise.get_future();
         static std::vector<boost::thread*> connection_threads;
         // TODO cleanup the connection threads
-
+        MO_LOG(info,
+               "Attempting to load {} with frame_grabber: {} with priority: {}",
+               uri,
+               fg->GetTypeName(),
+               valid_constructor_priority[idx[static_cast<size_t>(i)]]);
         boost::thread* connection_thread = new boost::thread([obj]() -> void {
             try
             {
@@ -187,7 +191,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
             if (future.get())
             {
                 MO_LOG(info,
-                       "Loading {} with frame_grabber: {} with priority: {}",
+                       "Loaded {} with frame_grabber: {} with priority: {}",
                        uri,
                        fg->GetTypeName(),
                        valid_constructor_priority[idx[static_cast<size_t>(i)]]);
