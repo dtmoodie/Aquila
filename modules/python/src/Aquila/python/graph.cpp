@@ -177,9 +177,9 @@ namespace aq
                               boost::python::make_function(&aq::IGraph::saveGraph,
                                                            boost::python::default_call_policies(),
                                                            boost::python::arg("filename")));
-                    bpobj.def("start", &aq::IGraph::startThread);
-                    bpobj.def("stop", &aq::IGraph::stopThread);
-                    bpobj.def("pause", &aq::IGraph::pauseThread);
+                    bpobj.def("start", &aq::IGraph::start);
+                    bpobj.def("stop", &aq::IGraph::stop);
+
                     bpobj.def("step", &aq::IGraph::process);
                     // bpobj.def("addNode", static_cast<void(aq::IGraph::*) (const
                     // rcc::shared_ptr<aq::nodes::INode>&)>(&aq::IGraph::addNode));

@@ -54,7 +54,7 @@ bool recompile(bool async = false)
                     auto shared = graph.lock();
                     if (shared)
                     {
-                        shared->stopThread();
+                        shared->stop();
                     }
                 }
             }
@@ -71,7 +71,7 @@ bool recompile(bool async = false)
                     auto shared = graph.lock();
                     if (shared)
                     {
-                        shared->startThread();
+                        shared->start();
                     }
                 }
             }
