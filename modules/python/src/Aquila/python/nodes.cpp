@@ -1,4 +1,5 @@
 #include <MetaObject/python/MetaObject.hpp>
+#include <MetaObject/python/PythonConversionVisitation.hpp>
 
 #include "nodes.hpp"
 #include <Aquila/core/IGraph.hpp>
@@ -195,13 +196,6 @@ namespace aq
                                                   IObjectConstructor* ctr)
         {
             MO_ASSERT(param_names.size() == args.size());
-            /*auto info = dynamic_cast<aq::nodes::NodeInfo*>(ctr->GetObjectInfo());
-            auto param_info = info->getParamInfo();
-            std::map<std::string, ParamInfo*> info_map;
-            for(auto info : param_info)
-            {
-                info_map[info->name] = info;
-            }*/
             for (size_t i = 0; i < param_names.size(); ++i)
             {
                 if (args[i])
@@ -209,28 +203,14 @@ namespace aq
                     mo::IControlParam* param = obj.obj->getParam(param_names[i]);
                     if (param)
                     {
-                        auto setter = mo::python::DataConverterRegistry::instance()->getSetter(param->getTypeInfo());
-                        if (setter)
-                        {
-                            if (!setter(param, args[i]))
-                            {
-                                MO_LOG(debug, "Unable to set {}", param_names[i]);
-                            }
-                        }
-                        else
-                        {
-                            MO_LOG(debug,
-                                   "No converter available for {} of type: {}",
-                                   param->getTreeName(),
-                                   mo::TypeTable::instance()->typeToName(param->getTypeInfo()));
-                        }
+                        mo::python::ControlParamSetter setter(args[i]);
+                        param->load(setter);
                     }
                     else
                     {
                         mo::ISubscriber* input = obj.obj->getInput(param_names[i]);
                         if (input)
                         {
-
                             connectInput(obj, input, args[i]);
                             continue;
                         }
