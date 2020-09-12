@@ -609,7 +609,7 @@ void Node::addParent(WeakPtr parent_)
             }
             m_parents.push_back(shared);
         }
-        // shared->addChild(*this);
+        shared->addChild(*this);
     }
 }
 
