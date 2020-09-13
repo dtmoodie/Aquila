@@ -113,6 +113,11 @@ void readArgs(const boost::python::list& args)
     aq::KeyValueStore::instance()->parseArgs(std::move(argv));
 }
 
+void setGuiStream(const std::shared_ptr<mo::IAsyncStream>& stream)
+{
+    mo::ThreadRegistry::instance()->registerThread(mo::ThreadRegistry::GUI, stream);
+}
+
 #define BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY
 
 BOOST_PYTHON_MODULE(aquila)
@@ -136,6 +141,7 @@ BOOST_PYTHON_MODULE(aquila)
     aq::serialization::initModule(table.get());
     boost::python::def("readArgs", &readArgs);
     boost::python::def("recompile", &recompile, (boost::python::arg("async") = false));
+    boost::python::def("setGuiStream", &setGuiStream);
 
     boost::python::class_<AqLibGuard, boost::shared_ptr<AqLibGuard>, boost::noncopyable>("aqLibGuard",
                                                                                          boost::python::no_init);
