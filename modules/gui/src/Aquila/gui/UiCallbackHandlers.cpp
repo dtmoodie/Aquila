@@ -50,14 +50,14 @@ void WindowCallbackHandler::EventLoop::Register(WindowCallbackHandler* handler)
 
 std::shared_ptr<mo::IAsyncStream> WindowCallbackHandler::getUiStream()
 {
-    std::shared_ptr<mo::IAsyncStream> output = m_ui_stream;
-    if (output == nullptr)
+    std::shared_ptr<mo::IAsyncStream> ui_stream = m_ui_stream;
+    if (ui_stream == nullptr)
     {
-        output = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
-        MO_ASSERT(output != nullptr);
-        m_ui_stream = output;
+        ui_stream = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
+        MO_ASSERT(ui_stream != nullptr);
+        m_ui_stream = ui_stream;
     }
-    return output;
+    return ui_stream;
 }
 
 void WindowCallbackHandler::on_mouse_click(int event, int x, int y, int flags, void* callback_handler)
