@@ -126,6 +126,11 @@ namespace aq
         }
     }
 
+    ComponentAssigner EntityComponentSystem::operator[](uint32_t idx)
+    {
+        return ComponentAssigner(*this, idx);
+    }
+
     void EntityComponentSystem::setProviders(std::vector<ce::shared_ptr<IComponentProvider>> providers)
     {
         m_component_providers = providers;
@@ -149,6 +154,12 @@ namespace aq
         {
             provider->clear();
         }
+    }
+
+    ComponentAssigner::ComponentAssigner(EntityComponentSystem& ecs, uint32_t idx)
+        : m_ecs(ecs)
+        , m_idx(idx)
+    {
     }
 } // namespace aq
 

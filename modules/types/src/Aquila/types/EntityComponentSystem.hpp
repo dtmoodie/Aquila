@@ -73,7 +73,7 @@ namespace aq
 
     template <class T, class E = void>
     struct TEntityComponentSystem;
-
+    struct ComponentAssigner;
     struct AQUILA_EXPORTS EntityComponentSystem
     {
 
@@ -146,6 +146,26 @@ namespace aq
         void erase(uint32_t entity_id);
         void clear();
         void resize(uint32_t size);
+
+        template <class T>
+        void assign(uint32_t idx, T&& cmp)
+        {
+            auto provider = getProvider(mo::TypeInfo::create<T>());
+            if (!provider)
+            {
+                MO_ASSERT_EQ(idx, 0);
+                auto new_provider = ce::shared_ptr<TComponentProvider<T>>::create();
+                new_provider->resize(1);
+                addProvider(ce::shared_ptr<IComponentProvider>(std::move(new_provider)));
+                provider = getProvider(mo::TypeInfo::create<T>());
+            }
+            MO_ASSERT(provider);
+            auto typed = static_cast<TComponentProvider<T>*>(provider);
+            MO_ASSERT(typed);
+            typed->assign(idx, std::forward<T>(cmp));
+        }
+
+        ComponentAssigner operator[](uint32_t idx);
 
       protected:
         template <class Component_t>
@@ -242,6 +262,28 @@ namespace aq
 
       private:
         std::vector<ce::shared_ptr<IComponentProvider>> m_component_providers;
+    };
+
+    struct ComponentAssigner
+    {
+        ComponentAssigner(EntityComponentSystem&, uint32_t);
+
+        template <class COMPONENT>
+        ComponentAssigner& operator=(COMPONENT&& cmp)
+        {
+            this->m_ecs.assign(m_idx, std::forward(cmp));
+            return *this;
+        }
+
+        /*template<class COMPONENT>
+        operator COMPONENT&()
+        {
+            // TODO
+        }*/
+
+      private:
+        EntityComponentSystem& m_ecs;
+        uint32_t m_idx;
     };
 
     template <class T>
