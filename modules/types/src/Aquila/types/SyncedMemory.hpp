@@ -80,6 +80,7 @@ namespace aq
         SyncedMemory& operator=(const SyncedMemory& other);
         SyncedMemory& operator=(SyncedMemory&& other);
 
+        // return the number of elements in the memory block
         size_t size() const;
         bool resize(size_t size, size_t elem_size = 1, std::shared_ptr<mo::IAsyncStream> = {});
 
