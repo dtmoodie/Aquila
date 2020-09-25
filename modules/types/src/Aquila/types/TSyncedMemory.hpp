@@ -8,8 +8,28 @@ namespace aq
     template <class T>
     struct TSyncedMemory : virtual SyncedMemory
     {
+        template <uint8_t D>
+        static TSyncedMemory copyHost(mt::Tensor<const T, D> tensor,
+                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current())
+        {
+            return TSyncedMemory(SyncedMemory::copyHost(std::move(tensor), std::move(stream)));
+        }
+
+        template <uint8_t D>
+        static TSyncedMemory copyDevice(mt::Tensor<const T, D> tensor,
+                                        std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current())
+        {
+            return TSyncedMemory(SyncedMemory::copyDevice(std::move(tensor), std::move(stream)));
+        }
+
         TSyncedMemory(size_t elements = 0, std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current())
             : SyncedMemory(elements * sizeof(T), sizeof(T), stream)
+        {
+        }
+
+        template <class... ARGS>
+        TSyncedMemory(ARGS&&... args)
+            : SyncedMemory(std::forward<ARGS>(args)...)
         {
         }
 
@@ -48,6 +68,6 @@ namespace aq
             return TSyncedView<const T>(SyncedMemory::syncedView(stream));
         }
     };
-}
+} // namespace aq
 
 #endif // AQ_TSYNCED_MEMORY_HPP

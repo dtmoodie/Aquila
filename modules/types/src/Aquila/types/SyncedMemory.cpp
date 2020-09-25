@@ -5,6 +5,15 @@
 
 namespace aq
 {
+    SyncedMemory
+    SyncedMemory::copyHost(ct::TArrayView<void> data, size_t elem_size, std::shared_ptr<mo::IAsyncStream> stream)
+    {
+
+        SyncedMemory output(data.size(), elem_size, stream);
+        auto dst = output.mutableHost(stream.get());
+        std::memcpy(dst.data(), data.data(), data.size());
+        return output;
+    }
 
     SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<void> data,
                                         size_t elem_size,
@@ -29,6 +38,16 @@ namespace aq
         output.h_ptr = const_cast<void*>(data.data());
         output.m_state = SyncState::HOST_UPDATED;
         output.h_flags = PointerFlags::CONST | PointerFlags::UNOWNED;
+        return output;
+    }
+
+    SyncedMemory
+    SyncedMemory::copyDevice(ct::TArrayView<void> data, size_t elem_size, std::shared_ptr<mo::IDeviceStream> stream)
+    {
+
+        SyncedMemory output(data.size(), elem_size, stream);
+        auto dst = output.mutableDevice(stream.get());
+        stream->deviceToDevice(dst, data);
         return output;
     }
 
