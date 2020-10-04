@@ -38,7 +38,7 @@ namespace aq
             return SyncedMemory::size() / sizeof(T);
         }
 
-        ct::TArrayView<const T> host(mo::IDeviceStream* stream, bool* sync_required = nullptr) const
+        ct::TArrayView<const T> host(mo::IAsyncStream* stream, bool* sync_required = nullptr) const
         {
             return SyncedMemory::hostAs<T>(stream, sync_required);
         }
@@ -48,7 +48,7 @@ namespace aq
             return SyncedMemory::deviceAs<T>(stream, sync_required);
         }
 
-        ct::TArrayView<T> mutableHost(mo::IDeviceStream* stream, bool* sync_required = nullptr)
+        ct::TArrayView<T> mutableHost(mo::IAsyncStream* stream, bool* sync_required = nullptr)
         {
             return SyncedMemory::mutableHostAs<T>(stream, sync_required);
         }
