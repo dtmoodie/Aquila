@@ -10,21 +10,24 @@ struct DiamondFixture : public ::testing::TestWithParam<mo::BufferFlags>
     DiamondFixture()
     {
     }
-    virtual ~DiamondFixture()
+
+    ~DiamondFixture() override
     {
     }
 
-    virtual void SetUp()
+    void SetUp() override
     {
         init();
     }
-    virtual void TearDown()
+
+    void TearDown() override
     {
     }
+
     void init()
     {
         graph = graph.create();
-        graph->stopThread();
+        graph->stop();
         a = a.create();
         d0 = d0.create();
         d1 = d0.create();

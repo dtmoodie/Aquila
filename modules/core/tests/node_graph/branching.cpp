@@ -17,7 +17,7 @@ struct BranchingFixture : public ::testing::Test
     void init()
     {
         graph = graph.create();
-        graph->stopThread();
+        graph->stop();
         a = a.create();
         b = b.create();
         c = c.create();
@@ -200,7 +200,7 @@ TEST_F(BranchingFixture, merging_direct_desynced_ts)
     rcc::shared_ptr<node_c> c;
     rcc::shared_ptr<aq::IGraph> ds;
     ds = ds.create();
-    ds->stopThread();
+    ds->stop();
     a = a.create();
     e = e.create();
     c = c.create();
