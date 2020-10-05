@@ -62,7 +62,8 @@ namespace aq
 
         std::shared_ptr<IComponentProvider> clone() const override;
 
-        void assign(uint32_t idx, const T& val);
+        template <class U>
+        void assign(uint32_t idx, U&& val);
 
         void save(mo::ISaveVisitor& visitor, const std::string& name) const override;
         void load(mo::ILoadVisitor& visitor, const std::string& name) override;
@@ -88,8 +89,13 @@ namespace aq
         uint32_t getNumComponents() const;
         mo::TypeInfo getComponentType(uint32_t idx) const;
 
-        IComponentProvider* getProvider(mo::TypeInfo type);
+        IComponentProvider* getProviderMutable(mo::TypeInfo type);
         const IComponentProvider* getProvider(mo::TypeInfo type) const;
+
+        template <class T>
+        TComponentProvider<T>* getProviderMutable();
+        template <class T>
+        const TComponentProvider<T>* getProvider() const;
 
         void addProvider(ce::shared_ptr<IComponentProvider>);
         void setProviders(std::vector<ce::shared_ptr<IComponentProvider>> providers);
@@ -120,11 +126,10 @@ namespace aq
         typename ct::ext::DataDimensionality<T>::TensorView getComponentMutable()
         {
             typename ct::ext::DataDimensionality<T>::TensorView view;
-            auto provider = getProvider(mo::TypeInfo::create<T>());
+            auto provider = getProviderMutable<T>();
             if (provider)
             {
-                auto typed = static_cast<TComponentProvider<T>*>(provider);
-                view = typed->getComponentMutable();
+                view = provider->getComponentMutable();
             }
 
             return view;
@@ -134,11 +139,10 @@ namespace aq
         typename ct::ext::DataDimensionality<T>::ConstTensorView getComponent() const
         {
             typename ct::ext::DataDimensionality<T>::ConstTensorView view;
-            auto provider = getProvider(mo::TypeInfo::create<T>());
+            auto provider = getProvider<T>();
             if (provider)
             {
-                const TComponentProvider<T>* typed = static_cast<const TComponentProvider<T>*>(provider);
-                return typed->getComponent();
+                return provider->getComponent();
             }
             return view;
         }
@@ -150,19 +154,17 @@ namespace aq
         template <class T>
         void assign(uint32_t idx, T&& cmp)
         {
-            auto provider = getProvider(mo::TypeInfo::create<T>());
+            auto provider = getProviderMutable<ct::decay_t<T>>();
             if (!provider)
             {
                 MO_ASSERT_EQ(idx, 0);
-                auto new_provider = ce::shared_ptr<TComponentProvider<T>>::create();
+                auto new_provider = ce::shared_ptr<TComponentProvider<ct::decay_t<T>>>::create();
                 new_provider->resize(1);
                 addProvider(ce::shared_ptr<IComponentProvider>(std::move(new_provider)));
-                provider = getProvider(mo::TypeInfo::create<T>());
+                provider = getProviderMutable<ct::decay_t<T>>();
             }
             MO_ASSERT(provider);
-            auto typed = static_cast<TComponentProvider<T>*>(provider);
-            MO_ASSERT(typed);
-            typed->assign(idx, std::forward<T>(cmp));
+            provider->assign(idx, std::forward<T>(cmp));
         }
 
         ComponentAssigner operator[](uint32_t idx);
@@ -171,7 +173,7 @@ namespace aq
         template <class Component_t>
         void pushComponent(const Component_t& obj, const uint32_t id)
         {
-            auto provider = getProvider(mo::TypeInfo::create<Component_t>());
+            auto provider = getProviderMutable<Component_t>();
             if (!provider)
             {
                 MO_ASSERT_EQ(id, 0);
@@ -179,18 +181,16 @@ namespace aq
                 auto new_provider = ce::shared_ptr<TComponentProvider<Component_t>>::create();
                 new_provider->resize(1);
                 addProvider(ce::shared_ptr<IComponentProvider>(std::move(new_provider)));
-                provider = getProvider(mo::TypeInfo::create<Component_t>());
+                provider = getProviderMutable<Component_t>();
             }
             MO_ASSERT(provider);
-            auto typed = static_cast<TComponentProvider<Component_t>*>(provider);
-            MO_ASSERT(typed);
-            typed->assign(id, obj);
+            provider->assign(id, obj);
         }
 
         template <class T>
         void pushComponent(const ct::TArrayView<T>& obj, const uint32_t id)
         {
-            auto provider = getProvider(mo::TypeInfo::create<ct::TArrayView<T>>());
+            auto provider = getProviderMutable<T>();
             if (!provider)
             {
                 MO_ASSERT_EQ(id, 0);
@@ -201,9 +201,7 @@ namespace aq
                 provider = getProvider(mo::TypeInfo::create<ct::TArrayView<T>>());
             }
             MO_ASSERT(provider);
-            auto typed = static_cast<TComponentProvider<ct::TArrayView<T>>*>(provider);
-            MO_ASSERT(typed);
-            typed->assign(id, obj);
+            provider->assign(id, obj);
         }
 
       protected:
@@ -264,22 +262,107 @@ namespace aq
         std::vector<ce::shared_ptr<IComponentProvider>> m_component_providers;
     };
 
+    template <class T>
+    TComponentProvider<T>* EntityComponentSystem::getProviderMutable()
+    {
+        IComponentProvider* provider = this->getProviderMutable(mo::TypeInfo::create<T>());
+        if (provider)
+        {
+            return static_cast<TComponentProvider<T>*>(provider);
+        }
+        return nullptr;
+    }
+
+    template <class T>
+    const TComponentProvider<T>* EntityComponentSystem::getProvider() const
+    {
+        const IComponentProvider* provider = this->getProvider(mo::TypeInfo::create<T>());
+        if (provider)
+        {
+            return static_cast<const TComponentProvider<T>*>(provider);
+        }
+        return nullptr;
+    }
+
+    template <class T>
+    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, T&& object, ct::Indexer<0> indexer)
+    {
+        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
+        ecs.assign(idx, ptr.get(object));
+    }
+
+    template <class T, ct::index_t I>
+    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, T&& object, ct::Indexer<I> indexer)
+    {
+        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
+        ecs.assign(idx, ptr.get(object));
+        extractComponents(ecs, idx, object, --indexer);
+    }
+
+    template <class T>
+    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, const T& object, ct::Indexer<0> indexer)
+    {
+        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
+        ecs.assign(idx, ptr.get(object));
+    }
+
+    template <class T, ct::index_t I>
+    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, const T& object, ct::Indexer<I> indexer)
+    {
+        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
+        ecs.assign(idx, ptr.get(object));
+        extractComponents(ecs, idx, object, --indexer);
+    }
     struct ComponentAssigner
     {
         ComponentAssigner(EntityComponentSystem&, uint32_t);
 
+        // By default assignment is for components
         template <class COMPONENT>
         ComponentAssigner& operator=(COMPONENT&& cmp)
         {
-            this->m_ecs.assign(m_idx, std::forward(cmp));
+            this->m_ecs.assign(m_idx, std::forward<COMPONENT>(cmp));
             return *this;
         }
 
-        /*template<class COMPONENT>
-        operator COMPONENT&()
+        template <class OBJECT>
+        ComponentAssigner& assignObject(OBJECT&& obj)
         {
-            // TODO
-        }*/
+            extractComponents<OBJECT>(this->m_ecs, m_idx, std::forward<OBJECT>(obj), ct::Reflect<OBJECT>::end());
+            return *this;
+        }
+
+        template <class OBJECT>
+        ComponentAssigner& assignObject(const OBJECT& obj)
+        {
+            extractComponents<OBJECT>(this->m_ecs, m_idx, std::forward<OBJECT>(obj), ct::Reflect<OBJECT>::end());
+            return *this;
+        }
+
+        template <class T>
+        ct::EnableIfReflected<T, T> convertTo() const
+        {
+            return m_ecs.at<T>(m_idx);
+        }
+
+        template <class T>
+        ct::DisableIfReflected<T, T> convertTo() const
+        {
+            THROW(warn, "This type cannot be extracted");
+            return {};
+        }
+
+        template <class COMPONENT>
+        operator COMPONENT() const
+        {
+            const TComponentProvider<COMPONENT>* provider = this->m_ecs.getProvider<COMPONENT>();
+            if (provider)
+            {
+                auto components = provider->getComponent();
+                return components[this->m_idx];
+            }
+            return convertTo<COMPONENT>();
+        }
 
       private:
         EntityComponentSystem& m_ecs;
@@ -456,9 +539,10 @@ namespace aq
     }
 
     template <class T>
-    void TComponentProvider<T>::assign(uint32_t idx, const T& val)
+    template <class U>
+    void TComponentProvider<T>::assign(uint32_t idx, U&& val)
     {
-        m_data.assign(idx, val);
+        m_data.assign(idx, std::forward<U>(val));
     }
 
     template <class T>

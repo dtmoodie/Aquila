@@ -62,7 +62,7 @@ namespace aq
         return mo::TypeInfo::Void();
     }
 
-    IComponentProvider* EntityComponentSystem::getProvider(const mo::TypeInfo type)
+    IComponentProvider* EntityComponentSystem::getProviderMutable(const mo::TypeInfo type)
     {
         for (auto& provider : m_component_providers)
         {
