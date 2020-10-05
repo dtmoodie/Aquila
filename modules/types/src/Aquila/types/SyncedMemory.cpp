@@ -253,9 +253,13 @@ namespace aq
                 // program error, state should not be HOST_UPDATED if we haven't even allocated data
                 MO_ASSERT(old_host != nullptr);
                 d_ptr = nullptr;
-                src_stream->hostToHost({h_ptr, m_size}, {old_host, old_size});
-                src_stream->pushWork(
-                    [old_host, old_size, alloc]() { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
+                const size_t copy_size = std::min(old_size, m_size);
+                if (copy_size)
+                {
+                    src_stream->hostToHost({h_ptr, copy_size}, {old_host, copy_size});
+                    src_stream->pushWork(
+                        [old_host, old_size, alloc]() { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
+                }
 
                 if (old_device)
                 {
@@ -278,10 +282,15 @@ namespace aq
                     d_ptr = alloc->allocate(m_size, m_elem_size);
                     MO_ASSERT(d_ptr != nullptr);
                     MO_ASSERT(old_device != nullptr);
-                    src_device_stream->deviceToDevice({d_ptr, m_size}, {old_device, old_size});
-                    src_device_stream->pushWork([old_device, old_size, alloc]() {
-                        alloc->deallocate(ct::ptrCast<uint8_t>(old_device), old_size);
-                    });
+                    const size_t copy_size = std::min(old_size, m_size);
+                    if (copy_size)
+                    {
+                        src_device_stream->deviceToDevice({d_ptr, copy_size}, {old_device, copy_size});
+                        src_device_stream->pushWork([old_device, old_size, alloc]() {
+                            alloc->deallocate(ct::ptrCast<uint8_t>(old_device), old_size);
+                        });
+                    }
+
                     if (old_host)
                     {
                         auto alloc = src_stream->hostAllocator();
