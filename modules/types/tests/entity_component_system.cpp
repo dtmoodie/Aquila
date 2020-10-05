@@ -99,6 +99,22 @@ TEST(entity_component_system, initialization)
     ASSERT_FALSE(sphere_view.getShape()[0]);
 }
 
+TEST(entity_component_system, assignment)
+{
+    aq::EntityComponentSystem ecs;
+    auto obj = GameObject::init();
+    for (size_t i = 0; i < 10; ++i)
+    {
+        obj = GameObject::init(i);
+        ecs.push_back(obj);
+    }
+    ecs[2].assignObject(GameObject::init(4));
+    ASSERT_EQ(ecs.at<GameObject>(2), GameObject::init(4));
+
+    obj = ecs[2];
+    ASSERT_EQ(obj, GameObject::init(4));
+}
+
 TEST(entity_component_system, erase)
 {
     aq::EntityComponentSystem ecs;
