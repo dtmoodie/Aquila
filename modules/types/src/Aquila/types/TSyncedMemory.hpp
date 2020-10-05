@@ -27,12 +27,6 @@ namespace aq
         {
         }
 
-        template <class... ARGS>
-        TSyncedMemory(ARGS&&... args)
-            : SyncedMemory(std::forward<ARGS>(args)...)
-        {
-        }
-
         size_t size() const
         {
             return SyncedMemory::size() / sizeof(T);
