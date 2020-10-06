@@ -6,7 +6,7 @@
 namespace aq
 {
     SyncedMemory
-    SyncedMemory::copyHost(ct::TArrayView<void> data, size_t elem_size, std::shared_ptr<mo::IAsyncStream> stream)
+    SyncedMemory::copyHost(ct::TArrayView<const void> data, size_t elem_size, std::shared_ptr<mo::IAsyncStream> stream)
     {
 
         SyncedMemory output(data.size(), elem_size, stream);
@@ -41,8 +41,9 @@ namespace aq
         return output;
     }
 
-    SyncedMemory
-    SyncedMemory::copyDevice(ct::TArrayView<void> data, size_t elem_size, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedMemory SyncedMemory::copyDevice(ct::TArrayView<const void> data,
+                                          size_t elem_size,
+                                          std::shared_ptr<mo::IDeviceStream> stream)
     {
 
         SyncedMemory output(data.size(), elem_size, stream);
@@ -202,6 +203,11 @@ namespace aq
     size_t SyncedMemory::size() const
     {
         return m_size;
+    }
+
+    size_t SyncedMemory::elemSize() const
+    {
+        return m_elem_size;
     }
 
     bool SyncedMemory::empty() const

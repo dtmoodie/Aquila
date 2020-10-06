@@ -33,7 +33,7 @@ namespace aq
             ENUM_VALUE(CONST, 2)
         ENUM_END;
 
-        static SyncedMemory copyHost(ct::TArrayView<void>,
+        static SyncedMemory copyHost(ct::TArrayView<const void>,
                                      size_t elem_size,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
         static SyncedMemory wrapHost(ct::TArrayView<void>,
@@ -45,7 +45,7 @@ namespace aq
                                      std::shared_ptr<void> owning,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
-        static SyncedMemory copyDevice(ct::TArrayView<void>,
+        static SyncedMemory copyDevice(ct::TArrayView<const void>,
                                        size_t elem_size,
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
         static SyncedMemory wrapDevice(ct::TArrayView<void>,
@@ -86,11 +86,11 @@ namespace aq
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
 
         template <class T, uint8_t D>
-        static SyncedMemory copyHost(mt::Tensor<T, D>,
+        static SyncedMemory copyHost(mt::Tensor<const T, D>,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
         template <class T, uint8_t D>
-        static SyncedMemory copyDevice(mt::Tensor<T, D>,
+        static SyncedMemory copyDevice(mt::Tensor<const T, D>,
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
 
         SyncedMemory(size_t size = 0,
@@ -106,6 +106,11 @@ namespace aq
 
         // return the number of elements in the memory block
         size_t size() const;
+        size_t elemSize() const;
+
+        // size is in bytes
+        // elem_size is the size of each element
+
         bool resize(size_t size, size_t elem_size = 1, std::shared_ptr<mo::IAsyncStream> = {});
 
         ct::TArrayView<const void> host(mo::IAsyncStream* = nullptr, bool* sync_required = nullptr) const;
@@ -243,23 +248,23 @@ namespace aq
     }
 
     template <class T, uint8_t D>
-    SyncedMemory SyncedMemory::copyHost(mt::Tensor<T, D> tensor, std::shared_ptr<mo::IAsyncStream> stream)
+    SyncedMemory SyncedMemory::copyHost(mt::Tensor<const T, D> tensor, std::shared_ptr<mo::IAsyncStream> stream)
     {
         auto shape = tensor.getShape();
         MO_ASSERT(shape.isContinuous());
         const size_t sz = shape.numElements();
-        ct::TArrayView<T> view(tensor.data(), sz);
-        return copyHost(std::move(view), std::move(stream));
+        ct::TArrayView<const void> view(tensor.data(), sz * sizeof(T));
+        return copyHost(std::move(view), sizeof(T), std::move(stream));
     }
 
     template <class T, uint8_t D>
-    SyncedMemory SyncedMemory::copyDevice(mt::Tensor<T, D> tensor, std::shared_ptr<mo::IDeviceStream> stream)
+    SyncedMemory SyncedMemory::copyDevice(mt::Tensor<const T, D> tensor, std::shared_ptr<mo::IDeviceStream> stream)
     {
         auto shape = tensor.getShape();
         MO_ASSERT(shape.isContinuous());
         const size_t sz = shape.numElements();
-        ct::TArrayView<T> view(tensor.data(), sz);
-        return copyDevice(std::move(view), std::move(stream));
+        ct::TArrayView<const void> view(tensor.data(), sz * sizeof(T));
+        return copyDevice(std::move(view), sizeof(T), std::move(stream));
     }
 
     std::ostream& operator<<(std::ostream& os, const SyncedMemory& memory);
