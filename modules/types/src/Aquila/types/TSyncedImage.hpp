@@ -104,6 +104,12 @@ namespace aq
             return SyncedImage::template device<T>(stream, sync_required);
         }
     };
-}
+} // namespace aq
+namespace ct
+{
+    REFLECT_TEMPLATED_DERIVED(aq::TSyncedImage, aq::SyncedImage)
+
+    REFLECT_END;
+} // namespace ct
 
 #endif // AQUILA_TSYNCED_IMAGE_HPP
