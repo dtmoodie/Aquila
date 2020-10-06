@@ -8,6 +8,7 @@ namespace aq
     template <class T>
     struct TSyncedMemory : virtual SyncedMemory
     {
+        using DType = T;
         template <uint8_t D>
         static TSyncedMemory copyHost(mt::Tensor<const T, D> tensor,
                                       std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current())
@@ -25,6 +26,37 @@ namespace aq
         TSyncedMemory(size_t elements = 0, std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current())
             : SyncedMemory(elements * sizeof(T), sizeof(T), stream)
         {
+        }
+
+        TSyncedMemory(SyncedMemory&& other)
+            : SyncedMemory(std::move(other))
+        {
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+        }
+
+        TSyncedMemory(const SyncedMemory& other)
+            : SyncedMemory(other)
+        {
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+        }
+
+        TSyncedMemory& operator=(SyncedMemory&& other)
+
+        {
+            SyncedMemory::operator=(std::move(other));
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+        }
+
+        TSyncedMemory& operator=(const SyncedMemory& other)
+        {
+            SyncedMemory::operator=(other);
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+        }
+
+        // size in number of elements
+        bool resize(size_t size, std::shared_ptr<mo::IAsyncStream> stream = {})
+        {
+            return SyncedMemory::resize(size * sizeof(T), sizeof(T), std::move(stream));
         }
 
         size_t size() const
@@ -64,4 +96,25 @@ namespace aq
     };
 } // namespace aq
 
+namespace ct
+{
+    REFLECT_TEMPLATED_DERIVED(aq::TSyncedMemory, aq::SyncedMemory)
+        using DType = typename DataType::DType;
+        static TArrayView<const DType> hostDefault(const DataType& obj)
+        {
+            return obj.host();
+        }
+        static TArrayView<DType> mutableHostDefault(DataType & obj)
+        {
+            return obj.mutableHost();
+        }
+        // This just exists to strip off the default arg
+        static void setSize(DataType & obj, size_t sz)
+        {
+            obj.resize(sz);
+        }
+        PROPERTY(size, &DataType::size, &ct::ReflectImpl<DataType>::setSize)
+        PROPERTY(host, &ct::ReflectImpl<DataType>::hostDefault, &ct::ReflectImpl<DataType>::mutableHostDefault)
+    REFLECT_END;
+} // namespace ct
 #endif // AQ_TSYNCED_MEMORY_HPP
