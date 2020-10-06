@@ -234,11 +234,9 @@ namespace aq
         {
             auto ptr = ct::Reflect<T>::getPtr(field_index);
             using Component_t = typename decltype(ptr)::Data_t;
-            auto provider = getProvider(mo::TypeInfo::create<Component_t>());
+            auto provider = getProvider<Component_t>();
             MO_ASSERT(provider);
-            auto typed = static_cast<const TComponentProvider<Component_t>*>(provider);
-            MO_ASSERT(typed);
-            auto view = typed->getComponent();
+            auto view = provider->getComponent();
 
             MO_ASSERT(entity_id < view.getShape()[0]);
             ptr.set(obj, view[entity_id]);
