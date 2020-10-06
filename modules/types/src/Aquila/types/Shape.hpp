@@ -1,3 +1,5 @@
+#ifndef AQUILA_TYPES_SHAPP_HPP
+#define AQUILA_TYPES_SHAPP_HPP
 #include <Eigen/Core>
 #include <ct/types/eigen.hpp>
 
@@ -42,7 +44,7 @@ namespace aq
             return out;
         }
     };
-}
+} // namespace aq
 
 namespace ct
 {
@@ -64,6 +66,7 @@ namespace ct
             PROPERTY_WITH_FLAG(Flags::COMPILE_TIME_CONSTANT, size)
             PROPERTY_WITH_FLAG(Flags::COMPILE_TIME_CONSTANT, cols)
             PROPERTY_WITH_FLAG(Flags::COMPILE_TIME_CONSTANT, rows)
+            MEMBER_FUNCTION(numel)
         REFLECT_INTERNAL_END;
 
         static constexpr auto end()
@@ -71,5 +74,6 @@ namespace ct
             return ct::Indexer<NUM_FIELDS - 1>();
         }
     };
-// clang-format on
-}
+    // clang-format on
+} // namespace ct
+#endif // AQUILA_TYPES_SHAPP_HPP
