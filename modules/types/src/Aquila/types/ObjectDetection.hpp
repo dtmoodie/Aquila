@@ -1,4 +1,5 @@
 #pragma once
+#include "Shape.hpp"
 #include "detection/Category.hpp"
 #include "detection/Classification.hpp"
 
@@ -20,6 +21,7 @@ namespace aq
 {
 
     AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f& bb, cv::Size size);
+    AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f, aq::Shape<2> size);
     AQUILA_EXPORTS void normalizeBoundingBox(cv::Rect2f& bb, cv::Size size);
     AQUILA_EXPORTS void clipNormalizedBoundingBox(cv::Rect2f& bb);
 
