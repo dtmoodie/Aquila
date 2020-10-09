@@ -169,9 +169,8 @@ namespace aq
 
         ComponentAssigner operator[](uint32_t idx);
 
-      protected:
         template <class Component_t>
-        void pushComponent(const Component_t& obj, const uint32_t id)
+        void assignComponent(const Component_t& obj, const uint32_t id)
         {
             auto provider = getProviderMutable<Component_t>();
             if (!provider)
@@ -188,7 +187,7 @@ namespace aq
         }
 
         template <class T>
-        void pushComponent(const ct::TArrayView<T>& obj, const uint32_t id)
+        void assignComponent(const ct::TArrayView<T>& obj, const uint32_t id)
         {
             auto provider = getProviderMutable<T>();
             if (!provider)
@@ -212,7 +211,7 @@ namespace aq
         {
             auto ptr = ct::Reflect<T>::getPtr(field_index);
             using Component_t = typename decltype(ptr)::Data_t;
-            pushComponent<Component_t>(ptr.get(obj), id);
+            assignComponent<Component_t>(ptr.get(obj), id);
         }
 
         template <class T>
@@ -368,7 +367,7 @@ namespace aq
     };
 
     template <class T>
-    void addComponents(EntityComponentSystem& ecs, ct::VariadicTypedef<T>)
+    void addComponentsHelper(EntityComponentSystem& ecs, const ct::VariadicTypedef<T>*)
     {
         auto ptr = ce::make_shared<TComponentProvider<T>>();
         MO_ASSERT(ptr);
@@ -376,14 +375,26 @@ namespace aq
     }
 
     template <class T, class... Ts>
-    void addComponents(EntityComponentSystem& ecs,
-                       ct::VariadicTypedef<T, Ts...>,
-                       ct::EnableIf<sizeof...(Ts) != 0, int32_t> = 0)
+    auto addComponentsHelper(EntityComponentSystem& ecs, const ct::VariadicTypedef<T, Ts...>*)
+        -> ct::EnableIf<sizeof...(Ts) != 0>
     {
         auto ptr = ce::make_shared<TComponentProvider<T>>();
         MO_ASSERT(ptr);
         ecs.addProvider(std::move(ptr));
-        addComponents(ecs, ct::VariadicTypedef<Ts...>());
+        addComponentsHelper(ecs, static_cast<const ct::VariadicTypedef<Ts...>*>(nullptr));
+    }
+
+    template <class U>
+    ct::EnableIfReflected<U> addComponentsHelper(EntityComponentSystem& ecs, const U*)
+    {
+        using MemberObjects_t = typename ct::GlobMemberObjects<U>::types;
+        addComponentsHelper(ecs, static_cast<const MemberObjects_t*>(nullptr));
+    }
+
+    template <class U>
+    void addComponents(EntityComponentSystem& ecs)
+    {
+        addComponentsHelper(ecs, static_cast<const U*>(nullptr));
     }
 
     template <class T, class E>
@@ -397,7 +408,7 @@ namespace aq
 
         TEntityComponentSystem()
         {
-            addComponents(*this, ct::VariadicTypedef<T>{});
+            addComponents<T>(*this);
         }
 
         T at(uint32_t id) const
@@ -417,8 +428,9 @@ namespace aq
 
         TEntityComponentSystem()
         {
-            using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
-            addComponents(*this, MemberObjects_t{});
+            // using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
+            // addComponents(*this, MemberObjects_t{});
+            addComponents<T>(*this);
         }
 
         T at(uint32_t id) const
@@ -426,6 +438,20 @@ namespace aq
             return EntityComponentSystem::template at<T>(id);
         }
     };
+
+    template <class U>
+    void pushComponentsRecursive(EntityComponentSystem& ecs, uint32_t id, const U& head)
+    {
+        ecs.assignComponent(head, id);
+    }
+
+    template <class U, class... Us>
+    ct::EnableIf<sizeof...(Us) != 0>
+    pushComponentsRecursive(EntityComponentSystem& ecs, uint32_t id, const U& head, const Us&... tail)
+    {
+        ecs.assignComponent(head, id);
+        pushComponentsRecursive(ecs, id, tail...);
+    }
 
     template <class... T>
     struct TEntityComponentSystem<ct::VariadicTypedef<T...>, void> : EntityComponentSystem
@@ -438,28 +464,16 @@ namespace aq
 
         TEntityComponentSystem()
         {
-            addComponents(*this, ct::VariadicTypedef<T...>{});
+            addComponents<ct::VariadicTypedef<T...>>(*this);
         }
 
         void push_back(const T&... data)
         {
             const uint32_t new_id = append();
-            pushRecurse(new_id, data...);
+            pushComponentsRecursive(static_cast<EntityComponentSystem&>(*this), new_id, data...);
         }
 
       private:
-        template <class U>
-        void pushRecurse(uint32_t id, const U& head)
-        {
-            EntityComponentSystem::pushComponent(head, id);
-        }
-
-        template <class U, class... Us>
-        ct::EnableIf<sizeof...(Us) != 0> pushRecurse(uint32_t id, const U& head, const Us&... tail)
-        {
-            EntityComponentSystem::pushComponent(head, id);
-            pushRecurse(id, tail...);
-        }
         // TODO get returning a std::tuple<T...>
     };
 
