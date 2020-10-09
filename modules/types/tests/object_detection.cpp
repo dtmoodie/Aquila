@@ -48,7 +48,7 @@ TEST(object_detection, reflect_object)
 TEST(object_detection, reflect_ecs)
 {
     using Bases_t = typename ct::ReflectImpl<aq::DetectedObjectSet>::BaseTypes;
-    ct::StaticEqualTypes<Bases_t, ct::VariadicTypedef<aq::TEntityComponentSystem<aq::DetectedObject>>>{};
+    ct::StaticEqualTypes<Bases_t, ct::VariadicTypedef<aq::EntityComponentSystem>>{};
     std::vector<std::string> cat_names({"cat0", "cat1", "cat2", "cat3", "cat4", "cat5"});
     aq::CategorySet::ConstPtr cats = std::make_shared<aq::CategorySet>(cat_names);
     aq::DetectedObjectSet set(cats);
