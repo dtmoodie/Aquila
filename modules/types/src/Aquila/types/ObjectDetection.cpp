@@ -73,4 +73,20 @@ namespace aq
         classifications[k] = cls;
     }
 
+    DetectedObjectSet::DetectedObjectSet(const CategorySet::ConstPtr& cats)
+        : cat_set(cats)
+    {
+    }
+
+    void DetectedObjectSet::setCatSet(const CategorySet::ConstPtr& cats)
+    {
+        cat_set = cats;
+        EntityComponentSystem::clear();
+    }
+
+    CategorySet::ConstPtr DetectedObjectSet::getCatSet() const
+    {
+        return cat_set;
+    }
+
 } // namespace aq

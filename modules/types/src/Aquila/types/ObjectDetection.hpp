@@ -23,6 +23,7 @@ namespace aq
     AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f& bb, cv::Size size);
     AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f, aq::Shape<2> size);
     AQUILA_EXPORTS void normalizeBoundingBox(cv::Rect2f& bb, cv::Size size);
+    AQUILA_EXPORTS void normalizeBoundingBox(cv::Rect2f& bb, aq::Shape<2> size);
     AQUILA_EXPORTS void clipNormalizedBoundingBox(cv::Rect2f& bb);
 
     namespace detection
@@ -86,42 +87,41 @@ namespace aq
     //////////////////////////////////////////
     /// TDetectedObjectSet
     //////////////////////////////////////////
+    struct AQUILA_EXPORTS DetectedObjectSet : EntityComponentSystem
+    {
+
+        DetectedObjectSet(const CategorySet::ConstPtr& cats = CategorySet::ConstPtr());
+
+        void setCatSet(const CategorySet::ConstPtr& cats);
+
+        CategorySet::ConstPtr getCatSet() const;
+
+      private:
+        CategorySet::ConstPtr cat_set;
+    };
+
     template <class DetType>
-    struct AQUILA_EXPORTS TDetectedObjectSet : TEntityComponentSystem<DetType>
+    struct AQUILA_EXPORTS TDetectedObjectSet : DetectedObjectSet
     {
 
         TDetectedObjectSet(const CategorySet::ConstPtr& cats = CategorySet::ConstPtr())
-            : cat_set(cats)
+        {
+            addComponents<DetType>(*this);
+        }
+
+        template <class... T>
+        TDetectedObjectSet(const TDetectedObjectSet<T...>& other)
+            : DetectedObjectSet(other)
         {
         }
 
-        template <class... Args>
-        TDetectedObjectSet(CategorySet::ConstPtr& cats, Args&&... args)
-            : TEntityComponentSystem<DetType>(std::forward<Args>(args)...)
-            , cat_set(cats)
+        template <class... T>
+        void push_back(const T&... data)
         {
+            const uint32_t new_id = append();
+            pushComponentsRecursive(*this, new_id, data...);
         }
-
-        template <class... Args>
-        TDetectedObjectSet(Args&&... args)
-            : TEntityComponentSystem<DetType>(std::forward<Args>(args)...)
-        {
-        }
-
-        void setCatSet(const CategorySet::ConstPtr& cats)
-        {
-            cat_set = cats;
-            TEntityComponentSystem<DetType>::clear();
-        }
-
-        CategorySet::ConstPtr getCatSet() const
-        {
-            return cat_set;
-        }
-
-        CategorySet::ConstPtr cat_set;
     };
-    using DetectedObjectSet = TDetectedObjectSet<DetectedObject>;
 } // namespace aq
 
 namespace ct
@@ -141,7 +141,11 @@ namespace ct
         PUBLIC_ACCESS(confidence)
     REFLECT_END;
 
-    REFLECT_TEMPLATED_DERIVED(aq::TDetectedObjectSet, aq::TEntityComponentSystem<Args...>)
+    REFLECT_DERIVED(aq::DetectedObjectSet, aq::EntityComponentSystem)
         PROPERTY(cats, &DataType::getCatSet, &DataType::setCatSet)
+    REFLECT_END;
+
+    REFLECT_TEMPLATED_DERIVED(aq::TDetectedObjectSet, aq::DetectedObjectSet)
+
     REFLECT_END;
 } // namespace ct
