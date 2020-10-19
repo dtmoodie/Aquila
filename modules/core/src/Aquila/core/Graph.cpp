@@ -553,9 +553,7 @@ void Graph::stop()
 
     mo::IAsyncStreamPtr_t stream = this->getStream();
     MO_ASSERT(stream);
-
-    const auto object_id = this->GetObjectId();
-    const auto event_id = ce::combineHash(object_id.m_PerTypeId, object_id.m_ConstructorId);
+    size_t event_id = ce::generateHash(static_cast<const void*>(this));
     auto event = []() {};
     stream->pushEvent(std::move(event), event_id);
 }
