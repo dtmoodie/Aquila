@@ -5,13 +5,13 @@
 
 namespace aq
 {
-namespace core
-{
+    namespace core
+    {
 
-void initModule(mo::MetaObjectFactory* factory, const std::string& log_dir)
-{
-    // TODO setup logging to a log dir
-    factory->setupObjectConstructors(PerModuleInterface::GetInstance());
-}
-}
-}
+        void initModule(mo::MetaObjectFactory* factory, const std::string& log_dir)
+        {
+            // TODO setup logging to a log dir
+            factory->setupObjectConstructors(PerModuleInterface::GetInstance());
+        }
+    } // namespace core
+} // namespace aq
