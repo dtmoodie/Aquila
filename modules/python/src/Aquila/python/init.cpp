@@ -14,9 +14,11 @@
 #include <Aquila/nodes/INode.hpp>
 #include <Aquila/nodes/NodeInfo.hpp>
 #include <Aquila/serialization.hpp>
+#include <Aquila/types.hpp>
 
 #include <MetaObject/MetaParameters.hpp>
 #include <MetaObject/core/SystemTable.hpp>
+#include <MetaObject/cuda.hpp>
 #include <MetaObject/logging/profiling.hpp>
 #include <MetaObject/object/RelayManager.hpp>
 #include <MetaObject/python/MetaObject.hpp>
@@ -134,6 +136,8 @@ BOOST_PYTHON_MODULE(aquila)
     mo::python::RegisterInterface<aq::IGraph> graph(&aq::python::setupGraphInterface, &aq::python::setupGraphObjects);
 
     mo::initMetaParamsModule(table.get());
+    mo::cuda::init(table.get());
+    aq::types::initModule(table.get());
     auto factory = mo::MetaObjectFactory::instance(table.get());
     factory->registerTranslationUnit();
     aq::core::initModule(factory.get());
