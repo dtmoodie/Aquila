@@ -381,8 +381,9 @@ namespace aq
 
         if (!d_ptr)
         {
-            auto alloc = src_device_stream->deviceAllocator();
-            d_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            auto device_allocator = src_device_stream->deviceAllocator();
+            MO_ASSERT(device_allocator);
+            d_ptr = static_cast<void*>(device_allocator->allocate(m_size, m_elem_size));
             d_flags = PointerFlags::OWNED;
             if (h_ptr)
             {
