@@ -490,6 +490,7 @@ namespace aq
                                       std::bind(&constructWrappedObject<Node>, *itr))));
                     }
                     mo::addParamAccessors<Node>(bpobj, info);
+                    mo::addOutputAccessors<Node>(bpobj, info);
                     mo::addSlotAccessors<Node, void>(bpobj, info);
                     mo::StaticSlotAccessor<std::vector<std::string>()>::add<Node>(bpobj, info);
                     mo::StaticSlotAccessor<aq::nodes::Node::Ptr(std::string)>::add<Node>(bpobj, info);
