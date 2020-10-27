@@ -599,16 +599,20 @@ namespace mo
     {
         void load(ILoadVisitor& visitor, void* inst, const std::string&, size_t cnt) const override
         {
-            MO_ASSERT_EQ(cnt, 1);
-            auto& ref = this->ref(inst);
-            SharedPointerHelper<T>::load(visitor, ref);
+            ce::shared_ptr<T>* ptr = ct::ptrCast<ce::shared_ptr<T>>(inst);
+            for (size_t i = 0; i < cnt; ++i)
+            {
+                SharedPointerHelper<T>::load(visitor, ptr[i]);
+            }
         }
 
         void save(ISaveVisitor& visitor, const void* inst, const std::string&, size_t cnt) const override
         {
-            MO_ASSERT_EQ(cnt, 1);
-            auto& ref = this->ref(inst);
-            SharedPointerHelper<T>::save(visitor, ref);
+            const ce::shared_ptr<T>* ptr = ct::ptrCast<ce::shared_ptr<T>>(inst);
+            for (size_t i = 0; i < cnt; ++i)
+            {
+                SharedPointerHelper<T>::save(visitor, ptr[i]);
+            }
         }
 
         void visit(StaticVisitor& visitor, const std::string&) const override
