@@ -98,6 +98,8 @@ namespace aq
         const TComponentProvider<T>* getProvider() const;
 
         void addProvider(ce::shared_ptr<IComponentProvider>);
+        template <class T>
+        void addProvider();
         void setProviders(std::vector<ce::shared_ptr<IComponentProvider>> providers);
 
         std::vector<ce::shared_ptr<IComponentProvider>> getProviders() const;
@@ -105,11 +107,30 @@ namespace aq
         uint32_t getNumEntities() const;
 
         template <class T>
-        void push_back(const T& obj)
+        void assignObject(T&& obj, const uint32_t id)
+        {
+            const auto idx = ct::Reflect<ct::decay_t<T>>::end();
+            assignRecurse(obj, id, idx);
+        }
+
+        template <class T>
+        void pushObject(T&& obj)
         {
             const uint32_t new_id = append();
-            const auto idx = ct::Reflect<T>::end();
-            pushRecurse(obj, new_id, idx);
+            assignObject(std::forward<T>(obj), new_id);
+        }
+
+        template <class T>
+        void push_back(const T& obj)
+        {
+            pushObject(obj);
+        }
+
+        template <class... Us>
+        void pushComponents(const Us&... data)
+        {
+            uint32_t id = this->append();
+            pushComponentsRecursive(id, data...);
         }
 
         template <class T>
@@ -151,22 +172,6 @@ namespace aq
         void clear();
         void resize(uint32_t size);
 
-        template <class T>
-        void assign(uint32_t idx, T&& cmp)
-        {
-            auto provider = getProviderMutable<ct::decay_t<T>>();
-            if (!provider)
-            {
-                MO_ASSERT_EQ(idx, 0);
-                auto new_provider = ce::shared_ptr<TComponentProvider<ct::decay_t<T>>>::create();
-                new_provider->resize(1);
-                addProvider(ce::shared_ptr<IComponentProvider>(std::move(new_provider)));
-                provider = getProviderMutable<ct::decay_t<T>>();
-            }
-            MO_ASSERT(provider);
-            provider->assign(idx, std::forward<T>(cmp));
-        }
-
         ComponentAssigner operator[](uint32_t idx);
 
         template <class Component_t>
@@ -206,8 +211,21 @@ namespace aq
       protected:
         uint32_t append();
 
+        template <class U>
+        void pushComponentsRecursive(uint32_t id, const U& head)
+        {
+            assignComponent(head, id);
+        }
+
+        template <class U, class... Us>
+        ct::EnableIf<sizeof...(Us) != 0> pushComponentsRecursive(uint32_t id, const U& head, const Us&... tail)
+        {
+            assignComponent(head, id);
+            pushComponentsRecursive(id, tail...);
+        }
+
         template <class T, ct::index_t I>
-        void pushImpl(const T& obj, const uint32_t id, ct::Indexer<I> field_index)
+        void assignImpl(const T& obj, const uint32_t id, ct::Indexer<I> field_index)
         {
             auto ptr = ct::Reflect<T>::getPtr(field_index);
             using Component_t = typename decltype(ptr)::Data_t;
@@ -215,17 +233,17 @@ namespace aq
         }
 
         template <class T>
-        void pushRecurse(const T& obj, const uint32_t entity_id, ct::Indexer<0> field_index)
+        void assignRecurse(const T& obj, const uint32_t entity_id, ct::Indexer<0> field_index)
         {
-            pushImpl(obj, entity_id, field_index);
+            assignImpl(obj, entity_id, field_index);
         }
 
         template <class T, ct::index_t I>
-        void pushRecurse(const T& obj, const uint32_t entity_id, ct::Indexer<I> field_index)
+        void assignRecurse(const T& obj, const uint32_t entity_id, ct::Indexer<I> field_index)
         {
-            pushImpl(obj, entity_id, field_index);
+            assignImpl(obj, entity_id, field_index);
             const auto next_field = --field_index;
-            pushRecurse(obj, entity_id, next_field);
+            assignRecurse(obj, entity_id, next_field);
         }
 
         template <class T, ct::index_t I>
@@ -281,60 +299,40 @@ namespace aq
         return nullptr;
     }
 
-    template <class T>
-    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, T&& object, ct::Indexer<0> indexer)
-    {
-        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
-        ecs.assign(idx, ptr.get(object));
-    }
-
-    template <class T, ct::index_t I>
-    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, T&& object, ct::Indexer<I> indexer)
-    {
-        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
-        ecs.assign(idx, ptr.get(object));
-        extractComponents(ecs, idx, object, --indexer);
-    }
-
-    template <class T>
-    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, const T& object, ct::Indexer<0> indexer)
-    {
-        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
-        ecs.assign(idx, ptr.get(object));
-    }
-
-    template <class T, ct::index_t I>
-    void extractComponents(EntityComponentSystem& ecs, uint32_t idx, const T& object, ct::Indexer<I> indexer)
-    {
-        auto ptr = ct::Reflect<ct::decay_t<T>>::getPtr(indexer);
-        ecs.assign(idx, ptr.get(object));
-        extractComponents(ecs, idx, object, --indexer);
-    }
     struct ComponentAssigner
     {
         ComponentAssigner(EntityComponentSystem&, uint32_t);
 
-        // By default assignment is for components
-        template <class COMPONENT>
-        ComponentAssigner& operator=(COMPONENT&& cmp)
-        {
-            this->m_ecs.assign(m_idx, std::forward<COMPONENT>(cmp));
-            return *this;
-        }
-
         template <class OBJECT>
         ComponentAssigner& assignObject(OBJECT&& obj)
         {
-            extractComponents<OBJECT>(this->m_ecs, m_idx, std::forward<OBJECT>(obj), ct::Reflect<OBJECT>::end());
+            const uint32_t id = m_idx;
+            if (ct::IsReflected<OBJECT>::value)
+            {
+                auto provider = this->m_ecs.getProvider<OBJECT>();
+                if (provider)
+                {
+                    this->m_ecs.assignComponent(std::forward<OBJECT>(obj), id);
+                    return *this;
+                }
+            }
+            this->m_ecs.assignObject(std::forward<OBJECT>(obj), id);
             return *this;
         }
 
-        template <class OBJECT>
+        // By default assignment is for components
+        template <class OBJ>
+        ComponentAssigner& operator=(OBJ&& cmp)
+        {
+            return this->assignObject(std::forward<OBJ>(cmp));
+        }
+
+        /*template <class OBJECT>
         ComponentAssigner& assignObject(const OBJECT& obj)
         {
-            extractComponents<OBJECT>(this->m_ecs, m_idx, std::forward<OBJECT>(obj), ct::Reflect<OBJECT>::end());
+            this->m_ecs.pushObject(obj);
             return *this;
-        }
+        }*/
 
         template <class T>
         ct::EnableIfReflected<T, T> convertTo() const
@@ -439,20 +437,6 @@ namespace aq
         }
     };
 
-    template <class U>
-    void pushComponentsRecursive(EntityComponentSystem& ecs, uint32_t id, const U& head)
-    {
-        ecs.assignComponent(head, id);
-    }
-
-    template <class U, class... Us>
-    ct::EnableIf<sizeof...(Us) != 0>
-    pushComponentsRecursive(EntityComponentSystem& ecs, uint32_t id, const U& head, const Us&... tail)
-    {
-        ecs.assignComponent(head, id);
-        pushComponentsRecursive(ecs, id, tail...);
-    }
-
     template <class... T>
     struct TEntityComponentSystem<ct::VariadicTypedef<T...>, void> : EntityComponentSystem
     {
@@ -470,7 +454,7 @@ namespace aq
         void push_back(const T&... data)
         {
             const uint32_t new_id = append();
-            pushComponentsRecursive(static_cast<EntityComponentSystem&>(*this), new_id, data...);
+            pushComponentsRecursive(new_id, data...);
         }
 
       private:
