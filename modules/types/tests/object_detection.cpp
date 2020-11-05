@@ -75,7 +75,7 @@ TEST(object_detection, serialize_ecs)
     loader(&loaded, "objects");
 }
 
-TEST(object_detection, detection_descriptor)
+aq::DetectedObjectSet makeDescriptorSet()
 {
     std::vector<std::string> cat_names({"cat0", "cat1", "cat2", "cat3", "cat4", "cat5"});
     aq::CategorySet::ConstPtr cats = std::make_shared<aq::CategorySet>(cat_names);
@@ -91,10 +91,89 @@ TEST(object_detection, detection_descriptor)
             return std::rand() / RAND_MAX;
         });
 
-        set.push_back(bb, aq::detection::Descriptor(descriptor_holder.data(), descriptor_holder.size()));
+        set.pushComponents(bb, aq::detection::Descriptor(descriptor_holder.data(), descriptor_holder.size()));
     }
+    return set;
+}
+
+TEST(object_detection, missmatch_ctr)
+{
+    using type =
+        aq::TDetectedObjectSet<ct::VariadicTypedef<aq::detection::Confidence, aq::detection::LandmarkDetection>>;
+    EXPECT_THROW(type set = makeDescriptorSet(), mo::TExceptionWithCallstack<std::runtime_error>);
+}
+
+TEST(object_detection, detection_descriptor)
+{
+    aq::DetectedObjectSet set = makeDescriptorSet();
     std::cout << set << std::endl;
     auto descriptors = set.getComponent<aq::detection::Descriptor>();
     EXPECT_EQ(descriptors.getShape()[0], 10);
     EXPECT_EQ(descriptors.getShape()[1], 20);
+}
+
+TEST(object_detection, untyped_publish_subscribe)
+{
+    std::shared_ptr<mo::TPublisher<aq::DetectedObjectSet>> pub =
+        std::make_shared<mo::TPublisher<aq::DetectedObjectSet>>();
+
+    mo::TSubscriber<aq::DetectedObjectSet> sub;
+    auto types = pub->getOutputTypes();
+    EXPECT_EQ(types.size(), 1);
+    EXPECT_TRUE(sub.acceptsType(types[0]));
+    EXPECT_TRUE(sub.acceptsPublisher(*pub));
+    EXPECT_TRUE(static_cast<mo::ISubscriber&>(sub).setInput(std::shared_ptr<mo::IPublisher>(pub)));
+    EXPECT_TRUE(sub.setInput(pub.get()));
+
+    aq::DetectedObjectSet set = makeDescriptorSet();
+    pub->publish(std::move(set));
+
+    auto data = sub.getData();
+    EXPECT_TRUE(data);
+    auto tdata = sub.getTypedData();
+    EXPECT_TRUE(tdata);
+}
+
+TEST(object_detection, typed_publish_subscribe)
+{
+    using Type = aq::TDetectedObjectSet<ct::VariadicTypedef<aq::detection::BoundingBox2d>>;
+    std::shared_ptr<mo::TPublisher<Type>> pub = std::make_shared<mo::TPublisher<Type>>();
+
+    mo::TSubscriber<aq::DetectedObjectSet> sub;
+    auto types = pub->getOutputTypes();
+    EXPECT_EQ(types.size(), 1);
+    EXPECT_TRUE(sub.acceptsType(types[0]));
+    EXPECT_TRUE(sub.acceptsPublisher(*pub));
+    EXPECT_TRUE(static_cast<mo::ISubscriber&>(sub).setInput(std::shared_ptr<mo::IPublisher>(pub)));
+    EXPECT_TRUE(sub.setInput(pub.get()));
+
+    aq::DetectedObjectSet set = makeDescriptorSet();
+    pub->publish(std::move(set));
+
+    auto data = sub.getData();
+    EXPECT_TRUE(data);
+    auto tdata = sub.getTypedData();
+    EXPECT_TRUE(tdata);
+}
+
+TEST(object_detection, publish_typed_subscribe)
+{
+    using Type = aq::TDetectedObjectSet<ct::VariadicTypedef<aq::detection::BoundingBox2d>>;
+    std::shared_ptr<mo::TPublisher<Type>> pub = std::make_shared<mo::TPublisher<Type>>();
+
+    mo::TSubscriber<aq::DetectedObjectSet> sub;
+    auto types = pub->getOutputTypes();
+    EXPECT_EQ(types.size(), 1);
+    EXPECT_TRUE(sub.acceptsType(types[0]));
+    EXPECT_TRUE(sub.acceptsPublisher(*pub));
+    EXPECT_TRUE(static_cast<mo::ISubscriber&>(sub).setInput(std::shared_ptr<mo::IPublisher>(pub)));
+    EXPECT_TRUE(sub.setInput(pub.get()));
+
+    aq::DetectedObjectSet set = makeDescriptorSet();
+    pub->publish(std::move(set));
+
+    auto data = sub.getData();
+    EXPECT_TRUE(data);
+    auto tdata = sub.getTypedData();
+    EXPECT_TRUE(tdata);
 }

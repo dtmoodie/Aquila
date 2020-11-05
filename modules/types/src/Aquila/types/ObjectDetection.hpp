@@ -21,7 +21,7 @@ namespace aq
 {
 
     AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f& bb, cv::Size size);
-    AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f, aq::Shape<2> size);
+    AQUILA_EXPORTS void boundingBoxToPixels(cv::Rect2f&, aq::Shape<2> size);
     AQUILA_EXPORTS void normalizeBoundingBox(cv::Rect2f& bb, cv::Size size);
     AQUILA_EXPORTS void normalizeBoundingBox(cv::Rect2f& bb, aq::Shape<2> size);
     AQUILA_EXPORTS void clipNormalizedBoundingBox(cv::Rect2f& bb);
@@ -89,6 +89,10 @@ namespace aq
     //////////////////////////////////////////
     struct AQUILA_EXPORTS DetectedObjectSet : EntityComponentSystem
     {
+        DetectedObjectSet(const DetectedObjectSet&) = default;
+        DetectedObjectSet(DetectedObjectSet&&) = default;
+        DetectedObjectSet& operator=(const DetectedObjectSet&) = default;
+        DetectedObjectSet& operator=(DetectedObjectSet&&) = default;
 
         DetectedObjectSet(const CategorySet::ConstPtr& cats = CategorySet::ConstPtr());
 
@@ -103,6 +107,22 @@ namespace aq
     template <class DetType>
     struct AQUILA_EXPORTS TDetectedObjectSet : DetectedObjectSet
     {
+        TDetectedObjectSet(const DetectedObjectSet& other)
+            : DetectedObjectSet(other)
+        {
+            assertContainsComponents(other, static_cast<const DetType*>(nullptr));
+        }
+
+        TDetectedObjectSet(DetectedObjectSet&& other)
+            : DetectedObjectSet(other)
+        {
+            assertContainsComponents(*this, static_cast<const DetType*>(nullptr));
+        }
+
+        TDetectedObjectSet(const TDetectedObjectSet&) = default;
+        TDetectedObjectSet(TDetectedObjectSet&&) = default;
+        TDetectedObjectSet& operator=(const TDetectedObjectSet&) = default;
+        TDetectedObjectSet& operator=(TDetectedObjectSet&&) = default;
 
         TDetectedObjectSet(const CategorySet::ConstPtr& cats = CategorySet::ConstPtr())
         {
@@ -113,16 +133,67 @@ namespace aq
         TDetectedObjectSet(const TDetectedObjectSet<T...>& other)
             : DetectedObjectSet(other)
         {
-        }
-
-        template <class... T>
-        void push_back(const T&... data)
-        {
-            const uint32_t new_id = append();
-            pushComponentsRecursive(*this, new_id, data...);
+            assertContainsComponents(*this, static_cast<const DetType*>(nullptr));
         }
     };
 } // namespace aq
+
+namespace mo
+{
+    template <>
+    struct TSubscriber<aq::DetectedObjectSet> : public TSubscriberImpl<aq::DetectedObjectSet>
+    {
+        bool setInput(IPublisher* publisher) override
+        {
+            if (!acceptsPublisher(*publisher))
+            {
+                return false;
+            }
+            return TSubscriberImpl<aq::DetectedObjectSet>::setInput(publisher);
+        }
+
+        bool acceptsPublisher(const IPublisher& param) const override
+        {
+            if (TSubscriberImpl<aq::DetectedObjectSet>::acceptsPublisher(param))
+            {
+                return true;
+            }
+            return false;
+        }
+    };
+
+    template <class... T>
+    struct TSubscriber<aq::TDetectedObjectSet<T...>> : public TSubscriberImpl<aq::DetectedObjectSet>
+    {
+        bool setInput(IPublisher* publisher) override
+        {
+            if (!acceptsPublisher(*publisher))
+            {
+                return false;
+            }
+            return TSubscriberImpl<aq::DetectedObjectSet>::setInput(publisher);
+        }
+
+        bool acceptsPublisher(const IPublisher& param) const override
+        {
+            if (TSubscriberImpl<aq::DetectedObjectSet>::acceptsPublisher(param))
+            {
+                return true;
+            }
+            return false;
+        }
+    };
+
+    template <class... T>
+    struct TPublisher<aq::TDetectedObjectSet<T...>> : public TPublisherImpl<aq::DetectedObjectSet>
+    {
+        bool providesOutput(const TypeInfo type) const
+        {
+            static const TypeInfo s_type = TypeInfo::create<aq::DetectedObjectSet>();
+            return type == s_type;
+        }
+    };
+} // namespace mo
 
 namespace ct
 {

@@ -99,6 +99,20 @@ TEST(entity_component_system, initialization)
     ASSERT_FALSE(sphere_view.getShape()[0]);
 }
 
+TEST(entity_component_system, assert_wrong_copy)
+{
+    aq::TEntityComponentSystem<GameObject> ecs;
+
+    {
+        using Type = aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Orientation, Position>>;
+        EXPECT_NO_THROW(Type other(ecs));
+    }
+    {
+        using Type = aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Orientation, Position, Sphere>>;
+        EXPECT_THROW(Type other(ecs), mo::TExceptionWithCallstack<std::runtime_error>);
+    }
+}
+
 TEST(entity_component_system, assignment)
 {
     aq::EntityComponentSystem ecs;

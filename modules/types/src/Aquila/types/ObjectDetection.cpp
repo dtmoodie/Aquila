@@ -23,7 +23,7 @@ namespace aq
         }
     }
 
-    void boundingBoxToPixels(cv::Rect2f rect, aq::Shape<2> size)
+    void boundingBoxToPixels(cv::Rect2f& rect, aq::Shape<2> size)
     {
         cv::Size cv_size(size(1), size(0));
         boundingBoxToPixels(rect, cv_size);

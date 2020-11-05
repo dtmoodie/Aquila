@@ -225,11 +225,17 @@ namespace aq
         }
 
         template <class T, ct::index_t I>
-        void assignImpl(const T& obj, const uint32_t id, ct::Indexer<I> field_index)
+        ct::EnableIf<ct::IsWritable<T, I>::value>
+        assignImpl(const T& obj, const uint32_t id, ct::Indexer<I> field_index)
         {
             auto ptr = ct::Reflect<T>::getPtr(field_index);
             using Component_t = typename decltype(ptr)::Data_t;
             assignComponent<Component_t>(ptr.get(obj), id);
+        }
+
+        template <class T, ct::index_t I>
+        ct::EnableIf<!ct::IsWritable<T, I>::value> assignImpl(const T&, const uint32_t, ct::Indexer<I>)
+        {
         }
 
         template <class T>
@@ -304,19 +310,28 @@ namespace aq
         ComponentAssigner(EntityComponentSystem&, uint32_t);
 
         template <class OBJECT>
-        ComponentAssigner& assignObject(OBJECT&& obj)
+        ct::EnableIfReflected<OBJECT, ComponentAssigner&> assignObject(OBJECT&& obj)
         {
             const uint32_t id = m_idx;
-            if (ct::IsReflected<OBJECT>::value)
+
+            auto provider = this->m_ecs.getProvider<OBJECT>();
+            if (provider)
             {
-                auto provider = this->m_ecs.getProvider<OBJECT>();
-                if (provider)
-                {
-                    this->m_ecs.assignComponent(std::forward<OBJECT>(obj), id);
-                    return *this;
-                }
+                this->m_ecs.assignComponent(std::forward<OBJECT>(obj), id);
+                return *this;
             }
+
             this->m_ecs.assignObject(std::forward<OBJECT>(obj), id);
+            return *this;
+        }
+
+        template <class OBJECT>
+        ct::DisableIfReflected<OBJECT, ComponentAssigner&> assignObject(OBJECT&& obj)
+        {
+            const uint32_t id = m_idx;
+            auto provider = this->m_ecs.getProvider<OBJECT>();
+
+            this->m_ecs.assignComponent(std::forward<OBJECT>(obj), id);
             return *this;
         }
 
@@ -416,18 +431,42 @@ namespace aq
     };
 
     template <class T>
+    void assertContainsComponents(const EntityComponentSystem& ecs, const ct::VariadicTypedef<T>*)
+    {
+        auto provider = ecs.getProvider<T>();
+        MO_ASSERT(provider);
+    }
+
+    template <class T, class... Ts>
+    ct::EnableIf<(sizeof...(Ts) != 0)> assertContainsComponents(const EntityComponentSystem& ecs,
+                                                                const ct::VariadicTypedef<T, Ts...>*)
+    {
+        auto provider = ecs.getProvider<T>();
+        MO_ASSERT(provider);
+        assertContainsComponents(ecs, static_cast<const ct::VariadicTypedef<Ts...>*>(nullptr));
+    }
+
+    template <class T>
+    void assertContainsComponents(const EntityComponentSystem& ecs, const T*)
+    {
+        using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
+        assertContainsComponents(ecs, static_cast<const MemberObjects_t*>(nullptr));
+    }
+
+    template <class T>
     struct TEntityComponentSystem<T, ct::EnableIfReflected<T>> : EntityComponentSystem
     {
+
         template <class U>
         TEntityComponentSystem(const TEntityComponentSystem<U, void>& other)
             : EntityComponentSystem(other)
         {
+            using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
+            assertContainsComponents(other, static_cast<const MemberObjects_t*>(nullptr));
         }
 
         TEntityComponentSystem()
         {
-            // using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
-            // addComponents(*this, MemberObjects_t{});
             addComponents<T>(*this);
         }
 
@@ -444,6 +483,8 @@ namespace aq
         TEntityComponentSystem(const TEntityComponentSystem<U, void>& other)
             : EntityComponentSystem(other)
         {
+
+            assertContainsComponents(other, static_cast<const ct::VariadicTypedef<T...>*>(nullptr));
         }
 
         TEntityComponentSystem()
