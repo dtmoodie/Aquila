@@ -528,6 +528,7 @@ void Graph::removeVariableSink(IVariableSink* sink)
     });
 }
 
+// TODO a graph should actually just push an event when one of the underlying nodes is updated
 void graphLoop(rcc::shared_ptr<Graph> graph, IAsyncStreamPtr_t stream, const uint64_t event_id)
 {
     graph->process();
