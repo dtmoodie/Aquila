@@ -107,6 +107,7 @@ namespace aq
             {
                 return;
             }
+            std::string name = obj.obj->getName();
 
             rcc::shared_ptr<aq::nodes::INode> node;
             mo::IPublisher* output_param = nullptr;
@@ -119,17 +120,23 @@ namespace aq
 
                     if (!output_param || !input_param->acceptsPublisher(*output_param))
                     {
-                        output_param = node->getOutput(input->getName());
+                        std::string input_name = input->getName();
+                        output_param = node->getOutput(input_name);
                         if (!output_param || !input_param->acceptsPublisher(*output_param))
                         {
                             auto all_outputs = node->getOutputs();
+                            uint32_t count = 0;
                             for (auto output : all_outputs)
                             {
                                 if (input_param->acceptsPublisher(*output))
                                 {
                                     output_param = output;
-                                    break;
+                                    ++count;
                                 }
+                            }
+                            if (count > 1)
+                            {
+                                output_param = nullptr;
                             }
                         }
                     }
