@@ -620,7 +620,7 @@ namespace mo
     };
 
     template <class T>
-    struct TTraits<ce::shared_ptr<T>, 4> : virtual StructBase<ce::shared_ptr<T>>
+    struct TTraits<ce::shared_ptr<T>, 4> : virtual PtrBase<ce::shared_ptr<T>>
     {
         void load(ILoadVisitor& visitor, void* inst, const std::string&, size_t cnt) const override
         {
@@ -643,6 +643,49 @@ namespace mo
         void visit(StaticVisitor& visitor, const std::string&) const override
         {
             visitor.template visit<T>("ptr");
+        }
+
+        std::shared_ptr<const void> getPointer(const void* inst) const
+        {
+            ce::shared_ptr<T> ptr = this->ref(inst);
+            return std::shared_ptr<const void>(ptr.get(), [ptr](const void*) {});
+        }
+
+        uint32_t getNumMembers() const
+        {
+            return 1;
+        }
+
+        bool loadMember(ILoadVisitor& visitor, void* inst, uint32_t idx, std::string* name = nullptr) const
+        {
+            if (idx != 0)
+            {
+                return false;
+            }
+            ce::shared_ptr<T>& ref = this->ref(inst);
+            // Unsure if we need some checks here
+            PolymorphicSerializationHelper<T>::load(visitor, ref);
+            if (name)
+            {
+                *name = "data";
+            }
+            mo::SharedPointerHelper<T>::loadMember(visitor, ref.get());
+            return true;
+        }
+
+        bool saveMember(ISaveVisitor& visitor, const void* inst, uint32_t idx, std::string* name = nullptr) const
+        {
+            if (idx != 0)
+            {
+                return false;
+            }
+            const ce::shared_ptr<T>& ref = this->ref(inst);
+            if (name)
+            {
+                *name = "data";
+            }
+            visitor(ref.get(), "data");
+            return true;
         }
     };
 
