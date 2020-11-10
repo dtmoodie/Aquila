@@ -29,8 +29,10 @@ namespace aq
     namespace detection
     {
         // Various commonly used components
-        using BoundingBox2d = cv::Rect2f;
-        using Confidence = float;
+        struct BoundingBox2d_;
+        using BoundingBox2d = ct::ext::ScalarComponent<cv::Rect2f, BoundingBox2d_>;
+        struct Confidence_;
+        using Confidence = ct::ext::ScalarComponent<float, Confidence_>;
         using Classifications = mo::SmallVec<aq::Classification, 5>;
 
         template <class TAG, class DTYPE>
@@ -43,9 +45,12 @@ namespace aq
             }
         };
 
-        using Id = uint32_t;
-        using Size3d = Eigen::Vector3f;
-        using Pose3d = Eigen::Affine3f;
+        struct Id_;
+        using Id = ct::ext::ScalarComponent<uint32_t, Id_>;
+        struct Size3d_;
+        using Size3d = ct::ext::ScalarComponent<Eigen::Vector3f, Size3d_>;
+        struct Pose3d_;
+        using Pose3d = ct::ext::ScalarComponent<Eigen::Affine3f, Pose3d_>;
 
     } // namespace detection
 

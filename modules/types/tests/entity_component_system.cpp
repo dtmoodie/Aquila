@@ -2,6 +2,7 @@
 
 #include <ct/reflect/compare.hpp>
 #include <ct/reflect/print.hpp>
+#include <ct/static_asserts.hpp>
 
 #include <MetaObject/runtime_reflection/TraitInterface.hpp>
 #include <MetaObject/runtime_reflection/VisitorTraits.hpp>
@@ -111,6 +112,26 @@ TEST(entity_component_system, assert_wrong_copy)
         using Type = aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Orientation, Position, Sphere>>;
         EXPECT_THROW(Type other(ecs), mo::TExceptionWithCallstack<std::runtime_error>);
     }
+}
+
+TEST(entity_component_system, unique_components)
+{
+    struct Tag0;
+    struct Tag1;
+    using Comp0 = ct::ext::ScalarComponent<float, Tag0>;
+    using Comp1 = ct::ext::ScalarComponent<float, Tag1>;
+    aq::EntityComponentSystem ecs;
+    auto provider0 = ce::shared_ptr<aq::TComponentProvider<Comp0>>::create();
+    auto provider1 = ce::shared_ptr<aq::TComponentProvider<Comp1>>::create();
+    ecs.addProvider(provider0);
+    ecs.addProvider(provider1);
+    auto P0 = ecs.getProviderMutable<Comp0>();
+    auto P1 = ecs.getProviderMutable<Comp1>();
+    ASSERT_TRUE(P0);
+    ASSERT_TRUE(P1);
+
+    ct::StaticEqualTypes<ct::decay_t<decltype(*P0->getComponentMutable().data())>, float>{};
+    ct::StaticEqualTypes<ct::decay_t<decltype(*P1->getComponentMutable().data())>, float>{};
 }
 
 TEST(entity_component_system, assignment)
