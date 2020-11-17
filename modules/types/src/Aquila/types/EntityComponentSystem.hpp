@@ -841,7 +841,7 @@ namespace ct
     REFLECT_END;
 
     REFLECT_BEGIN(aq::EntityComponentSystem)
-        PROPERTY(providers, &DataType::getProviders, &DataType::setProviders)
+        PROPERTY(components, &DataType::getProviders, &DataType::setProviders)
         MEMBER_FUNCTION(getNumComponents)
         MEMBER_FUNCTION(getNumEntities)
         MEMBER_FUNCTION(getComponentType)
