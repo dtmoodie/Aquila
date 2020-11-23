@@ -117,7 +117,9 @@ namespace aq
         ct::TArrayView<const void> device(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr) const;
 
         ct::TArrayView<void> mutableHost(mo::IAsyncStream* = nullptr, bool* sync_required = nullptr);
+        ct::TArrayView<void> mutableHostOnlyWrite(mo::IAsyncStream* = nullptr);
         ct::TArrayView<void> mutableDevice(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
+        ct::TArrayView<void> mutableDeviceOnlyWrite(mo::IAsyncStream* = nullptr);
 
         SyncState state() const;
 

@@ -491,6 +491,31 @@ namespace aq
         return {h_ptr, m_size};
     }
 
+    ct::TArrayView<void> SyncedMemory::mutableHostOnlyWrite(mo::IAsyncStream* dst_stream)
+    {
+        std::shared_ptr<mo::IAsyncStream> src_stream = m_stream.lock();
+        if (!h_ptr)
+        {
+            MO_ASSERT(src_stream);
+            std::shared_ptr<mo::Allocator> alloc = src_stream->hostAllocator();
+            h_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            h_flags = PointerFlags::OWNED;
+        }
+
+        // Copy on write semantics, we now allocate a new h_ptr and use that instead
+        if (h_flags & PointerFlags::CONST)
+        {
+            MO_ASSERT(src_stream);
+            auto alloc = src_stream->hostAllocator();
+            MO_ASSERT(alloc);
+            h_ptr = alloc->allocate(m_size, m_elem_size);
+            h_flags = PointerFlags::OWNED;
+        }
+
+        m_state = SyncState::HOST_UPDATED;
+        return {h_ptr, m_size};
+    }
+
     ct::TArrayView<void> SyncedMemory::mutableDevice(mo::IDeviceStream* stream, bool* sync_required)
     {
         std::shared_ptr<mo::IAsyncStream> src_stream = m_stream.lock();
@@ -546,6 +571,35 @@ namespace aq
             {
                 *sync_required = true;
             }
+        }
+        m_state = SyncState::DEVICE_UPDATED;
+        return {d_ptr, m_size};
+    }
+
+    ct::TArrayView<void> SyncedMemory::mutableDeviceOnlyWrite(mo::IAsyncStream* dst_stream)
+    {
+        std::shared_ptr<mo::IAsyncStream> src_stream = m_stream.lock();
+        MO_ASSERT(src_stream != nullptr);
+        mo::IDeviceStream* src_device_stream = src_stream->getDeviceStream();
+        MO_ASSERT(src_device_stream != nullptr);
+        if (!d_ptr)
+        {
+            auto alloc = src_device_stream->deviceAllocator();
+            d_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            d_flags = PointerFlags::OWNED;
+            if (h_ptr)
+            {
+                m_state = SyncState::HOST_UPDATED;
+            }
+        }
+
+        // Copy on write semantics, we now allocate a new d_ptr and use that instead
+        if (d_flags & PointerFlags::CONST)
+        {
+            auto alloc = src_device_stream->deviceAllocator();
+            MO_ASSERT(alloc);
+            d_ptr = alloc->allocate(m_size, m_elem_size);
+            d_flags = PointerFlags::OWNED;
         }
         m_state = SyncState::DEVICE_UPDATED;
         return {d_ptr, m_size};
