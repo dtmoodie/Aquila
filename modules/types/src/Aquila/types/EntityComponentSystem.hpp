@@ -48,6 +48,8 @@ namespace aq
     {
         TComponentProvider();
         void resize(uint32_t) override;
+        template <uint8_t D>
+        void reshape(mt::Shape<D>);
         void erase(uint32_t) override;
         void clear() override;
 
@@ -171,6 +173,9 @@ namespace aq
         void erase(uint32_t entity_id);
         void clear();
         void resize(uint32_t size);
+
+        template <class COMPONENT, uint8_t I>
+        void reshape(mt::Shape<I> shape);
 
         ComponentAssigner operator[](uint32_t idx);
 
@@ -329,8 +334,6 @@ namespace aq
         ct::DisableIfReflected<OBJECT, ComponentAssigner&> assignObject(OBJECT&& obj)
         {
             const uint32_t id = m_idx;
-            auto provider = this->m_ecs.getProvider<OBJECT>();
-
             this->m_ecs.assignComponent(std::forward<OBJECT>(obj), id);
             return *this;
         }
@@ -431,26 +434,38 @@ namespace aq
     };
 
     template <class T>
-    void assertContainsComponents(const EntityComponentSystem& ecs, const ct::VariadicTypedef<T>*)
+    void ensureContainsComponents(EntityComponentSystem& ecs, const ct::VariadicTypedef<T>*)
     {
         auto provider = ecs.getProvider<T>();
-        MO_ASSERT(provider);
+        if (!provider)
+        {
+            auto provider = ce::make_shared<TComponentProvider<T>>();
+            const auto num_entities = ecs.getNumEntities();
+            provider->resize(num_entities);
+            ecs.addProvider(std::move(provider));
+        }
     }
 
     template <class T, class... Ts>
-    ct::EnableIf<(sizeof...(Ts) != 0)> assertContainsComponents(const EntityComponentSystem& ecs,
+    ct::EnableIf<(sizeof...(Ts) != 0)> ensureContainsComponents(EntityComponentSystem& ecs,
                                                                 const ct::VariadicTypedef<T, Ts...>*)
     {
         auto provider = ecs.getProvider<T>();
-        MO_ASSERT(provider);
-        assertContainsComponents(ecs, static_cast<const ct::VariadicTypedef<Ts...>*>(nullptr));
+        if (!provider)
+        {
+            auto provider = ce::make_shared<TComponentProvider<T>>();
+            const auto num_entities = ecs.getNumEntities();
+            provider->resize(num_entities);
+            ecs.addProvider(std::move(provider));
+        }
+        ensureContainsComponents(ecs, static_cast<const ct::VariadicTypedef<Ts...>*>(nullptr));
     }
 
     template <class T>
-    void assertContainsComponents(const EntityComponentSystem& ecs, const T*)
+    void ensureContainsComponents(EntityComponentSystem& ecs, const T*)
     {
         using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
-        assertContainsComponents(ecs, static_cast<const MemberObjects_t*>(nullptr));
+        ensureContainsComponents(ecs, static_cast<const MemberObjects_t*>(nullptr));
     }
 
     template <class T>
@@ -462,7 +477,7 @@ namespace aq
             : EntityComponentSystem(other)
         {
             using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
-            assertContainsComponents(other, static_cast<const MemberObjects_t*>(nullptr));
+            ensureContainsComponents(other, static_cast<const MemberObjects_t*>(nullptr));
         }
 
         TEntityComponentSystem()
@@ -484,7 +499,7 @@ namespace aq
             : EntityComponentSystem(other)
         {
 
-            assertContainsComponents(other, static_cast<const ct::VariadicTypedef<T...>*>(nullptr));
+            ensureContainsComponents(*this, static_cast<const ct::VariadicTypedef<T...>*>(nullptr));
         }
 
         TEntityComponentSystem()
@@ -506,6 +521,16 @@ namespace aq
     // Implementation
     ////////////////////////////////////////////////////////////////////////////////
 
+    template <class COMPONENT, uint8_t I>
+    void EntityComponentSystem::reshape(mt::Shape<I> shape)
+    {
+        TComponentProvider<COMPONENT>* provider = this->getProviderMutable<COMPONENT>();
+        if (provider)
+        {
+            provider->reshape(shape);
+        }
+    }
+
     template <class T>
     TComponentProvider<T>::TComponentProvider()
     {
@@ -522,10 +547,18 @@ namespace aq
             factory_instance->registerConstructor(type, std::move(factory_func));
         }
     }
+
     template <class T>
     void TComponentProvider<T>::resize(uint32_t size)
     {
         m_data.resize(size);
+    }
+
+    template <class T>
+    template <uint8_t D>
+    void TComponentProvider<T>::reshape(mt::Shape<D> shape)
+    {
+        m_data.resizeSubarray(std::move(shape));
     }
 
     template <class T>
