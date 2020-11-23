@@ -46,7 +46,7 @@ namespace aq
             }
             else
             {
-                MO_ASSERT(*num_entities == entities);
+                MO_ASSERT_EQ(*num_entities, entities);
             }
         }
 
