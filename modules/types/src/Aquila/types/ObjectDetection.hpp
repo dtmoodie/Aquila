@@ -115,13 +115,13 @@ namespace aq
         TDetectedObjectSet(const DetectedObjectSet& other)
             : DetectedObjectSet(other)
         {
-            assertContainsComponents(other, static_cast<const DetType*>(nullptr));
+            ensureContainsComponents(other, static_cast<const DetType*>(nullptr));
         }
 
         TDetectedObjectSet(DetectedObjectSet&& other)
             : DetectedObjectSet(other)
         {
-            assertContainsComponents(*this, static_cast<const DetType*>(nullptr));
+            ensureContainsComponents(*this, static_cast<const DetType*>(nullptr));
         }
 
         TDetectedObjectSet(const TDetectedObjectSet&) = default;
@@ -138,7 +138,7 @@ namespace aq
         TDetectedObjectSet(const TDetectedObjectSet<T...>& other)
             : DetectedObjectSet(other)
         {
-            assertContainsComponents(*this, static_cast<const DetType*>(nullptr));
+            ensureContainsComponents(*this, static_cast<const DetType*>(nullptr));
         }
     };
 } // namespace aq

@@ -40,6 +40,11 @@ namespace aq
         }
     }
 
+    void normalizeBoundingBox(cv::Rect2f& bb, aq::Shape<2> size)
+    {
+        normalizeBoundingBox(bb, cv::Size(size(1), size(0)));
+    }
+
     void clipNormalizedBoundingBox(cv::Rect2f& bb)
     {
         bb.x = std::min(1.0f, std::max<float>(bb.x, 0.0f));
