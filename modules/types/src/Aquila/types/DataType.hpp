@@ -41,60 +41,69 @@ namespace aq
     struct DataType<uint8_t>
     {
         static constexpr const auto depth_flag = DataFlag::kUINT8;
+        static constexpr const auto value = depth_flag;
     };
-
     template <>
     struct DataType<int8_t>
     {
         static constexpr const auto depth_flag = DataFlag::kINT8;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<uint16_t>
     {
         static constexpr const auto depth_flag = DataFlag::kUINT16;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<int16_t>
     {
         static constexpr const auto depth_flag = DataFlag::kINT16;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<int32_t>
     {
         static constexpr const auto depth_flag = DataFlag::kINT32;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<uint32_t>
     {
         static constexpr const auto depth_flag = DataFlag::kUINT32;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<float>
     {
         static constexpr const auto depth_flag = DataFlag::kFLOAT32;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<uint64_t>
     {
         static constexpr const auto depth_flag = DataFlag::kUINT64;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<int64_t>
     {
         static constexpr const auto depth_flag = DataFlag::kINT64;
+        static constexpr const auto value = depth_flag;
     };
 
     template <>
     struct DataType<double>
     {
         static constexpr const auto depth_flag = DataFlag::kFLOAT64;
+        static constexpr const auto value = depth_flag;
     };
 
     using AvailableDataTypes_t =
