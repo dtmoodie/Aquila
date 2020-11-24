@@ -107,9 +107,9 @@ namespace aq
     }
 
     SyncedImage::SyncedImage(SyncedImage&& other, std::shared_ptr<mo::IAsyncStream> stream)
-        : m_data(other.m_data)
-        , m_pixel_type(other.m_pixel_type)
-        , m_shape(other.m_shape)
+        : m_data(std::move(other.m_data))
+        , m_pixel_type(std::move(other.m_pixel_type))
+        , m_shape(std::move(other.m_shape))
     {
         setHash(other.hash());
     }

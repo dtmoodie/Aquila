@@ -49,6 +49,12 @@ namespace aq
                     DataFlag type = DataFlag::kUINT8,
                     std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
 
+        template<class PIXEL>
+        SyncedImage(const Shape<2>& shape,
+                    PIXEL* data,
+                    std::shared_ptr<const void> owning = std::shared_ptr<const void>{},
+                    std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
+
         SyncedImage(Shape<2> size, PixelType type, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
 
         // Copy on write
@@ -143,6 +149,25 @@ namespace aq
         PixelType m_pixel_type;
         Shape<2> m_shape;
     };
+
+    template<class PIXEL>
+    SyncedImage::SyncedImage(const Shape<2>& shape,
+                PIXEL* data,
+                std::shared_ptr<const void> owning,
+                std::shared_ptr<mo::IAsyncStream> stream)
+    {
+        ct::TArrayView<PIXEL> view(data, shape.numel());
+        if(owning)
+        {
+            m_data = ce::make_shared<SyncedMemory>(SyncedMemory::wrapHost(view, owning, stream));
+        }else
+        {
+            m_data = ce::make_shared<SyncedMemory>(SyncedMemory::copyHost(ct::TArrayView<const PIXEL>(view), stream));
+        }
+        m_shape = std::move(shape);
+        m_pixel_type.pixel_format = PIXEL::pixel_format;
+        m_pixel_type.data_type = DataType<typename PIXEL::Scalar_t>::depth_flag;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     ///    IMPLEMENTATION
