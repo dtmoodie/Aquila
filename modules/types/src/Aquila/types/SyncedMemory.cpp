@@ -17,7 +17,7 @@ namespace aq
 
     SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<void> data,
                                         size_t elem_size,
-                                        std::shared_ptr<void> owning,
+                                        std::shared_ptr<const void> owning,
                                         std::shared_ptr<mo::IAsyncStream> stream)
     {
         SyncedMemory output(data.size(), elem_size, stream);
@@ -30,7 +30,7 @@ namespace aq
 
     SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<const void> data,
                                         size_t elem_size,
-                                        std::shared_ptr<void> owning,
+                                        std::shared_ptr<const void> owning,
                                         std::shared_ptr<mo::IAsyncStream> stream)
     {
         SyncedMemory output(data.size(), elem_size, stream);
@@ -54,7 +54,7 @@ namespace aq
 
     SyncedMemory SyncedMemory::wrapDevice(ct::TArrayView<void> data,
                                           size_t elem_size,
-                                          std::shared_ptr<void> owning,
+                                          std::shared_ptr<const void> owning,
                                           std::shared_ptr<mo::IDeviceStream> stream)
     {
         SyncedMemory output(data.size(), elem_size, stream);
@@ -67,7 +67,7 @@ namespace aq
 
     SyncedMemory SyncedMemory::wrapDevice(ct::TArrayView<const void> data,
                                           size_t elem_size,
-                                          std::shared_ptr<void> owning,
+                                          std::shared_ptr<const void> owning,
                                           std::shared_ptr<mo::IDeviceStream> stream)
     {
         SyncedMemory output(data.size(), elem_size, stream);

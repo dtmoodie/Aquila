@@ -38,11 +38,11 @@ namespace aq
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
         static SyncedMemory wrapHost(ct::TArrayView<void>,
                                      size_t elem_size,
-                                     std::shared_ptr<void> owning,
+                                     std::shared_ptr<const void> owning,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
         static SyncedMemory wrapHost(ct::TArrayView<const void>,
                                      size_t elem_size,
-                                     std::shared_ptr<void> owning,
+                                     std::shared_ptr<const void> owning,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
         static SyncedMemory copyDevice(ct::TArrayView<const void>,
@@ -50,39 +50,44 @@ namespace aq
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
         static SyncedMemory wrapDevice(ct::TArrayView<void>,
                                        size_t elem_size,
-                                       std::shared_ptr<void> owning,
+                                       std::shared_ptr<const void> owning,
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
         static SyncedMemory wrapDevice(ct::TArrayView<const void>,
                                        size_t elem_size,
-                                       std::shared_ptr<void> owning,
+                                       std::shared_ptr<const void> owning,
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
 
         template <class T>
         static SyncedMemory wrapHost(ct::TArrayView<T>,
-                                     std::shared_ptr<void> owning,
+                                     std::shared_ptr<const void> owning,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
+
+        template <class T>
+        static SyncedMemory copyHost(ct::TArrayView<const T>,
+                                     std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
+
         template <class T>
         static SyncedMemory wrapHost(ct::TArrayView<const T>,
-                                     std::shared_ptr<void> owning,
+                                     std::shared_ptr<const void> owning,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
         template <class T>
         static SyncedMemory wrapDevice(ct::TArrayView<T>,
-                                       std::shared_ptr<void> owning,
+                                       std::shared_ptr<const void> owning,
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
         template <class T>
         static SyncedMemory wrapDevice(ct::TArrayView<const T>,
-                                       std::shared_ptr<void> owning,
+                                       std::shared_ptr<const void> owning,
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
 
         template <class T, uint8_t D>
         static SyncedMemory wrapHost(mt::Tensor<T, D>,
-                                     std::shared_ptr<void> owning,
+                                     std::shared_ptr<const void> owning,
                                      std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current());
 
         template <class T, uint8_t D>
         static SyncedMemory wrapDevice(mt::Tensor<T, D>,
-                                       std::shared_ptr<void> owning,
+                                       std::shared_ptr<const void> owning,
                                        std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current());
 
         template <class T, uint8_t D>
@@ -195,15 +200,22 @@ namespace aq
 
     template <class T>
     SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<T> data,
-                                        std::shared_ptr<void> owning,
+                                        std::shared_ptr<const void> owning,
                                         std::shared_ptr<mo::IAsyncStream> stream)
     {
         return wrapHost(ct::TArrayView<void>(std::move(data)), sizeof(T), owning, stream);
     }
 
     template <class T>
+    SyncedMemory SyncedMemory::copyHost(ct::TArrayView<const T> data,
+                                        std::shared_ptr<mo::IAsyncStream> stream)
+    {
+        return copyHost(ct::TArrayView<const void>(std::move(data)), sizeof(T), stream);
+    }
+
+    template <class T>
     SyncedMemory SyncedMemory::wrapHost(ct::TArrayView<const T> data,
-                                        std::shared_ptr<void> owning,
+                                        std::shared_ptr<const void> owning,
                                         std::shared_ptr<mo::IAsyncStream> stream)
     {
         return wrapHost(ct::TArrayView<const void>(std::move(data)), sizeof(T), owning, stream);
@@ -211,7 +223,7 @@ namespace aq
 
     template <class T>
     SyncedMemory SyncedMemory::wrapDevice(ct::TArrayView<T> data,
-                                          std::shared_ptr<void> owning,
+                                          std::shared_ptr<const void> owning,
                                           std::shared_ptr<mo::IDeviceStream> stream)
     {
         return wrapDevice(data, sizeof(T), owning, stream);
@@ -219,7 +231,7 @@ namespace aq
 
     template <class T>
     SyncedMemory SyncedMemory::wrapDevice(ct::TArrayView<const T> data,
-                                          std::shared_ptr<void> owning,
+                                          std::shared_ptr<const void> owning,
                                           std::shared_ptr<mo::IDeviceStream> stream)
     {
         return wrapDevice(data, sizeof(T), owning, stream);
@@ -227,7 +239,7 @@ namespace aq
 
     template <class T, uint8_t D>
     SyncedMemory SyncedMemory::wrapHost(mt::Tensor<T, D> tensor,
-                                        std::shared_ptr<void> owning,
+                                        std::shared_ptr<const void> owning,
                                         std::shared_ptr<mo::IAsyncStream> stream)
     {
         auto shape = tensor.getShape();
@@ -239,7 +251,7 @@ namespace aq
 
     template <class T, uint8_t D>
     SyncedMemory SyncedMemory::wrapDevice(mt::Tensor<T, D> tensor,
-                                          std::shared_ptr<void> owning,
+                                          std::shared_ptr<const void> owning,
                                           std::shared_ptr<mo::IDeviceStream> stream)
     {
         auto shape = tensor.getShape();
