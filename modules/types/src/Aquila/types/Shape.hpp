@@ -9,7 +9,7 @@ namespace aq
     struct Shape : Eigen::Array<uint32_t, D, 1>
     {
         using Super = Eigen::Array<uint32_t, D, 1>;
-
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Shape()
             : Super()
         {
