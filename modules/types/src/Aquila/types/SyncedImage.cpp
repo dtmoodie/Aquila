@@ -216,8 +216,8 @@ namespace aq
         if (size > 0)
         {
             MO_ASSERT_EQ(data->size(), size);
-            m_data = data;
         }
+        m_data = data;
     }
 
     bool SyncedImage::empty() const
