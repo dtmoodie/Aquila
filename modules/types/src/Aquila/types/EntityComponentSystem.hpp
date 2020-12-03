@@ -612,6 +612,7 @@ namespace aq
     template <class U>
     void TComponentProvider<T>::assign(uint32_t idx, U&& val)
     {
+        MO_ASSERT_GT(m_data.size(), idx);
         m_data.assign(idx, std::forward<U>(val));
     }
 
