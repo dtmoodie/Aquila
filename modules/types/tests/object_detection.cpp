@@ -96,13 +96,6 @@ aq::DetectedObjectSet makeDescriptorSet()
     return set;
 }
 
-TEST(object_detection, missmatch_ctr)
-{
-    using type =
-        aq::TDetectedObjectSet<ct::VariadicTypedef<aq::detection::Confidence, aq::detection::LandmarkDetection>>;
-    EXPECT_THROW(type set = makeDescriptorSet(), mo::TExceptionWithCallstack<std::runtime_error>);
-}
-
 TEST(object_detection, detection_descriptor)
 {
     aq::DetectedObjectSet set = makeDescriptorSet();
@@ -176,4 +169,14 @@ TEST(object_detection, publish_typed_subscribe)
     EXPECT_TRUE(data);
     auto tdata = sub.getTypedData();
     EXPECT_TRUE(tdata);
+}
+
+TEST(object_detection, copy_components)
+{
+    aq::DetectedObjectSet set = makeDescriptorSet();
+
+    aq::TDetectedObjectSet<ct::VariadicTypedef<aq::detection::Classifications>> cat_set = set;
+
+    auto component = cat_set.getComponent<aq::detection::Classifications>();
+    EXPECT_EQ(component.getShape()[0], 10);
 }
