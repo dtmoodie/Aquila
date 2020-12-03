@@ -86,7 +86,6 @@ namespace aq
     void DetectedObjectSet::setCatSet(const CategorySet::ConstPtr& cats)
     {
         cat_set = cats;
-        EntityComponentSystem::clear();
     }
 
     CategorySet::ConstPtr DetectedObjectSet::getCatSet() const
