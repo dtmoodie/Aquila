@@ -53,6 +53,7 @@ namespace mo
             visitor(&id, "id");
             if (*val && ptr == nullptr)
             {
+                PolymorphicSerializationHelper<T>::save(visitor, *val);
                 visitor(val->get(), "data");
             }
         }
@@ -97,6 +98,7 @@ namespace mo
             visitor(&id, "id");
             if (*val && ptr == nullptr)
             {
+                PolymorphicSerializationHelper<T>::save(visitor, *val);
                 visitor(val->get(), "data");
             }
         }
