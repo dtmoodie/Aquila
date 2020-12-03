@@ -49,7 +49,7 @@ namespace aq
                     DataFlag type = DataFlag::kUINT8,
                     std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
 
-        template<class PIXEL>
+        template <class PIXEL>
         SyncedImage(const Shape<2>& shape,
                     PIXEL* data,
                     std::shared_ptr<const void> owning = std::shared_ptr<const void>{},
@@ -150,17 +150,18 @@ namespace aq
         Shape<2> m_shape;
     };
 
-    template<class PIXEL>
+    template <class PIXEL>
     SyncedImage::SyncedImage(const Shape<2>& shape,
-                PIXEL* data,
-                std::shared_ptr<const void> owning,
-                std::shared_ptr<mo::IAsyncStream> stream)
+                             PIXEL* data,
+                             std::shared_ptr<const void> owning,
+                             std::shared_ptr<mo::IAsyncStream> stream)
     {
         ct::TArrayView<PIXEL> view(data, shape.numel());
-        if(owning)
+        if (owning)
         {
             m_data = ce::make_shared<SyncedMemory>(SyncedMemory::wrapHost(view, owning, stream));
-        }else
+        }
+        else
         {
             m_data = ce::make_shared<SyncedMemory>(SyncedMemory::copyHost(ct::TArrayView<const PIXEL>(view), stream));
         }
@@ -250,7 +251,10 @@ namespace aq
     {
         const auto height = static_cast<int>(rows());
         const auto width = static_cast<int>(cols());
-        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto dtype = dataType();
+        auto c = channels();
+        auto cvdepth = toCvDepth(dtype);
+        const auto type = CV_MAKETYPE(cvdepth, c);
         auto data = m_data->mutableHost(stream, sync).data();
         return cv::Mat(height, width, type, data);
     }
@@ -259,7 +263,10 @@ namespace aq
     {
         const auto height = static_cast<int>(rows());
         const auto width = static_cast<int>(cols());
-        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto dtype = dataType();
+        auto c = channels();
+        auto cvdepth = toCvDepth(dtype);
+        const auto type = CV_MAKETYPE(cvdepth, c);
         auto data = m_data->mutableDevice(stream, sync).data();
         return cv::cuda::GpuMat(height, width, type, data);
     }
@@ -267,7 +274,10 @@ namespace aq
     {
         const auto height = static_cast<int>(rows());
         const auto width = static_cast<int>(cols());
-        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto dtype = dataType();
+        auto c = channels();
+        auto cvdepth = toCvDepth(dtype);
+        const auto type = CV_MAKETYPE(cvdepth, c);
         auto data = const_cast<void*>(m_data->host(stream, sync).data());
         return cv::Mat(height, width, type, data);
     }
@@ -276,7 +286,10 @@ namespace aq
     {
         const auto height = static_cast<int>(rows());
         const auto width = static_cast<int>(cols());
-        const auto type = CV_MAKETYPE(toCvDepth(dataType()), channels());
+        auto dtype = dataType();
+        auto c = channels();
+        auto cvdepth = toCvDepth(dtype);
+        const auto type = CV_MAKETYPE(cvdepth, c);
         auto data = const_cast<void*>(m_data->device(stream, sync).data());
         return cv::cuda::GpuMat(height, width, type, data);
     }
