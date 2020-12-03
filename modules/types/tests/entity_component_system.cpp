@@ -100,9 +100,17 @@ TEST(entity_component_system, initialization)
     ASSERT_FALSE(sphere_view.getShape()[0]);
 }
 
-TEST(entity_component_system, assert_wrong_copy)
+TEST(entity_component_system, assert_bad_assign)
 {
     aq::TEntityComponentSystem<GameObject> ecs;
+    ASSERT_THROW(ecs[0] = Velocity(), mo::TExceptionWithCallstack<std::runtime_error>);
+}
+
+TEST(entity_component_system, copy_new_resize)
+{
+    aq::TEntityComponentSystem<GameObject> ecs;
+    GameObject obj = GameObject::init();
+    ecs.pushObject(std::move(obj));
 
     {
         using Type = aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Orientation, Position>>;
@@ -110,7 +118,27 @@ TEST(entity_component_system, assert_wrong_copy)
     }
     {
         using Type = aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity, Orientation, Position, Sphere>>;
-        EXPECT_THROW(Type other(ecs), mo::TExceptionWithCallstack<std::runtime_error>);
+        Type other(ecs);
+        {
+            auto provider = other.getProvider<Sphere>();
+            ASSERT_TRUE(provider);
+            ASSERT_EQ(provider->getNumEntities(), 1);
+        }
+        {
+            auto provider = other.getProvider<Position>();
+            ASSERT_TRUE(provider);
+            ASSERT_EQ(provider->getNumEntities(), 1);
+        }
+        {
+            auto provider = other.getProvider<Orientation>();
+            ASSERT_TRUE(provider);
+            ASSERT_EQ(provider->getNumEntities(), 1);
+        }
+        {
+            auto provider = other.getProvider<Velocity>();
+            ASSERT_TRUE(provider);
+            ASSERT_EQ(provider->getNumEntities(), 1);
+        }
     }
 }
 
