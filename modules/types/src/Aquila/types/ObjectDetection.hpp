@@ -115,7 +115,7 @@ namespace aq
         TDetectedObjectSet(const DetectedObjectSet& other)
             : DetectedObjectSet(other)
         {
-            ensureContainsComponents(other, static_cast<const DetType*>(nullptr));
+            ensureContainsComponents(*this, static_cast<const DetType*>(nullptr));
         }
 
         TDetectedObjectSet(DetectedObjectSet&& other)
