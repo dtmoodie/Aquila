@@ -721,6 +721,32 @@ namespace mo
             visitor(ref.get(), "data");
             return true;
         }
+
+        bool savePointedToData(ISaveVisitor& visitor, const void* inst, const std::string& name) const
+        {
+            const auto& ref = this->ref(inst);
+            if(ref)
+            {
+                visitor(ref.get(), name);
+                return true;
+            }
+            return false;
+        }
+
+        bool loadPointedToData(ILoadVisitor& visitor, void* inst, const std::string& name) const
+        {
+            if(std::is_const<T>::value)
+            {
+                return false;
+            }
+            auto& ref = this->ref(inst);
+            if(ref)
+            {
+                visitor(const_cast<typename std::remove_const<T>::type*>(ref.get()), name);
+                return true;
+            }
+            return false;
+        }
     };
 
     // Overload for publishing and subscribing to an entity component system
