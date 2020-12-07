@@ -40,7 +40,7 @@ namespace aq
 
         void create(Shape<2> size_)
         {
-            SyncedImage::create(size_, T::num_channels, DataType<Scalar_t>::depth_flag, T::pixel_format);
+            SyncedImage::create(size_, T::pixel_format, DataType<Scalar_t>::depth_flag);
         }
 
         void create(uint32_t height, uint32_t width)
