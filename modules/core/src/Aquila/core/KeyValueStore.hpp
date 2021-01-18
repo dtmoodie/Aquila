@@ -52,7 +52,7 @@ namespace aq
     {
         const auto param = getValue(name);
         MO_ASSERT(param);
-        MO_ASSERT(param->getTypeInfo() == mo::TypeInfo(typeid(T)));
+        MO_ASSERT(param->getTypeInfo() == mo::TypeInfo::create<T>());
         auto tparam = dynamic_cast<const mo::ITControlParam<T>*>(param);
         MO_ASSERT(tparam);
         return tparam->getValue();
@@ -67,21 +67,21 @@ namespace aq
             MO_LOG(debug, "No key with name: {} available keys: {}", name, listKeys());
             return default_value;
         }
-        if (param->getTypeInfo() != mo::TypeInfo(typeid(T)))
+        if (param->getTypeInfo() != mo::TypeInfo::create<T>())
         {
             MO_LOG(debug,
                    "existing value for {} of type {} does not match requested type {}",
                    name,
                    mo::TypeTable::instance()->typeToName(param->getTypeInfo()),
-                   mo::TypeTable::instance()->typeToName(mo::TypeInfo(typeid(T))));
+                   mo::TypeTable::instance()->typeToName(mo::TypeInfo::create<T>()));
             return default_value;
         }
-        auto tparam = dynamic_cast<const mo::TParam<T>*>(param);
+        auto tparam = dynamic_cast<const mo::ITControlParam<T>*>(param);
         if (tparam == nullptr)
         {
             return default_value;
         }
-        return tparam->read()();
+        return tparam->getValue();
     }
 
     template <class T>
