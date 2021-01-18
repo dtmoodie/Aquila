@@ -207,8 +207,7 @@ namespace aq
     }
 
     template <class T>
-    SyncedMemory SyncedMemory::copyHost(ct::TArrayView<const T> data,
-                                        std::shared_ptr<mo::IAsyncStream> stream)
+    SyncedMemory SyncedMemory::copyHost(ct::TArrayView<const T> data, std::shared_ptr<mo::IAsyncStream> stream)
     {
         return copyHost(ct::TArrayView<const void>(std::move(data)), sizeof(T), stream);
     }
