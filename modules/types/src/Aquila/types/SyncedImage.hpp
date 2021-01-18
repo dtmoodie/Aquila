@@ -27,6 +27,11 @@ namespace aq
     {
         DataFlag data_type;
         PixelFormat pixel_format;
+
+        inline size_t pixelSize() const
+        {
+            return data_type.elemSize() * pixel_format.numChannels();
+        }
     };
 
     // SyncedImage inherits from enable_shared_from_this because the opencv wrapping api needs a shared_ptr
@@ -52,6 +57,18 @@ namespace aq
         template <class PIXEL>
         SyncedImage(const Shape<2>& shape,
                     PIXEL* data,
+                    std::shared_ptr<const void> owning = std::shared_ptr<const void>{},
+                    std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
+
+        SyncedImage(const Shape<2>& shape,
+                    PixelType type,
+                    void* data,
+                    std::shared_ptr<const void> owning = std::shared_ptr<const void>{},
+                    std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
+
+        SyncedImage(const Shape<2>& shape,
+                    PixelType type,
+                    const void* data,
                     std::shared_ptr<const void> owning = std::shared_ptr<const void>{},
                     std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
 
@@ -140,7 +157,7 @@ namespace aq
         inline operator const cv::cuda::GpuMat() const;
 
         inline void copyTo(cv::cuda::GpuMat& mat, mo::IDeviceStream* stream = nullptr) const;
-        inline void copyTo(cv::Mat& mat, mo::IDeviceStream* stream = nullptr) const;
+        inline void copyTo(cv::Mat& mat, mo::IAsyncStream* stream = nullptr) const;
 #endif
 
       private:
@@ -170,9 +187,9 @@ namespace aq
         m_pixel_type.data_type = DataType<typename PIXEL::Scalar_t>::depth_flag;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    ///    IMPLEMENTATION
-    ///////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
+///    IMPLEMENTATION
+///////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef HAVE_OPENCV
     SyncedImage::SyncedImage(const cv::Mat& mat, PixelFormat fmt, std::shared_ptr<mo::IAsyncStream> stream)
@@ -270,6 +287,7 @@ namespace aq
         auto data = m_data->mutableDevice(stream, sync).data();
         return cv::cuda::GpuMat(height, width, type, data);
     }
+
     const cv::Mat SyncedImage::mat(mo::IAsyncStream* stream, bool* sync) const
     {
         const auto height = static_cast<int>(rows());
@@ -348,7 +366,7 @@ namespace aq
         }
     }
 
-    void SyncedImage::copyTo(cv::Mat& mat, mo::IDeviceStream* dst_stream) const
+    void SyncedImage::copyTo(cv::Mat& mat, mo::IAsyncStream* dst_stream) const
     {
         bool sync = false;
         cv::Mat tmp = this->mat(dst_stream, &sync);

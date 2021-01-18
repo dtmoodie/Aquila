@@ -6,6 +6,45 @@
 
 namespace aq
 {
+    SyncedImage::SyncedImage(const Shape<2>& shape,
+                             PixelType type,
+                             void* data,
+                             std::shared_ptr<const void> owning,
+                             std::shared_ptr<mo::IAsyncStream> stream)
+    {
+        const size_t pixel_bytes = type.pixelSize();
+        ct::TArrayView<void> view(data, shape.numel() * pixel_bytes);
+        if (owning)
+        {
+            m_data = ce::make_shared<SyncedMemory>(SyncedMemory::wrapHost(view, owning, stream));
+        }
+        else
+        {
+            m_data = ce::make_shared<SyncedMemory>(SyncedMemory::copyHost(ct::TArrayView<const void>(view), stream));
+        }
+        m_shape = std::move(shape);
+        m_pixel_type = type;
+    }
+
+    SyncedImage::SyncedImage(const Shape<2>& shape,
+                             PixelType type,
+                             const void* data,
+                             std::shared_ptr<const void> owning,
+                             std::shared_ptr<mo::IAsyncStream> stream)
+    {
+        const size_t pixel_bytes = type.pixelSize();
+        ct::TArrayView<const void> view(data, shape.numel() * pixel_bytes);
+        if (owning)
+        {
+            m_data = ce::make_shared<SyncedMemory>(SyncedMemory::wrapHost(view, owning, stream));
+        }
+        else
+        {
+            m_data = ce::make_shared<SyncedMemory>(SyncedMemory::copyHost(ct::TArrayView<const void>(view), stream));
+        }
+        m_shape = std::move(shape);
+        m_pixel_type = type;
+    }
 
     PixelType SyncedImage::pixelType() const
     {
