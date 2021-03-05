@@ -20,6 +20,7 @@ aquila_declare_module(NAME types DEPENDS
     opencv_imgproc
     metaobject_types
     metaobject_params
+    metaobject_cuda
     aquila_core
     Eigen3
     ce
