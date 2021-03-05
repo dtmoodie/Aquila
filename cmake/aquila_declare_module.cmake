@@ -1,3 +1,4 @@
+set(ENABLED_AQUILA_MODULES "" CACHE STRING INTERNAL FORCE)
 function(aquila_declare_module)
     set(oneValueArgs NAME CXX_STANDARD INCLUDE)
     set(multiValueArgs SRC DEPENDS FLAGS PRIVATE_DEP_HEADER)
@@ -116,4 +117,5 @@ function(aquila_declare_module)
     install(EXPORT aquila_${aquila_declare_module_NAME}Targets
         DESTINATION "${CMAKE_INSTALL_PREFIX}/share/Aquila" COMPONENT dev
     )
+    set(ENABLED_AQUILA_MODULES "${ENABLED_AQUILA_MODULES};${aquila_declare_module_NAME}" CACHE STRING INTERNAL FORCE)
 endfunction()

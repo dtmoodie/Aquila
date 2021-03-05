@@ -64,7 +64,7 @@ set(RCC_PERMODULE_INTERFACE_SOURCE
 )
 
 include(cmake/configure_bin_dirs.cmake)
-find_package(OpenCV 3.0 QUIET COMPONENTS
+find_package(OpenCV QUIET COMPONENTS
     core
 )
 
@@ -157,6 +157,11 @@ endforeach()
 # using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
 set(Aquila_INCLUDE_DIRS "${aquila_module_includes};${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS}" CACHE PATH "" FORCE)
 set(Aquila_LIBRARIES "${aquila_modules};${MetaObject_LIBRARIES}" CACHE INTERNAL "" FORCE)
+
+# print config
+message("--- Aquila config ---")
+message(" Aquila modules: ${ENABLED_AQUILA_MODULES}")
+
 
 # ----------------- Install
 if(Qt5_FOUND)
