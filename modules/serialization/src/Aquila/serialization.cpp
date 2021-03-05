@@ -6,11 +6,11 @@
 
 #include <MetaObject/core/metaobject_config.hpp>
 #include <MetaObject/params/detail/MetaParamImpl.hpp>
-#include <MetaObject/python/PythonAllocator.hpp>
 
 #include <cereal/types/string.hpp>
 
-#ifdef MO_HAVE_PYTHON2
+#ifdef MO_HAVE_PYTHON
+#include <MetaObject/python/PythonAllocator.hpp>
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
@@ -20,11 +20,11 @@ namespace mo
     {
 
         template <class T, size_t N>
-        inline void convertFromPython(const boost::python::object& obj, ct::ArrayAdapter<T, N> result)
+        inline void convertFromPython(const boost::python::object& obj, ct::TArrayView<T, N> result)
         {
-            if (result.ptr)
+            if (result.data())
             {
-                for (size_t i = 0; i < N; ++i)
+                for (size_t i = 0; i < result.size(); ++i)
                 {
                     boost::python::extract<T> extractor(obj[i]);
                     result.ptr[i] = extractor();
@@ -33,19 +33,6 @@ namespace mo
         }
     } // namespace python
 } // namespace mo
-#endif
-
-#include <MetaObject/python/PythonAllocator.hpp>
-
-namespace cereal
-{
-    template <class AR>
-    void serialize(AR& ar, aq::Category const*& cat)
-    {
-    }
-} // namespace cereal
-
-#if MO_HAVE_PYTHON2 == 1
 
 namespace ct
 {
