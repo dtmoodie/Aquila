@@ -104,7 +104,7 @@ namespace aq
             return boost::thread(guiThreadFunc);
         }
 
-        struct StaticRegistration
+        /*struct StaticRegistration
         {
             static StaticRegistration g_inst;
             StaticRegistration()
@@ -114,6 +114,6 @@ namespace aq
                 initModule(instance.get());
             }
         };
-        StaticRegistration StaticRegistration::g_inst;
+        StaticRegistration StaticRegistration::g_inst;*/
     } // namespace gui
 } // namespace aq
