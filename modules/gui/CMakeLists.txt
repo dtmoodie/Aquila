@@ -14,10 +14,10 @@ aquila_declare_module(NAME gui
         metaobject_types
 )
 
-target_include_directories(aquila_gui
-    PUBLIC
-        $<BUILD_INTERFACE:${OpenCV_INCLUDE_DIRS}>    
-)
+#target_include_directories(aquila_gui
+#    PUBLIC
+#        $<BUILD_INTERFACE:${OpenCV_INCLUDE_DIRS}>    
+#)
 
 if(BUILD_TESTS)
     add_subdirectory(tests)

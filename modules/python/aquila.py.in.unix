@@ -1,7 +1,8 @@
 import imp
 import sys
 mod = imp.load_dynamic('aquila','libaquila_python@POSTFIX@.so')
-mod.readArgs(sys.argv)
+# TODO fix this, temporarily creates then destroys a stream
+#mod.readArgs(sys.argv)
 import os
 if(os.path.exists('./bin/plugins')):
     mod.plugins.loadPlugins('./bin/plugins')
