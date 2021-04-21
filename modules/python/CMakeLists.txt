@@ -28,6 +28,14 @@ if(TARGET metaobject_python)
         configure_file(${CMAKE_CURRENT_LIST_DIR}/aquila.py.in.win32 ${out_dir}/Release/aquila.py @ONLY)
     endif(UNIX)
 
+    if(Python_LIBRARY_RELEASE)
+        if(EXISTS ${Python_LIBRARY_RELEASE})
+            target_link_libraries(aquila_python
+                ${Python_LIBRARY_RELEASE}
+            )
+        endif()
+    endif()
+
     RCC_TARGET_CONFIG(aquila_python libraries_deb libraries_rel)
     INSTALL(FILES ${out_dir}/aquila.py
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
