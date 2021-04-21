@@ -41,7 +41,8 @@ int FrameGrabberInfo::loadTimeout() const
 int FrameGrabberInfo::canLoadPath(const std::string& path) const
 {
     // Check all grabbers
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
+    auto factory = mo::MetaObjectFactory::instance();
+    auto constructors = factory->getConstructors(IGrabber::getHash());
     int max = 0;
     for (auto constructor : constructors)
     {
@@ -80,7 +81,9 @@ std::string FrameGrabberInfo::Print(IObjectInfo::Verbosity verbosity) const
 std::vector<std::pair<std::string, std::string>> IFrameGrabber::listAllLoadableDocuments()
 {
     std::vector<std::pair<std::string, std::string>> output;
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::getHash());
+    auto factory = mo::MetaObjectFactory::instance();
+    const auto hash = aq::nodes::IFrameGrabber::getHash();
+    auto constructors = factory->getConstructors(hash);
     for (auto constructor : constructors)
     {
         auto info = constructor->GetObjectInfo();
@@ -99,7 +102,9 @@ std::vector<std::pair<std::string, std::string>> IFrameGrabber::listAllLoadableD
 
 rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, const std::string& preferred_loader)
 {
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(aq::nodes::IFrameGrabber::getHash());
+    auto factory = mo::MetaObjectFactory::instance();
+    const auto hash = aq::nodes::IFrameGrabber::getHash();
+    auto constructors = factory->getConstructors(hash);
     std::vector<IObjectConstructor*> valid_constructors;
     std::vector<int> valid_constructor_priority;
     for (auto constructor : constructors)
@@ -280,7 +285,9 @@ bool FrameGrabber::loadData(std::string path)
         }
     }
     // find a new grabber to load this
-    auto constructors = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
+    auto factory = mo::MetaObjectFactory::instance();
+    const auto hash = IGrabber::getHash();
+    auto constructors = factory->getConstructors(hash);
     std::map<int, IObjectConstructor*> priorities;
     for (auto constructor : constructors)
     {
@@ -325,7 +332,9 @@ bool FrameGrabber::processImpl()
 
 std::vector<std::string> FrameGrabber::listLoadablePaths()
 {
-    auto ctrs = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
+    auto factory = mo::MetaObjectFactory::instance();
+    const auto hash = IGrabber::getHash();
+    auto ctrs = factory->getConstructors(hash);
     std::vector<std::string> output;
     for (auto ctr : ctrs)
     {
@@ -340,7 +349,9 @@ std::vector<std::string> FrameGrabber::listLoadablePaths()
 
 int FrameGrabber::loadTimeout()
 {
-    auto ctrs = mo::MetaObjectFactory::instance()->getConstructors(IGrabber::getHash());
+    auto factory = mo::MetaObjectFactory::instance();
+    const auto hash = IGrabber::getHash();
+    auto ctrs = factory->getConstructors(hash);
     int max = 0;
     for (auto ctr : ctrs)
     {
