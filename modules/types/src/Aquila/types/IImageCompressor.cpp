@@ -23,7 +23,8 @@ namespace aq
         MO_ASSERT(eng != nullptr);
         eng->exec(&IImageCompressor::compressImpl, ce::makeEmptyInput(*this), img, ce::makeOutput(ret), enc);
 
-        size_t fhash, arghash;
+        size_t fhash = 0;
+        size_t arghash = 0;
         const auto compression_hit = eng->wasCacheUsedLast();
         SyncedImage decompressed = img;
         auto result = eng->getCachedResult(fhash,
@@ -35,7 +36,7 @@ namespace aq
         eng->setCacheWasUsed(compression_hit);
 
         using PackType = typename decltype(result)::element_type;
-        const size_t original_hash = ret.hash();
+        // const size_t original_hash = ret.hash();
         result = std::make_shared<PackType>();
         const auto combined = ce::combineHash(fhash, arghash);
         result->setHash(combined);

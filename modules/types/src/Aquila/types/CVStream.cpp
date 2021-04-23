@@ -46,3 +46,11 @@ namespace aq
         CVStreamConstructor g_ctr;
     } // namespace
 } // namespace aq
+
+// for debugging purposes, we add this here
+cv::Mat download_gpu_mat(const cv::cuda::GpuMat& mat)
+{
+    cv::Mat h_mat(mat);
+    std::cout << "Debug downloading of gpu mat complete" << std::endl;
+    return h_mat;
+}

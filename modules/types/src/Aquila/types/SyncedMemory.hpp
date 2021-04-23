@@ -203,13 +203,13 @@ namespace aq
                                         std::shared_ptr<const void> owning,
                                         std::shared_ptr<mo::IAsyncStream> stream)
     {
-        return wrapHost(ct::TArrayView<void>(std::move(data)), sizeof(T), owning, stream);
+        return wrapHost(ct::TArrayView<void>(std::move(data)), ct::safeSizeOf<T>(), owning, stream);
     }
 
     template <class T>
     SyncedMemory SyncedMemory::copyHost(ct::TArrayView<const T> data, std::shared_ptr<mo::IAsyncStream> stream)
     {
-        return copyHost(ct::TArrayView<const void>(std::move(data)), sizeof(T), stream);
+        return copyHost(ct::TArrayView<const void>(std::move(data)), ct::safeSizeOf<T>(), stream);
     }
 
     template <class T>
@@ -217,7 +217,7 @@ namespace aq
                                         std::shared_ptr<const void> owning,
                                         std::shared_ptr<mo::IAsyncStream> stream)
     {
-        return wrapHost(ct::TArrayView<const void>(std::move(data)), sizeof(T), owning, stream);
+        return wrapHost(ct::TArrayView<const void>(std::move(data)), ct::safeSizeOf<T>(), owning, stream);
     }
 
     template <class T>
@@ -225,7 +225,7 @@ namespace aq
                                           std::shared_ptr<const void> owning,
                                           std::shared_ptr<mo::IDeviceStream> stream)
     {
-        return wrapDevice(data, sizeof(T), owning, stream);
+        return wrapDevice(data, ct::safeSizeOf<T>(), owning, stream);
     }
 
     template <class T>

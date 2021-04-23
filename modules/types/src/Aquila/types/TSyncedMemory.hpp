@@ -34,6 +34,18 @@ namespace aq
             MO_ASSERT_EQ(this->elemSize(), sizeof(T));
         }
 
+        TSyncedMemory(TSyncedMemory&& other)
+            : SyncedMemory(std::move(other))
+        {
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+        }
+
+        TSyncedMemory(const TSyncedMemory& other)
+            : SyncedMemory(other)
+        {
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+        }
+
         TSyncedMemory(const SyncedMemory& other)
             : SyncedMemory(other)
         {
@@ -45,12 +57,29 @@ namespace aq
         {
             SyncedMemory::operator=(std::move(other));
             MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+            return *this;
         }
 
         TSyncedMemory& operator=(const SyncedMemory& other)
         {
             SyncedMemory::operator=(other);
             MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+            return *this;
+        }
+
+        TSyncedMemory& operator=(TSyncedMemory&& other)
+
+        {
+            SyncedMemory::operator=(std::move(other));
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+            return *this;
+        }
+
+        TSyncedMemory& operator=(const TSyncedMemory& other)
+        {
+            SyncedMemory::operator=(other);
+            MO_ASSERT_EQ(this->elemSize(), sizeof(T));
+            return *this;
         }
 
         // size in number of elements
