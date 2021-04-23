@@ -33,6 +33,7 @@ namespace aq
         ENUM_END;
 
         virtual bool process() = 0;
+        virtual bool process(mo::IAsyncStream&) = 0;
 
         virtual void setSyncInput(const std::string& name) = 0;
         virtual void setSyncMethod(SyncMethod method) = 0;
@@ -52,6 +53,8 @@ namespace aq
       protected:
         virtual InputState checkInputs() = 0;
         virtual bool processImpl() = 0;
+        virtual bool processImpl(mo::IAsyncStream& stream) = 0;
+        virtual bool processImpl(mo::IDeviceStream& stream) = 0;
     };
 
 } // namespace aq

@@ -13,6 +13,16 @@ if(TARGET metaobject_python)
             aquila_serialization
     )
 
+    if(TARGET aquila_gui)
+        target_link_libraries(aquila_python
+            aquila_gui
+        )
+        target_compile_definitions(aquila_python
+            PRIVATE
+                HAVE_AQUILA_GUI
+        )
+    endif()
+
     if(UNIX)
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             set(POSTFIX "${CMAKE_DEBUG_POSTFIX}")

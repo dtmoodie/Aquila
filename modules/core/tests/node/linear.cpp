@@ -4,16 +4,19 @@
 TEST(pubsub, direct)
 {
     auto graph = aq::IGraph::create();
+
     auto output_node = test_output_node::create();
     auto input_node = test_input_node::create();
     EXPECT_NE(output_node, nullptr);
     EXPECT_NE(input_node, nullptr);
     EXPECT_NE(graph, nullptr) << "Unable to create a graph";
+    mo::IAsyncStreamPtr_t stream = graph->getStream();
+    EXPECT_NE(stream, nullptr);
     output_node->setGraph(graph);
     EXPECT_EQ(input_node->connectInput("value", output_node.get(), "value"), true);
     for (int i = 0; i < 10; ++i)
     {
-        output_node->process();
+        output_node->process(*stream);
     }
     EXPECT_EQ(output_node->process_count, 10);
     EXPECT_EQ(input_node->process_count, 10);
@@ -22,12 +25,15 @@ TEST(pubsub, direct)
 TEST(pubsub, buffered)
 {
     auto graph = aq::IGraph::create();
+    ASSERT_NE(graph, nullptr);
     auto output_node = test_output_node::create();
     auto input_node = test_input_node::create();
     EXPECT_NE(output_node, nullptr);
     EXPECT_NE(input_node, nullptr);
     output_node->setGraph(graph);
     input_node->setGraph(graph);
+    mo::IAsyncStreamPtr_t stream = graph->getStream();
+    EXPECT_NE(stream, nullptr);
     static const std::vector<mo::BufferFlags> test_cases{mo::BufferFlags::MAP_BUFFER,
                                                          mo::BufferFlags::STREAM_BUFFER,
                                                          mo::BufferFlags::BLOCKING_STREAM_BUFFER,
@@ -43,7 +49,7 @@ TEST(pubsub, buffered)
 
         for (int i = 0; i < 10; ++i)
         {
-            output_node->process();
+            output_node->process(*stream);
         }
         EXPECT_EQ(output_node->process_count, 10);
         EXPECT_EQ(input_node->process_count, 10);

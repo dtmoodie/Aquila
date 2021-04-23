@@ -203,7 +203,7 @@ void Node::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateF
     }
 }
 
-bool Node::process()
+bool Node::process(mo::IAsyncStream& stream)
 {
     LOG_ALGO(trace, "{} -- process", getName());
     ++m_iterations_since_execution;
@@ -242,7 +242,7 @@ bool Node::process()
             {
                 LOG_ALGO(trace, "{} calling processImpl", getName());
                 mo::ScopedProfile profiler(this->getName().c_str());
-                if (!processImpl())
+                if (!processImpl(stream))
                 {
                     m_iterations_since_execution = 0;
                 }
@@ -332,10 +332,10 @@ bool Node::process()
         m_iterations_since_execution = 0;
     }
 
-    return processChildren();
+    return processChildren(stream);
 }
 
-bool Node::processChildren()
+bool Node::processChildren(mo::IAsyncStream& stream)
 {
     LOG_ALGO(trace, "{} processing children", getName());
     auto children = getChildren();
@@ -344,19 +344,17 @@ bool Node::processChildren()
         if (child)
         {
             auto child_stream = child->getStream();
-            auto my_stream = getStream();
-            if (child_stream && my_stream)
+            if (child_stream)
             {
-
                 // TODO new threading model
-                if (child_stream->threadId() == my_stream->threadId())
+                if (child_stream->threadId() == stream.threadId())
                 {
-                    child->process();
+                    child->process(stream);
                 }
             }
             else
             {
-                child->process();
+                child->process(stream);
             }
         }
     }

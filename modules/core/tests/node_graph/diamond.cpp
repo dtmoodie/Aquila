@@ -39,13 +39,15 @@ struct DiamondFixture : public ::testing::TestWithParam<mo::BufferFlags>
 
     void check()
     {
+        auto stream = graph->getStream();
+        ASSERT_NE(stream, nullptr);
         for (int i = 0; i < 100; ++i)
         {
             ASSERT_EQ(a->iterations, i);
             ASSERT_EQ(d0->iterations, i);
             ASSERT_EQ(d1->iterations, i);
             ASSERT_EQ(c->iterations, i);
-            a->process();
+            a->process(*stream);
             ASSERT_EQ(a->iterations, i + 1);
             ASSERT_EQ(d0->iterations, i + 1);
             ASSERT_EQ(d1->iterations, i + 1);

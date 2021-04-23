@@ -137,21 +137,55 @@ mo::IControlParam* Algorithm::getParam(const std::string& name)
 
 bool Algorithm::process()
 {
+    mo::IAsyncStream::Ptr_t stream = this->getStream();
+    if (stream == nullptr)
+    {
+        return false;
+    }
+    return this->process(*stream);
+}
+
+bool Algorithm::process(mo::IAsyncStream& stream)
+{
     mo::Lock_t lock(getMutex());
     if (m_enabled == false)
     {
         return false;
     }
+
     if (checkInputs() == InputState::kNONE_VALID)
     {
         return false;
     }
-    if (processImpl())
+    mo::IDeviceStream* dev_stream = stream.getDeviceStream();
+    if (dev_stream)
     {
-        clearModifiedInputs();
-        return true;
+        if (processImpl(*dev_stream))
+        {
+            clearModifiedInputs();
+            return true;
+        }
     }
+    else
+    {
+        if (processImpl(stream))
+        {
+            clearModifiedInputs();
+            return true;
+        }
+    }
+
     return false;
+}
+
+bool Algorithm::processImpl(mo::IAsyncStream&)
+{
+    return this->processImpl();
+}
+
+bool Algorithm::processImpl(mo::IDeviceStream&)
+{
+    return this->processImpl();
 }
 
 const mo::IPublisher* Algorithm::getOutput(const std::string& name) const

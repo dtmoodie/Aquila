@@ -39,7 +39,8 @@ namespace aq
                                   boost::python::bases<mo::IMetaObject>,
                                   boost::noncopyable>
                 bpobj("IAlgorithm", boost::python::no_init);
-            bpobj.def("process", &aq::IAlgorithm::process);
+            bpobj.def("process", static_cast<bool (aq::IAlgorithm::*)()>(&aq::IAlgorithm::process));
+            bpobj.def("process", static_cast<bool (aq::IAlgorithm::*)(mo::IAsyncStream&)>(&aq::IAlgorithm::process));
             bpobj.def("addComponent", &aq::IAlgorithm::addComponent);
             bpobj.def("getComponents", &getComponents);
             bpobj.def("setSyncParam", &aq::IAlgorithm::setSyncInput);
@@ -50,7 +51,7 @@ namespace aq
             setup = true;
         }
 
-        void setupAlgorithmObjects(std::vector<IObjectConstructor*>& ctrs)
+        void setupAlgorithmObjects(std::vector<IObjectConstructor*>&)
         {
             // auto info = dynamic_cast<aq::Algorithm>((*itr)->GetObjectInfo());
         }

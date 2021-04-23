@@ -54,13 +54,15 @@ static const std::vector<std::pair<mo::BufferFlags, bool>> settings = {{mo::Buff
 TEST_F(BranchingFixture, direct_ts)
 {
     init();
+    auto stream = graph->getStream();
+    ASSERT_NE(stream, nullptr);
     timestamp_mode = true;
     a->addChild(b);
     EXPECT_EQ(c->connectInput("in_a", a.get(), "out_a"), true);
     EXPECT_EQ(c->connectInput("in_b", b.get(), "out_b"), true);
     for (int i = 0; i < 100; ++i)
     {
-        a->process();
+        a->process(*stream);
         EXPECT_EQ(a->iterations, i + 1);
         EXPECT_EQ(b->iterations, i + 1);
         EXPECT_EQ(c->iterations, i + 1);
@@ -103,6 +105,8 @@ TEST_F(BranchingFixture, buffered)
     for (const auto& param : settings)
     {
         init();
+        auto stream = this->graph->getStream();
+        ASSERT_NE(stream, nullptr);
         /*auto sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
         auto logger = std::make_shared<spdlog::logger>("logger", sink);
         logger->set_level(spdlog::level::level_enum::trace);
@@ -119,7 +123,7 @@ TEST_F(BranchingFixture, buffered)
             true);
         for (int i = 0; i < 1000; ++i)
         {
-            a->process();
+            a->process(*stream);
             EXPECT_EQ(a->iterations, i + 1);
             EXPECT_EQ(b->iterations, i + 1);
             EXPECT_EQ(c->iterations, i + 1);
@@ -148,15 +152,16 @@ TEST_F(BranchingFixture, merging_direct_ts)
     init();
     timestamp_mode = true;
     b->setGraph(graph);
+    auto stream = graph->getStream();
     EXPECT_EQ(c->connectInput("in_a", a.get(), "out_a"), true);
     EXPECT_EQ(c->connectInput("in_b", b.get(), "out_b"), true);
     for (int i = 0; i < 100; ++i)
     {
-        a->process();
+        a->process(*stream);
         EXPECT_EQ(a->iterations, i + 1);
         EXPECT_EQ(b->iterations, i);
         EXPECT_EQ(c->iterations, i);
-        b->process();
+        b->process(*stream);
         EXPECT_EQ(b->iterations, i + 1);
         EXPECT_EQ(c->iterations, i + 1);
 
@@ -216,16 +221,18 @@ TEST_F(BranchingFixture, merging_direct_desynced_ts)
 
     int e_iters = 0;
     int c_iters = -1;
+    auto stream = graph->getStream();
+    ASSERT_NE(stream, nullptr);
     for (int i = 0; i < 100; ++i)
     {
-        a->process();
+        a->process(*stream);
         ASSERT_EQ(a->iterations, i + 1);
         ASSERT_EQ(e->iterations, e_iters);
         ++c_iters;
 
         if (i % 2 == 0)
         {
-            e->process();
+            e->process(*stream);
             ++e_iters;
             ++c_iters;
             ASSERT_EQ(e->iterations, e_iters);

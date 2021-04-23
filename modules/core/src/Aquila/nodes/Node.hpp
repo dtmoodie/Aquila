@@ -83,7 +83,7 @@ namespace aq
 
             ~Node() override;
 
-            bool process() override;
+            bool process(mo::IAsyncStream&) override;
 
             void addParent(WeakPtr parent) override;
             std::vector<WeakPtr> getParents() const override;
@@ -129,7 +129,7 @@ namespace aq
             void addParam(mo::IParam& param) override;
 
           protected:
-            bool processChildren();
+            bool processChildren(mo::IAsyncStream&);
 
             void setModified(bool val = true) override;
             void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&) override;

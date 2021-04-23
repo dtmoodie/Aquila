@@ -27,6 +27,7 @@ namespace aq
 
         Algorithm();
         bool process() override;
+        bool process(mo::IAsyncStream&) override;
 
         int setupParamServer(const std::shared_ptr<mo::IParamServer>& mgr) override;
         int setupSignals(const std::shared_ptr<mo::RelayManager>& mgr) override;
@@ -100,6 +101,10 @@ namespace aq
             boost::optional<mo::Time> ts;
             mo::FrameNumber fn;
         };
+
+        bool processImpl(mo::IAsyncStream& stream) override;
+        bool processImpl(mo::IDeviceStream& stream) override;
+        bool processImpl() override = 0;
 
       private:
         std::shared_ptr<spdlog::logger> m_logger;

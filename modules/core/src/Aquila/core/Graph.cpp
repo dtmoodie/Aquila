@@ -306,7 +306,8 @@ bool Graph::loadDocument(const std::string& document, const std::string& prefere
 
             delete obj;
         });
-        if (connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->loadTimeout())))
+        const auto timeout = fg_info->loadTimeout();
+        if (connection_thread->timed_join(boost::posix_time::milliseconds(timeout)))
         {
             if (future.get())
             {
@@ -328,7 +329,7 @@ bool Graph::loadDocument(const std::string& document, const std::string& prefere
                    "Timeout while loading {} with {}  after waiting {} ms",
                    file_to_load,
                    fg_info->GetObjectName(),
-                   fg_info->loadTimeout());
+                   timeout);
             m_connection_threads.push_back(connection_thread);
         }
     }
@@ -561,6 +562,8 @@ void Graph::stop()
 
 int Graph::process()
 {
+    mo::IAsyncStream::Ptr_t stream = this->getStream();
+    MO_ASSERT(stream != nullptr);
     if (m_dirty_flag /* || run_continuously == true*/)
     {
         m_dirty_flag = false;
@@ -568,7 +571,7 @@ int Graph::process()
         MO_LOG(trace, "-------------------------------- Processing all nodes");
         for (auto& node : m_top_level_nodes)
         {
-            node->process();
+            node->process(*stream);
         }
         if (m_dirty_flag)
         {
@@ -612,12 +615,12 @@ void Graph::setObjectContainer(mo::TypeInfo type, IObjectContainer::Ptr_t&& cont
     m_objects[type] = std::move(container);
 }
 
-bool Graph::saveGraph(const std::string& filename)
+bool Graph::saveGraph(const std::string&)
 {
     return false;
 }
 
-bool Graph::loadGraph(const std::string& filename)
+bool Graph::loadGraph(const std::string&)
 {
     return false;
 }

@@ -192,8 +192,8 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
 
             delete obj;
         });
-
-        if (connection_thread->timed_join(boost::posix_time::milliseconds(fg_info->loadTimeout())))
+        const auto timeout = fg_info->loadTimeout();
+        if (connection_thread->timed_join(boost::posix_time::milliseconds(timeout)))
         {
             if (future.get())
             {
@@ -215,7 +215,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
                    "Timeout while loading {} with {}  after waiting {} ms",
                    uri,
                    fg_info->GetObjectName(),
-                   fg_info->loadTimeout());
+                   timeout);
             connection_threads.push_back(connection_thread);
         }
     }
@@ -248,21 +248,6 @@ bool IFrameGrabber::loadData(std::vector<std::string> path)
     return false;
 }
 // MO_REGISTER_CLASS(IFrameGrabber)
-
-class FrameGrabber : virtual public IFrameGrabber
-{
-  public:
-    static std::vector<std::string> listLoadablePaths();
-    static int loadTimeout();
-    MO_DERIVE(FrameGrabber, IFrameGrabber)
-        MO_SLOT(bool, loadData, std::string)
-    MO_END;
-    bool processImpl() override;
-    void addComponent(const rcc::weak_ptr<IAlgorithm>& component) override;
-
-  protected:
-    std::vector<IGrabber::Ptr> _grabbers;
-};
 
 void FrameGrabber::addComponent(const rcc::weak_ptr<IAlgorithm>& component)
 {
@@ -330,6 +315,24 @@ bool FrameGrabber::processImpl()
     return true;
 }
 
+Priority_t FrameGrabber::canLoadPath(const std::string& path)
+{
+    auto factory = mo::MetaObjectFactory::instance();
+    const auto hash = IGrabber::getHash();
+    auto ctrs = factory->getConstructors(hash);
+    int32_t priority = 0;
+    for (auto ctr : ctrs)
+    {
+        auto ptr = dynamic_cast<const IGrabber::InterfaceInfo*>(ctr->GetObjectInfo());
+        if (ptr)
+        {
+            const auto p = ptr->canLoad(path);
+            priority = std::max(p, priority);
+        }
+    }
+    return priority;
+}
+
 std::vector<std::string> FrameGrabber::listLoadablePaths()
 {
     auto factory = mo::MetaObjectFactory::instance();
@@ -347,18 +350,19 @@ std::vector<std::string> FrameGrabber::listLoadablePaths()
     return output;
 }
 
-int FrameGrabber::loadTimeout()
+Timeout_t FrameGrabber::loadTimeout()
 {
     auto factory = mo::MetaObjectFactory::instance();
     const auto hash = IGrabber::getHash();
     auto ctrs = factory->getConstructors(hash);
-    int max = 0;
+    Timeout_t max{0};
     for (auto ctr : ctrs)
     {
         auto ptr = dynamic_cast<const IGrabber::InterfaceInfo*>(ctr->GetObjectInfo());
         if (ptr)
         {
-            max = std::max<int>(max, ptr->timeout());
+            const Timeout_t timeout = ptr->timeout();
+            max = std::max<Timeout_t>(max, timeout);
         }
     }
     return max;

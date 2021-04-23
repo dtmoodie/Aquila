@@ -1,6 +1,8 @@
-#pragma once
+#ifndef AQUILA_FRAME_GRABBER_INFO_HPP
+#define AQUILA_FRAME_GRABBER_INFO_HPP
 #include "Aquila/nodes/NodeInfo.hpp"
 #include "IFrameGrabber.hpp"
+
 namespace aq
 {
     namespace nodes
@@ -10,17 +12,20 @@ namespace aq
 } // namespace aq
 
 // I tried placing these as functions inside of the MetaObjectInfoImpl specialization, but msvc doesn't like that. :(
+DEFINE_HAS_STATIC_FUNCTION(HasLoadablePaths, listLoadablePaths, std::vector<std::string>);
+
 template <class T>
 struct GetLoadablePathsHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasLoadablePaths, listLoadablePaths, std::vector<std::string>, void);
+
     template <class U>
-    static std::vector<std::string> helper(typename std::enable_if<HasLoadablePaths<U>::value, void>::type* = 0)
+    static std::vector<std::string> helper(ct::EnableIf<HasLoadablePaths<U>::value, int32_t> = 0)
     {
         return U::listLoadablePaths();
     }
+
     template <class U>
-    static std::vector<std::string> helper(typename std::enable_if<!HasLoadablePaths<U>::value, void>::type* = 0)
+    static std::vector<std::string> helper(ct::DisableIf<HasLoadablePaths<U>::value, int32_t> = 0)
     {
         return std::vector<std::string>();
     }
@@ -31,50 +36,61 @@ struct GetLoadablePathsHelper
     }
 };
 
+DEFINE_HAS_STATIC_FUNCTION(HasTimeout, loadTimeout, aq::nodes::Timeout_t);
+
 template <class T>
 struct GetTimeoutHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasTimeout, loadTimeout, int, void);
+
+    enum
+    {
+        value = HasTimeout<T>::value
+    };
+
     template <class U>
-    static int helper(typename std::enable_if<HasTimeout<U>::value, void>::type* = 0)
+    static aq::nodes::Timeout_t helper(ct::EnableIf<HasTimeout<U>::value, int32_t> = 0)
     {
         return U::loadTimeout();
     }
+
     template <class U>
-    static int helper(typename std::enable_if<!HasTimeout<U>::value, void>::type* = 0)
+    static aq::nodes::Timeout_t helper(ct::DisableIf<HasTimeout<U>::value, int32_t> = 0)
     {
-        return 1000;
+        return aq::nodes::Timeout_t{1000};
     }
 
-    static int get()
+    static aq::nodes::Timeout_t get()
     {
         return helper<T>();
     }
 };
 
+DEFINE_HAS_STATIC_FUNCTION(HasCanLoad, canLoadPath, aq::nodes::Priority_t, const std::string&);
+
 template <class T>
 struct GetCanLoadHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasCanLoad, canLoadPath, int, const std::string&);
-    template <class U>
-    static int helper(const std::string& doc, typename std::enable_if<HasCanLoad<U>::value, void>::type* = 0)
-    {
-        return U::canLoadPath(doc);
-    }
-    template <class U>
-    static int helper(const std::string&, typename std::enable_if<!HasCanLoad<U>::value, void>::type* = 0)
-    {
-        return 0;
-    }
-
-    static int get(const std::string& doc)
-    {
-        return helper<T>(doc);
-    }
     enum
     {
         value = HasCanLoad<T>::value
     };
+
+    template <class U>
+    static aq::nodes::Priority_t helper(const std::string& doc, ct::EnableIf<HasCanLoad<U>::value, int32_t> = 0)
+    {
+        return U::canLoadPath(doc);
+    }
+
+    template <class U>
+    static aq::nodes::Priority_t helper(const std::string&, ct::DisableIf<HasCanLoad<U>::value, int32_t> = 0)
+    {
+        return aq::nodes::Priority_t{0};
+    }
+
+    static aq::nodes::Priority_t get(const std::string& doc)
+    {
+        return helper<T>(doc);
+    }
 };
 
 namespace mo
@@ -83,7 +99,7 @@ namespace mo
     template <class Type>
     struct MetaObjectInfoImpl<Type, aq::nodes::FrameGrabberInfo> : public aq::nodes::FrameGrabberInfo
     {
-        int loadTimeout() const
+        aq::nodes::Timeout_t loadTimeout() const
         {
             return GetTimeoutHelper<Type>::get();
         }
@@ -93,7 +109,7 @@ namespace mo
             return GetLoadablePathsHelper<Type>::get();
         }
 
-        int canLoadPath(const std::string& document) const
+        aq::nodes::Priority_t canLoadPath(const std::string& document) const
         {
             if (GetCanLoadHelper<Type>::value)
                 return GetCanLoadHelper<Type>::get(document);
@@ -127,3 +143,4 @@ namespace mo
         }
     };
 } // namespace mo
+#endif // AQUILA_FRAME_GRABBER_INFO_HPP

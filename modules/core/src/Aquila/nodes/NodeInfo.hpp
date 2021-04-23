@@ -60,19 +60,19 @@ struct getNodeCategoryHelper
     }
 };
 
+DEFINE_HAS_STATIC_FUNCTION(HasParentDeps, getParentalDependencies, std::vector<std::vector<std::string>>);
 template <class T>
 struct GetParentDepsHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasParentDeps, getParentalDependencies, std::vector<std::vector<std::string>>);
+
     template <class U>
-    static std::vector<std::vector<std::string>>
-    helper(typename std::enable_if<HasParentDeps<U>::value, void>::type* = 0)
+    static std::vector<std::vector<std::string>> helper(ct::EnableIf<HasParentDeps<U>::value, int32_t> = 0)
     {
         return U::getParentalDependencies();
     }
+
     template <class U>
-    static std::vector<std::vector<std::string>>
-    helper(typename std::enable_if<!HasParentDeps<U>::value, void>::type* = 0)
+    static std::vector<std::vector<std::string>> helper(ct::DisableIf<HasParentDeps<U>::value, int32_t> = 0)
     {
         return std::vector<std::vector<std::string>>();
     }
@@ -82,20 +82,21 @@ struct GetParentDepsHelper
         return helper<T>();
     }
 };
+
+DEFINE_HAS_STATIC_FUNCTION(HasNonParentDeps, getNonParentalDependencies, std::vector<std::vector<std::string>>);
 
 template <class T>
 struct GetNonParentDepsHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasNonParentDeps, getNonParentalDependencies, std::vector<std::vector<std::string>>);
+
     template <class U>
-    static std::vector<std::vector<std::string>>
-    helper(typename std::enable_if<HasNonParentDeps<U>::value, void>::type* = 0)
+    static std::vector<std::vector<std::string>> helper(ct::EnableIf<HasNonParentDeps<U>::value, int32_t> = 0)
     {
         return U::getParentalDependencies();
     }
+
     template <class U>
-    static std::vector<std::vector<std::string>>
-    helper(typename std::enable_if<!HasNonParentDeps<U>::value, void>::type* = 0)
+    static std::vector<std::vector<std::string>> helper(ct::DisableIf<HasNonParentDeps<U>::value, int32_t> = 0)
     {
         return std::vector<std::vector<std::string>>();
     }
@@ -106,19 +107,21 @@ struct GetNonParentDepsHelper
     }
 };
 
+DEFINE_HAS_STATIC_FUNCTION(HasDepVar, checkDependentVariables, std::vector<std::string>, mo::IParamServer*);
+
 template <class T>
 struct GetDepVarHelper
 {
-    DEFINE_HAS_STATIC_FUNCTION(HasDepVar, checkDependentVariables, std::vector<std::string>, mo::IParamServer*);
+
     template <class U>
     static std::vector<std::vector<std::string>> helper(mo::IParamServer* mgr,
-                                                        typename std::enable_if<HasDepVar<U>::value, void>::type* = 0)
+                                                        ct::EnableIf<HasDepVar<U>::value, int32_t> = 0)
     {
         return U::checkDependentVariables(mgr);
     }
+
     template <class U>
-    static std::vector<std::string> helper(mo::IParamServer* mgr,
-                                           typename std::enable_if<!HasDepVar<U>::value, void>::type* = 0)
+    static std::vector<std::string> helper(mo::IParamServer*, ct::DisableIf<HasDepVar<U>::value, int32_t> = 0)
     {
         return std::vector<std::string>();
     }

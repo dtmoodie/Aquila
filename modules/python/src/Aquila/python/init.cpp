@@ -16,6 +16,10 @@
 #include <Aquila/serialization.hpp>
 #include <Aquila/types.hpp>
 
+#ifdef HAVE_AQUILA_GUI
+#include <Aquila/gui.hpp>
+#endif
+
 #include <MetaObject/MetaParameters.hpp>
 #include <MetaObject/core/SystemTable.hpp>
 #include <MetaObject/cuda.hpp>
@@ -92,16 +96,17 @@ struct AqLibGuard
     AqLibGuard(std::shared_ptr<SystemTable> table)
         : m_table(std::move(table))
     {
-        // gui_thread = aq::gui::createGuiThread();
+#ifdef HAVE_AQUILA_GUI
+        auto factory = mo::MetaObjectFactory::instance(m_table.get());
+
+        aq::gui::initModule(factory.get());
+#endif
     }
 
     ~AqLibGuard()
     {
-        gui_thread.interrupt();
-        gui_thread.join();
     }
 
-    boost::thread gui_thread;
     std::shared_ptr<SystemTable> m_table;
 };
 

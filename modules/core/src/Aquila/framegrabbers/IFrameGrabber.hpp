@@ -41,13 +41,33 @@ namespace aq
 
     namespace nodes
     {
+        // timeout used by frame grabbers in ms
+        // TODO change to std::chrono::milliseconds
+        using Timeout_t = int32_t;
+
+        // Priority frame grabber for loading a data source
+        using Priority_t = int32_t;
 
         class AQUILA_EXPORTS GrabberInfo : virtual public mo::IMetaObjectInfo
         {
           public:
-            virtual int canLoad(const std::string& path) const;
+            /*!
+             * \brief canLoad used to determine if a certain object can load a given path
+             * \param path to the data that should be loaded
+             * \return the priority of this frame grabber based on the provided path
+             */
+            virtual Priority_t canLoad(const std::string& path) const;
+            /*!
+             * \brief listPaths lists all possible paths that this frame grabber is aware that it can load
+             *        this is useful for enumerating devices on a system
+             * \param paths that can be loaded with this frame grabber
+             */
             virtual void listPaths(std::vector<std::string>& paths) const;
-            virtual int timeout() const;
+            /*!
+             * \brief timeout for trying to load from this frame grabber in milliseconds
+             * \return
+             */
+            virtual Timeout_t timeout() const;
         };
 
         class AQUILA_EXPORTS IGrabber : virtual public TInterface<IGrabber, Algorithm>
@@ -64,7 +84,7 @@ namespace aq
             virtual bool grab() = 0;
 
           protected:
-            virtual bool processImpl() override;
+            bool processImpl() override;
         };
 
         class AQUILA_EXPORTS FrameGrabberInfo : virtual public NodeInfo
@@ -77,13 +97,13 @@ namespace aq
              * \return 0 if the document cannot be loaded, priority of the frame grabber otherwise.  Higher value means
              * higher compatibility with this document
              */
-            virtual int canLoadPath(const std::string& document) const;
+            virtual Priority_t canLoadPath(const std::string& document) const;
             /*!
              * \brief loadTimeout returns the ms that should be allowed for the frame grabber's LoadFile function before
              * a timeout condition
              * \return timeout in ms
              */
-            virtual int loadTimeout() const;
+            virtual Timeout_t loadTimeout() const;
 
             // Function used for listing what documents are available for loading, used in cases of connected devices to
             // list what
@@ -113,6 +133,22 @@ namespace aq
                 MO_SLOT(bool, loadData, std::string)
                 MO_SLOT(bool, loadData, std::vector<std::string>)
             MO_END;
+        };
+
+        class FrameGrabber : virtual public IFrameGrabber
+        {
+          public:
+            static std::vector<std::string> listLoadablePaths();
+            static Timeout_t loadTimeout();
+            static Priority_t canLoadPath(const std::string& path);
+            MO_DERIVE(FrameGrabber, IFrameGrabber)
+                MO_SLOT(bool, loadData, std::string)
+            MO_END;
+            bool processImpl() override;
+            void addComponent(const rcc::weak_ptr<IAlgorithm>& component) override;
+
+          protected:
+            std::vector<IGrabber::Ptr> _grabbers;
         };
     } // namespace nodes
 } // namespace aq
