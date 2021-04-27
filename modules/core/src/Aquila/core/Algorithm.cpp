@@ -241,15 +241,6 @@ mo::IPublisher* Algorithm::getOutput(const std::string& name)
 IMetaObject::PublisherVec_t Algorithm::getOutputs(const std::string& name_filter)
 {
     auto outputs = mo::MetaObject::getOutputs(name_filter);
-    for (auto& component : m_algorithm_components)
-    {
-        auto shared = component.lock();
-        if (shared)
-        {
-            auto comp_outputs = shared->getOutputs(name_filter);
-            outputs.insert(outputs.end(), comp_outputs.begin(), comp_outputs.end());
-        }
-    }
     return outputs;
 }
 
