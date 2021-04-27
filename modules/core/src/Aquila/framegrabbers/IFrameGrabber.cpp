@@ -287,7 +287,9 @@ bool FrameGrabber::loadData(std::string path)
     }
     if (priorities.size())
     {
-        rcc::shared_ptr<IObject> obj = priorities.rbegin()->second->Construct();
+        IObjectConstructor* ctr = priorities.rbegin()->second;
+        getLogger().info("Attempting to load {} with {}", path, ctr->GetName());
+        rcc::shared_ptr<IObject> obj = ctr->Construct();
         if (obj)
         {
             auto typed = obj.DynamicCast<IGrabber>();
@@ -299,7 +301,19 @@ bool FrameGrabber::loadData(std::string path)
                     addComponent(typed);
                     return true;
                 }
+                else
+                {
+                    getLogger().error("{} was unable to load {}", ctr->GetName(), path);
+                }
             }
+            else
+            {
+                getLogger().error("Grabber unable to cast to IGrabber");
+            }
+        }
+        else
+        {
+            getLogger().warn("Unable to create grabber");
         }
     }
     return false;
