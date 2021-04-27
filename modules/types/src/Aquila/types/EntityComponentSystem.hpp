@@ -4,9 +4,13 @@
 
 #include <Aquila/core/detail/Export.hpp>
 
+#include <MetaObject/types/opencv.hpp>
+
 #include <MetaObject/core/IAsyncStream.hpp>
 #include <MetaObject/detail/TypeInfo.hpp>
 #include <MetaObject/logging/logging.hpp>
+
+#include <MetaObject/runtime_reflection.hpp>
 
 #include <MetaObject/runtime_reflection/visitor_traits/TypeInfo.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/array_adapter.hpp>

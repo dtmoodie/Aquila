@@ -127,7 +127,7 @@ namespace aq
     }
 
 #ifdef HAVE_OPENCV
-    inline int toCvDepth(DataFlag depth)
+    inline int32_t toCvDepth(DataFlag depth)
     {
         switch (depth)
         {
@@ -151,7 +151,7 @@ namespace aq
         return 0;
     }
 
-    inline DataFlag fromCvDepth(int depth)
+    inline DataFlag fromCvDepth(int32_t depth)
     {
         switch (depth)
         {

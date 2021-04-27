@@ -3,6 +3,8 @@
 #include "detection/Category.hpp"
 #include "detection/Classification.hpp"
 
+#include <MetaObject/types/opencv.hpp>
+
 #include <Aquila/core/detail/Export.hpp>
 #include <Aquila/types/EntityComponentSystem.hpp>
 

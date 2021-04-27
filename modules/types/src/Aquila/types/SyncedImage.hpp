@@ -1,7 +1,7 @@
 #ifndef AQ_TYPES_SYNCED_IMAGE_HPP
 #define AQ_TYPES_SYNCED_IMAGE_HPP
 
-#if defined(HAVE_OPENCV) || defined(OPENCV_CORE_CUDA_HPP)
+#if defined(HAVE_OPENCV) || defined(OPENCV_CORE_CUDA_HPP) || defined(OPENCV_CORE_TYPES_HPP)
 #include <ct/types/opencv.hpp>
 #include <opencv2/core/cuda.hpp>
 #if !defined(HAVE_OPENCV)
@@ -32,6 +32,13 @@ namespace aq
         {
             return data_type.elemSize() * pixel_format.numChannels();
         }
+#ifdef HAVE_OPENCV
+        inline int32_t toCvType() const
+        {
+            const int32_t depth = toCvDepth(data_type);
+            return CV_MAKE_TYPE(depth, pixel_format.numChannels());
+        }
+#endif
     };
 
     // SyncedImage inherits from enable_shared_from_this because the opencv wrapping api needs a shared_ptr
