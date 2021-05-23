@@ -9,15 +9,14 @@ aquila_declare_module(NAME gui
     DEPENDS 
         metaobject_object 
         metaobject_core 
-        opencv_highgui
-        aquila_rcc 
         metaobject_types
-)
+        opencv_highgui
 
-#target_include_directories(aquila_gui
-#    PUBLIC
-#        $<BUILD_INTERFACE:${OpenCV_INCLUDE_DIRS}>    
-#)
+        aquila_rcc 
+        aquila_core
+        aquila_types
+
+)
 
 if(BUILD_TESTS)
     add_subdirectory(tests)

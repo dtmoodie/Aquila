@@ -1,6 +1,6 @@
 #pragma once
 #include "nodes.hpp"
-#include "Aquila/core/detail/Export.hpp"
+#include "Aquila/detail/export.hpp"
 
 struct IObjectConstructor;
 

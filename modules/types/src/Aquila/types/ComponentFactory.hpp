@@ -1,6 +1,6 @@
 #ifndef AQUILA_TYPES_COMPONENT_FACTORY_HPP
 #define AQUILA_TYPES_COMPONENT_FACTORY_HPP
-#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/detail/export.hpp>
 
 #include <MetaObject/core/SystemTable.hpp>
 #include <MetaObject/detail/TypeInfo.hpp>

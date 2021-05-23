@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/core/detail/Export.hpp"
+#include "Aquila/detail/export.hpp"
 #include "MetaObject/detail/TypeInfo.hpp"
 #include <RuntimeObjectSystem/IObject.h>
 #include <RuntimeObjectSystem/shared_ptr.hpp>

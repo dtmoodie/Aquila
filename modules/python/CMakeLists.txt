@@ -46,7 +46,7 @@ if(TARGET metaobject_python)
         endif()
     endif()
 
-    RCC_TARGET_CONFIG(aquila_python libraries_deb libraries_rel)
+    RCC_TARGET_CONFIG(aquila_python libraries libraries_deb libraries_rel)
     INSTALL(FILES ${out_dir}/aquila.py
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
     )

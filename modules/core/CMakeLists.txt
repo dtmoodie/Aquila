@@ -30,7 +30,7 @@ set_target_properties(aquila_core
 )
 ENDIF()
 
-RCC_TARGET_CONFIG(aquila_core libraries_deb libraries_rel)
+RCC_TARGET_CONFIG(aquila_core libraries libraries_deb libraries_rel)
 
 
 SUBDIRLIST(tests "${CMAKE_CURRENT_LIST_DIR}/tests")

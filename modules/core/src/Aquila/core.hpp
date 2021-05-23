@@ -1,9 +1,7 @@
 #ifndef AQUILA_CORE_HPP
 #define AQUILA_CORE_HPP
 
-#define AQUILA_MODULE "core"
-#include <Aquila/detail/export.hpp>
-#undef AQUILA_MODULE
+#include <Aquila/core/export.hpp>
 
 #include <string>
 

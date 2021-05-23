@@ -264,7 +264,7 @@ namespace aq
                 {
                     src_stream->hostToHost({h_ptr, copy_size}, {old_host, copy_size});
                     src_stream->pushWork(
-                        [old_host, old_size, alloc]() { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
+                        [old_host, old_size, alloc](mo::IAsyncStream&) { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
                 }
 
                 if (old_device)
@@ -292,7 +292,7 @@ namespace aq
                     if (copy_size)
                     {
                         src_device_stream->deviceToDevice({d_ptr, copy_size}, {old_device, copy_size});
-                        src_device_stream->pushWork([old_device, old_size, alloc]() {
+                        src_device_stream->pushWork([old_device, old_size, alloc](mo::IAsyncStream&) {
                             alloc->deallocate(ct::ptrCast<uint8_t>(old_device), old_size);
                         });
                     }

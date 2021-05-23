@@ -91,6 +91,7 @@ class multi_input : public Algorithm
     bool processImpl() override
     {
         EXPECT_EQ(*input1, *input2);
+        EXPECT_NE(last, *input1);
         last = *input1;
         first.push_back(*input1);
         second.push_back(*input2);
@@ -101,7 +102,7 @@ class multi_input : public Algorithm
         INPUT(int, input1)
         INPUT(int, input2)
     MO_END;
-    int last = 0;
+    int last = -1;
     std::vector<int> first;
     std::vector<int> second;
 };
@@ -245,19 +246,21 @@ TEST(algorithm, desynced_input)
     auto obj = rcc::shared_ptr<multi_input>::create();
 
     boost::this_fiber::sleep_for(std::chrono::milliseconds(10));
-    stream1->pushWork([&slow_output, iterations]() -> void {
+    bool finished = false;
+    stream1->pushWork([&slow_output, iterations, &finished](mo::IAsyncStream&) -> void {
         for (int i = 0; i < iterations; ++i)
         {
-            slow_output.publish(i, mo::Header(i));
+            slow_output.publish(i, mo::Header(std::chrono::milliseconds(i)));
             boost::this_fiber::sleep_for(std::chrono::milliseconds(10));
         }
         // slow_output.setStream(nullptr);
         MO_LOG(info, "Publishing thread finished");
+        finished = true;
     });
 
     obj->setStream(stream2);
 
-    stream2->pushWork([&obj, &fast_output, &slow_output, iterations]() -> void {
+    stream2->pushWork([&obj, &fast_output, &slow_output, iterations](mo::IAsyncStream&) -> void {
         EXPECT_TRUE(obj->connectInput(&obj->input1_param, nullptr, &fast_output));
         EXPECT_TRUE(obj->connectInput(&obj->input2_param, nullptr, &slow_output));
 
@@ -285,12 +288,17 @@ TEST(algorithm, desynced_input)
             }
         }
         MO_LOG(info, "Subscribing thread finished");
+
     });
 
     for (int i = 0; i < iterations; ++i)
     {
-        fast_output.publish(i, mo::Header(i));
+        fast_output.publish(i, mo::Header(std::chrono::milliseconds(i)));
         boost::this_fiber::sleep_for(std::chrono::milliseconds(1));
     }
     boost::this_fiber::sleep_for(std::chrono::milliseconds(100));
+    while(!finished)
+    {
+        stream1->synchronize();
+    }
 }

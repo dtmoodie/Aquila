@@ -1,6 +1,6 @@
 #pragma once
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
-#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/detail/export.hpp>
 #include <opencv2/core.hpp>
 #ifdef _WIN32
 #ifdef _DEBUG

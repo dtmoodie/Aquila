@@ -5,7 +5,7 @@
 
 #include <MetaObject/types/opencv.hpp>
 
-#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/detail/export.hpp>
 #include <Aquila/types/EntityComponentSystem.hpp>
 
 #include <MetaObject/types/small_vec.hpp>

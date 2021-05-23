@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/core/detail/Export.hpp"
+#include "Aquila/detail/export.hpp"
 #include <functional>
 #include <map>
 #include <string>

@@ -1,5 +1,5 @@
 #pragma once
-#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/detail/export.hpp>
 #include <MetaObject/object/MetaObject.hpp>
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
 #include <MetaObject/signals/detail/SignalMacros.hpp>

@@ -533,7 +533,7 @@ void Graph::removeVariableSink(IVariableSink* sink)
 void graphLoop(rcc::shared_ptr<Graph> graph, IAsyncStreamPtr_t stream, const uint64_t event_id)
 {
     graph->process();
-    stream->pushEvent([graph, stream, event_id]() mutable { graphLoop(graph, stream, event_id); }, event_id);
+    stream->pushEvent([graph, stream, event_id](mo::IAsyncStream&) mutable { graphLoop(graph, stream, event_id); }, event_id);
 }
 
 void Graph::start()
@@ -545,7 +545,7 @@ void Graph::start()
     const auto object_id = this->GetObjectId();
     const auto event_id = ce::combineHash(object_id.m_PerTypeId, object_id.m_ConstructorId);
     rcc::shared_ptr<Graph> graph_ptr(*this);
-    auto event = [graph_ptr, stream, event_id]() { graphLoop(graph_ptr, stream, event_id); };
+    auto event = [graph_ptr, stream, event_id](mo::IAsyncStream&) { graphLoop(graph_ptr, stream, event_id); };
     stream->pushEvent(std::move(event), event_id);
 }
 
@@ -556,7 +556,7 @@ void Graph::stop()
     mo::IAsyncStreamPtr_t stream = this->getStream();
     MO_ASSERT(stream);
     size_t event_id = ce::generateHash(static_cast<const void*>(this));
-    auto event = []() {};
+    auto event = [](mo::IAsyncStream&) {};
     stream->pushEvent(std::move(event), event_id);
 }
 

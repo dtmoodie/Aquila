@@ -2,7 +2,7 @@
 #define AQ_TYPES_ENTITY_COMPONENT_SYSTEM_HPP
 #include "ComponentFactory.hpp"
 
-#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/detail/export.hpp>
 
 #include <MetaObject/types/opencv.hpp>
 

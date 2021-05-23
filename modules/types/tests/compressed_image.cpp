@@ -17,7 +17,15 @@
 #include "cv_compression/cv_compressor.hpp"
 #include "cv_compression/cv_decompressor.hpp"
 
+#include "aq_cv_compression_export.hpp"
+
 #include <gtest/gtest.h>
+
+TEST(compressed_image, initialization)
+{
+    auto factory = mo::MetaObjectFactory::instance();
+    aq_cv_compression::initPlugin(0, factory.get());
+}
 
 TEST(compressed_image, static_checks)
 {
@@ -31,8 +39,11 @@ TEST(compressed_image, static_checks)
         dynamic_cast<TObjectControlBlock<aq::OpenCVDecompressor>*>(static_cast<IObjectControlBlock*>(nullptr));
     (void)control_block;
     auto decompressor = aq::OpenCVDecompressor::create();
+    EXPECT_NE(decompressor, nullptr);
     auto typed_cb = decompressor.GetControlBlock();
+    EXPECT_NE(typed_cb, nullptr);
     auto cb = typed_cb.get();
+    EXPECT_NE(cb, nullptr);
     EXPECT_NE(dynamic_cast<TObjectControlBlock<aq::IImageDecompressor>*>(cb), nullptr);
     EXPECT_NE(dynamic_cast<TObjectControlBlock<mo::MetaObject>*>(cb), nullptr);
     EXPECT_NE(dynamic_cast<TObjectControlBlock<IObject>*>(cb), nullptr);

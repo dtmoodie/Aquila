@@ -1,5 +1,5 @@
 #pragma once
-#include "Aquila/core/detail/Export.hpp"
+#include "Aquila/detail/export.hpp"
 #include <Aquila/rcc/external_includes/cv_core.hpp>
 #include <Aquila/rcc/external_includes/cv_imgproc.hpp>
 #include <functional>

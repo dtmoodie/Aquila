@@ -2,7 +2,7 @@
 #include <ct/types/opencv.hpp>
 
 #include "Classification.hpp"
-#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/detail/export.hpp>
 #include <cereal/cereal.hpp>
 #include <ct/reflect.hpp>
 #include <ct/types/vector.hpp>

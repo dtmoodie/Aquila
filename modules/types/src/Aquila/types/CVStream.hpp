@@ -1,6 +1,6 @@
 #ifndef AQUILA_TYPES_CVSTREAM_HPP
 #define AQUILA_TYPES_CVSTREAM_HPP
-#include <Aquila/core/detail/Export.hpp>
+#include <Aquila/detail/export.hpp>
 
 #include <MetaObject/core/IAsyncStream.hpp>
 #include <MetaObject/cuda/AsyncStream.hpp>
