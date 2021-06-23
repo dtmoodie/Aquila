@@ -167,7 +167,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
             }
         };
 
-        auto obj = new thread_load_object();
+        auto obj = std::make_unique<thread_load_object>();
         obj->fg = fg;
         obj->document = uri;
         auto future = obj->promise.get_future();
@@ -179,7 +179,8 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
                fg->GetTypeName(),
                valid_constructor_priority[idx[static_cast<size_t>(i)]]);
         mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::current();
-        boost::thread* connection_thread = new boost::thread([obj, stream]() -> void {
+
+        boost::thread* connection_thread = new boost::thread([&obj, stream]() -> void {
             mo::IAsyncStream::setCurrent(stream);
             try
             {
@@ -190,7 +191,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
                 MO_LOG(debug, e.what());
             }
 
-            delete obj;
+            //delete obj;
         });
         const auto timeout = fg_info->loadTimeout();
         if (connection_thread->timed_join(boost::posix_time::milliseconds(timeout)))

@@ -6,6 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include <MetaObject/logging/profiling.hpp>
+
 #define private public
 #include "cv_compression/CvMatAllocatorWrapper.hpp"
 #include <Aquila/types/CvMatAllocator.hpp>
@@ -125,18 +127,24 @@ TEST(synced_image_opencv, global_allocator)
 
 TEST(synced_image_opencv, sync_data)
 {
+
+    mo::initProfiling();
+    PROFILE_FUNCTION
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
     aq::SyncedImage image;
-    image.create(1024, 1024);
+    // Count non zero only takes gray images
+    image.create(1024, 1024, aq::PixelFormat::kGRAY);
     image.setStream(stream);
 
     auto gpu_mat = image.mutableGpuMat();
-    EXPECT_EQ(gpu_mat.channels(), 3);
+    EXPECT_EQ(gpu_mat.channels(), 1);
     gpu_mat.setTo(cv::Scalar::all(100));
-    const auto cpu_mat = image.mat();
+    bool sync = false;
+    const auto cpu_mat = image.mat(nullptr, &sync);
+    EXPECT_TRUE(sync);
     stream->synchronize();
 
-    EXPECT_EQ(cv::countNonZero(cpu_mat == 100), 1024 * 1024 * 3);
+    EXPECT_EQ(cv::countNonZero(cpu_mat == 100), 1024 * 1024);
 }
 
 TEST(synced_image_opencv, wrapping_allocator)

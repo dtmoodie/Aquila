@@ -264,7 +264,7 @@ namespace aq
                 {
                     src_stream->hostToHost({h_ptr, copy_size}, {old_host, copy_size});
                     src_stream->pushWork(
-                        [old_host, old_size, alloc](mo::IAsyncStream&) { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
+                        [old_host, old_size, alloc](mo::IAsyncStream*) { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
                 }
 
                 if (old_device)
@@ -292,7 +292,7 @@ namespace aq
                     if (copy_size)
                     {
                         src_device_stream->deviceToDevice({d_ptr, copy_size}, {old_device, copy_size});
-                        src_device_stream->pushWork([old_device, old_size, alloc](mo::IAsyncStream&) {
+                        src_device_stream->pushWork([old_device, old_size, alloc](mo::IAsyncStream*) {
                             alloc->deallocate(ct::ptrCast<uint8_t>(old_device), old_size);
                         });
                     }
@@ -316,8 +316,9 @@ namespace aq
         if (!h_ptr)
         {
             MO_ASSERT(src_stream);
-            auto alloc = src_stream->hostAllocator();
-            h_ptr = static_cast<void*>(alloc->allocate(m_size, m_elem_size));
+            auto host_allocator = src_stream->hostAllocator();
+            MO_ASSERT(host_allocator);
+            h_ptr = static_cast<void*>(host_allocator->allocate(m_size, m_elem_size));
             h_flags = PointerFlags::OWNED;
             if (d_ptr)
             {

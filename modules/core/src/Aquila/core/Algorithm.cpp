@@ -153,7 +153,7 @@ bool Algorithm::process(mo::IAsyncStream& stream)
         return false;
     }
 
-    if (checkInputs() == InputState::kNONE_VALID)
+    if (checkInputs() != InputState::kALL_VALID)
     {
         return false;
     }
@@ -346,6 +346,7 @@ Algorithm::InputState Algorithm::syncTimestamp(const mo::Time& ts, const std::ve
                      data->getHeader().timestamp,
                      ts,
                      input->getName());
+            fn = data->getHeader().frame_number;
         }
         else
         {
@@ -843,6 +844,11 @@ void Algorithm::setSyncInput(const std::string& name)
     {
         LOG_ALGO(warn, "Unable to set sync input for {} to {}", this->GetTypeName(), name);
     }
+}
+
+void Algorithm::setSynchronizer(std::unique_ptr<IParameterSynchronizer> sync)
+{
+    m_synchronizer = std::move(sync);
 }
 
 int Algorithm::setupParamServer(const std::shared_ptr<mo::IParamServer>& mgr)

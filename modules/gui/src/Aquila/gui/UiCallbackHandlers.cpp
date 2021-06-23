@@ -78,7 +78,7 @@ void WindowCallbackHandler::imshow(const std::string& window_name, cv::Mat img, 
     if (mystream != ui_stream)
     {
         // clang-format off
-        auto event = [this, window_name, img, flags](mo::IAsyncStream&)
+        auto event = [this, window_name, img, flags](mo::IAsyncStream*)
         {
             this->imshow(window_name, img, flags);
         };
@@ -116,7 +116,7 @@ void WindowCallbackHandler::imshowd(const std::string& window_name, cv::cuda::Gp
     if (mystream != ui_stream)
     {
         // clang-format off
-        auto event = [this, window_name, img, flags](mo::IAsyncStream&)
+        auto event = [this, window_name, img, flags](mo::IAsyncStream*)
         {
             this->imshowd(window_name, img, flags);
         };
@@ -150,7 +150,7 @@ void WindowCallbackHandler::imshowb(const std::string& window_name, cv::ogl::Buf
     std::shared_ptr<mo::IAsyncStream> ui_stream = getUiStream();
     if (mystream != ui_stream)
     {
-        auto event = [this, window_name, buffer, flags](mo::IAsyncStream&) { this->imshowb(window_name, buffer, flags); };
+        auto event = [this, window_name, buffer, flags](mo::IAsyncStream*) { this->imshowb(window_name, buffer, flags); };
         ui_stream->pushWork(std::move(event));
         return;
     }

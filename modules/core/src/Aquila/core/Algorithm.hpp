@@ -1,6 +1,8 @@
 #pragma once
 #include "Aquila/detail/export.hpp"
 #include "IAlgorithm.hpp"
+#include "ParameterSynchronizer.hpp"
+
 #include <MetaObject/object/MetaObject.hpp>
 #include <RuntimeObjectSystem/shared_ptr.hpp>
 
@@ -38,6 +40,7 @@ namespace aq
 
         void setSyncInput(const std::string& name) override;
         void setSyncMethod(SyncMethod method) override;
+        void setSynchronizer(std::unique_ptr<IParameterSynchronizer>) override;
 
         void postSerializeInit() override;
         void Init(bool first_init) override;
@@ -119,5 +122,6 @@ namespace aq
         std::map<const mo::ISubscriber*, boost::circular_buffer<SyncData>> m_buffer_timing_data;
         std::vector<rcc::weak_ptr<IAlgorithm>> m_algorithm_components;
         bool m_enabled = true;
+        std::unique_ptr<IParameterSynchronizer> m_synchronizer;
     };
 } // namespace aq

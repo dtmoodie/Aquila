@@ -119,21 +119,28 @@ TEST(algorithm, reflection)
 
 TEST(algorithm, no_input)
 {
-    auto ctx = mo::AsyncStreamFactory::instance()->create();
+    auto stream = mo::AsyncStreamFactory::instance()->create();
     auto obj = rcc::shared_ptr<int_output>::create();
-    for (int i = 0; i < 100; ++i)
+    obj->setStream(stream);
+    size_t success_count = 0;
+    for (size_t i = 0; i < 100; ++i)
     {
-        obj->process();
+        if(obj->process())
+        {
+            ++success_count;
+        }
     }
-
+    EXPECT_EQ(success_count, 100);
     EXPECT_EQ(obj->counter, 100);
 }
 
 TEST(algorithm, counting_input)
 {
-    auto ctx = mo::AsyncStreamFactory::instance()->create();
+    auto stream = mo::AsyncStreamFactory::instance()->create();
     auto output = rcc::shared_ptr<int_output>::create();
     auto input = rcc::shared_ptr<int_input>::create();
+    output->setStream(stream);
+    input->setStream(stream);
     auto output_param = output->getOutput("value");
     auto input_param = input->getInput("input");
     EXPECT_NE(output_param, nullptr);
@@ -179,7 +186,6 @@ TEST(algorithm, threaded_input)
     mo::TPublisher<int> output;
     output.setName("test");
     output.setStream(*ctx);
-    // mo::getDefaultLogger().set_level(spdlog::level::trace);
     auto obj = rcc::shared_ptr<int_input>::create();
     std::atomic<int> success_count(0);
     boost::thread thread([&obj, &output, &success_count]() -> void {
@@ -203,7 +209,7 @@ TEST(algorithm, threaded_input)
 
     for (int i = 0; i < 1000; ++i)
     {
-        output.publish(i, mo::Header(i));
+        output.publish(i, mo::Header(std::chrono::milliseconds(i)));
         boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
     }
 
@@ -244,10 +250,11 @@ TEST(algorithm, desynced_input)
     auto data2 = slow_output.getData();
 
     auto obj = rcc::shared_ptr<multi_input>::create();
+    ASSERT_TRUE(obj);
 
     boost::this_fiber::sleep_for(std::chrono::milliseconds(10));
     bool finished = false;
-    stream1->pushWork([&slow_output, iterations, &finished](mo::IAsyncStream&) -> void {
+    stream1->pushWork([&slow_output, iterations, &finished](mo::IAsyncStream*) -> void {
         for (int i = 0; i < iterations; ++i)
         {
             slow_output.publish(i, mo::Header(std::chrono::milliseconds(i)));
@@ -260,19 +267,19 @@ TEST(algorithm, desynced_input)
 
     obj->setStream(stream2);
 
-    stream2->pushWork([&obj, &fast_output, &slow_output, iterations](mo::IAsyncStream&) -> void {
-        EXPECT_TRUE(obj->connectInput(&obj->input1_param, nullptr, &fast_output));
-        EXPECT_TRUE(obj->connectInput(&obj->input2_param, nullptr, &slow_output));
+    EXPECT_TRUE(obj->connectInput(&obj->input1_param, nullptr, &fast_output));
+    EXPECT_TRUE(obj->connectInput(&obj->input2_param, nullptr, &slow_output));
 
-        auto pub1 = obj->input1_param.getPublisher();
-        auto pub2 = obj->input2_param.getPublisher();
+    auto pub1 = obj->input1_param.getPublisher();
+    auto pub2 = obj->input2_param.getPublisher();
 
-        ASSERT_NE(pub1, nullptr) << "Did not correctly connect a publisher to this subscriber";
-        ASSERT_NE(pub2, nullptr) << "Did not correctly connect a publisher to this subscriber";
+    ASSERT_NE(pub1, nullptr) << "Did not correctly connect a publisher to this subscriber";
+    ASSERT_NE(pub2, nullptr) << "Did not correctly connect a publisher to this subscriber";
 
-        EXPECT_TRUE(pub1->checkFlags(mo::ParamFlags::kBUFFER)) << "Did not correctly negotiate a buffered connection";
-        EXPECT_TRUE(pub2->checkFlags(mo::ParamFlags::kBUFFER)) << "Did not correctly negotiate a buffered connection";
+    EXPECT_TRUE(pub1->checkFlags(mo::ParamFlags::kBUFFER)) << "Did not correctly negotiate a buffered connection";
+    EXPECT_TRUE(pub2->checkFlags(mo::ParamFlags::kBUFFER)) << "Did not correctly negotiate a buffered connection";
 
+    stream2->pushWork([&obj, &fast_output, &slow_output, iterations](mo::IAsyncStream*) -> void {
         int success_count = 0;
 
         // mo::getDefaultLogger().set_level(spdlog::level::trace);
@@ -296,9 +303,8 @@ TEST(algorithm, desynced_input)
         fast_output.publish(i, mo::Header(std::chrono::milliseconds(i)));
         boost::this_fiber::sleep_for(std::chrono::milliseconds(1));
     }
-    boost::this_fiber::sleep_for(std::chrono::milliseconds(100));
     while(!finished)
     {
-        stream1->synchronize();
+        boost::this_fiber::sleep_for(std::chrono::milliseconds(100));
     }
 }

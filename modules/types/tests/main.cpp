@@ -6,6 +6,10 @@
 
 #include <MetaObject/cuda/Allocator.hpp>
 #include <MetaObject/cuda/MemoryBlock.hpp>
+#include <MetaObject/thread/ThreadPool.hpp>
+#include <MetaObject/thread/FiberScheduler.hpp>
+
+#include <boost/fiber/operations.hpp>
 
 #include <gtest/gtest.h>
 
@@ -30,12 +34,13 @@ int main(int argc, char** argv)
     if (make_table)
     {
         table = SystemTable::instance();
-        auto allocator = std::make_shared<mo::DefaultAllocator<mo::CPU>>();
+        auto allocator = std::make_shared<mo::DefaultAllocator<mo::cuda::HOST>>();
         table->setDefaultAllocator(allocator);
         using DeviceAllocator = mo::DefaultAllocator<mo::cuda::CUDA>;
         table->getSingleton<mo::DeviceAllocator, DeviceAllocator>();
         mo::MetaObjectFactory::instance()->registerTranslationUnit();
-        // mo::MetaObjectFactory::loadStandardPlugins();
+        std::shared_ptr<mo::ThreadPool> pool = table->getSingleton<mo::ThreadPool>();
+        boost::fibers::use_scheduling_algorithm<mo::PriorityScheduler>(pool);
     }
 
     return RUN_ALL_TESTS();

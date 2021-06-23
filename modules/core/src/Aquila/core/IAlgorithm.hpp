@@ -9,6 +9,7 @@
 
 namespace aq
 {
+    class IParameterSynchronizer;
     class AQUILA_EXPORTS IAlgorithm : virtual public TInterface<IAlgorithm, mo::MetaObject>
     {
       public:
@@ -37,6 +38,7 @@ namespace aq
 
         virtual void setSyncInput(const std::string& name) = 0;
         virtual void setSyncMethod(SyncMethod method) = 0;
+        virtual void setSynchronizer(std::unique_ptr<IParameterSynchronizer>) = 0;
 
         virtual void setEnabled(bool value) = 0;
         virtual bool getEnabled() const = 0;
