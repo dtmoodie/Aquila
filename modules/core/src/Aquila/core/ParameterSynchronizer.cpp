@@ -6,6 +6,7 @@ namespace aq
     ParameterSynchronizer::ParameterSynchronizer()
     {
         m_slot.bind(&ParameterSynchronizer::onParamUpdate, this);
+        m_previous_timestamps.set_capacity(20);
     }
 
     ParameterSynchronizer::~ParameterSynchronizer()
@@ -20,14 +21,17 @@ namespace aq
             {
                 m_headers[input] = boost::circular_buffer<mo::Header>(100);
             }
+            input->registerUpdateNotifier(m_slot);
         }
+        m_publishers = std::move(inputs);
     }
 
-    void ParameterSynchronizer::setCallback(std::function<Callback_s>)
+    void ParameterSynchronizer::setCallback(std::function<Callback_s> cb)
     {
+        m_callback = std::move(cb);
     }
 
-    boost::optional<mo::Time> ParameterSynchronizer::findEarliestCommonTimestamp() const
+    mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
     {
         mo::OptionalTime output;
         uint32_t valid_count = 0;
@@ -39,7 +43,7 @@ namespace aq
                 if (boost::none != hdr.timestamp)
                 {
                     ++valid_count;
-                    if (boost::none != output)
+                    if (boost::none == output)
                     {
                         output = hdr.timestamp;
                         continue;
@@ -54,12 +58,64 @@ namespace aq
         return output;
     }
 
+    bool ParameterSynchronizer::dedoup(const mo::Time& time)
+    {
+        auto itr = std::find(m_previous_timestamps.begin(), m_previous_timestamps.end(), time);
+        if(itr != m_previous_timestamps.end())
+        {
+            // Duplicate timestamp detected
+            return false;
+        }
+        m_previous_timestamps.push_back(time);
+        return true;
+    }
+
+    void ParameterSynchronizer::removeTimestamp(const mo::Time& time)
+    {
+        for( auto& itr : m_headers)
+        {
+            auto find_itr = std::find_if(itr.second.begin(), itr.second.end(), [&time](const mo::Header& hdr)
+            {
+                if(hdr.timestamp)
+                {
+                    return time == hdr.timestamp;
+                }
+                return false;
+            });
+            if(find_itr != itr.second.end())
+            {
+                itr.second.erase(find_itr);
+                // We don't expect duplicate timestamps in the same circular buffer, perhaps this should be a loop until we don't find the timestamp?
+                break;
+            }
+        }
+    }
+
+    void ParameterSynchronizer::onNewData()
+    {
+        mo::OptionalTime time = findEarliestCommonTimestamp();
+
+        if(time)
+        {
+
+            if(dedoup(*time))
+            {
+                if(m_callback)
+                {
+                    m_callback(time.get_ptr(), nullptr, m_publishers);
+                }
+            }
+            removeTimestamp(*time);
+        }
+    }
+
     void
     ParameterSynchronizer::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags, mo::IAsyncStream&)
     {
         auto itr = m_headers.find(&param);
         MO_ASSERT(itr != m_headers.end());
         itr->second.push_back(header);
+        onNewData();
     }
 
 } // namespace aq
