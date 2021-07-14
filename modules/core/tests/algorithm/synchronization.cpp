@@ -65,12 +65,14 @@ TEST(parameter_synchronizer, two_synchronized_inputs_timestamp)
     };
 
     synchronizer.setCallback(std::move(callback));
-    for (uint32_t i = 0; i < 20; ++i)
+    for (uint32_t i = 1; i < 20; ++i)
     {
         pub0.publish(i, header);
         pub1.publish(i + 1, header);
-        ASSERT_TRUE(callback_invoked);
+        ASSERT_TRUE(callback_invoked) << "i = " << i;
         callback_invoked = false;
+        pub0.publish(i, header);
+        ASSERT_FALSE(callback_invoked);
         header = mo::Header(std::chrono::milliseconds(i));
     }
 }

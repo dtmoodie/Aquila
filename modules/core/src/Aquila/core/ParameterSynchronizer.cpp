@@ -42,17 +42,25 @@ namespace aq
                 const mo::Header& hdr = itr->second.front();
                 if (boost::none != hdr.timestamp)
                 {
-                    ++valid_count;
                     if (boost::none == output)
                     {
                         output = hdr.timestamp;
+                        ++valid_count;
                         continue;
                     }
                     else
                     {
+                        if(output == hdr.timestamp)
+                        {
+                            ++valid_count;
+                        }
                     }
                 }
             }
+        }
+        if(valid_count != m_headers.size())
+        {
+            return {};
         }
 
         return output;
@@ -86,7 +94,6 @@ namespace aq
             {
                 itr.second.erase(find_itr);
                 // We don't expect duplicate timestamps in the same circular buffer, perhaps this should be a loop until we don't find the timestamp?
-                break;
             }
         }
     }
