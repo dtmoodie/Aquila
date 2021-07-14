@@ -1,12 +1,13 @@
 #include <Aquila/core/Algorithm.hpp>
 
-#include "MetaObject/core/detail/Allocator.hpp"
-#include "MetaObject/object/MetaObjectFactory.hpp"
-#include "MetaObject/object/detail/IMetaObjectImpl.hpp"
-#include "MetaObject/object/detail/MetaObjectMacros.hpp"
-#include "MetaObject/params/ParamMacros.hpp"
-#include "MetaObject/params/TSubscriberPtr.hpp"
+#include <MetaObject/core/detail/Allocator.hpp>
+#include <MetaObject/object/MetaObjectFactory.hpp>
+#include <MetaObject/object/detail/IMetaObjectImpl.hpp>
+#include <MetaObject/object/detail/MetaObjectMacros.hpp>
+#include <MetaObject/params/ParamMacros.hpp>
+#include <MetaObject/params/TSubscriberPtr.hpp>
 #include <MetaObject/core/AsyncStreamFactory.hpp>
+#include <MetaObject/thread/FiberScheduler.hpp>
 
 #include <boost/fiber/operations.hpp>
 #include <boost/thread.hpp>
@@ -154,21 +155,70 @@ TEST(algorithm, counting_input)
     }
 }
 
-TEST(algorithm, synced_input)
+TEST(algorithm, single_input)
 {
-    auto ctx = mo::AsyncStreamFactory::instance()->create();
+    auto stream = mo::AsyncStreamFactory::instance()->create();
     mo::TPublisher<int> output;
+    output.setStream(*stream);
     output.publish(10, mo::Header(0));
     auto input = rcc::shared_ptr<int_input>::create();
     input->input_param.setInput(&output);
-    input->setSyncInput("input");
+    input->setStream(stream);
     for (int i = 0; i < 100; ++i)
     {
         output.publish(i + 1, i);
         EXPECT_EQ(input->process(), true);
 
         auto header = mo::Header(mo::FrameNumber(i));
-        auto data = output.getData(&header, ctx.get());
+        auto data = output.getData(&header, stream.get());
+
+        EXPECT_TRUE(data) << "Unable to retrieve data at fn=" << i + 1 << " what does exist is "
+                          << output.getAvailableHeaders();
+        auto ptr = data->ptr<int>();
+        ASSERT_TRUE(ptr);
+        EXPECT_EQ(input->value, *ptr) << "retrieved value does not match what we published";
+        EXPECT_EQ(*ptr, i + 1);
+        EXPECT_EQ(*input->input, input->value);
+    }
+}
+
+TEST(algorithm, single_input_multi_stream)
+{
+    auto stream0 = mo::AsyncStreamFactory::instance()->create();
+    auto stream1 = mo::AsyncStreamFactory::instance()->create();
+    mo::TPublisher<int> output;
+    output.setStream(*stream0);
+    output.publish(10, mo::Header(0));
+    auto input = rcc::shared_ptr<int_input>::create();
+    input->setStream(stream1);
+    input->input_param.setInput(&output);
+    for (int i = 0; i < 100; ++i)
+    {
+        output.publish(i + 1, i);
+        EXPECT_EQ(input->process(), true);
+
+        auto header = mo::Header(mo::FrameNumber(i));
+        EXPECT_EQ(*input->input, input->value);
+    }
+}
+
+TEST(algorithm, synced_input)
+{
+    auto stream = mo::AsyncStreamFactory::instance()->create();
+    mo::TPublisher<int> output;
+    output.setStream(*stream);
+    output.publish(10, mo::Header(0));
+    auto input = rcc::shared_ptr<int_input>::create();
+    input->input_param.setInput(&output);
+    input->setSyncInput("input");
+    input->setStream(stream);
+    for (int i = 0; i < 100; ++i)
+    {
+        output.publish(i + 1, i);
+        EXPECT_EQ(input->process(), true);
+
+        auto header = mo::Header(mo::FrameNumber(i));
+        auto data = output.getData(&header, stream.get());
 
         EXPECT_TRUE(data) << "Unable to retrieve data at fn=" << i + 1 << " what does exist is "
                           << output.getAvailableHeaders();
@@ -182,46 +232,49 @@ TEST(algorithm, synced_input)
 
 TEST(algorithm, threaded_input)
 {
-    auto ctx = mo::AsyncStreamFactory::instance()->create();
+    const uint32_t count = 100;
+    auto stream = mo::AsyncStreamFactory::instance()->create();
     mo::TPublisher<int> output;
     output.setName("test");
-    output.setStream(*ctx);
-    auto obj = rcc::shared_ptr<int_input>::create();
+    output.setStream(*stream);
+    mo::getDefaultLogger().set_level(spdlog::level::trace);
+    auto subscriber = rcc::shared_ptr<int_input>::create();
+    subscriber->setStream(stream);
     std::atomic<int> success_count(0);
-    boost::thread thread([&obj, &output, &success_count]() -> void {
+    boost::thread thread([&subscriber, &output, &success_count]() -> void {
+        boost::fibers::use_scheduling_algorithm<mo::PriorityScheduler>(std::weak_ptr<mo::ThreadPool>());
         auto thread_stream = mo::AsyncStreamFactory::instance()->create();
-        obj->setStream(thread_stream);
-        ASSERT_TRUE(obj->connectInput(&obj->input_param, nullptr, &output));
-        auto pub = obj->input_param.getPublisher();
+        subscriber->setStream(thread_stream);
+        ASSERT_TRUE(subscriber->connectInput(&subscriber->input_param, nullptr, &output));
+        auto pub = subscriber->input_param.getPublisher();
         ASSERT_TRUE(pub);
         ASSERT_TRUE(pub->checkFlags(mo::ParamFlags::kBUFFER)) << "Failed to setup a buffered connection";
 
-        while (success_count < 1000 && !boost::this_thread::interruption_requested())
+        while (success_count < count && !boost::this_thread::interruption_requested())
         {
-            if (obj->process())
+            if (subscriber->process())
             {
                 ++success_count;
             }
         }
-        obj->setStream(nullptr);
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
     });
 
-    for (int i = 0; i < 1000; ++i)
+    for (uint32_t i = 0; i < count; ++i)
     {
         output.publish(i, mo::Header(std::chrono::milliseconds(i)));
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+        boost::this_fiber::sleep_for(std::chrono::nanoseconds(10));
     }
 
-    const bool finished = thread.try_join_for(boost::chrono::seconds(5));
-    EXPECT_TRUE(finished) << "expected to perform 1000 iterations, but instead performed only " << success_count;
+    const bool finished = thread.try_join_for(boost::chrono::seconds(50));
+    EXPECT_TRUE(finished) << "expected to perform " << count << " iterations, but instead performed only "
+                          << success_count;
     if (!finished)
     {
         thread.interrupt();
         thread.join();
     }
 
-    // mo::getDefaultLogger().set_level(spdlog::level::info);
+    mo::getDefaultLogger().set_level(spdlog::level::info);
 }
 
 TEST(algorithm, desynced_input)
