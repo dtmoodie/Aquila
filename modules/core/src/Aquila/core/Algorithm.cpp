@@ -750,7 +750,7 @@ Algorithm::InputState Algorithm::checkInputs()
         {
             ts = findBufferedTimestamp();
         }
-        if (!ts)
+        if (!ts && !buffered)
         {
             for (auto input : inputs)
             {
@@ -846,7 +846,7 @@ void Algorithm::setSyncInput(const std::string& name)
     }
 }
 
-void Algorithm::setSynchronizer(std::unique_ptr<IParameterSynchronizer> sync)
+void Algorithm::setSynchronizer(std::unique_ptr<ParameterSynchronizer> sync)
 {
     m_synchronizer = std::move(sync);
 }
