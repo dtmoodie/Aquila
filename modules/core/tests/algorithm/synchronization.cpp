@@ -163,3 +163,51 @@ TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
         time = mo::Time(std::chrono::milliseconds(i*33));
     }
 }
+
+
+TEST(parameter_synchronizer, multiple_inputs_timestamp)
+{
+    aq::ParameterSynchronizer synchronizer(std::chrono::milliseconds(10));
+    mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
+
+    int N = 100;
+    std::vector<mo::TFPublisher<uint32_t>> publishers(N);
+    std::vector<mo::IPublisher*> pub_ptrs;
+    for(auto& pub : publishers)
+    {
+        pub_ptrs.push_back(&pub);
+    }
+    synchronizer.setInputs(pub_ptrs);
+
+    mo::Time time(std::chrono::milliseconds(0));
+
+
+    bool callback_invoked = false;
+    auto callback = [&callback_invoked, &publishers](const mo::Time* time_, const mo::FrameNumber* fn,
+                                                               const aq::ParameterSynchronizer::PublisherVec_t& vec) {
+        callback_invoked = true;
+        for(const auto& pub : publishers)
+        {
+            ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub) != vec.end());
+        }
+
+        ASSERT_TRUE(time_);
+    };
+
+    synchronizer.setCallback(std::move(callback));
+    for (uint32_t i = 1; i < 40; ++i)
+    {
+        publishers[0].publish(i, mo::Header(time));
+        for(int j = 1; j < N; ++j)
+        {
+            publishers[j].publish(i + j, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
+        }
+
+        ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+
+        callback_invoked = false;
+        publishers[0].publish(i, mo::Header(time));
+        ASSERT_FALSE(callback_invoked);
+        time = mo::Time(std::chrono::milliseconds(i*33));
+    }
+}
