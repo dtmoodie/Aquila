@@ -128,7 +128,7 @@ int randi(int start, int end)
 
 TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
 {
-    aq::ParameterSynchronizer synchronizer(std::chrono::nanoseconds(40));
+    aq::ParameterSynchronizer synchronizer(std::chrono::milliseconds(10));
     mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
 
     mo::TPublisher<uint32_t> pub0;
@@ -153,13 +153,13 @@ TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
     {
         pub0.publish(i, mo::Header(time));
 
-        pub1.publish(i + 1, mo::Header(time + std::chrono::nanoseconds(randi(-20, 20))));
+        pub1.publish(i + 1, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
         ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
 
 
         callback_invoked = false;
         pub0.publish(i, mo::Header(time));
         ASSERT_FALSE(callback_invoked);
-        time = mo::Time(std::chrono::milliseconds(i));
+        time = mo::Time(std::chrono::milliseconds(i*33));
     }
 }
