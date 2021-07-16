@@ -23,7 +23,7 @@ namespace aq
       public:
         using PublisherVec_t = mo::SmallVec<mo::IPublisher*, 20>;
         using Callback_s = void(const mo::Time*, const mo::FrameNumber*, const PublisherVec_t);
-        ParameterSynchronizer();
+        ParameterSynchronizer(std::chrono::nanoseconds slop = std::chrono::nanoseconds(0));
         virtual ~ParameterSynchronizer();
 
         virtual void setInputs(std::vector<mo::IPublisher*>);
@@ -33,6 +33,7 @@ namespace aq
         void removeTimestamp(const mo::Time& time);
 
       private:
+        bool closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const;
         void onNewData();
         void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&);
         bool dedoup(const mo::Time&);
@@ -45,6 +46,7 @@ namespace aq
         std::unordered_map<const mo::IParam*, boost::circular_buffer<mo::Header>> m_headers;
 
         boost::circular_buffer<mo::Time> m_previous_timestamps;
+        std::chrono::nanoseconds m_slop;
     };
 }
 

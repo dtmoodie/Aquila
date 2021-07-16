@@ -1,9 +1,11 @@
 #include "ParameterSynchronizer.hpp"
 #include <MetaObject/params/IPublisher.hpp>
+#include <chrono>
 
 namespace aq
 {
-    ParameterSynchronizer::ParameterSynchronizer()
+    ParameterSynchronizer::ParameterSynchronizer(std::chrono::nanoseconds slop):
+        m_slop(std::move(slop))
     {
         m_slot.bind(&ParameterSynchronizer::onParamUpdate, this);
         m_previous_timestamps.set_capacity(20);
@@ -31,28 +33,39 @@ namespace aq
         m_callback = std::move(cb);
     }
 
+    bool ParameterSynchronizer::closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const
+    {
+        return std::abs(std::chrono::nanoseconds(reference_time.time_since_epoch()).count() - std::chrono::nanoseconds(other_time.time_since_epoch()).count()) <= m_slop.count();
+    }
+
     mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
     {
+        // Todo earliest guarantee?
         mo::OptionalTime output;
         uint32_t valid_count = 0;
         for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
             if (!itr->second.empty())
             {
-                const mo::Header& hdr = itr->second.front();
-                if (boost::none != hdr.timestamp)
+                if(boost::none == output)
                 {
-                    if (boost::none == output)
+                    const mo::Header& hdr = itr->second.front();
+                    if (boost::none != hdr.timestamp)
                     {
                         output = hdr.timestamp;
                         ++valid_count;
-                        continue;
                     }
-                    else
+                }else
+                {
+                    for(const mo::Header& hdr : itr->second)
                     {
-                        if(output == hdr.timestamp)
+                        if(boost::none != hdr.timestamp)
                         {
-                            ++valid_count;
+                            if(closeEnough(*hdr.timestamp, *output))
+                            {
+                                ++valid_count;
+                                break;
+                            }
                         }
                     }
                 }
@@ -68,7 +81,10 @@ namespace aq
 
     bool ParameterSynchronizer::dedoup(const mo::Time& time)
     {
-        auto itr = std::find(m_previous_timestamps.begin(), m_previous_timestamps.end(), time);
+        auto itr = std::find_if(m_previous_timestamps.begin(), m_previous_timestamps.end(), [time, this](const mo::Time& other)
+        {
+            return closeEnough(other, time);
+        });
         if(itr != m_previous_timestamps.end())
         {
             // Duplicate timestamp detected
@@ -80,20 +96,24 @@ namespace aq
 
     void ParameterSynchronizer::removeTimestamp(const mo::Time& time)
     {
+        // Remove any timestamp instances that are less than the new time
+        // We don't go back and look at stale data
         for( auto& itr : m_headers)
         {
-            auto find_itr = std::find_if(itr.second.begin(), itr.second.end(), [&time](const mo::Header& hdr)
+            auto find_itr = itr.second.begin();
+            auto pred = [&time, this](const mo::Header& hdr)
             {
                 if(hdr.timestamp)
                 {
-                    return time == hdr.timestamp;
+                    return *hdr.timestamp <= (time + m_slop);
                 }
                 return false;
-            });
-            if(find_itr != itr.second.end())
+            };
+            find_itr = std::find_if(find_itr, itr.second.end(), pred);
+            while(find_itr != itr.second.end())
             {
-                itr.second.erase(find_itr);
-                // We don't expect duplicate timestamps in the same circular buffer, perhaps this should be a loop until we don't find the timestamp?
+                find_itr = itr.second.erase(find_itr);
+                find_itr = std::find_if(find_itr, itr.second.end(), pred);
             }
         }
     }
@@ -121,7 +141,25 @@ namespace aq
     {
         auto itr = m_headers.find(&param);
         MO_ASSERT(itr != m_headers.end());
-        itr->second.push_back(header);
+        if(itr->second.size())
+        {
+            if(header.timestamp != boost::none && itr->second.back().timestamp != boost::none)
+            {
+                if(header.timestamp > itr->second.back().timestamp)
+                {
+                    itr->second.push_back(std::move(header));
+                }
+            }else
+            {
+                if(header.frame_number > itr->second.back().frame_number)
+                {
+                    itr->second.push_back(std::move(header));
+                }
+            }
+        }else
+        {
+            itr->second.push_back(std::move(header));
+        }
         onNewData();
     }
 
