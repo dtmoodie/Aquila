@@ -121,10 +121,14 @@ TEST(parameter_synchronizer, two_desynchronized_inputs_timestamp)
     }
 }
 
+int randi(int start, int end)
+{
+    return int((std::rand() / float(RAND_MAX)) * (end - start) + start);
+}
 
 TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
 {
-    aq::ParameterSynchronizer synchronizer(std::chrono::nanoseconds(RAND_MAX / 2));
+    aq::ParameterSynchronizer synchronizer(std::chrono::nanoseconds(40));
     mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
 
     mo::TPublisher<uint32_t> pub0;
@@ -148,7 +152,8 @@ TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
     for (uint32_t i = 1; i < 40; ++i)
     {
         pub0.publish(i, mo::Header(time));
-        pub1.publish(i + 1, mo::Header(time + std::chrono::nanoseconds(std::rand() / 10)));
+
+        pub1.publish(i + 1, mo::Header(time + std::chrono::nanoseconds(randi(-20, 20))));
         ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
 
 
