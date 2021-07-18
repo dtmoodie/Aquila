@@ -47,13 +47,13 @@ struct parameter_synchronizer_timestamp_two_synchronized_inputs: ::testing::Test
     aq::ParameterSynchronizer synchronizer;
     mo::IAsyncStream::Ptr_t stream;
 
-    mo::TPublisher<uint32_t> pub0;
-    mo::TPublisher<uint32_t> pub1;
+    std::vector<std::unique_ptr<mo::TPublisher<uint32_t>>> pubs;
 
-    mo::TSubscriber<uint32_t> sub0;
-    mo::TSubscriber<uint32_t> sub1;
+    std::vector<std::unique_ptr<mo::TSubscriber<uint32_t>>> subs;
+
     mo::Header header;
     bool callback_invoked = false;
+
     parameter_synchronizer_timestamp_two_synchronized_inputs()
     {
         stream = mo::IAsyncStream::create();
@@ -61,15 +61,33 @@ struct parameter_synchronizer_timestamp_two_synchronized_inputs: ::testing::Test
         header = mo::Header(std::chrono::milliseconds(0));
     }
 
+    void init(uint32_t N)
+    {
+        pubs.resize(N);
+        subs.resize(N);
+        std::vector<mo::ISubscriber*> sub_ptrs;
+        sub_ptrs.reserve(N);
+        for(uint32_t i = 0; i < N; ++i)
+        {
+            subs[i] = std::make_unique<mo::TSubscriber<uint32_t>>();
+            pubs[i] = std::make_unique<mo::TPublisher<uint32_t>>();
+            subs[i]->setInput(pubs[i].get());
+            sub_ptrs.push_back(subs[i].get());
+        }
+        synchronizer.setInputs(std::move(sub_ptrs));
+    }
+
     void iterate()
     {
         for (uint32_t i = 1; i < 20; ++i)
         {
-            pub0.publish(i, header);
-            pub1.publish(i + 1, header);
+            for(uint32_t j = 0; j < pubs.size(); ++j)
+            {
+                pubs[j]->publish(i + j, header);
+            }
             ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
             callback_invoked = false;
-            pub0.publish(i, header);
+            pubs[0]->publish(i, header);
             ASSERT_FALSE(callback_invoked);
             header = mo::Header(std::chrono::milliseconds(i));
         }
@@ -79,8 +97,11 @@ struct parameter_synchronizer_timestamp_two_synchronized_inputs: ::testing::Test
                   const aq::ParameterSynchronizer::SubscriberVec_t& vec)
     {
         callback_invoked = true;
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub0) != vec.end());
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub1) != vec.end());
+        for(const auto& sub : subs)
+        {
+            ASSERT_TRUE(std::find(vec.begin(), vec.end(), sub.get()) != vec.end());
+        }
+
         ASSERT_TRUE(header.timestamp);
         ASSERT_TRUE(time);
         ASSERT_EQ(header.timestamp, *time);
@@ -89,32 +110,23 @@ struct parameter_synchronizer_timestamp_two_synchronized_inputs: ::testing::Test
 
 TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, direct)
 {
-    sub0.setInput(&pub0);
-    sub1.setInput(&pub1);
-    synchronizer.setInputs({&sub0, &sub1});
+    this->init(2);
     this->iterate();
 }
 
 
 TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, full_buffered)
 {
+    this->init(2);
     auto buf0 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
     auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
 
-    buf0->setInput(&pub0);
-    buf1->setInput(&pub1);
+    buf0->setInput(pubs[0].get());
+    buf1->setInput(pubs[1].get());
 
-    sub0.setInput(buf0);
-    sub1.setInput(buf1);
+    subs[0]->setInput(buf0);
+    subs[1]->setInput(buf1);
 
-    synchronizer.setInputs({&sub0, &sub1});
-
-    auto callback = [this](const mo::Time* time, const mo::FrameNumber* fn,
-            const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
-       this->callback(time, fn, vec);
-    };
-
-    synchronizer.setCallback(std::move(callback));
     this->iterate();
 }
 
@@ -122,19 +134,9 @@ TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, half_buffered)
 {
     auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
 
-    buf1->setInput(&pub1);
+    buf1->setInput(pubs[1].get());
 
-    sub0.setInput(&pub0);
-    sub1.setInput(buf1);
-
-    synchronizer.setInputs({&sub0, &sub1});
-
-    auto callback = [this](const mo::Time* time, const mo::FrameNumber* fn,
-            const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
-       this->callback(time, fn, vec);
-    };
-
-    synchronizer.setCallback(std::move(callback));
+    subs[1]->setInput(buf1);
     this->iterate();
 }
 
