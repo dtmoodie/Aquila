@@ -40,49 +40,103 @@ TEST(parameter_synchronizer_timestamp, single_input_dedoup)
     }
 }
 
-TEST(parameter_synchronizer_timestamp, two_synchronized_inputs)
-{
-    aq::ParameterSynchronizer synchronizer;
-    mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
 
+struct parameter_synchronizer_timestamp_two_synchronized_inputs: ::testing::Test
+{
+
+    aq::ParameterSynchronizer synchronizer;
+    mo::IAsyncStream::Ptr_t stream;
 
     mo::TPublisher<uint32_t> pub0;
     mo::TPublisher<uint32_t> pub1;
 
     mo::TSubscriber<uint32_t> sub0;
     mo::TSubscriber<uint32_t> sub1;
-
-    sub0.setInput(&pub0);
-    sub1.setInput(&pub1);
-
-    synchronizer.setInputs({&sub0, &sub1});
-
-    mo::Header header(std::chrono::milliseconds(0));
-
+    mo::Header header;
     bool callback_invoked = false;
-    auto callback = [&callback_invoked, &sub0, &sub1, &header](const mo::Time* time, const mo::FrameNumber* fn,
-                                                               const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
+    parameter_synchronizer_timestamp_two_synchronized_inputs()
+    {
+        stream = mo::IAsyncStream::create();
+        synchronizer.setCallback(ct::variadicBind(&parameter_synchronizer_timestamp_two_synchronized_inputs::callback, this));
+        header = mo::Header(std::chrono::milliseconds(0));
+    }
+
+    void iterate()
+    {
+        for (uint32_t i = 1; i < 20; ++i)
+        {
+            pub0.publish(i, header);
+            pub1.publish(i + 1, header);
+            ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+            callback_invoked = false;
+            pub0.publish(i, header);
+            ASSERT_FALSE(callback_invoked);
+            header = mo::Header(std::chrono::milliseconds(i));
+        }
+    }
+
+    void callback(const mo::Time* time, const mo::FrameNumber* fn,
+                  const aq::ParameterSynchronizer::SubscriberVec_t& vec)
+    {
         callback_invoked = true;
         ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub0) != vec.end());
         ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub1) != vec.end());
         ASSERT_TRUE(header.timestamp);
         ASSERT_TRUE(time);
         ASSERT_EQ(header.timestamp, *time);
+    }
+};
+
+TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, direct)
+{
+    sub0.setInput(&pub0);
+    sub1.setInput(&pub1);
+    synchronizer.setInputs({&sub0, &sub1});
+    this->iterate();
+}
+
+
+TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, full_buffered)
+{
+    auto buf0 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
+    auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
+
+    buf0->setInput(&pub0);
+    buf1->setInput(&pub1);
+
+    sub0.setInput(buf0);
+    sub1.setInput(buf1);
+
+    synchronizer.setInputs({&sub0, &sub1});
+
+    auto callback = [this](const mo::Time* time, const mo::FrameNumber* fn,
+            const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
+       this->callback(time, fn, vec);
     };
 
     synchronizer.setCallback(std::move(callback));
-    for (uint32_t i = 1; i < 20; ++i)
-    {
-        pub0.publish(i, header);
-        pub1.publish(i + 1, header);
-        ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-        callback_invoked = false;
-        pub0.publish(i, header);
-        ASSERT_FALSE(callback_invoked);
-        header = mo::Header(std::chrono::milliseconds(i));
-    }
+    this->iterate();
 }
 
+TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, half_buffered)
+{
+    auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
+
+    buf1->setInput(&pub1);
+
+    sub0.setInput(&pub0);
+    sub1.setInput(buf1);
+
+    synchronizer.setInputs({&sub0, &sub1});
+
+    auto callback = [this](const mo::Time* time, const mo::FrameNumber* fn,
+            const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
+       this->callback(time, fn, vec);
+    };
+
+    synchronizer.setCallback(std::move(callback));
+    this->iterate();
+}
 
 TEST(parameter_synchronizer_timestamp, two_desynchronized_inputs)
 {
@@ -137,6 +191,8 @@ int randi(int start, int end)
 {
     return int((std::rand() / float(RAND_MAX)) * (end - start) + start);
 }
+
+
 
 TEST(parameter_synchronizer_timestamp, two_non_exact_inputs)
 {
