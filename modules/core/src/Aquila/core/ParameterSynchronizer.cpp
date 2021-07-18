@@ -1,5 +1,6 @@
 #include "ParameterSynchronizer.hpp"
 #include <MetaObject/params/IPublisher.hpp>
+#include <MetaObject/params/ISubscriber.hpp>
 #include <chrono>
 
 namespace aq
@@ -15,7 +16,7 @@ namespace aq
     {
     }
 
-    void ParameterSynchronizer::setInputs(std::vector<mo::IPublisher*> inputs)
+    void ParameterSynchronizer::setInputs(std::vector<mo::ISubscriber*> inputs)
     {
         for (auto input : inputs)
         {

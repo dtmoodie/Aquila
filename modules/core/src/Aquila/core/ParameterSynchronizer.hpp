@@ -12,8 +12,8 @@
 
 namespace mo
 {
-    class IPublisher;
-    class IParam;
+    struct ISubscriber;
+    struct IParam;
 } // namespace mo
 
 namespace aq
@@ -21,12 +21,12 @@ namespace aq
     class ParameterSynchronizer
     {
       public:
-        using PublisherVec_t = mo::SmallVec<mo::IPublisher*, 20>;
-        using Callback_s = void(const mo::Time*, const mo::FrameNumber*, const PublisherVec_t);
+        using SubscriberVec_t = mo::SmallVec<mo::ISubscriber*, 20>;
+        using Callback_s = void(const mo::Time*, const mo::FrameNumber*, const SubscriberVec_t);
         ParameterSynchronizer(std::chrono::nanoseconds slop = std::chrono::nanoseconds(0));
         virtual ~ParameterSynchronizer();
 
-        virtual void setInputs(std::vector<mo::IPublisher*>);
+        virtual void setInputs(std::vector<mo::ISubscriber*>);
         virtual void setCallback(std::function<Callback_s>);
 
         mo::OptionalTime findEarliestCommonTimestamp() const;
@@ -41,7 +41,7 @@ namespace aq
         std::function<Callback_s> m_callback;
         mo::TSlot<mo::Update_s> m_slot;
 
-        std::vector<mo::IPublisher*> m_publishers;
+        std::vector<mo::ISubscriber*> m_publishers;
 
         std::unordered_map<const mo::IParam*, boost::circular_buffer<mo::Header>> m_headers;
 

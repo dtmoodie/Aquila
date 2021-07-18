@@ -1,27 +1,28 @@
 #include <Aquila/core/ParameterSynchronizer.hpp>
 
 #include <MetaObject/params/TPublisher.hpp>
+#include <MetaObject/params/TSubscriber.hpp>
 #include <MetaObject/types/small_vec.hpp>
 
 #include <gtest/gtest.h>
 
-TEST(parameter_synchronizer, single_input_dedoup)
+TEST(parameter_synchronizer_timestamp, single_input_dedoup)
 {
     aq::ParameterSynchronizer synchronizer;
     mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
 
-
     mo::TPublisher<uint32_t> pub0;
-
-    synchronizer.setInputs({&pub0});
+    mo::TSubscriber<uint32_t> sub0;
+    sub0.setInput(&pub0);
+    synchronizer.setInputs({&sub0});
 
     mo::Header header(std::chrono::milliseconds(0));
 
     bool callback_invoked = false;
-    auto callback = [&callback_invoked, &pub0, &header](const mo::Time* time, const mo::FrameNumber* fn,
-                                                               const aq::ParameterSynchronizer::PublisherVec_t& vec) {
+    auto callback = [&callback_invoked, &sub0, &header](const mo::Time* time, const mo::FrameNumber* fn,
+                                                               const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
         callback_invoked = true;
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub0) != vec.end());
+        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub0) != vec.end());
         ASSERT_TRUE(header.timestamp);
         ASSERT_TRUE(time);
         ASSERT_EQ(header.timestamp, *time);
@@ -39,26 +40,31 @@ TEST(parameter_synchronizer, single_input_dedoup)
     }
 }
 
-
-
-TEST(parameter_synchronizer, two_synchronized_inputs_timestamp)
+TEST(parameter_synchronizer_timestamp, two_synchronized_inputs)
 {
     aq::ParameterSynchronizer synchronizer;
     mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
 
+
     mo::TPublisher<uint32_t> pub0;
     mo::TPublisher<uint32_t> pub1;
 
-    synchronizer.setInputs({&pub0, &pub1});
+    mo::TSubscriber<uint32_t> sub0;
+    mo::TSubscriber<uint32_t> sub1;
+
+    sub0.setInput(&pub0);
+    sub1.setInput(&pub1);
+
+    synchronizer.setInputs({&sub0, &sub1});
 
     mo::Header header(std::chrono::milliseconds(0));
 
     bool callback_invoked = false;
-    auto callback = [&callback_invoked, &pub0, &pub1, &header](const mo::Time* time, const mo::FrameNumber* fn,
-                                                               const aq::ParameterSynchronizer::PublisherVec_t& vec) {
+    auto callback = [&callback_invoked, &sub0, &sub1, &header](const mo::Time* time, const mo::FrameNumber* fn,
+                                                               const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
         callback_invoked = true;
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub0) != vec.end());
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub1) != vec.end());
+        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub0) != vec.end());
+        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub1) != vec.end());
         ASSERT_TRUE(header.timestamp);
         ASSERT_TRUE(time);
         ASSERT_EQ(header.timestamp, *time);
@@ -78,7 +84,7 @@ TEST(parameter_synchronizer, two_synchronized_inputs_timestamp)
 }
 
 
-TEST(parameter_synchronizer, two_desynchronized_inputs_timestamp)
+TEST(parameter_synchronizer_timestamp, two_desynchronized_inputs)
 {
     aq::ParameterSynchronizer synchronizer;
     mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
@@ -86,16 +92,22 @@ TEST(parameter_synchronizer, two_desynchronized_inputs_timestamp)
     mo::TPublisher<uint32_t> pub0;
     mo::TPublisher<uint32_t> pub1;
 
-    synchronizer.setInputs({&pub0, &pub1});
+    mo::TSubscriber<uint32_t> sub0;
+    mo::TSubscriber<uint32_t> sub1;
+
+    sub0.setInput(&pub0);
+    sub1.setInput(&pub1);
+
+    synchronizer.setInputs({&sub0, &sub1});
 
     mo::Header header(std::chrono::milliseconds(0));
 
     bool callback_invoked = false;
-    auto callback = [&callback_invoked, &pub0, &pub1, &header](const mo::Time* time, const mo::FrameNumber* fn,
-                                                               const aq::ParameterSynchronizer::PublisherVec_t& vec) {
+    auto callback = [&callback_invoked, &sub0, &sub1, &header](const mo::Time* time, const mo::FrameNumber* fn,
+                                                               const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
         callback_invoked = true;
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub0) != vec.end());
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub1) != vec.end());
+        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub0) != vec.end());
+        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub1) != vec.end());
         ASSERT_TRUE(header.timestamp);
         ASSERT_TRUE(time);
         ASSERT_EQ(header.timestamp, *time);
@@ -126,7 +138,7 @@ int randi(int start, int end)
     return int((std::rand() / float(RAND_MAX)) * (end - start) + start);
 }
 
-TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
+TEST(parameter_synchronizer_timestamp, two_non_exact_inputs)
 {
     aq::ParameterSynchronizer synchronizer(std::chrono::milliseconds(10));
     mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
@@ -134,17 +146,22 @@ TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
     mo::TPublisher<uint32_t> pub0;
     mo::TPublisher<uint32_t> pub1;
 
-    synchronizer.setInputs({&pub0, &pub1});
+    mo::TSubscriber<uint32_t> sub0;
+    mo::TSubscriber<uint32_t> sub1;
+
+    sub0.setInput(&pub0);
+    sub1.setInput(&pub1);
+
+    synchronizer.setInputs({&sub0, &sub1});
 
     mo::Time time(std::chrono::milliseconds(0));
 
-
     bool callback_invoked = false;
-    auto callback = [&callback_invoked, &pub0, &pub1](const mo::Time* time_, const mo::FrameNumber* fn,
-                                                               const aq::ParameterSynchronizer::PublisherVec_t& vec) {
+    auto callback = [&callback_invoked, &sub0, &sub1](const mo::Time* time_, const mo::FrameNumber* fn,
+                                                               const aq::ParameterSynchronizer::SubscriberVec_t& vec) {
         callback_invoked = true;
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub0) != vec.end());
-        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub1) != vec.end());
+        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub0) != vec.end());
+        ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub1) != vec.end());
         ASSERT_TRUE(time_);
     };
 
@@ -156,7 +173,6 @@ TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
         pub1.publish(i + 1, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
         ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
 
-
         callback_invoked = false;
         pub0.publish(i, mo::Header(time));
         ASSERT_FALSE(callback_invoked);
@@ -164,31 +180,33 @@ TEST(parameter_synchronizer, two_non_exact_inputs_timestamp)
     }
 }
 
-
-TEST(parameter_synchronizer, multiple_inputs_timestamp)
+TEST(parameter_synchronizer_timestamp, multiple_inputs)
 {
     aq::ParameterSynchronizer synchronizer(std::chrono::milliseconds(10));
     mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
 
     int N = 100;
     std::vector<mo::TFPublisher<uint32_t>> publishers(N);
-    std::vector<mo::IPublisher*> pub_ptrs;
-    for(auto& pub : publishers)
+    std::vector<mo::TSubscriber<uint32_t>> subscribers(N);
+    std::vector<mo::ISubscriber*> pub_ptrs;
+    pub_ptrs.reserve(N);
+    for(uint32_t i = 0; i < N; ++i)
     {
-        pub_ptrs.push_back(&pub);
+        subscribers[i].setInput(&publishers[i]);
+        pub_ptrs.push_back(&subscribers[i]);
     }
     synchronizer.setInputs(pub_ptrs);
 
     mo::Time time(std::chrono::milliseconds(0));
 
-
     bool callback_invoked = false;
-    auto callback = [&callback_invoked, &publishers](const mo::Time* time_, const mo::FrameNumber* fn,
-                                                               const aq::ParameterSynchronizer::PublisherVec_t& vec) {
+    auto callback = [&callback_invoked, &subscribers](const mo::Time* time_, const mo::FrameNumber* fn,
+                                                     const aq::ParameterSynchronizer::SubscriberVec_t& vec)
+    {
         callback_invoked = true;
-        for(const auto& pub : publishers)
+        for(const auto& sub : subscribers)
         {
-            ASSERT_TRUE(std::find(vec.begin(), vec.end(), &pub) != vec.end());
+            ASSERT_TRUE(std::find(vec.begin(), vec.end(), &sub) != vec.end());
         }
 
         ASSERT_TRUE(time_);
@@ -210,4 +228,10 @@ TEST(parameter_synchronizer, multiple_inputs_timestamp)
         ASSERT_FALSE(callback_invoked);
         time = mo::Time(std::chrono::milliseconds(i*33));
     }
+}
+
+// This test case is specifically to test
+TEST(parameter_synchronizer_timestamp, non_buffered_input)
+{
+
 }
