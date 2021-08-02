@@ -138,7 +138,7 @@ namespace aq
     }
 
     void
-    ParameterSynchronizer::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags, mo::IAsyncStream&)
+    ParameterSynchronizer::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags flags, mo::IAsyncStream&)
     {
         auto itr = m_headers.find(&param);
         MO_ASSERT(itr != m_headers.end());
