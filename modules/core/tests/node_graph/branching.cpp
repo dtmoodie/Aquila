@@ -63,9 +63,9 @@ TEST_F(BranchingFixture, direct_ts)
     for (int i = 0; i < 100; ++i)
     {
         a->process(*stream);
-        EXPECT_EQ(a->iterations, i + 1);
-        EXPECT_EQ(b->iterations, i + 1);
-        EXPECT_EQ(c->iterations, i + 1);
+        ASSERT_EQ(a->iterations, i + 1);
+        ASSERT_EQ(b->iterations, i + 1);
+        ASSERT_EQ(c->iterations, i + 1);
         auto dataa = a->out_a.getData();
         auto datab = b->out_b.getData();
         ASSERT_TRUE(dataa);
@@ -133,9 +133,9 @@ TEST_F(BranchingFixture, buffered)
             ASSERT_TRUE(datab);
             auto ptra = dataa->ptr<int>();
             auto ptrb = datab->ptr<int>();
-            EXPECT_EQ(*ptra, i);
-            EXPECT_EQ(*ptrb, i);
-            EXPECT_EQ(c->sum, *ptra + *ptrb);
+            ASSERT_EQ(*ptra, i);
+            ASSERT_EQ(*ptrb, i);
+            ASSERT_EQ(c->sum, *ptra + *ptrb);
         }
     }
 }
