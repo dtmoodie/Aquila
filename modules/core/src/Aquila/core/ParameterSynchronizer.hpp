@@ -29,6 +29,8 @@ namespace aq
         virtual void setInputs(std::vector<mo::ISubscriber*>);
         virtual void setCallback(std::function<Callback_s>);
 
+        void setSlop(std::chrono::nanoseconds slop);
+
         mo::OptionalTime findEarliestCommonTimestamp() const;
         void removeTimestamp(const mo::Time& time);
 

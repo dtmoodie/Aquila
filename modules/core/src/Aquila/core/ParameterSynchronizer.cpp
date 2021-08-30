@@ -34,6 +34,11 @@ namespace aq
         m_callback = std::move(cb);
     }
 
+    void ParameterSynchronizer::setSlop(std::chrono::nanoseconds slop)
+    {
+        m_slop = std::move(slop);
+    }
+
     bool ParameterSynchronizer::closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const
     {
         return std::abs(std::chrono::nanoseconds(reference_time.time_since_epoch()).count() - std::chrono::nanoseconds(other_time.time_since_epoch()).count()) <= m_slop.count();
@@ -64,6 +69,10 @@ namespace aq
                         {
                             if(closeEnough(*hdr.timestamp, *output))
                             {
+                                if(*hdr.timestamp < *output)
+                                {
+                                    output = hdr.timestamp;
+                                }
                                 ++valid_count;
                                 break;
                             }
