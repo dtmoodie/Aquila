@@ -41,7 +41,8 @@ namespace aq
 
     bool ParameterSynchronizer::closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const
     {
-        return std::abs(std::chrono::nanoseconds(reference_time.time_since_epoch()).count() - std::chrono::nanoseconds(other_time.time_since_epoch()).count()) <= m_slop.count();
+        const std::chrono::nanoseconds delta = reference_time.time_since_epoch() - other_time.time_since_epoch();
+        return std::abs(delta.count()) <= m_slop.count();
     }
 
     mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
