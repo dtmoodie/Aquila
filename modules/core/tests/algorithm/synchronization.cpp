@@ -17,15 +17,15 @@ struct parameter_synchronizer: ::testing::Test
 
     mo::Header header;
     bool callback_invoked = false;
+    bool callback_used = false;
 
     parameter_synchronizer()
     {
         stream = mo::IAsyncStream::create();
-        synchronizer.setCallback(ct::variadicBind(&parameter_synchronizer::callback, this));
         header = mo::Header(std::chrono::milliseconds(0));
     }
 
-    void init(uint32_t N)
+    void init(const uint32_t N, const bool use_callback = true)
     {
         pubs.resize(N);
         subs.resize(N);
@@ -39,6 +39,11 @@ struct parameter_synchronizer: ::testing::Test
             sub_ptrs.push_back(subs[i].get());
         }
         synchronizer.setInputs(std::move(sub_ptrs));
+        callback_used = use_callback;
+        if(use_callback)
+        {
+            synchronizer.setCallback(ct::variadicBind(&parameter_synchronizer::callback, this));
+        }
     }
 
     void callback(const mo::Time* time, const mo::FrameNumber* fn,
@@ -72,10 +77,20 @@ struct parameter_synchronizer_timestamp: parameter_synchronizer
             post(i);
         }
     }
+
     void check(uint32_t i)
     {
-        ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+        if(callback_used)
+        {
+            ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+        }else
+        {
+            auto timestamp = synchronizer.getNextSample();
+            ASSERT_NE(boost::none, timestamp);
+            ASSERT_EQ(*timestamp, *header.timestamp);
+        }
     }
+
     void post(uint32_t i)
     {
         callback_invoked = false;
