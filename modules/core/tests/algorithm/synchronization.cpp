@@ -59,35 +59,36 @@ struct parameter_synchronizer: ::testing::Test
 
 struct parameter_synchronizer_timestamp: parameter_synchronizer
 {
-    void iterate()
+    void iterate(const uint32_t N = 20)
     {
-        for (uint32_t i = 1; i < 20; ++i)
+        const size_t sz = pubs.size();
+        for (uint32_t i = 1; i < N; ++i)
         {
-            for(uint32_t j = 0; j < pubs.size(); ++j)
+            for(uint32_t j = 0; j < sz; ++j)
             {
-                pubs[j]->publish(i + j, header);
+                pubs[j]->publish(i + j, header, stream.get());
             }
-            ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-            callback_invoked = false;
-            pubs[0]->publish(i, header);
-            ASSERT_FALSE(callback_invoked);
-            header = mo::Header(std::chrono::milliseconds(i));
+            check(i);
+            post(i);
         }
+    }
+    void check(uint32_t i)
+    {
+        ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+    }
+    void post(uint32_t i)
+    {
+        callback_invoked = false;
+        pubs[0]->publish(i, header);
+        ASSERT_FALSE(callback_invoked) << "i = " << i;
+        header = mo::Header(std::chrono::milliseconds(i));
     }
 };
 
 TEST_F(parameter_synchronizer_timestamp, single_input_dedoup)
 {
     this->init(1);
-    for (uint32_t i = 1; i < 20; ++i)
-    {
-        pubs[0]->publish(i, header, stream.get());
-        ASSERT_TRUE(callback_invoked) << "i = " << i;
-        callback_invoked = false;
-        pubs[0]->publish(i, header, stream.get());
-        ASSERT_FALSE(callback_invoked) << "i = " << i;
-        header = mo::Header(std::chrono::milliseconds(i));
-    }
+    iterate();
 }
 
 
@@ -140,11 +141,7 @@ TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs)
         {
             ASSERT_FALSE(callback_invoked);
         }
-
-        callback_invoked = false;
-        pubs[0]->publish(i, header);
-        ASSERT_FALSE(callback_invoked);
-        header = mo::Header(std::chrono::milliseconds(i));
+        post(i);
     }
 }
 
@@ -168,9 +165,8 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter)
         pubs[1]->publish(i + 1, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
         ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
 
-        callback_invoked = false;
-        pubs[0]->publish(i, mo::Header(time));
-        ASSERT_FALSE(callback_invoked);
+        check(i);
+        post(i);
         time = mo::Time(std::chrono::milliseconds(i*33));
     }
 }
@@ -192,11 +188,8 @@ TEST_F(parameter_synchronizer_timestamp, multiple_inputs)
             pubs[j]->publish(i + j, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
         }
 
-        ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-
-        callback_invoked = false;
-        pubs[0]->publish(i, mo::Header(time));
-        ASSERT_FALSE(callback_invoked);
+        check(i);
+        post(i);
         time = mo::Time(std::chrono::milliseconds(i*33));
     }
 }
