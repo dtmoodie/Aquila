@@ -119,21 +119,34 @@ namespace aq
         }
     }
 
-    void ParameterSynchronizer::onNewData()
+    boost::optional<mo::Header> ParameterSynchronizer::getNextSample()
     {
         mo::OptionalTime time = findEarliestCommonTimestamp();
 
         if(time)
         {
+            const bool dedoup_success = dedoup(*time);
+            removeTimestamp(*time);
+            return dedoup_success ? boost::optional<mo::Header>(mo::Header(*time)) : boost::optional<mo::Header>();
+        }
+        return {};
+    }
 
-            if(dedoup(*time))
+    void ParameterSynchronizer::onNewData()
+    {
+        boost::optional<mo::Header> hdr = getNextSample();
+        if(hdr)
+        {
+            if(m_callback)
             {
-                if(m_callback)
+                if(hdr->timestamp)
                 {
-                    m_callback(time.get_ptr(), nullptr, m_publishers);
+                    m_callback(hdr->timestamp.get_ptr(), nullptr, m_publishers);
+                }else
+                {
+                    m_callback(hdr->timestamp.get_ptr(), &hdr->frame_number, m_publishers);
                 }
             }
-            removeTimestamp(*time);
         }
     }
 
@@ -152,16 +165,22 @@ namespace aq
                 }
             }else
             {
-                if(header.frame_number > itr->second.back().frame_number)
+                if(header.frame_number.valid() && (header.frame_number > itr->second.back().frame_number))
                 {
                     itr->second.push_back(std::move(header));
                 }
             }
         }else
         {
-            itr->second.push_back(std::move(header));
+            if(flags == mo::UpdateFlags::kINPUT_UPDATED || flags == mo::UpdateFlags::kBUFFER_UPDATED)
+            {
+                itr->second.push_back(std::move(header));
+            }
         }
-        onNewData();
+        if(m_callback)
+        {
+            onNewData();
+        }
     }
 
 } // namespace aq

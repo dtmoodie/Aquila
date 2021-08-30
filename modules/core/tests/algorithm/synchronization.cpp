@@ -132,6 +132,7 @@ TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, full_buffered)
 
 TEST_F(parameter_synchronizer_timestamp_two_synchronized_inputs, half_buffered)
 {
+    this->init(2);
     auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
 
     buf1->setInput(pubs[1].get());
@@ -288,8 +289,3 @@ TEST(parameter_synchronizer_timestamp, multiple_inputs)
     }
 }
 
-// This test case is specifically to test
-TEST(parameter_synchronizer_timestamp, non_buffered_input)
-{
-
-}

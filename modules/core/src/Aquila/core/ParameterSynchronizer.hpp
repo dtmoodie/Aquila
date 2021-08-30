@@ -32,6 +32,8 @@ namespace aq
         mo::OptionalTime findEarliestCommonTimestamp() const;
         void removeTimestamp(const mo::Time& time);
 
+        boost::optional<mo::Header> getNextSample();
+
       private:
         bool closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const;
         void onNewData();
