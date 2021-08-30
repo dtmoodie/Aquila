@@ -178,12 +178,14 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter)
 TEST_F(parameter_synchronizer_timestamp, multiple_inputs)
 {
     const int N = 100;
+    this->synchronizer.setSlop(std::chrono::milliseconds(10));
     this->init(N);
 
     mo::Time time(std::chrono::milliseconds(0));
 
     for (uint32_t i = 1; i < 40; ++i)
     {
+        header = mo::Header(time);
         pubs[0]->publish(i, mo::Header(time));
         for(int j = 1; j < N; ++j)
         {
