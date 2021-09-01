@@ -85,36 +85,46 @@ struct parameter_synchronizer_timestamp: parameter_synchronizer
             ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
         }else
         {
-            auto timestamp = synchronizer.getNextSample();
-            ASSERT_NE(boost::none, timestamp);
-            ASSERT_EQ(*timestamp, *header.timestamp);
+            auto header = synchronizer.getNextSample();
+            ASSERT_TRUE(header) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+            ASSERT_EQ(header->timestamp, this->header.timestamp);
         }
     }
 
     void post(uint32_t i)
     {
         callback_invoked = false;
-        pubs[0]->publish(i, header);
-        ASSERT_FALSE(callback_invoked) << "i = " << i;
         header = mo::Header(std::chrono::milliseconds(i));
     }
 };
 
-TEST_F(parameter_synchronizer_timestamp, single_input_dedoup)
+TEST_F(parameter_synchronizer_timestamp, single_input_dedoup_callback)
 {
     this->init(1);
     iterate();
 }
 
+TEST_F(parameter_synchronizer_timestamp, single_input_dedoup_query)
+{
+    this->init(1, false);
+    iterate();
+}
 
-TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct)
+
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct_callback)
 {
     this->init(2);
     this->iterate();
 }
 
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct_query)
+{
+    this->init(2, false);
+    this->iterate();
+}
 
-TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_full_buffered)
+
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_full_buffered_callback)
 {
     this->init(2);
     auto buf0 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
@@ -129,7 +139,22 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_full_buffered)
     this->iterate();
 }
 
-TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_half_buffered)
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_full_buffered_query)
+{
+    this->init(2, false);
+    auto buf0 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
+    auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
+
+    buf0->setInput(pubs[0].get());
+    buf1->setInput(pubs[1].get());
+
+    subs[0]->setInput(buf0);
+    subs[1]->setInput(buf1);
+
+    this->iterate();
+}
+
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_half_buffered_callback)
 {
     this->init(2);
     auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
@@ -140,8 +165,19 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_half_buffered)
     this->iterate();
 }
 
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_half_buffered_query)
+{
+    this->init(2, false);
+    auto buf1 = mo::buffer::IBuffer::create(mo::BufferFlags::DROPPING_STREAM_BUFFER);
+
+    buf1->setInput(pubs[1].get());
+
+    subs[1]->setInput(buf1);
+    this->iterate();
+}
+
 // Timestamp is the same but one only publishes half the time
-TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs)
+TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs_callback)
 {
     this->init(2);
 
@@ -160,13 +196,38 @@ TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs)
     }
 }
 
+TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs_query)
+{
+    this->init(2, false);
+
+    for (uint32_t i = 1; i < 40; ++i)
+    {
+        pubs[0]->publish(i, header);
+        if(i % 2 == 0)
+        {
+            pubs[1]->publish(i + 1, header);
+            if(callback_used)
+            {
+                ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+            }else
+            {
+                ASSERT_TRUE(synchronizer.getNextSample());
+            }
+        }else
+        {
+            ASSERT_FALSE(callback_invoked);
+        }
+        post(i);
+    }
+}
+
 int randi(int start, int end)
 {
     return int((std::rand() / float(RAND_MAX)) * (end - start) + start);
 }
 
 // Jitter added to timestamp
-TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter)
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter_callback)
 {
     this->init(2);
     this->synchronizer.setSlop(std::chrono::milliseconds(10));
@@ -186,11 +247,57 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter)
     }
 }
 
-TEST_F(parameter_synchronizer_timestamp, multiple_inputs)
+TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter_query)
+{
+    this->init(2, false);
+    this->synchronizer.setSlop(std::chrono::milliseconds(10));
+    mo::Time time(std::chrono::milliseconds(0));
+
+    for (uint32_t i = 1; i < 40; ++i)
+    {
+        header = mo::Header(time);
+        pubs[0]->publish(i, mo::Header(time));
+
+        pubs[1]->publish(i + 1, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
+        if(this->callback_used)
+        {
+            ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
+        }
+
+        check(i);
+        post(i);
+        time = mo::Time(std::chrono::milliseconds(i*33));
+    }
+}
+
+TEST_F(parameter_synchronizer_timestamp, multiple_inputs_callback)
 {
     const int N = 100;
     this->synchronizer.setSlop(std::chrono::milliseconds(10));
     this->init(N);
+
+    mo::Time time(std::chrono::milliseconds(0));
+
+    for (uint32_t i = 1; i < 40; ++i)
+    {
+        header = mo::Header(time);
+        pubs[0]->publish(i, mo::Header(time));
+        for(int j = 1; j < N; ++j)
+        {
+            pubs[j]->publish(i + j, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
+        }
+
+        check(i);
+        post(i);
+        time = mo::Time(std::chrono::milliseconds(i*33));
+    }
+}
+
+TEST_F(parameter_synchronizer_timestamp, multiple_inputs_query)
+{
+    const int N = 100;
+    this->synchronizer.setSlop(std::chrono::milliseconds(10));
+    this->init(N, false);
 
     mo::Time time(std::chrono::milliseconds(0));
 
