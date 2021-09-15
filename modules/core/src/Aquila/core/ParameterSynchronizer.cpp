@@ -26,7 +26,7 @@ namespace aq
             }
             input->registerUpdateNotifier(m_slot);
         }
-        m_publishers = std::move(inputs);
+        m_subscribers = std::move(inputs);
     }
 
     void ParameterSynchronizer::setCallback(std::function<Callback_s> cb)
@@ -142,6 +142,21 @@ namespace aq
         return {};
     }
 
+    bool ParameterSynchronizer::getNextSample(ct::TArrayView<mo::IDataContainerConstPtr_t>& data, mo::IAsyncStream* stream)
+    {
+        boost::optional<mo::Header> header = this->getNextSample();
+        if(header)
+        {
+            MO_ASSERT_GE(data.size(), this->m_subscribers.size());
+            for(size_t i = 0; i < this->m_subscribers.size(); ++i)
+            {
+                data[i] = m_subscribers[i]->getData(header.get_ptr(), stream);
+            }
+            return true;
+        }
+        return false;
+    }
+
     void ParameterSynchronizer::onNewData()
     {
         boost::optional<mo::Header> hdr = getNextSample();
@@ -151,10 +166,10 @@ namespace aq
             {
                 if(hdr->timestamp)
                 {
-                    m_callback(hdr->timestamp.get_ptr(), nullptr, m_publishers);
+                    m_callback(hdr->timestamp.get_ptr(), nullptr, m_subscribers);
                 }else
                 {
-                    m_callback(hdr->timestamp.get_ptr(), &hdr->frame_number, m_publishers);
+                    m_callback(hdr->timestamp.get_ptr(), &hdr->frame_number, m_subscribers);
                 }
             }
         }

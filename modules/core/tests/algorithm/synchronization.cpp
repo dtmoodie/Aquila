@@ -316,3 +316,65 @@ TEST_F(parameter_synchronizer_timestamp, multiple_inputs_query)
     }
 }
 
+
+TEST_F(parameter_synchronizer_timestamp, typed_query)
+{
+    mo::TPublisher<int> pub0;
+    mo::TPublisher<float> pub1;
+    mo::TPublisher<double> pub2;
+    mo::TPublisher<std::vector<int>> pub3;
+    mo::TPublisher<std::string> pub4;
+
+    mo::TSubscriber<int> sub0;
+    sub0.setInput(&pub0);
+    mo::TSubscriber<float> sub1;
+    sub1.setInput(&pub1);
+    mo::TSubscriber<double> sub2;
+    sub2.setInput(&pub2);
+    mo::TSubscriber<std::vector<int>> sub3;
+    sub3.setInput(&pub3);
+    mo::TSubscriber<std::string> sub4;
+    sub4.setInput(&pub4);
+
+    aq::ParameterSynchronizer synchronizer;
+
+    synchronizer.setInputs(std::vector<mo::ISubscriber*>{&sub0, &sub1, &sub2, &sub3, &sub4});
+
+    std::tuple<mo::TDataContainerConstPtr_t<int>, mo::TDataContainerConstPtr_t<float>, mo::TDataContainerConstPtr_t<double>, mo::TDataContainerConstPtr_t<std::vector<int>>, mo::TDataContainerConstPtr_t<std::string>> tup0;
+    std::tuple<int, float, double, mo::vector<int>, std::string> tup1;
+    mo::IAsyncStreamPtr_t stream = mo::IAsyncStream::create();
+    ASSERT_FALSE(synchronizer.getNextSample(tup0, stream.get()));
+    mo::Header header(10 * mo::ms);
+    pub0.publish(5, header, stream.get());
+    pub1.publish(15.0F, header, stream.get());
+    pub2.publish(25.0, header, stream.get());
+    auto vec = pub3.create(4);
+    vec->data[0] = 4; vec->data[1] = 5; vec->data[2] = 6; vec->data[3] = 7;
+    vec->header = header;
+    pub3.publish(std::move(vec), stream.get());
+    pub4.publish("asdf", header, stream.get());
+
+    bool success = synchronizer.getNextSample(tup0, stream.get());
+    ASSERT_TRUE(success);
+    ASSERT_EQ(std::get<0>(tup0)->data, 5);
+    ASSERT_EQ(std::get<1>(tup0)->data, 15.0F);
+    ASSERT_EQ(std::get<2>(tup0)->data, 25.0);
+    ASSERT_EQ(std::get<4>(tup0)->data, "asdf");
+
+    header = mo::Header(15 * mo::ms);
+    pub0.publish(5, header, stream.get());
+    pub1.publish(12.0F, header, stream.get());
+    pub2.publish(25.0, header, stream.get());
+    vec->data[0] = 4; vec->data[1] = 5; vec->data[2] = 6; vec->data[3] = 7;
+    vec->header = header;
+    pub3.publish(std::move(vec), stream.get());
+    pub4.publish("asdf", header, stream.get());
+
+    success = synchronizer.getNextSample(tup1, stream.get());
+    ASSERT_TRUE(success);
+    ASSERT_EQ(std::get<0>(tup1), 5);
+    ASSERT_EQ(std::get<1>(tup1), 12.0F);
+    ASSERT_EQ(std::get<2>(tup1), 25.0);
+    ASSERT_EQ(std::get<4>(tup1), "asdf");
+}
+
