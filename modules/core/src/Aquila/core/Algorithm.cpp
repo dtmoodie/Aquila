@@ -711,10 +711,15 @@ mo::OptionalTime Algorithm::findDirectTimestamp(bool& buffered, const std::vecto
 
 Algorithm::InputState Algorithm::checkInputs()
 {
+    auto inputs = this->getInputs();
+    if(inputs.empty())
+    {
+        return Algorithm::InputState::kALL_VALID;
+    }
     auto next_header = this->m_synchronizer->getNextSample();
+
     if(next_header)
     {
-        auto inputs = this->getInputs();
         for(auto input : inputs)
         {
             auto data = input->getData(next_header.get_ptr());
