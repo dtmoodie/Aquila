@@ -31,6 +31,9 @@ namespace aq
         bool process() override;
         bool process(mo::IAsyncStream&) override;
 
+        void addParam(std::shared_ptr<mo::IParam> param) override;
+        void addParam(mo::IParam& param) override;
+
         int setupParamServer(const std::shared_ptr<mo::IParamServer>& mgr) override;
         int setupSignals(const std::shared_ptr<mo::RelayManager>& mgr) override;
         void setEnabled(bool value) override;

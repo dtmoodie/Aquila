@@ -17,6 +17,7 @@ using namespace aq;
 Algorithm::Algorithm()
 {
     m_logger = mo::getLogger();
+    m_synchronizer = std::make_unique<ParameterSynchronizer>();
 }
 
 void Algorithm::setEnabled(bool value)
@@ -186,6 +187,20 @@ bool Algorithm::processImpl(mo::IAsyncStream&)
 bool Algorithm::processImpl(mo::IDeviceStream&)
 {
     return this->processImpl();
+}
+
+
+void Algorithm::addParam(std::shared_ptr<mo::IParam> param)
+{
+    IAlgorithm::addParam(std::move(param));
+}
+
+void Algorithm::addParam(mo::IParam& param)
+{
+    IAlgorithm::addParam(param);
+
+    auto inputs = this->getInputs();
+    m_synchronizer->setInputs(inputs);
 }
 
 const mo::IPublisher* Algorithm::getOutput(const std::string& name) const
@@ -696,113 +711,17 @@ mo::OptionalTime Algorithm::findDirectTimestamp(bool& buffered, const std::vecto
 
 Algorithm::InputState Algorithm::checkInputs()
 {
-    auto inputs = this->getInputs();
-    if (inputs.empty())
+    auto next_header = this->m_synchronizer->getNextSample();
+    if(next_header)
     {
-        return InputState::kALL_VALID;
+        auto inputs = this->getInputs();
+        for(auto input : inputs)
+        {
+            auto data = input->getData(next_header.get_ptr());
+            MO_ASSERT(data != nullptr);
+        }
+        return Algorithm::InputState::kALL_VALID;
     }
-    for (auto input : inputs)
-    {
-        if (!input->isInputSet() && !input->checkFlags(mo::ParamFlags::kOPTIONAL))
-        {
-            LOG_ALGO(trace, "Required input ({}) is not connected", input->getTreeName());
-            return InputState::kNONE_VALID;
-        }
-    }
-    boost::optional<mo::Time> ts;
-    FrameNumber fn;
-    // First check to see if we have a sync input, if we do then use its synchronizatio method
-    // TODO: Handle processing queue
-    bool buffered = false;
-    if (m_sync_input)
-    {
-        mo::Lock_t lock(m_mtx);
-        auto input_param = m_sync_input->getPublisher();
-        if (input_param && input_param->checkFlags(mo::ParamFlags::kBUFFER))
-        {
-            if (!m_ts_processing_queue.empty())
-            {
-                if (m_sync_method == SyncMethod::kEVERY)
-                {
-                    ts = m_ts_processing_queue.front();
-                }
-                else
-                {
-                    ts = m_ts_processing_queue.back();
-                }
-                m_ts_processing_queue.pop();
-            }
-        }
-        else
-        {
-            auto header = m_sync_input->getNewestHeader();
-            if (header && !header->timestamp)
-            {
-                fn = header->frame_number;
-            }
-        }
-    }
-    else
-    {
-        // first look for any direct connections, if so use the timestamp from them
-        ts = findDirectTimestamp(buffered, inputs);
-        if (!ts && buffered)
-        {
-            ts = findBufferedTimestamp();
-        }
-        if (!ts && !buffered)
-        {
-            for (auto input : inputs)
-            {
-                if (input->isInputSet())
-                {
-                    auto header = input->getNewestHeader();
-                    if (header)
-                    {
-                        auto in_fn = header->frame_number;
-                        fn = std::min(fn.val, in_fn.val);
-                    }
-                }
-            }
-        }
-    }
-    // Synchronizing on timestamp
-
-    if (ts)
-    {
-        auto ret = syncTimestamp(*ts, inputs);
-        if (ret == InputState::kALL_VALID)
-        {
-            LOG_ALGO(trace, "Syncing to {}", *ts);
-            if (buffered)
-            {
-                removeTimestampFromBuffer(*ts);
-            }
-        }
-        else
-        {
-            LOG_ALGO(debug, "Unable to sync timestamp to {} due to {}", *ts, ct::toString(ret));
-        }
-        return ret;
-    }
-    if (fn.valid())
-    {
-        auto ret = syncFrameNumber(fn, inputs);
-        if (ret == InputState::kALL_VALID)
-        {
-            LOG_ALGO(trace, "Syncing to {}", fn);
-            if (buffered)
-            {
-                removeFrameNumberFromBuffer(fn);
-            }
-        }
-        else
-        {
-            LOG_ALGO(debug, "Unable to sync frame number to {} due to {}", fn, ct::toString(ret));
-        }
-        return ret;
-    }
-    LOG_ALGO(debug, "Nothing to sync to ");
     return InputState::kNONE_VALID;
 }
 
