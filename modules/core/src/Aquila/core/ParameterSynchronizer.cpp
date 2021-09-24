@@ -10,11 +10,10 @@ namespace aq
     {
         m_slot.bind(&ParameterSynchronizer::onParamUpdate, this);
         m_previous_timestamps.set_capacity(20);
+        m_previous_frame_numbers.set_capacity(20);
     }
 
-    ParameterSynchronizer::~ParameterSynchronizer()
-    {
-    }
+    ParameterSynchronizer::~ParameterSynchronizer() = default;
 
     void ParameterSynchronizer::setInputs(std::vector<mo::ISubscriber*> inputs)
     {
@@ -90,6 +89,52 @@ namespace aq
         return output;
     }
 
+    mo::FrameNumber ParameterSynchronizer::findEarliestCommonFrameNumber() const
+    {
+        // Todo earliest guarantee?
+        mo::FrameNumber output;
+        uint32_t valid_count = 0;
+        for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        {
+            if (!itr->second.empty())
+            {
+                if(!output.valid())
+                {
+                    const mo::Header& hdr = itr->second.front();
+                    if (hdr.frame_number.valid())
+                    {
+                        output = hdr.frame_number;
+                        ++valid_count;
+                    }
+                }else
+                {
+                    for(const mo::Header& hdr : itr->second)
+                    {
+                        if(hdr.frame_number.valid())
+                        {
+                            // We do an exact comparison because if we want to synchronize across different sources, we should be synchronizing based on time stamp
+                            if(hdr.frame_number == output)
+                            {
+                                if(hdr.frame_number < output)
+                                {
+                                    output = hdr.frame_number;
+                                }
+                                ++valid_count;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(valid_count != m_headers.size())
+        {
+            return {};
+        }
+
+        return output;
+    }
+
     bool ParameterSynchronizer::dedoup(const mo::Time& time)
     {
         auto itr = std::find_if(m_previous_timestamps.begin(), m_previous_timestamps.end(), [time, this](const mo::Time& other)
@@ -102,6 +147,21 @@ namespace aq
             return false;
         }
         m_previous_timestamps.push_back(time);
+        return true;
+    }
+
+    bool ParameterSynchronizer::dedoup(const mo::FrameNumber& fn)
+    {
+        auto itr = std::find_if(m_previous_frame_numbers.begin(), m_previous_frame_numbers.end(), [fn](const mo::FrameNumber& other)
+        {
+            return other == fn;
+        });
+        if(itr != m_previous_frame_numbers.end())
+        {
+            // Duplicate timestamp detected
+            return false;
+        }
+        m_previous_frame_numbers.push_back(fn);
         return true;
     }
 
@@ -129,6 +189,30 @@ namespace aq
         }
     }
 
+    void ParameterSynchronizer::removeFrameNumber(const mo::FrameNumber &fn)
+    {
+        // Remove any timestamp instances that are less than the new time
+        // We don't go back and look at stale data
+        for( auto& itr : m_headers)
+        {
+            auto find_itr = itr.second.begin();
+            auto pred = [&fn](const mo::Header& hdr)
+            {
+                if(hdr.frame_number.valid())
+                {
+                    return hdr.frame_number == fn;
+                }
+                return false;
+            };
+            find_itr = std::find_if(find_itr, itr.second.end(), pred);
+            while(find_itr != itr.second.end())
+            {
+                find_itr = itr.second.erase(find_itr);
+                find_itr = std::find_if(find_itr, itr.second.end(), pred);
+            }
+        }
+    }
+
     boost::optional<mo::Header> ParameterSynchronizer::getNextSample()
     {
         mo::OptionalTime time = findEarliestCommonTimestamp();
@@ -138,6 +222,13 @@ namespace aq
             const bool dedoup_success = dedoup(*time);
             removeTimestamp(*time);
             return dedoup_success ? boost::optional<mo::Header>(mo::Header(*time)) : boost::optional<mo::Header>();
+        }
+        mo::FrameNumber fn = findEarliestCommonFrameNumber();
+        if(fn.valid())
+        {
+            const bool dedoup_success = dedoup(fn);
+            removeFrameNumber(fn);
+            return dedoup_success ? boost::optional<mo::Header>(mo::Header(fn)) : boost::optional<mo::Header>();
         }
         return {};
     }
@@ -169,7 +260,7 @@ namespace aq
                     m_callback(hdr->timestamp.get_ptr(), nullptr, m_subscribers);
                 }else
                 {
-                    m_callback(hdr->timestamp.get_ptr(), &hdr->frame_number, m_subscribers);
+                    m_callback(nullptr, &hdr->frame_number, m_subscribers);
                 }
             }
         }
