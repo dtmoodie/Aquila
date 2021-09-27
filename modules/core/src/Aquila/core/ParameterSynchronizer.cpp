@@ -52,6 +52,9 @@ namespace aq
 
     mo::OptionalTime ParameterSynchronizer::findDirectTimestamp() const
     {
+        uint32_t valid_count = 0;
+        uint32_t direct_inputs = 0;
+        mo::OptionalTime output;
         for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
             const mo::IPublisher* publisher = itr->first->getPublisher();
@@ -61,27 +64,42 @@ namespace aq
                 if(!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
                 {
                     m_logger->warn("No input set for '{}'", itr->first->getName());
-                    return {};
                 }
-            }
-
-            // If this is not a buffered connection, then we need to use the direct timestamp since there is no buffer history, we can only operate on current data
-            if(!publisher->checkFlags(mo::ParamFlags::kBUFFER))
+            }else
             {
-                if(itr->first->hasNewData())
+                // If this is not a buffered connection, then we need to use the direct timestamp since there is no buffer history, we can only operate on current data
+                if(!publisher->checkFlags(mo::ParamFlags::kBUFFER))
                 {
-                    auto hdr = itr->first->getNewestHeader();
-                    if(hdr)
+                    ++direct_inputs;
+                    if(itr->first->hasNewData())
                     {
-                        return hdr->timestamp;
-                    }else
-                    {
-                        return {};
+                        auto hdr = itr->first->getNewestHeader();
+                        if(hdr)
+                        {
+                            if(boost::none == output)
+                            {
+                                output = hdr->timestamp;
+                                ++valid_count;
+                            }else
+                            {
+                                if(boost::none != hdr->timestamp)
+                                {
+                                    if(output == hdr->timestamp)
+                                    {
+                                        ++valid_count;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        return {};
+        if(valid_count != direct_inputs)
+        {
+            output = mo::OptionalTime();
+        }
+        return output;
     }
 
     mo::OptionalTime ParameterSynchronizer::findEarliestTimestamp() const

@@ -229,14 +229,28 @@ TEST_F(parameter_synchronizer_timestamp, single_input_dedoup_query)
 
 TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct_callback)
 {
-    this->init(2);
+    this->init(2, true, false);
     this->iterate();
 }
 
 TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct_query)
 {
-    this->init(2, false);
-    this->iterate();
+    this->init(2, false, false);
+    const size_t sz = pubs.size();
+    for (uint32_t i = 1; i < 2; ++i)
+    {
+        for(uint32_t j = 0; j < sz; ++j)
+        {
+            pubs[j]->publish(i + j, header, stream.get());
+            if(j == 0)
+            {
+                auto header = synchronizer.getNextSample();
+                ASSERT_FALSE(header);
+            }
+        }
+        check(i);
+        post(i);
+    }
 }
 
 
@@ -562,13 +576,13 @@ TEST_F(parameter_synchronizer_framenumber, single_input_dedoup_query)
 
 TEST_F(parameter_synchronizer_framenumber, synchronized_inputs_direct_callback)
 {
-    this->init(2);
+    this->init(2, false, false);
     this->iterate();
 }
 
 TEST_F(parameter_synchronizer_framenumber, synchronized_inputs_direct_query)
 {
-    this->init(2, false);
+    this->init(2, false, false);
     this->iterate();
 }
 
