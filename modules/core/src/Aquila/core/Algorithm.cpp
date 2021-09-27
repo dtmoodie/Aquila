@@ -17,7 +17,7 @@ using namespace aq;
 Algorithm::Algorithm()
 {
     m_logger = mo::getLogger();
-    m_synchronizer = std::make_unique<ParameterSynchronizer>();
+    m_synchronizer = std::make_unique<ParameterSynchronizer>(*m_logger);
 }
 
 void Algorithm::setEnabled(bool value)
@@ -988,6 +988,7 @@ bool Algorithm::SyncData::operator!=(const SyncData& other)
 void Algorithm::setLogger(const std::shared_ptr<spdlog::logger>& logger)
 {
     m_logger = logger;
+    m_synchronizer->setLogger(*m_logger);
 }
 
 spdlog::logger& Algorithm::getLogger() const

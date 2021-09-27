@@ -5,8 +5,9 @@
 
 namespace aq
 {
-    ParameterSynchronizer::ParameterSynchronizer(std::chrono::nanoseconds slop):
-        m_slop(std::move(slop))
+    ParameterSynchronizer::ParameterSynchronizer(spdlog::logger& logger, std::chrono::nanoseconds slop):
+        m_slop(std::move(slop)),
+        m_logger(&logger)
     {
         m_slot.bind(&ParameterSynchronizer::onParamUpdate, this);
         m_previous_timestamps.set_capacity(20);
@@ -14,6 +15,11 @@ namespace aq
     }
 
     ParameterSynchronizer::~ParameterSynchronizer() = default;
+
+    void ParameterSynchronizer::setLogger(spdlog::logger& logger)
+    {
+        m_logger = &logger;
+    }
 
     void ParameterSynchronizer::setInputs(std::vector<mo::ISubscriber*> inputs)
     {
@@ -44,43 +50,132 @@ namespace aq
         return std::abs(delta.count()) <= m_slop.count();
     }
 
+    mo::OptionalTime ParameterSynchronizer::findDirectTimestamp() const
+    {
+        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        {
+            const mo::IPublisher* publisher = itr->first->getPublisher();
+            // If the input isn't set, can't do anything unless it is an optional input
+            if(publisher == nullptr)
+            {
+                if(!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
+                {
+                    m_logger->warn("No input set for '{}'", itr->first->getName());
+                    return {};
+                }
+            }
+
+            // If this is not a buffered connection, then we need to use the direct timestamp since there is no buffer history, we can only operate on current data
+            if(!publisher->checkFlags(mo::ParamFlags::kBUFFER))
+            {
+                if(itr->first->hasNewData())
+                {
+                    auto hdr = itr->first->getNewestHeader();
+                    if(hdr)
+                    {
+                        return hdr->timestamp;
+                    }else
+                    {
+                        return {};
+                    }
+                }
+            }
+        }
+        return {};
+    }
+
+    mo::OptionalTime ParameterSynchronizer::findEarliestTimestamp() const
+    {
+        mo::OptionalTime output;
+        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        {
+            for(const mo::Header& hdr : itr->second)
+            {
+                if(boost::none != hdr.timestamp)
+                {
+                    if(boost::none == output)
+                    {
+                        output = hdr.timestamp;
+                    }else
+                    {
+                        if(*hdr.timestamp < *output)
+                        {
+                            output = hdr.timestamp;
+                        }
+                    }
+                }
+
+            }
+        }
+        return output;
+    }
+
     mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
     {
         // Todo earliest guarantee?
-        mo::OptionalTime output;
+        mo::OptionalTime output = findDirectTimestamp();
+        if(boost::none != output)
+        {
+            return output;
+        }
+        output = findEarliestTimestamp();
+        // Can't continue since we don't have any data to start from
+        if(boost::none == output)
+        {
+            return output;
+        }
         uint32_t valid_count = 0;
+
+        const auto check = [this, &output](const boost::circular_buffer<mo::Header>& headers) -> bool
+        {
+            for(const mo::Header& hdr : headers)
+            {
+                if(boost::none != hdr.timestamp)
+                {
+                    if(closeEnough(*hdr.timestamp, *output))
+                    {
+
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
         for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
             if (!itr->second.empty())
             {
-                if(boost::none == output)
+                bool found = check(itr->second);
+
+                // The selected timestamp was not found for this input,
+                if(found)
                 {
-                    const mo::Header& hdr = itr->second.front();
-                    if (boost::none != hdr.timestamp)
-                    {
-                        output = hdr.timestamp;
-                        ++valid_count;
-                    }
-                }else
+                    ++valid_count;
+                }
+                else
                 {
-                    for(const mo::Header& hdr : itr->second)
+                    if(!itr->second.empty())
                     {
+                        const mo::Header& hdr = *itr->second.begin();
                         if(boost::none != hdr.timestamp)
                         {
-                            if(closeEnough(*hdr.timestamp, *output))
+                            if(*hdr.timestamp > *output)
                             {
-                                if(*hdr.timestamp < *output)
+                                output = hdr.timestamp;
+                                valid_count = 0;
+                                itr = m_headers.begin();
+                                found = check(itr->second);
+                                if(found)
                                 {
-                                    output = hdr.timestamp;
+                                    ++valid_count;
                                 }
-                                ++valid_count;
-                                break;
                             }
                         }
                     }
                 }
             }
         }
+
         if(valid_count != m_headers.size())
         {
             return {};
@@ -269,12 +364,14 @@ namespace aq
     void
     ParameterSynchronizer::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags flags, mo::IAsyncStream&)
     {
-        auto itr = m_headers.find(&param);
+        auto itr = m_headers.find(dynamic_cast<const mo::ISubscriber*>(&param));
         MO_ASSERT(itr != m_headers.end());
         if(itr->second.size())
         {
             if(header.timestamp != boost::none && itr->second.back().timestamp != boost::none)
             {
+                // Only insert data if it is newer than the most recent sample.
+                // This prevents time from moving backward, and causes complications with re-compute.
                 if(header.timestamp > itr->second.back().timestamp)
                 {
                     itr->second.push_back(std::move(header));

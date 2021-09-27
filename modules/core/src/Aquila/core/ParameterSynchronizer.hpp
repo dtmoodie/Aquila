@@ -29,12 +29,14 @@ namespace aq
          * @brief ParameterSynchronizer constructor with default of no slop
          * @param slop
          */
-        ParameterSynchronizer(std::chrono::nanoseconds slop = std::chrono::nanoseconds(0));
+        ParameterSynchronizer(spdlog::logger& logger, std::chrono::nanoseconds slop = std::chrono::nanoseconds(0));
 
         /**
          * destructor
         */
         ~ParameterSynchronizer();
+
+        void setLogger(spdlog::logger& logger);
 
         /**
          * @brief set the subscribers that this object will synchronize
@@ -52,7 +54,10 @@ namespace aq
          */
         void setSlop(std::chrono::nanoseconds slop);
 
+        mo::OptionalTime findDirectTimestamp() const;
+        mo::OptionalTime findEarliestTimestamp() const;
         mo::OptionalTime findEarliestCommonTimestamp() const;
+
 
         mo::FrameNumber findEarliestCommonFrameNumber() const;
 
@@ -101,18 +106,23 @@ namespace aq
         bool getNextSample(std::tuple<Types...>& data, mo::IAsyncStream* stream = nullptr);
 
       private:
+
+
         bool closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const;
         void onNewData();
         void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&);
         bool dedoup(const mo::Time&);
         bool dedoup(const mo::FrameNumber&);
 
+
+
+        spdlog::logger* m_logger;
         std::function<Callback_s> m_callback;
         mo::TSlot<mo::Update_s> m_slot;
 
         std::vector<mo::ISubscriber*> m_subscribers;
 
-        std::unordered_map<const mo::IParam*, boost::circular_buffer<mo::Header>> m_headers;
+        std::unordered_map<const mo::ISubscriber*, boost::circular_buffer<mo::Header>> m_headers;
 
         boost::circular_buffer<mo::Time> m_previous_timestamps;
         boost::circular_buffer<mo::FrameNumber> m_previous_frame_numbers;

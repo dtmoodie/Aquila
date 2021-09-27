@@ -138,20 +138,20 @@ TEST(algorithm, no_input)
 TEST(algorithm, counting_input)
 {
     auto stream = mo::AsyncStreamFactory::instance()->create();
-    auto output = rcc::shared_ptr<int_output>::create();
-    auto input = rcc::shared_ptr<int_input>::create();
-    output->setStream(stream);
-    input->setStream(stream);
-    auto output_param = output->getOutput("value");
-    auto input_param = input->getInput("input");
+    auto publisher = rcc::shared_ptr<int_output>::create();
+    auto subscriber = rcc::shared_ptr<int_input>::create();
+    publisher->setStream(stream);
+    subscriber->setStream(stream);
+    auto output_param = publisher->getOutput("value");
+    auto input_param = subscriber->getInput("input");
     EXPECT_NE(output_param, nullptr);
     EXPECT_NE(input_param, nullptr);
     EXPECT_EQ(input_param->setInput(output_param), true);
     for (int i = 0; i < 100; ++i)
     {
-        output->process();
-        input->process();
-        EXPECT_EQ(output->counter, *input->input);
+        publisher->process();
+        subscriber->process();
+        EXPECT_EQ(publisher->counter, *subscriber->input);
     }
 }
 

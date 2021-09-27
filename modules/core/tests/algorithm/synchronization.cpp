@@ -6,8 +6,14 @@
 
 #include <gtest/gtest.h>
 
+int randi(int start, int end)
+{
+    return int((std::rand() / float(RAND_MAX)) * (end - start) + start);
+}
+
 struct parameter_synchronizer: ::testing::Test
 {
+    std::shared_ptr<spdlog::logger> m_logger;
     aq::ParameterSynchronizer synchronizer;
     mo::IAsyncStream::Ptr_t stream;
 
@@ -19,13 +25,15 @@ struct parameter_synchronizer: ::testing::Test
     bool callback_invoked = false;
     bool callback_used = false;
 
-    parameter_synchronizer()
+    parameter_synchronizer():
+        m_logger(mo::getLogger()),
+        synchronizer(*m_logger)
     {
         stream = mo::IAsyncStream::create();
         header = mo::Header(std::chrono::milliseconds(0));
     }
 
-    void init(const uint32_t N, const bool use_callback = true)
+    void init(const uint32_t N, const bool use_callback = true, const bool buffered = true)
     {
         pubs.resize(N);
         subs.resize(N);
@@ -35,7 +43,15 @@ struct parameter_synchronizer: ::testing::Test
         {
             subs[i] = std::make_unique<mo::TSubscriber<uint32_t>>();
             pubs[i] = std::make_unique<mo::TPublisher<uint32_t>>();
-            subs[i]->setInput(pubs[i].get());
+            if(buffered)
+            {
+                auto buffer = mo::buffer::IBuffer::create(mo::BufferFlags::STREAM_BUFFER);
+                buffer->setInput(pubs[i].get());
+                subs[i]->setInput(buffer);
+            }else
+            {
+                subs[i]->setInput(pubs[i].get());
+            }
             sub_ptrs.push_back(subs[i].get());
         }
         synchronizer.setInputs(std::move(sub_ptrs));
@@ -100,6 +116,102 @@ struct parameter_synchronizer_timestamp: parameter_synchronizer
         ASSERT_EQ(*header.timestamp, *time);
     }
 };
+
+
+TEST_F(parameter_synchronizer_timestamp, find_direct_timestamp_0)
+{
+    pubs.resize(2);
+    subs.resize(2);
+    std::vector<mo::ISubscriber*> sub_ptrs;
+    sub_ptrs.reserve(2);
+
+    // Setup a buffered connection
+    subs[0] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[0] = std::make_unique<mo::TPublisher<uint32_t>>();
+    auto buffer = mo::buffer::IBuffer::create(mo::BufferFlags::STREAM_BUFFER);
+    buffer->setInput(pubs[0].get());
+    subs[0]->setInput(buffer);
+    sub_ptrs.push_back(subs[0].get());
+
+    // setup a direct connection
+    subs[1] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[1] = std::make_unique<mo::TPublisher<uint32_t>>();
+    subs[1]->setInput(pubs[1].get());
+    sub_ptrs.push_back(subs[1].get());
+
+    synchronizer.setInputs(std::move(sub_ptrs));
+
+    mo::Header hdr(0 * mo::ms);
+    auto ts = synchronizer.findDirectTimestamp();
+    ASSERT_FALSE(ts);
+
+    pubs[0]->publish(0, hdr);
+    ts = synchronizer.findDirectTimestamp();
+    ASSERT_FALSE(ts);
+
+    pubs[1]->publish(0, hdr);
+    ts = synchronizer.findDirectTimestamp();
+    ASSERT_TRUE(ts);
+    //ASSERT_EQ(*ts, 0 * mo::ms);
+}
+
+// Do it backwards from above to make sure we don't have any weird ordering issues
+TEST_F(parameter_synchronizer_timestamp, find_direct_timestamp_1)
+{
+    pubs.resize(2);
+    subs.resize(2);
+    std::vector<mo::ISubscriber*> sub_ptrs;
+    sub_ptrs.reserve(2);
+
+    // Setup a buffered connection
+    subs[1] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[1] = std::make_unique<mo::TPublisher<uint32_t>>();
+    auto buffer = mo::buffer::IBuffer::create(mo::BufferFlags::STREAM_BUFFER);
+    buffer->setInput(pubs[1].get());
+    subs[1]->setInput(buffer);
+    sub_ptrs.push_back(subs[1].get());
+
+    // setup a direct connection
+    subs[0] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[0] = std::make_unique<mo::TPublisher<uint32_t>>();
+    subs[0]->setInput(pubs[0].get());
+    sub_ptrs.push_back(subs[0].get());
+
+    synchronizer.setInputs(std::move(sub_ptrs));
+
+    mo::Header hdr(0 * mo::ms);
+    auto ts = synchronizer.findDirectTimestamp();
+    ASSERT_FALSE(ts);
+
+    pubs[1]->publish(0, hdr);
+    ts = synchronizer.findDirectTimestamp();
+    ASSERT_FALSE(ts);
+
+    pubs[0]->publish(0, hdr);
+    ts = synchronizer.findDirectTimestamp();
+    ASSERT_TRUE(ts);
+    //ASSERT_EQ(*ts, 0 * mo::ms);
+}
+
+TEST_F(parameter_synchronizer_timestamp, find_earlist_timestamp)
+{
+    this->init(2, false);
+    mo::Time earliest(1000 * mo::ms);
+    std::vector<int> times{4,5,6,7,8,9,10};
+    for(auto i : times)
+    {
+        const mo::Time time = i * mo::ms;
+        earliest = std::min(time, earliest);
+        pubs[0]->publish(i, mo::Header(time));
+        pubs[1]->publish(i, mo::Header(time));
+    }
+    mo::OptionalTime found = synchronizer.findEarliestTimestamp();
+    ASSERT_TRUE(found);
+    ASSERT_EQ(*found, earliest);
+}
+
+
+
 
 
 TEST_F(parameter_synchronizer_timestamp, single_input_dedoup_callback)
@@ -225,10 +337,7 @@ TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs_query)
     }
 }
 
-int randi(int start, int end)
-{
-    return int((std::rand() / float(RAND_MAX)) * (end - start) + start);
-}
+
 
 // Jitter added to timestamp
 TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter_callback)
@@ -339,8 +448,8 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     sub3.setInput(&pub3);
     mo::TSubscriber<std::string> sub4;
     sub4.setInput(&pub4);
-
-    aq::ParameterSynchronizer synchronizer;
+    auto logger = mo::getLogger();
+    aq::ParameterSynchronizer synchronizer(*logger);
 
     synchronizer.setInputs(std::vector<mo::ISubscriber*>{&sub0, &sub1, &sub2, &sub3, &sub4});
 
@@ -627,7 +736,8 @@ TEST_F(parameter_synchronizer_framenumber, typed_query)
     mo::TSubscriber<std::string> sub4;
     sub4.setInput(&pub4);
 
-    aq::ParameterSynchronizer synchronizer;
+    auto logger = mo::getLogger();
+    aq::ParameterSynchronizer synchronizer(*logger);
 
     synchronizer.setInputs(std::vector<mo::ISubscriber*>{&sub0, &sub1, &sub2, &sub3, &sub4});
 
