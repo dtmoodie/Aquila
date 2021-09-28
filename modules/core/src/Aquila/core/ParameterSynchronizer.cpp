@@ -77,7 +77,10 @@ namespace aq
                         auto hdr = itr->first->getNewestHeader();
                         if(hdr)
                         {
-                            output = predicate(std::move(output), *hdr, valid_count);
+                            if(predicate(output, *hdr))
+                            {
+                                ++valid_count;
+                            }
                         }
                     }
                 }
@@ -90,28 +93,68 @@ namespace aq
         return output;
     }
 
-    mo::OptionalTime ParameterSynchronizer::findDirectTimestamp() const
+    struct TimestampPredicate
     {
-        auto predicate = [](mo::OptionalTime&& output, const mo::Header& hdr, uint32_t& valid_count) -> mo::OptionalTime
+        TimestampPredicate(const std::chrono::nanoseconds& slop):
+            m_slop(slop)
         {
-            if(boost::none == output && boost::none != hdr.timestamp)
+
+        }
+
+        bool equal(const mo::Time& t0, const mo::Time& t1)
+        {
+            const std::chrono::nanoseconds delta = t0.time_since_epoch() - t1.time_since_epoch();
+            return std::abs(delta.count()) <= m_slop.count();
+        }
+
+        bool less(const mo::Time& t0, const mo::Time& t1)
+        {
+            return t0 < t1;
+        }
+
+        template<class T>
+        bool check(mo::OptionalTime& output, const mo::Header& hdr, T pred)
+        {
+            if(boost::none != hdr.timestamp)
             {
-                output = hdr.timestamp;
-                ++valid_count;
-            }else
-            {
-                if(boost::none != hdr.timestamp)
+                if(boost::none == output)
                 {
-                    if(output == hdr.timestamp)
+                    output = hdr.timestamp;
+                    return true;
+                }else
+                {
+                    if(pred(*output, *hdr.timestamp))
                     {
-                        ++valid_count;
+                        return true;
                     }
                 }
             }
-            return std::move(output);
-        };
+            return false;
+        }
 
-        return findDirect<mo::OptionalTime>(std::move(predicate));
+        bool checkExact(mo::OptionalTime& output, const mo::Header& hdr)
+        {
+            return check(output, hdr, [this](const mo::Time& t0, const mo::Time& t1){return this->equal(t0, t1);});
+        }
+
+        bool checkLessThan(mo::OptionalTime& output, const mo::Header& hdr)
+        {
+            if(check(output, hdr, [this](const mo::Time& t0, const mo::Time& t1){return this->less(t0, t1);}))
+            {
+                return true;
+            }
+            // We found a new smaller timestamp and thus we update output
+            output = hdr.timestamp;
+            return false;
+        }
+    private:
+        std::chrono::nanoseconds m_slop;
+    };
+
+    mo::OptionalTime ParameterSynchronizer::findDirectTimestamp() const
+    {
+        TimestampPredicate pred(m_slop);
+        return findDirect<mo::OptionalTime>([&pred](mo::OptionalTime& output, const mo::Header& hdr){return pred.checkExact(output, hdr);});
     }
 
     template<class T, class F>
@@ -123,7 +166,7 @@ namespace aq
             // The assumption that itr->second is sorted is not necessarily true since data playback could be rewound
             for(const mo::Header& hdr : itr->second)
             {
-                output = predicate(std::move(output), hdr);
+                predicate(output, hdr);
             }
         }
         return output;
@@ -131,24 +174,8 @@ namespace aq
 
     mo::OptionalTime ParameterSynchronizer::findEarliestTimestamp() const
     {
-        auto predicate = [](mo::OptionalTime&& output, const mo::Header& hdr) -> mo::OptionalTime
-        {
-            if(boost::none != hdr.timestamp)
-            {
-                if(boost::none == output)
-                {
-                    output = hdr.timestamp;
-                }else
-                {
-                    if(*hdr.timestamp < *output)
-                    {
-                        output = hdr.timestamp;
-                    }
-                }
-            }
-            return std::move(output);
-        };
-        return findEarliest<mo::OptionalTime>(std::move(predicate));
+        TimestampPredicate pred(m_slop);
+        return findEarliest<mo::OptionalTime>([&pred](mo::OptionalTime& output, const mo::Header& hdr){return pred.checkLessThan(output, hdr);});
     }
 
     mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
@@ -225,46 +252,63 @@ namespace aq
         return output;
     }
 
-    mo::FrameNumber ParameterSynchronizer::findDirectFrameNumber() const
+    struct FrameNumberPredicate
     {
-        auto predicate = [](mo::FrameNumber&& output, const mo::Header& hdr, uint32_t& valid_count) -> mo::FrameNumber
-        {
-            if(!output.valid())
-            {
-                output = hdr.frame_number;
-                ++valid_count;
-            }else
-            {
-                if(output == hdr.frame_number)
-                {
-                    ++valid_count;
-                }
-            }
-            return std::move(output);
-        };
-        return findDirect<mo::FrameNumber>(std::move(predicate));
-    }
 
-    mo::FrameNumber ParameterSynchronizer::findEarliestFrameNumber() const
-    {
-        auto predicate = [](mo::FrameNumber&& output, const mo::Header& hdr) -> mo::FrameNumber
+        static bool equal(const mo::FrameNumber& t0, const mo::FrameNumber& t1)
+        {
+            return t0 == t1;
+        }
+
+        static bool less(const mo::FrameNumber& t0, const mo::FrameNumber& t1)
+        {
+            return t0 < t1;
+        }
+
+        template<class T>
+        static bool check(mo::FrameNumber& output, const mo::Header& hdr, T pred)
         {
             if(boost::none == hdr.timestamp)
             {
                 if(!output.valid())
                 {
                     output = hdr.frame_number;
+                    return true;
                 }else
                 {
-                    if(hdr.frame_number < output)
+                    if(pred(output, hdr.frame_number))
                     {
-                        output = hdr.frame_number;
+                        return true;
                     }
                 }
             }
-            return std::move(output);
-        };
-        return findEarliest<mo::FrameNumber>(std::move(predicate));
+            return false;
+        }
+
+        static bool checkExact(mo::FrameNumber& output, const mo::Header& hdr)
+        {
+            return check(output, hdr, &FrameNumberPredicate::equal);
+        }
+
+        static bool checkLessThan(mo::FrameNumber& output, const mo::Header& hdr)
+        {
+            if(!check(output, hdr, &FrameNumberPredicate::less))
+            {
+                output = hdr.frame_number;
+                return false;
+            }
+            return true;
+        }
+    };
+
+    mo::FrameNumber ParameterSynchronizer::findDirectFrameNumber() const
+    {
+        return findDirect<mo::FrameNumber>(&FrameNumberPredicate::checkExact);
+    }
+
+    mo::FrameNumber ParameterSynchronizer::findEarliestFrameNumber() const
+    {
+        return findEarliest<mo::FrameNumber>(&FrameNumberPredicate::checkLessThan);
     }
 
     mo::FrameNumber ParameterSynchronizer::findEarliestCommonFrameNumber() const
@@ -453,18 +497,10 @@ namespace aq
         {
             if(header.timestamp != boost::none && itr->second.back().timestamp != boost::none)
             {
-                // Only insert data if it is newer than the most recent sample.
-                // This prevents time from moving backward, and causes complications with re-compute.
-                if(header.timestamp > itr->second.back().timestamp)
-                {
-                    itr->second.push_back(std::move(header));
-                }
+                itr->second.push_back(std::move(header));
             }else
             {
-                if(header.frame_number.valid() && (header.frame_number > itr->second.back().frame_number))
-                {
-                    itr->second.push_back(std::move(header));
-                }
+                itr->second.push_back(std::move(header));
             }
         }else
         {

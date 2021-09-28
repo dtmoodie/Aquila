@@ -197,7 +197,7 @@ TEST_F(parameter_synchronizer_timestamp, find_earlist_timestamp)
 {
     this->init(2, false);
     mo::Time earliest(1000 * mo::ms);
-    std::vector<int> times{4,5,6,7,8,9,10};
+    std::vector<int> times{5,6,7,4, 8,9,10};
     for(auto i : times)
     {
         const mo::Time time = i * mo::ms;
@@ -580,7 +580,7 @@ TEST_F(parameter_synchronizer_framenumber, find_direct_framenumber_0)
 
     synchronizer.setInputs(std::move(sub_ptrs));
 
-    mo::Header hdr(0 * mo::ms);
+    mo::Header hdr(mo::FrameNumber(0));
     auto ts = synchronizer.findDirectFrameNumber();
     ASSERT_FALSE(ts.valid());
 
@@ -617,7 +617,7 @@ TEST_F(parameter_synchronizer_framenumber, find_direct_framenumber_1)
 
     synchronizer.setInputs(std::move(sub_ptrs));
 
-    mo::Header hdr(0 * mo::ms);
+    mo::Header hdr(mo::FrameNumber(0));
     auto ts = synchronizer.findDirectFrameNumber();
     ASSERT_FALSE(ts.valid());
 
@@ -635,7 +635,7 @@ TEST_F(parameter_synchronizer_framenumber, find_earlist_framenumber)
 {
     this->init(2, false);
     mo::FrameNumber earliest(1000);
-    std::vector<int> times{4,5,6,7,8,9,10};
+    std::vector<int> times{5,6,7,4,8,9,10};
     for(auto i : times)
     {
         const mo::FrameNumber fn(i);

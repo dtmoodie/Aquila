@@ -135,6 +135,9 @@ namespace aq
         T findDirect(F&& predicate) const;
         template<class T, class F>
         T findEarliest(F&& predicate) const;
+
+        template<class T, class F>
+        T findEarliestCommon(F&& predicate) const;
     };
 } // namespace aq
 
