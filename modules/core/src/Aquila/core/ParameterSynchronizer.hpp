@@ -131,6 +131,10 @@ namespace aq
 
         template<class ... Types, size_t ... I>
         bool unpackTuple(std::tuple<Types...>& data, ct::IndexSequence<I...>, mo::IAsyncStream* stream);
+        template<class T, class F>
+        T findDirect(F&& predicate) const;
+        template<class T, class F>
+        T findEarliest(F&& predicate) const;
     };
 } // namespace aq
 

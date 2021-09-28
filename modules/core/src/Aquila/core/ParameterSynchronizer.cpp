@@ -50,11 +50,12 @@ namespace aq
         return std::abs(delta.count()) <= m_slop.count();
     }
 
-    mo::OptionalTime ParameterSynchronizer::findDirectTimestamp() const
+    template<class T, class F>
+    T ParameterSynchronizer::findDirect(F&& predicate) const
     {
         uint32_t valid_count = 0;
         uint32_t direct_inputs = 0;
-        mo::OptionalTime output;
+        T output;
         for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
             const mo::IPublisher* publisher = itr->first->getPublisher();
@@ -76,20 +77,7 @@ namespace aq
                         auto hdr = itr->first->getNewestHeader();
                         if(hdr)
                         {
-                            if(boost::none == output && boost::none != hdr->timestamp)
-                            {
-                                output = hdr->timestamp;
-                                ++valid_count;
-                            }else
-                            {
-                                if(boost::none != hdr->timestamp)
-                                {
-                                    if(output == hdr->timestamp)
-                                    {
-                                        ++valid_count;
-                                    }
-                                }
-                            }
+                            output = predicate(std::move(output), *hdr, valid_count);
                         }
                     }
                 }
@@ -97,7 +85,49 @@ namespace aq
         }
         if(valid_count != direct_inputs)
         {
-            output = mo::OptionalTime();
+            output = T();
+        }
+        return output;
+    }
+
+    mo::OptionalTime ParameterSynchronizer::findDirectTimestamp() const
+    {
+        auto predicate = [](mo::OptionalTime&& output, const mo::Header& hdr, uint32_t& valid_count) -> mo::OptionalTime
+        {
+            if(boost::none == output && boost::none != hdr.timestamp)
+            {
+                output = hdr.timestamp;
+                ++valid_count;
+            }else
+            {
+                if(boost::none != hdr.timestamp)
+                {
+                    if(output == hdr.timestamp)
+                    {
+                        ++valid_count;
+                    }
+                }
+            }
+            return std::move(output);
+        };
+
+        return findDirect<mo::OptionalTime>(std::move(predicate));
+    }
+
+    template<class T, class F>
+    T ParameterSynchronizer::findEarliest(F&& predicate) const
+    {
+        mo::OptionalTime output;
+        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        {
+            // The assumption that itr->second is sorted is not necessarily true since data playback could be rewound
+            for(const mo::Header& hdr : itr->second)
+            {
+                if(boost::none != hdr.timestamp)
+                {
+                    output = predicate(std::move(output), hdr);
+                }
+            }
         }
         return output;
     }
@@ -204,51 +234,22 @@ namespace aq
 
     mo::FrameNumber ParameterSynchronizer::findDirectFrameNumber() const
     {
-        uint32_t valid_count = 0;
-        uint32_t direct_inputs = 0;
-        mo::FrameNumber output;
-        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        auto predicate = [](mo::FrameNumber&& output, const mo::Header& hdr, uint32_t& valid_count) -> mo::FrameNumber
         {
-            const mo::IPublisher* publisher = itr->first->getPublisher();
-            // If the input isn't set, can't do anything unless it is an optional input
-            if(publisher == nullptr)
+            if(!output.valid())
             {
-                if(!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
-                {
-                    m_logger->warn("No input set for '{}'", itr->first->getName());
-                }
+                output = hdr.frame_number;
+                ++valid_count;
             }else
             {
-                // If this is not a buffered connection, then we need to use the direct timestamp since there is no buffer history, we can only operate on current data
-                if(!publisher->checkFlags(mo::ParamFlags::kBUFFER))
+                if(output == hdr.frame_number)
                 {
-                    ++direct_inputs;
-                    if(itr->first->hasNewData())
-                    {
-                        auto hdr = itr->first->getNewestHeader();
-                        if(hdr)
-                        {
-                            if(!output.valid())
-                            {
-                                output = hdr->frame_number;
-                                ++valid_count;
-                            }else
-                            {
-                                if(output == hdr->frame_number)
-                                {
-                                    ++valid_count;
-                                }
-                            }
-                        }
-                    }
+                    ++valid_count;
                 }
             }
-        }
-        if(valid_count != direct_inputs)
-        {
-            output = mo::FrameNumber();
-        }
-        return output;
+            return std::move(output);
+        };
+        return findDirect<mo::FrameNumber>(std::move(predicate));
     }
 
     mo::FrameNumber ParameterSynchronizer::findEarliestFrameNumber() const
