@@ -210,10 +210,6 @@ TEST_F(parameter_synchronizer_timestamp, find_earlist_timestamp)
     ASSERT_EQ(*found, earliest);
 }
 
-
-
-
-
 TEST_F(parameter_synchronizer_timestamp, single_input_dedoup_callback)
 {
     this->init(1);
@@ -560,6 +556,97 @@ struct parameter_synchronizer_framenumber: parameter_synchronizer
         ASSERT_EQ(header.frame_number, *fn);
     }
 };
+
+TEST_F(parameter_synchronizer_framenumber, find_direct_framenumber_0)
+{
+    pubs.resize(2);
+    subs.resize(2);
+    std::vector<mo::ISubscriber*> sub_ptrs;
+    sub_ptrs.reserve(2);
+
+    // Setup a buffered connection
+    subs[0] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[0] = std::make_unique<mo::TPublisher<uint32_t>>();
+    auto buffer = mo::buffer::IBuffer::create(mo::BufferFlags::STREAM_BUFFER);
+    buffer->setInput(pubs[0].get());
+    subs[0]->setInput(buffer);
+    sub_ptrs.push_back(subs[0].get());
+
+    // setup a direct connection
+    subs[1] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[1] = std::make_unique<mo::TPublisher<uint32_t>>();
+    subs[1]->setInput(pubs[1].get());
+    sub_ptrs.push_back(subs[1].get());
+
+    synchronizer.setInputs(std::move(sub_ptrs));
+
+    mo::Header hdr(0 * mo::ms);
+    auto ts = synchronizer.findDirectFrameNumber();
+    ASSERT_FALSE(ts.valid());
+
+    pubs[0]->publish(0, hdr);
+    ts = synchronizer.findDirectFrameNumber();
+    ASSERT_FALSE(ts.valid());
+
+    pubs[1]->publish(0, hdr);
+    ts = synchronizer.findDirectFrameNumber();
+    ASSERT_TRUE(ts.valid());
+}
+
+// Do it backwards from above to make sure we don't have any weird ordering issues
+TEST_F(parameter_synchronizer_framenumber, find_direct_framenumber_1)
+{
+    pubs.resize(2);
+    subs.resize(2);
+    std::vector<mo::ISubscriber*> sub_ptrs;
+    sub_ptrs.reserve(2);
+
+    // Setup a buffered connection
+    subs[1] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[1] = std::make_unique<mo::TPublisher<uint32_t>>();
+    auto buffer = mo::buffer::IBuffer::create(mo::BufferFlags::STREAM_BUFFER);
+    buffer->setInput(pubs[1].get());
+    subs[1]->setInput(buffer);
+    sub_ptrs.push_back(subs[1].get());
+
+    // setup a direct connection
+    subs[0] = std::make_unique<mo::TSubscriber<uint32_t>>();
+    pubs[0] = std::make_unique<mo::TPublisher<uint32_t>>();
+    subs[0]->setInput(pubs[0].get());
+    sub_ptrs.push_back(subs[0].get());
+
+    synchronizer.setInputs(std::move(sub_ptrs));
+
+    mo::Header hdr(0 * mo::ms);
+    auto ts = synchronizer.findDirectFrameNumber();
+    ASSERT_FALSE(ts.valid());
+
+    pubs[1]->publish(0, hdr);
+    ts = synchronizer.findDirectFrameNumber();
+    ASSERT_FALSE(ts.valid());
+
+    pubs[0]->publish(0, hdr);
+    ts = synchronizer.findDirectFrameNumber();
+    ASSERT_TRUE(ts.valid());
+    //ASSERT_EQ(*ts, 0 * mo::ms);
+}
+
+TEST_F(parameter_synchronizer_framenumber, find_earlist_framenumber)
+{
+    this->init(2, false);
+    mo::FrameNumber earliest(1000);
+    std::vector<int> times{4,5,6,7,8,9,10};
+    for(auto i : times)
+    {
+        const mo::FrameNumber fn(i);
+        earliest = std::min(fn, earliest);
+        pubs[0]->publish(i, mo::Header(fn));
+        pubs[1]->publish(i, mo::Header(fn));
+    }
+    mo::FrameNumber found = synchronizer.findEarliestFrameNumber();
+    ASSERT_TRUE(found);
+    ASSERT_EQ(found, earliest);
+}
 
 TEST_F(parameter_synchronizer_framenumber, single_input_dedoup_callback)
 {

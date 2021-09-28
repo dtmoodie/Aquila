@@ -58,7 +58,8 @@ namespace aq
         mo::OptionalTime findEarliestTimestamp() const;
         mo::OptionalTime findEarliestCommonTimestamp() const;
 
-
+        mo::FrameNumber findDirectFrameNumber() const;
+        mo::FrameNumber findEarliestFrameNumber() const;
         mo::FrameNumber findEarliestCommonFrameNumber() const;
 
         /**

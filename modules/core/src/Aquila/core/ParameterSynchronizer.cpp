@@ -76,7 +76,7 @@ namespace aq
                         auto hdr = itr->first->getNewestHeader();
                         if(hdr)
                         {
-                            if(boost::none == output)
+                            if(boost::none == output && boost::none != hdr->timestamp)
                             {
                                 output = hdr->timestamp;
                                 ++valid_count;
@@ -199,6 +199,81 @@ namespace aq
             return {};
         }
 
+        return output;
+    }
+
+    mo::FrameNumber ParameterSynchronizer::findDirectFrameNumber() const
+    {
+        uint32_t valid_count = 0;
+        uint32_t direct_inputs = 0;
+        mo::FrameNumber output;
+        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        {
+            const mo::IPublisher* publisher = itr->first->getPublisher();
+            // If the input isn't set, can't do anything unless it is an optional input
+            if(publisher == nullptr)
+            {
+                if(!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
+                {
+                    m_logger->warn("No input set for '{}'", itr->first->getName());
+                }
+            }else
+            {
+                // If this is not a buffered connection, then we need to use the direct timestamp since there is no buffer history, we can only operate on current data
+                if(!publisher->checkFlags(mo::ParamFlags::kBUFFER))
+                {
+                    ++direct_inputs;
+                    if(itr->first->hasNewData())
+                    {
+                        auto hdr = itr->first->getNewestHeader();
+                        if(hdr)
+                        {
+                            if(!output.valid())
+                            {
+                                output = hdr->frame_number;
+                                ++valid_count;
+                            }else
+                            {
+                                if(output == hdr->frame_number)
+                                {
+                                    ++valid_count;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(valid_count != direct_inputs)
+        {
+            output = mo::FrameNumber();
+        }
+        return output;
+    }
+
+    mo::FrameNumber ParameterSynchronizer::findEarliestFrameNumber() const
+    {
+        mo::FrameNumber output;
+        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        {
+            for(const mo::Header& hdr : itr->second)
+            {
+                if(boost::none == hdr.timestamp)
+                {
+                    if(!output.valid())
+                    {
+                        output = hdr.frame_number;
+                    }else
+                    {
+                        if(hdr.frame_number < output)
+                        {
+                            output = hdr.frame_number;
+                        }
+                    }
+                }
+
+            }
+        }
         return output;
     }
 
