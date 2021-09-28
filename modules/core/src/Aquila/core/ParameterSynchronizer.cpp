@@ -117,16 +117,13 @@ namespace aq
     template<class T, class F>
     T ParameterSynchronizer::findEarliest(F&& predicate) const
     {
-        mo::OptionalTime output;
+        T output;
         for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
             // The assumption that itr->second is sorted is not necessarily true since data playback could be rewound
             for(const mo::Header& hdr : itr->second)
             {
-                if(boost::none != hdr.timestamp)
-                {
-                    output = predicate(std::move(output), hdr);
-                }
+                output = predicate(std::move(output), hdr);
             }
         }
         return output;
@@ -134,28 +131,24 @@ namespace aq
 
     mo::OptionalTime ParameterSynchronizer::findEarliestTimestamp() const
     {
-        mo::OptionalTime output;
-        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        auto predicate = [](mo::OptionalTime&& output, const mo::Header& hdr) -> mo::OptionalTime
         {
-            for(const mo::Header& hdr : itr->second)
+            if(boost::none != hdr.timestamp)
             {
-                if(boost::none != hdr.timestamp)
+                if(boost::none == output)
                 {
-                    if(boost::none == output)
+                    output = hdr.timestamp;
+                }else
+                {
+                    if(*hdr.timestamp < *output)
                     {
                         output = hdr.timestamp;
-                    }else
-                    {
-                        if(*hdr.timestamp < *output)
-                        {
-                            output = hdr.timestamp;
-                        }
                     }
                 }
-
             }
-        }
-        return output;
+            return std::move(output);
+        };
+        return findEarliest<mo::OptionalTime>(std::move(predicate));
     }
 
     mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
@@ -254,28 +247,24 @@ namespace aq
 
     mo::FrameNumber ParameterSynchronizer::findEarliestFrameNumber() const
     {
-        mo::FrameNumber output;
-        for(auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        auto predicate = [](mo::FrameNumber&& output, const mo::Header& hdr) -> mo::FrameNumber
         {
-            for(const mo::Header& hdr : itr->second)
+            if(boost::none == hdr.timestamp)
             {
-                if(boost::none == hdr.timestamp)
+                if(!output.valid())
                 {
-                    if(!output.valid())
+                    output = hdr.frame_number;
+                }else
+                {
+                    if(hdr.frame_number < output)
                     {
                         output = hdr.frame_number;
-                    }else
-                    {
-                        if(hdr.frame_number < output)
-                        {
-                            output = hdr.frame_number;
-                        }
                     }
                 }
-
             }
-        }
-        return output;
+            return std::move(output);
+        };
+        return findEarliest<mo::FrameNumber>(std::move(predicate));
     }
 
     mo::FrameNumber ParameterSynchronizer::findEarliestCommonFrameNumber() const
