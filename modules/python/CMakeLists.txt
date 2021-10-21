@@ -15,7 +15,8 @@ if(TARGET metaobject_python)
 
     if(TARGET aquila_gui)
         target_link_libraries(aquila_python
-            aquila_gui
+            PUBLIC
+                aquila_gui
         )
         target_compile_definitions(aquila_python
             PRIVATE
