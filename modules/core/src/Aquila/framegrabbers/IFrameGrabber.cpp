@@ -181,6 +181,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
         mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::current();
 
         boost::thread* connection_thread = new boost::thread([&obj, stream]() -> void {
+            mo::initThread();
             mo::IAsyncStream::setCurrent(stream);
             try
             {
