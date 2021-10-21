@@ -68,19 +68,16 @@ find_package(OpenCV QUIET COMPONENTS
     core
 )
 
-find_package(Gstreamer QUIET)
-
 set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 find_package(CUDA QUIET)
 if(CUDA_FOUND)
   set(CUDA_ARCH_NAME "Manual")
-  set(CUDA_ARCH_BIN "30 35 50 60")
-  set(CUDA_ARCH_PTX "30 35 50 60")
+  set(CUDA_ARCH_BIN "50 60 73")
+  set(CUDA_ARCH_PTX "50 60 73")
   get_filename_component(_cuda_lib_dir "${CUDA_CUDART_LIBRARY}" DIRECTORY)
   link_directories(${_cuda_lib_dir})
 endif(CUDA_FOUND)
 
-find_package(Qt5 QUIET COMPONENTS Core Gui Widgets Network OpenGL)
 cmake_policy(SET CMP0012 NEW)
 
 IF(WIN32)
@@ -93,6 +90,7 @@ ENDIF(WIN32)
 
 SET(LINK_LIBS "")
 ADD_DEFINITIONS(-DAquila_EXPORTS)
+
 IF(${NV_TOOLS_EXT_FOUND})
   ADD_DEFINITIONS(-DUSE_NVTX)
   list(APPEND LINK_LIBS ${NV_TOOLS_EXT_LIB})
