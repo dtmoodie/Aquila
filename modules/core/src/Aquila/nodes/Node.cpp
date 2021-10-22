@@ -496,7 +496,7 @@ void Node::setGraph(rcc::weak_ptr<IGraph> graph_)
 rcc::shared_ptr<IGraph> Node::getGraph()
 {
     auto graph = m_graph.lock();
-    if (m_parents.size() && graph)
+    if (m_parents.size() && graph == nullptr)
     {
         rcc::shared_ptr<INode> parent = m_parents[0].lock();
         if (parent)
