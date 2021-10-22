@@ -129,7 +129,7 @@ namespace aq
         {
             return;
         }
-        if (h_ptr && (h_flags & PointerFlags::OWNED))
+        if (h_ptr && (h_flags == PointerFlags::OWNED))
         {
             auto alloc = stream->hostAllocator();
             if (alloc == nullptr)
@@ -141,7 +141,7 @@ namespace aq
                 alloc->deallocate(h_ptr, m_size);
             }
         }
-        if (d_ptr && (d_flags & PointerFlags::OWNED))
+        if (d_ptr && (d_flags == PointerFlags::OWNED))
         {
             mo::IDeviceStream* device_stream = stream->getDeviceStream();
             MO_ASSERT(device_stream != nullptr);
