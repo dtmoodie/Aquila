@@ -1,0 +1,159 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "example_ct_boost"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"include_directories",
+			"target_include_directories",
+			"target_link_libraries"
+		],
+		"files" : 
+		[
+			"dependencies/ct/examples/boost_program_options/CMakeLists.txt",
+			"dependencies/ct/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 4,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 64,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 6,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 5,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-ftemplate-backtrace-limit=0 -g   -std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "BOOST_ALL_DYN_LINK"
+				},
+				{
+					"define" : "HAVE_CEREAL"
+				},
+				{
+					"define" : "HAVE_OPENCV"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 3,
+					"path" : "/usr/local/include/opencv"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/examples/boost_program_options/SYSTEM"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/home/dan/code/boost"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/include"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"id" : "example_ct_boost::@5603f6d19847811eeeed",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-ftemplate-backtrace-limit=0 -g",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-rdynamic",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64 /home/dan/code/boost/stage/lib/libboost_program_options.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "example_ct_boost",
+	"nameOnDisk" : "example_ct_boost",
+	"paths" : 
+	{
+		"build" : "dependencies/ct/examples/boost_program_options",
+		"source" : "dependencies/ct/examples/boost_program_options"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "dependencies/ct/examples/boost_program_options/main.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

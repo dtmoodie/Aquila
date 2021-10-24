@@ -1,0 +1,294 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "libmetaobject_typesd.so"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"metaobject_declare_module",
+			"install",
+			"target_link_libraries",
+			"target_include_directories",
+			"target_compile_definitions"
+		],
+		"files" : 
+		[
+			"cmake/metaobject_declare_module.cmake",
+			"modules/types/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 2,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 78,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 83,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 43,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 1
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 40,
+				"parent" : 1
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -g -fno-omit-frame-pointer -g -D_DEBUG -fPIC   -fPIC -Wl,--no-undefined -std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "BOOST_ALL_DYN_LINK"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "BOOST_NO_AUTO_PTR"
+				},
+				{
+					"backtrace" : 7,
+					"define" : "MetaObject_EXPORTS"
+				},
+				{
+					"define" : "_MWAITXINTRIN_H_INCLUDED"
+				},
+				{
+					"define" : "metaobject_types_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 6,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/types/src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/core/src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/rcc/Aurora"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/spdlog/include"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "/home/dan/code/boost"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				4
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 5,
+			"id" : "RuntimeObjectSystem::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "RuntimeCompiler::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "metaobject_core::@90e83aff1e86c0750a9d"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Modules"
+	},
+	"id" : "metaobject_types::@d395f55ce4b475a83da3",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64:/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build: ../../libmetaobject_cored.so /home/dan/code/boost/stage/lib/libboost_filesystem.so /home/dan/code/boost/stage/lib/libboost_filesystem.so /home/dan/code/boost/stage/lib/libboost_thread.so /home/dan/code/boost/stage/lib/libboost_date_time.so /home/dan/code/boost/stage/lib/libboost_atomic.so -lpthread /home/dan/code/boost/stage/lib/libboost_fiber.so /home/dan/code/boost/stage/lib/libboost_context.so /home/dan/code/boost/stage/lib/libboost_system.so /home/dan/code/boost/stage/lib/libboost_chrono.so ../../libRuntimeObjectSystemd.a ../../libRuntimeCompilerd.a -ldl -lpthread /usr/local/cuda/lib64/libcudart.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "metaobject_types",
+	"nameOnDisk" : "libmetaobject_typesd.so",
+	"paths" : 
+	{
+		"build" : "modules/types",
+		"source" : "modules/types"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "types",
+			"sourceIndexes" : 
+			[
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/ArrayAdapater.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/TDynArray.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/cereal_map.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/types/src/MetaObject/types/file_types.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/file_types.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/opencv.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/small_vec.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/small_vec_base.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/types/src/MetaObject/types/small_vec_storage.hpp",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

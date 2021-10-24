@@ -1,0 +1,125 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "test_ct_enum_cuda"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"cuda_add_executable",
+			"target_link_libraries"
+		],
+		"files" : 
+		[
+			"/usr/local/share/cmake-3.14/Modules/FindCUDA.cmake",
+			"dependencies/ct/tests/enum/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1863,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 12,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "gtest_main::@1d18f35ccff1250400b6"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "gtest::@1d18f35ccff1250400b6"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Tests/ct"
+	},
+	"id" : "test_ct_enum_cuda::@5aa044c221872128a7e8",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-ftemplate-backtrace-limit=0 -g",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-rdynamic",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64 /usr/local/cuda/lib64/libcudart_static.a -lpthread -ldl -lrt ../../../../lib/libgtestd.a ../../../../lib/libgtest_maind.a ../../../../lib/libgtestd.a -lpthread",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "test_ct_enum_cuda",
+	"nameOnDisk" : "test_ct_enum_cuda",
+	"paths" : 
+	{
+		"build" : "dependencies/ct/tests/enum",
+		"source" : "dependencies/ct/tests/enum"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Object Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"isGenerated" : true,
+			"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/dependencies/ct/tests/enum/CMakeFiles/test_ct_enum_cuda.dir/test_ct_enum_cuda_generated_enum.cu.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "dependencies/ct/tests/enum/enum.cu",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "EXECUTABLE"
+}

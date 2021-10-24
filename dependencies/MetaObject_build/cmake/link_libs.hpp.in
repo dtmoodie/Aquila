@@ -1,0 +1,38 @@
+#ifndef @PLUGIN_NAME@_LINK_LIBS_HPP
+#define @PLUGIN_NAME@_LINK_LIBS_HPP
+
+#if !defined(_WIN32)
+  #define LINK_PREFIX "-l"
+  #define LINK_POSTFIX ""
+  #if !defined(NDEBUG)
+    #if !defined(_DEBUG)
+      #define _DEBUG
+    #endif // !defined(_DEBUG)
+  #endif // !defined(NDEBUG)
+#else // !defined(_WIN32)
+  #define LINK_PREFIX ""
+  #dfine LINK_POSTFIX ".lib"
+#endif // !defined(_WIN32)
+
+#include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
+// both debug and release libraries
+
+
+ALL_LIBS
+
+#if defined(_DEBUG)
+// Debug only libraries
+
+DEBUG_LIBS
+
+#else // defined(_DEBUG)
+// Release only libraries
+
+RELEASE_LIBS
+
+#endif
+
+#undef LINK_PREFIX
+#undef LINK_POSTFIX
+
+#endif // @PLUGIN_NAME@_LINK_LIBS_HPP

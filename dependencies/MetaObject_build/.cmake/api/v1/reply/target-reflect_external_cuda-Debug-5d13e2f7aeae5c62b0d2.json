@@ -1,0 +1,114 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "reflect_external_cuda"
+		}
+	],
+	"backtrace" : 3,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"cuda_add_executable",
+			"add_conformance_test"
+		],
+		"files" : 
+		[
+			"/usr/local/share/cmake-3.14/Modules/FindCUDA.cmake",
+			"dependencies/ct/tests/compiler_compat/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 40,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 12,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1863,
+				"parent" : 2
+			}
+		]
+	},
+	"folder" : 
+	{
+		"name" : "Tests/ct_cpp_compat"
+	},
+	"id" : "reflect_external_cuda::@51d13f9565a94d17652e",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-ftemplate-backtrace-limit=0 -g",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-rdynamic",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64 /usr/local/cuda/lib64/libcudart_static.a -lpthread -ldl -lrt",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "reflect_external_cuda",
+	"nameOnDisk" : "reflect_external_cuda",
+	"paths" : 
+	{
+		"build" : "dependencies/ct/tests/compiler_compat",
+		"source" : "dependencies/ct/tests/compiler_compat"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Object Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/dependencies/ct/tests/compiler_compat/CMakeFiles/reflect_external_cuda.dir/reflect_external_cuda_generated_03_reflect_external.cu.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "dependencies/ct/tests/compiler_compat/03_reflect_external.cu",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "EXECUTABLE"
+}

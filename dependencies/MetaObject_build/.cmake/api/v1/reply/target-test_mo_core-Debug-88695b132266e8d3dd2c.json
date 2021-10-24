@@ -1,0 +1,312 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "test_mo_core"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"target_link_libraries",
+			"target_compile_definitions"
+		],
+		"files" : 
+		[
+			"modules/core/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 51,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 55,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 52,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -g -fno-omit-frame-pointer -g -D_DEBUG   -fPIC -Wl,--no-undefined -std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "BOOST_ALL_DYN_LINK"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "BOOST_NO_AUTO_PTR"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "MO_HAVE_OPENCV"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "MetaObject_EXPORTS"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "OPENCV_TRAITS_ENABLE_DEPRECATED"
+				},
+				{
+					"define" : "_MWAITXINTRIN_H_INCLUDED"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/core/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/rcc/Aurora"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/spdlog/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/include"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/dan/code/boost"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/googletest/googletest/include"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/googletest/googletest"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "/usr/local/include/opencv"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "RuntimeObjectSystem::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "RuntimeCompiler::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "gtest_main::@1d18f35ccff1250400b6"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "gtest::@1d18f35ccff1250400b6"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_core::@90e83aff1e86c0750a9d"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Tests/MetaObject/core"
+	},
+	"id" : "test_mo_core::@90e83aff1e86c0750a9d",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-g -fno-omit-frame-pointer -g -D_DEBUG",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-rdynamic",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64:/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build:/usr/local/lib ../../libmetaobject_cored.so ../../lib/libgtestd.a ../../lib/libgtest_maind.a /home/dan/code/boost/stage/lib/libboost_context.so /usr/local/lib/libopencv_cudabgsegm.so.3.4.1 /usr/local/lib/libopencv_cudaobjdetect.so.3.4.1 /usr/local/lib/libopencv_cudastereo.so.3.4.1 /usr/local/lib/libopencv_dnn.so.3.4.1 /usr/local/lib/libopencv_ml.so.3.4.1 /usr/local/lib/libopencv_shape.so.3.4.1 /usr/local/lib/libopencv_stitching.so.3.4.1 /usr/local/lib/libopencv_superres.so.3.4.1 /usr/local/lib/libopencv_videostab.so.3.4.1 /usr/local/lib/libopencv_viz.so.3.4.1 /home/dan/code/boost/stage/lib/libboost_thread.so /home/dan/code/boost/stage/lib/libboost_date_time.so /home/dan/code/boost/stage/lib/libboost_atomic.so /home/dan/code/boost/stage/lib/libboost_fiber.so /home/dan/code/boost/stage/lib/libboost_context.so /home/dan/code/boost/stage/lib/libboost_system.so /home/dan/code/boost/stage/lib/libboost_chrono.so ../../libRuntimeObjectSystemd.a ../../libRuntimeCompilerd.a -ldl -lpthread /usr/local/cuda/lib64/libcudart.so ../../lib/libgtestd.a -lpthread /usr/local/lib/libopencv_cudafeatures2d.so.3.4.1 /usr/local/lib/libopencv_cudacodec.so.3.4.1 /usr/local/lib/libopencv_cudaoptflow.so.3.4.1 /usr/local/lib/libopencv_cudalegacy.so.3.4.1 /usr/local/lib/libopencv_calib3d.so.3.4.1 /usr/local/lib/libopencv_cudawarping.so.3.4.1 /usr/local/lib/libopencv_features2d.so.3.4.1 /usr/local/lib/libopencv_flann.so.3.4.1 /usr/local/lib/libopencv_highgui.so.3.4.1 /usr/local/lib/libopencv_objdetect.so.3.4.1 /usr/local/lib/libopencv_photo.so.3.4.1 /usr/local/lib/libopencv_cudaimgproc.so.3.4.1 /usr/local/lib/libopencv_cudafilters.so.3.4.1 /usr/local/lib/libopencv_cudaarithm.so.3.4.1 /usr/local/lib/libopencv_video.so.3.4.1 /usr/local/lib/libopencv_videoio.so.3.4.1 /usr/local/lib/libopencv_imgcodecs.so.3.4.1 /usr/local/lib/libopencv_imgproc.so.3.4.1 /usr/local/lib/libopencv_core.so.3.4.1 /usr/local/lib/libopencv_cudev.so.3.4.1",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "test_mo_core",
+	"nameOnDisk" : "test_mo_core",
+	"paths" : 
+	{
+		"build" : "modules/core",
+		"source" : "modules/core"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/allocator.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/async_stream.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/context.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/detector_macros.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/enum_bitset.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/logging.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/main.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/system_table.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/test_signals.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/test_throw_on_destroy.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/thread.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/tests/time.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

@@ -1,0 +1,239 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "test_mo_python_init"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"target_link_libraries"
+		],
+		"files" : 
+		[
+			"modules/python/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 40,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 42,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -g -fno-omit-frame-pointer -g -D_DEBUG   -fPIC -Wl,--no-undefined -std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "BOOST_ALL_DYN_LINK"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "BOOST_NO_AUTO_PTR"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "OPENCV_TRAITS_ENABLE_DEPRECATED"
+				},
+				{
+					"define" : "_MWAITXINTRIN_H_INCLUDED"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/usr/include/python3.5m"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/usr/local/lib/python3.5/dist-packages/numpy/core/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/python/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/core/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/rcc/Aurora"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/spdlog/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/object/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/params/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/types/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/runtime_reflection/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/cuda/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/usr/local/cuda/include"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/dan/code/boost"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/usr/local/include/opencv"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "RuntimeObjectSystem::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "RuntimeCompiler::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_core::@90e83aff1e86c0750a9d"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_params::@13cfafed9c809835be87"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_types::@d395f55ce4b475a83da3"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_cuda::@905f24b45276e230a217"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_runtime_reflection::@842bb34bc6715966aa70"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_object::@d8dcf32444386c40e853"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_python::@56b7f89a5b682c853f48"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Tests/MetaObject/python"
+	},
+	"id" : "test_mo_python_init::@56b7f89a5b682c853f48",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-g -fno-omit-frame-pointer -g -D_DEBUG",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-rdynamic",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64:/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build:/usr/local/lib:/usr/lib/python3.5/config-3.5m-x86_64-linux-gnu ../../libmetaobject_pythond.so ../../libmetaobject_objectd.so ../../libmetaobject_paramsd.so ../../libmetaobject_runtime_reflectiond.so /home/dan/code/boost/stage/lib/libboost_filesystem.so ../../libmetaobject_cudad.so ../../libmetaobject_typesd.so ../../libmetaobject_cored.so ../../libRuntimeObjectSystemd.a ../../libRuntimeCompilerd.a -ldl /home/dan/code/boost/stage/lib/libboost_thread.so /home/dan/code/boost/stage/lib/libboost_date_time.so /home/dan/code/boost/stage/lib/libboost_atomic.so -lpthread /home/dan/code/boost/stage/lib/libboost_fiber.so /home/dan/code/boost/stage/lib/libboost_context.so /home/dan/code/boost/stage/lib/libboost_system.so /home/dan/code/boost/stage/lib/libboost_chrono.so -lpthread /usr/local/cuda/lib64/libcudart.so /home/dan/code/boost/stage/lib/libboost_filesystem.so /usr/local/lib/libopencv_core.so.3.4.1 /usr/local/lib/libopencv_cudev.so.3.4.1 /usr/lib/python3.5/config-3.5m-x86_64-linux-gnu/libpython3.5m.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "test_mo_python_init",
+	"nameOnDisk" : "test_mo_python_init",
+	"paths" : 
+	{
+		"build" : "modules/python",
+		"source" : "modules/python"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/python/tests/python_init_param_setter.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

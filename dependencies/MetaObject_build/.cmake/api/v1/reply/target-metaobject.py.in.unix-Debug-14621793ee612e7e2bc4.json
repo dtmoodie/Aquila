@@ -1,0 +1,35 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"modules/python/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 61,
+				"parent" : 0
+			}
+		]
+	},
+	"id" : "metaobject.py.in.unix::@56b7f89a5b682c853f48",
+	"name" : "metaobject.py.in.unix",
+	"paths" : 
+	{
+		"build" : "modules/python",
+		"source" : "modules/python"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

@@ -1,0 +1,308 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "test_mo_params"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"target_link_libraries"
+		],
+		"files" : 
+		[
+			"modules/params/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 18,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 19,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -g -fno-omit-frame-pointer -g -D_DEBUG   -fno-omit-frame-pointer -fsanitize=address -fPIC -Wl,--no-undefined -std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "BOOST_ALL_DYN_LINK"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "BOOST_NO_AUTO_PTR"
+				},
+				{
+					"define" : "_MWAITXINTRIN_H_INCLUDED"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/params/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/core/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/rcc/Aurora"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/spdlog/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/types/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/runtime_reflection/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/serialization/src"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/dan/code/boost"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/googletest/googletest/include"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/googletest/googletest"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "RuntimeObjectSystem::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "RuntimeCompiler::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "gtest_main::@1d18f35ccff1250400b6"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "gtest::@1d18f35ccff1250400b6"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_core::@90e83aff1e86c0750a9d"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_params::@13cfafed9c809835be87"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_types::@d395f55ce4b475a83da3"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_runtime_reflection::@842bb34bc6715966aa70"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "metaobject_serialization::@1f01b4657171dd97c3ab"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Tests/MetaObject/params"
+	},
+	"id" : "test_mo_params::@13cfafed9c809835be87",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-g -fno-omit-frame-pointer -g -D_DEBUG",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-rdynamic -fno-omit-frame-pointer -fsanitize=address",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64:/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build ../../libmetaobject_serializationd.so ../../lib/libgtestd.a ../../lib/libgtest_maind.a ../../libmetaobject_paramsd.so ../../libmetaobject_runtime_reflectiond.so ../../libmetaobject_typesd.so ../../libmetaobject_cored.so /home/dan/code/boost/stage/lib/libboost_thread.so /home/dan/code/boost/stage/lib/libboost_date_time.so /home/dan/code/boost/stage/lib/libboost_atomic.so /home/dan/code/boost/stage/lib/libboost_fiber.so /home/dan/code/boost/stage/lib/libboost_context.so /home/dan/code/boost/stage/lib/libboost_system.so /home/dan/code/boost/stage/lib/libboost_chrono.so ../../libRuntimeObjectSystemd.a ../../libRuntimeCompilerd.a -ldl -lpthread /usr/local/cuda/lib64/libcudart.so /home/dan/code/boost/stage/lib/libboost_filesystem.so ../../lib/libgtestd.a -lpthread",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "test_mo_params",
+	"nameOnDisk" : "test_mo_params",
+	"paths" : 
+	{
+		"build" : "modules/params",
+		"source" : "modules/params"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/allocator.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/buffer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/header.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/main.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/named_parameter.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/param_print.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/polymorphic_input.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/pubsub.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/runtime_reflect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/tdata_allocator.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/test_control_param.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "modules/params/tests/test_publisher.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

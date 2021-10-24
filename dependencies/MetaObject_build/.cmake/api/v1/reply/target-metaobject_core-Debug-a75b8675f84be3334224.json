@@ -1,0 +1,1058 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "libmetaobject_cored.so"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"metaobject_declare_module",
+			"install",
+			"target_link_libraries",
+			"target_include_directories",
+			"target_compile_definitions"
+		],
+		"files" : 
+		[
+			"cmake/metaobject_declare_module.cmake",
+			"modules/core/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 3,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 78,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 83,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 43,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 18,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 23,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 1,
+				"line" : 14,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 40,
+				"parent" : 1
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -g -fno-omit-frame-pointer -g -D_DEBUG -fPIC   -fPIC -Wl,--no-undefined -std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "BOOST_ALL_DYN_LINK"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "BOOST_NO_AUTO_PTR"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "MetaObject_EXPORTS"
+				},
+				{
+					"define" : "_MWAITXINTRIN_H_INCLUDED"
+				},
+				{
+					"define" : "metaobject_core_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 6,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/core/src"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/rcc/Aurora"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/spdlog/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/include"
+				},
+				{
+					"backtrace" : 8,
+					"isSystem" : true,
+					"path" : "/home/dan/code/boost"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0,
+				2,
+				4,
+				6,
+				8,
+				9,
+				11,
+				13,
+				15,
+				17,
+				22,
+				28,
+				32,
+				36,
+				39,
+				46,
+				49,
+				52,
+				54,
+				57,
+				70,
+				72,
+				74,
+				76,
+				78,
+				80,
+				82,
+				89,
+				91,
+				93,
+				95,
+				97,
+				99,
+				101,
+				103,
+				105,
+				107,
+				109,
+				111
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 5,
+			"id" : "RuntimeObjectSystem::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "RuntimeCompiler::@9f71bb42a7a6b200359b"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Modules"
+	},
+	"id" : "metaobject_core::@90e83aff1e86c0750a9d",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64: /home/dan/code/boost/stage/lib/libboost_thread.so /home/dan/code/boost/stage/lib/libboost_fiber.so /home/dan/code/boost/stage/lib/libboost_system.so /home/dan/code/boost/stage/lib/libboost_chrono.so ../../libRuntimeObjectSystemd.a -lpthread /usr/local/cuda/lib64/libcudart.so /home/dan/code/boost/stage/lib/libboost_date_time.so /home/dan/code/boost/stage/lib/libboost_atomic.so -lpthread /home/dan/code/boost/stage/lib/libboost_context.so ../../libRuntimeCompilerd.a -ldl",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "metaobject_core",
+	"nameOnDisk" : "libmetaobject_cored.so",
+	"paths" : 
+	{
+		"build" : "modules/core",
+		"source" : "modules/core"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		},
+		{
+			"name" : "core",
+			"sourceIndexes" : 
+			[
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				44
+			]
+		},
+		{
+			"name" : "core\\detail",
+			"sourceIndexes" : 
+			[
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				43
+			]
+		},
+		{
+			"name" : "core\\detail\\allocator_policies",
+			"sourceIndexes" : 
+			[
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38,
+				39,
+				40,
+				41,
+				42
+			]
+		},
+		{
+			"name" : "detail",
+			"sourceIndexes" : 
+			[
+				45,
+				46,
+				47,
+				48
+			]
+		},
+		{
+			"name" : "logging",
+			"sourceIndexes" : 
+			[
+				49,
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58
+			]
+		},
+		{
+			"name" : "rcc\\external_linkage",
+			"sourceIndexes" : 
+			[
+				59,
+				60,
+				61,
+				62,
+				63,
+				64,
+				65,
+				66,
+				67
+			]
+		},
+		{
+			"name" : "signals",
+			"sourceIndexes" : 
+			[
+				68,
+				69,
+				70,
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77,
+				78,
+				79,
+				80,
+				81,
+				82,
+				83,
+				84,
+				85,
+				86
+			]
+		},
+		{
+			"name" : "signals\\detail",
+			"sourceIndexes" : 
+			[
+				87,
+				88
+			]
+		},
+		{
+			"name" : "thread",
+			"sourceIndexes" : 
+			[
+				89,
+				90,
+				91,
+				92,
+				93,
+				94,
+				95,
+				96,
+				97,
+				98,
+				99,
+				100,
+				101,
+				102,
+				103,
+				104,
+				105,
+				106,
+				107,
+				108,
+				113
+			]
+		},
+		{
+			"name" : "thread\\detail",
+			"sourceIndexes" : 
+			[
+				109,
+				110,
+				111,
+				112
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/AsyncStream.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/AsyncStream.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/AsyncStreamConstructor.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/AsyncStreamConstructor.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/AsyncStreamFactory.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/AsyncStreamFactory.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/Enums.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/IAsyncStream.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/IAsyncStream.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/IObjectTable.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/IObjectTable.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/SystemTable.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/SystemTable.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/TypeTable.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/TypeTable.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/detail/Allocator.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/Allocator.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/ConcurrentQueue.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/Enums.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/HelperMacros.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/detail/MemoryBlock.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/MemoryBlock.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/NamedType.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/ObjectConstructor.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/ObjectPool.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/StlAllocator.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/detail/Time.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/Time.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/AllocatorConcept.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Combined.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Continuous.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Continuous.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Default.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Lock.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Pool.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Pool.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/RefCount.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Stack.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Stack.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/Usage.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/allocator_policies/opencv.hpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/detail/forward.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/core/export.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/detail/Export.hpp",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/detail/TypeInfo.cpp",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/detail/TypeInfo.hpp",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/detail/defines.hpp",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/logging/CompileLogger.cpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/logging/CompileLogger.hpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/logging/Logger.hpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/logging/callstack.cpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/logging/callstack.hpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/logging/logging.cpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/logging/logging.hpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/logging/logging_macros.hpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/logging/profiling.cpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/logging/profiling.hpp",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_atomic.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_base.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_chrono.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_context.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_fiber.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_filesystem.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_stacktrace.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_system.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/rcc/external_linkage/boost_thread.hpp",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/ArgumentPack.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/ArgumentSyncPolicy.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/signals/Connection.cpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/Connection.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/signals/ISignal.cpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/ISignal.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/signals/ISignalRelay.cpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/ISignalRelay.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/signals/ISlot.cpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/ISlot.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/signals/RelayFactory.cpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/RelayFactory.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/signals/SignalInfo.cpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/SignalInfo.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/signals/SlotInfo.cpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/SlotInfo.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/TSignal.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/TSignalRelay.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/TSlot.hpp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/detail/SignalMacros.hpp",
+			"sourceGroupIndex" : 8
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/signals/detail/SlotMacros.hpp",
+			"sourceGroupIndex" : 8
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/ConditionVariable.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/ConditionVariable.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/FiberProperties.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/FiberProperties.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/FiberScheduler.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/FiberScheduler.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/Mutex.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/Mutex.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/PriorityLevels.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/PriorityLevels.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/Thread.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/Thread.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/ThreadHandle.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/ThreadHandle.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/ThreadInfo.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/ThreadInfo.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/ThreadPool.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/ThreadPool.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/ThreadRegistry.cpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/ThreadRegistry.hpp",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/detail/ContextQueue.cpp",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/detail/ContextQueue.hpp",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/core/src/MetaObject/thread/detail/ContextSpinlockQueue.cpp",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/detail/context_spinlock_queue.hpp",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/core/src/MetaObject/thread/fiber_include.hpp",
+			"sourceGroupIndex" : 9
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

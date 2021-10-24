@@ -1,0 +1,346 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "libmetaobject_metaparamsd.so"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"metaobject_declare_module",
+			"install",
+			"target_link_libraries",
+			"target_include_directories",
+			"target_compile_definitions"
+		],
+		"files" : 
+		[
+			"cmake/metaobject_declare_module.cmake",
+			"modules/metaparams/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 2,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 78,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 83,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 43,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 15,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 1,
+				"line" : 12,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 40,
+				"parent" : 1
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -g -fno-omit-frame-pointer -g -D_DEBUG -fPIC   -fPIC -Wl,--no-undefined -std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "BOOST_ALL_DYN_LINK"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "BOOST_NO_AUTO_PTR"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "MO_HAVE_OPENCV"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "MetaObject_EXPORTS"
+				},
+				{
+					"define" : "_MWAITXINTRIN_H_INCLUDED"
+				},
+				{
+					"define" : "metaobject_metaparams_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 6,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/metaparams/src"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "/usr/local/include/opencv"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/params/src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/core/src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/rcc/Aurora"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/spdlog/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/dependencies/ct/dependencies/minitensor/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/types/src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/runtime_reflection/src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/dan/code/EagleEye/Aquila/dependencies/MetaObject/modules/serialization/src"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "/home/dan/code/boost"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 5,
+			"id" : "RuntimeObjectSystem::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "RuntimeCompiler::@9f71bb42a7a6b200359b"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "metaobject_core::@90e83aff1e86c0750a9d"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "metaobject_params::@13cfafed9c809835be87"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "metaobject_types::@d395f55ce4b475a83da3"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "metaobject_runtime_reflection::@842bb34bc6715966aa70"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "metaobject_serialization::@1f01b4657171dd97c3ab"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Modules"
+	},
+	"id" : "metaobject_metaparams::@5c1efce9c0b6ba14a8af",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-L/home/dan/code/boost/stage/lib  -L/usr/local/cuda/lib64",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/dan/code/boost/stage/lib:/usr/local/cuda/lib64:/home/dan/code/EagleEye/Aquila/dependencies/MetaObject_build: ../../libmetaobject_serializationd.so ../../libmetaobject_paramsd.so ../../libmetaobject_runtime_reflectiond.so ../../libmetaobject_typesd.so /home/dan/code/boost/stage/lib/libboost_filesystem.so ../../libmetaobject_cored.so /home/dan/code/boost/stage/lib/libboost_thread.so /home/dan/code/boost/stage/lib/libboost_date_time.so /home/dan/code/boost/stage/lib/libboost_atomic.so -lpthread /home/dan/code/boost/stage/lib/libboost_fiber.so /home/dan/code/boost/stage/lib/libboost_context.so /home/dan/code/boost/stage/lib/libboost_system.so /home/dan/code/boost/stage/lib/libboost_chrono.so ../../libRuntimeObjectSystemd.a ../../libRuntimeCompilerd.a -ldl -lpthread /usr/local/cuda/lib64/libcudart.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "metaobject_metaparams",
+	"nameOnDisk" : "libmetaobject_metaparamsd.so",
+	"paths" : 
+	{
+		"build" : "modules/metaparams",
+		"source" : "modules/metaparams"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/metaparams/src/MetaObject/MetaParameters.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/metaparams/src/MetaObject/MetaParameters.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "modules/metaparams/src/MetaObject/common.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/metaparams/src/MetaObject/instantiations_1.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/metaparams/src/MetaObject/instantiations_2.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/metaparams/src/MetaObject/instantiations_3.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/metaparams/src/MetaObject/instantiations_4.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/metaparams/src/MetaObject/instantiations_5.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "modules/metaparams/src/MetaObject/instantiations_6.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}
