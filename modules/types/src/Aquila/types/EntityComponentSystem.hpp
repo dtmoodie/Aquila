@@ -20,7 +20,7 @@
 #include <MetaObject/params/TPublisher.hpp>
 #include <MetaObject/params/TSubscriber.hpp>
 
-#include <ct/extensions/DataTable.hpp>
+#include <ctext/DataTable.hpp>
 #include <ct/static_asserts.hpp>
 
 #include <ce/shared_ptr.hpp>

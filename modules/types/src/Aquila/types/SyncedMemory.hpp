@@ -14,6 +14,8 @@
 #include <ct/enum.hpp>
 #include <ct/types/TArrayView.hpp>
 
+#include <minitensor/Tensor.hpp>
+
 #include <cstdint>
 #include <ostream>
 

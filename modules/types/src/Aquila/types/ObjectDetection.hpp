@@ -13,7 +13,7 @@
 #include <Eigen/Geometry>
 #include <opencv2/core/types.hpp>
 
-#include <ct/extensions/DataTable.hpp>
+#include <ctext/DataTable.hpp>
 
 #include <map>
 #include <string>

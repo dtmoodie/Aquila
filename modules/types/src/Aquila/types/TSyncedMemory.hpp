@@ -9,6 +9,7 @@ namespace aq
     struct TSyncedMemory : virtual SyncedMemory
     {
         using DType = T;
+
         template <uint8_t D>
         static TSyncedMemory copyHost(mt::Tensor<const T, D> tensor,
                                       std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current())

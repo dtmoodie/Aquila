@@ -6,7 +6,7 @@
 
 #include <MetaObject/serialization/JSONPrinter.hpp>
 
-#include <ct/extensions/DataTable.hpp>
+#include <ctext/DataTable.hpp>
 #include <ct/reflect/print.hpp>
 #include <ct/static_asserts.hpp>
 

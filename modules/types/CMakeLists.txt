@@ -1,17 +1,24 @@
 find_package(Eigen3 REQUIRED)
+find_package(ctext REQUIRED)
+find_package(minitensor REQUIRED)
 
 if(NOT TARGET Eigen3)
-    add_library(Eigen3 IMPORTED INTERFACE)
-    if(EIGEN3_INCLUDE_DIR)
-        set_target_properties(Eigen3 PROPERTIES
-          INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
-        )
-    endif()
 
-    if(EIGEN_INCLUDE_DIRS)
-        set_target_properties(Eigen3 PROPERTIES
-          INTERFACE_INCLUDE_DIRECTORIES "${EIGEN_INCLUDE_DIRS}"
-        )
+    add_library(Eigen3 IMPORTED INTERFACE)
+    if(TARGET Eigen3::Eigen)
+        target_link_directories(Eigen3 Eigen3::Eigen)
+    else()
+        if(EIGEN3_INCLUDE_DIR)
+            set_target_properties(Eigen3 PROPERTIES
+              INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
+            )
+        endif()
+
+        if(EIGEN_INCLUDE_DIRS)
+            set_target_properties(Eigen3 PROPERTIES
+              INTERFACE_INCLUDE_DIRECTORIES "${EIGEN_INCLUDE_DIRS}"
+            )
+        endif()
     endif()
 endif()
 
@@ -25,6 +32,8 @@ aquila_declare_module(NAME types DEPENDS
     aquila_core
     Eigen3
     ce
+    ctext
+    minitensor
     CXX_STANDARD 11
 )
 
