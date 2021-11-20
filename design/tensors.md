@@ -2,6 +2,7 @@ We want a tensor library primarily for container purposes to densly store arrays
 Want to have a data type that can wrap an image and that can natively wrap strided / padded images.
 
 Evaluation Criteria:
+- performance (https://romanpoya.medium.com/a-look-at-the-performance-of-expression-templates-in-c-eigen-vs-blaze-vs-fastor-vs-armadillo-vs-2474ed38d982)
 - Support
  - updates / bufxies
  - GPU compute
@@ -21,11 +22,12 @@ pros:
 - Has device functionality
 - OG template expressions
 - eigen matrix interop
+- very easy to define custom unary and binary functions
 cons:
 - Does not support wrapping strided images, the best I can think of with this is to create a tensor map of the full image
   and then return a strided view or a slice, but that returns an operation not another tensor.  We would then need to
   pass around tensor references everywhere.  This may be possible so this may need more exploration. Maybe we should just copy strided data?
-- col major
+- col major by default
 
 
 Tensorflow's tensor (https://www.tensorflow.org/api_docs/cc/class/tensorflow/tensor)
@@ -56,6 +58,7 @@ cons
 - not a standalone repo
 pros:
 - pretty good API with template expressions
+- supports striding
 
 pytorch's ATen (https://github.com/pytorch/pytorch/tree/master/aten/src)
 cons
@@ -86,3 +89,14 @@ Tensor Comprehensions (https://github.com/facebookresearch/TensorComprehensions)
 
 minitensor
 -
+
+mtensor (https://github.com/matazure/mtensor)
+cons:
+- documentation is in Chinese
+
+pros:
+
+
+mdspan (https://github.com/kokkos/mdspan)
+
+
