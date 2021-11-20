@@ -85,10 +85,8 @@ Graph::Graph()
 
 Graph::~Graph()
 {
-    MO_LOG(info, "Graph destructor");
     stop();
     m_top_level_nodes.clear();
-    MO_LOG(info, "End cleanup nodes");
     for (auto thread : m_connection_threads)
     {
         thread->join();

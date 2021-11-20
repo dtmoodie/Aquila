@@ -25,7 +25,6 @@
 #include <boost/stacktrace/stacktrace.hpp>
 #include <boost/thread.hpp>
 
-#include <opencv2/core/cuda_stream_accessor.hpp>
 #include <thrust/system/system_error.h>
 
 #include <future>
@@ -242,6 +241,7 @@ bool Node::process(mo::IAsyncStream& stream)
             {
                 LOG_ALGO(trace, "{} calling processImpl", getName());
                 mo::ScopedProfile profiler(this->getName().c_str());
+                stream.makeCurrent();
                 if (!processImpl(stream))
                 {
                     m_iterations_since_execution = 0;
@@ -327,6 +327,10 @@ bool Node::process(mo::IAsyncStream& stream)
             {
                 m_disable_due_to_errors = true;
             }
+        }
+        if(can_process)
+        {
+            stream.noLongerCurrent();
         }
         m_last_execution_failure_reason = nullptr;
         m_iterations_since_execution = 0;
