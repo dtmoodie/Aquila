@@ -6,4 +6,4 @@
 	url = ../cache-engine
 [submodule "dependencies/ctext"]
 	path = dependencies/ctext
-	url = ssh://dan@percocetpenguin.asuscomm.com:4444/code/ctext
+	url = ../ctext
