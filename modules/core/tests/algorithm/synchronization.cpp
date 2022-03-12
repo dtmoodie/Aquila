@@ -445,7 +445,7 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     mo::TPublisher<int> pub0;
     mo::TPublisher<float> pub1;
     mo::TPublisher<double> pub2;
-    mo::TPublisher<std::vector<int>> pub3;
+    mo::TPublisher<mo::vector<int>> pub3;
     mo::TPublisher<std::string> pub4;
 
     mo::TSubscriber<int> sub0;
@@ -454,7 +454,7 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     sub1.setInput(&pub1);
     mo::TSubscriber<double> sub2;
     sub2.setInput(&pub2);
-    mo::TSubscriber<std::vector<int>> sub3;
+    mo::TSubscriber<mo::vector<int>> sub3;
     sub3.setInput(&pub3);
     mo::TSubscriber<std::string> sub4;
     sub4.setInput(&pub4);

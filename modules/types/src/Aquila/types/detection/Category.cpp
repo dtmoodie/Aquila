@@ -77,6 +77,18 @@ namespace aq
         return *static_cast<Category*>(nullptr);
     }
 
+    /*void CategorySet::push_back(Category&& cat)
+    {
+        std::vector<Category>::push_back(std::move(cat));
+        colorize();
+    }
+
+    void CategorySet::push_back(const Category& cat)
+    {
+        std::vector<Category>::push_back(cat);
+        colorize();
+    }*/
+
     const Category& CategorySet::operator()(const std::string& name) const
     {
         for (size_t i = 0; i < size(); ++i)

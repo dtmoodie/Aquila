@@ -78,7 +78,7 @@ void WindowCallbackHandler::imshow(const std::string& window_name, cv::Mat img, 
     if (mystream != ui_stream)
     {
         // clang-format off
-        auto event = [this, window_name, img, flags](mo::IAsyncStream*)
+        auto event = [this, window_name, img, flags](mo::IAsyncStream* stream)
         {
             this->imshow(window_name, img, flags);
         };

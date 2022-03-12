@@ -188,7 +188,7 @@ bool Node::connectInput(mo::ISubscriber* input,
     }
 }
 
-void Node::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags fg, mo::IAsyncStream& stream)
+void Node::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags fg, mo::IAsyncStream* stream)
 {
     Algorithm::onParamUpdate(param, header, fg, stream);
     if (param.checkFlags(mo::ParamFlags::kCONTROL))

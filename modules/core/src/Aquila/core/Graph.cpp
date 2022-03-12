@@ -562,6 +562,7 @@ int Graph::process()
 {
     mo::IAsyncStream::Ptr_t stream = this->getStream();
     MO_ASSERT(stream != nullptr);
+    mo::IAsyncStream::setCurrent(stream);
     if (m_dirty_flag /* || run_continuously == true*/)
     {
         m_dirty_flag = false;

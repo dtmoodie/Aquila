@@ -111,6 +111,8 @@ namespace aq
         SyncedMemory& operator=(const SyncedMemory& other);
         SyncedMemory& operator=(SyncedMemory&& other);
 
+        SyncedMemory view() const;
+
         // return the number of elements in the memory block
         size_t size() const;
         size_t elemSize() const;
@@ -127,6 +129,8 @@ namespace aq
         ct::TArrayView<void> mutableHostOnlyWrite(mo::IAsyncStream* = nullptr);
         ct::TArrayView<void> mutableDevice(mo::IDeviceStream* = nullptr, bool* sync_required = nullptr);
         ct::TArrayView<void> mutableDeviceOnlyWrite(mo::IAsyncStream* = nullptr);
+
+        void copyTo(SyncedMemory& dest, mo::IAsyncStreamPtr_t stream = {}) const;
 
         SyncState state() const;
 

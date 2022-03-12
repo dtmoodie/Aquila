@@ -111,7 +111,7 @@ namespace aq
 
         bool closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const;
         void onNewData();
-        void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&);
+        void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream*);
         bool dedoup(const mo::Time&);
         bool dedoup(const mo::FrameNumber&);
 

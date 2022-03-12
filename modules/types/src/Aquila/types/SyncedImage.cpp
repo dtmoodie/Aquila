@@ -139,7 +139,7 @@ namespace aq
         setHash(other.hash());
         m_data.setConst();
         auto current = static_cast<const ce::shared_ptr<SyncedMemory>&>(m_data)->getStream().lock();
-        if (current != stream)
+        if (current != stream && stream)
         {
             setStream(stream);
         }

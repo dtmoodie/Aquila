@@ -87,23 +87,8 @@ namespace aq
 
     SyncedMemory::SyncedMemory(const SyncedMemory& other)
     {
-        if (other.m_state == SyncState::HOST_UPDATED || other.d_ptr == nullptr)
-        {
-            h_ptr = other.h_ptr;
-            h_flags = PointerFlags::CONST;
-            m_state = SyncState::HOST_UPDATED;
-        }
-        else
-        {
-            d_ptr = other.d_ptr;
-            d_flags = PointerFlags::CONST;
-            m_state = SyncState::DEVICE_UPDATED;
-        }
-        m_elem_size = other.m_elem_size;
-        m_size = other.m_size;
-        m_stream = other.m_stream;
-        m_owning = other.m_owning;
-        m_capacity = other.m_capacity;
+        this->m_stream = other.m_stream;
+        other.copyTo(*this, other.m_stream.lock());
     }
 
     SyncedMemory::SyncedMemory(SyncedMemory&& other)
@@ -159,22 +144,7 @@ namespace aq
 
     SyncedMemory& SyncedMemory::operator=(const SyncedMemory& other)
     {
-        if (other.m_state == SyncState::HOST_UPDATED)
-        {
-            h_ptr = other.h_ptr;
-            h_flags = PointerFlags::CONST;
-            m_state = SyncState::HOST_UPDATED;
-        }
-        else
-        {
-            d_ptr = other.d_ptr;
-            d_flags = PointerFlags::CONST;
-            m_state = SyncState::DEVICE_UPDATED;
-        }
-        m_elem_size = other.m_elem_size;
-        m_size = other.m_size;
-        m_stream = other.m_stream;
-        m_owning = other.m_owning;
+        other.copyTo(*this, other.m_stream.lock());
         return *this;
     }
 
@@ -200,6 +170,51 @@ namespace aq
         return *this;
     }
 
+    void SyncedMemory::copyTo(SyncedMemory& dest, mo::IAsyncStreamPtr_t stream) const
+    {
+        if (stream == nullptr)
+        {
+            stream = this->getStream().lock();
+        }
+        MO_ASSERT(stream != nullptr);
+        mo::IDeviceStream* dev_stream = stream->getDeviceStream();
+        dest.resize(m_size, m_elem_size, stream);
+        if (m_state == SyncState::HOST_UPDATED)
+        {
+            auto dst = dest.mutableHost();
+            auto src = this->host();
+            stream->hostToHost(dst, src);
+        }
+        else
+        {
+            // If this assertion throws, then you passed in a non-device stream to a device based synced memory object
+            MO_ASSERT(dev_stream != nullptr);
+            auto dst = dest.mutableDevice();
+            auto src = this->device();
+            dev_stream->deviceToDevice(dst, src);
+        }
+    }
+
+    SyncedMemory SyncedMemory::view() const
+    {
+        SyncedMemory output(m_size, m_elem_size, m_stream.lock());
+
+        if (m_state == SyncState::HOST_UPDATED)
+        {
+            output.h_ptr = h_ptr;
+            output.h_flags = PointerFlags::CONST;
+            output.m_state = SyncState::HOST_UPDATED;
+        }
+        else
+        {
+            output.d_ptr = d_ptr;
+            output.d_flags = PointerFlags::CONST;
+            output.m_state = SyncState::DEVICE_UPDATED;
+        }
+        output.m_owning = m_owning;
+        return output;
+    }
+
     size_t SyncedMemory::size() const
     {
         return m_size;
@@ -219,12 +234,14 @@ namespace aq
     {
         if (m_size == size_)
         {
+            m_elem_size = elem_size;
             return true;
         }
 
         if (size_ < m_capacity)
         {
             m_size = size_;
+            m_elem_size = elem_size;
             return true;
         }
 
@@ -263,8 +280,9 @@ namespace aq
                 if (copy_size)
                 {
                     src_stream->hostToHost({h_ptr, copy_size}, {old_host, copy_size});
-                    src_stream->pushWork(
-                        [old_host, old_size, alloc](mo::IAsyncStream*) { alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size); });
+                    src_stream->pushWork([old_host, old_size, alloc](mo::IAsyncStream*) {
+                        alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size);
+                    });
                 }
 
                 if (old_device)

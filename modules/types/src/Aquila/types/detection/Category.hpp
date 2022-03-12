@@ -17,7 +17,7 @@ namespace aq
     struct AQUILA_EXPORTS Category
     {
         Category(const std::string& name = "",
-                 cv::Vec3b color = cv::Vec3b(),
+                 cv::Vec3b color = cv::Vec3b::all(255),
                  int32_t parent = -1,
                  unsigned int idx = 0);
 
@@ -60,8 +60,11 @@ namespace aq
 
         const Category& operator()(const std::string& name) const;
 
+        /*void push_back(Category&& cat);
+        void push_back(const Category& cat);*/
+
       private:
-        void colorize(const std::map<std::string, cv::Vec3b>& colormap);
+        void colorize(const std::map<std::string, cv::Vec3b>& colormap = std::map<std::string, cv::Vec3b>());
         void hierarchy(const std::vector<int>& tree);
         Category& operator()(const std::string& name);
     };

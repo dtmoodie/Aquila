@@ -94,7 +94,7 @@ namespace aq
         mo::OptionalTime findDirectTimestamp(bool& buffered, const std::vector<mo::ISubscriber*>& inputs);
         mo::OptionalTime findBufferedTimestamp();
 
-        void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&) override;
+        void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream*) override;
 
         struct SyncData
         {

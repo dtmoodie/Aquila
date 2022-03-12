@@ -39,7 +39,7 @@ void Plotter::setInput(mo::IParam* param_)
     }
 }
 
-void Plotter::on_parameter_modified(const mo::IParam& param, mo::Header, mo::UpdateFlags, mo::IAsyncStream& ctx)
+void Plotter::on_parameter_modified(const mo::IParam& param, mo::Header, mo::UpdateFlags, mo::IAsyncStream* ctx)
 {
 }
 

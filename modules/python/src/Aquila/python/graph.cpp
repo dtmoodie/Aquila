@@ -73,8 +73,8 @@ namespace aq
             auto relay = mgr->getRelayOptional<void(void)>(name);
             if (relay)
             {
-                auto current = mo::IAsyncStream::current();
-                (*relay)(*current);
+                auto current = graph->getStream();
+                (*relay)(current.get());
             }
             else
             {

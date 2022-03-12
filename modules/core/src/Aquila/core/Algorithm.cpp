@@ -813,7 +813,7 @@ void Algorithm::setSyncMethod(SyncMethod _method)
     m_sync_method = _method;
 }
 
-void Algorithm::onParamUpdate(const mo::IParam& param, mo::Header hdr, mo::UpdateFlags fg, IAsyncStream& stream)
+void Algorithm::onParamUpdate(const mo::IParam& param, mo::Header hdr, mo::UpdateFlags fg, IAsyncStream* stream)
 {
     mo::MetaObject::onParamUpdate(param, hdr, fg, stream);
     if (param.checkFlags(mo::ParamFlags::kSOURCE))

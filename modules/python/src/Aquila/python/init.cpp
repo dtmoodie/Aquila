@@ -130,7 +130,9 @@ void setGuiStream(const std::shared_ptr<mo::IAsyncStream>& stream)
 BOOST_PYTHON_MODULE(aquila)
 {
     auto table = mo::python::pythonSetup("aquila");
-    boost::shared_ptr<AqLibGuard> lib_guard(new AqLibGuard(table));
+    auto factory = mo::MetaObjectFactory::instance(table.get());
+    aq::gui::initModule(factory.get());
+    // boost::shared_ptr<AqLibGuard> lib_guard(new AqLibGuard(table));
     mo::python::setLogLevel("debug");
     mo::python::RegisterInterface<aq::IAlgorithm> alg(&aq::python::setupAlgorithmInterface,
                                                       &aq::python::setupAlgorithmObjects);
@@ -143,7 +145,6 @@ BOOST_PYTHON_MODULE(aquila)
     mo::initMetaParamsModule(table.get());
     mo::cuda::init(table.get());
     aq::types::initModule(table.get());
-    auto factory = mo::MetaObjectFactory::instance(table.get());
     factory->registerTranslationUnit();
     aq::core::initModule(factory.get());
     // aq::gui::initModule(factory);
@@ -152,8 +153,8 @@ BOOST_PYTHON_MODULE(aquila)
     boost::python::def("recompile", &recompile, (boost::python::arg("async") = false));
     boost::python::def("setGuiStream", &setGuiStream);
 
-    boost::python::class_<AqLibGuard, boost::shared_ptr<AqLibGuard>, boost::noncopyable>("aqLibGuard",
+    /*boost::python::class_<AqLibGuard, boost::shared_ptr<AqLibGuard>, boost::noncopyable>("aqLibGuard",
                                                                                          boost::python::no_init);
 
-    boost::python::scope().attr("__aqlibguard") = lib_guard;
+    boost::python::scope().attr("__aqlibguard") = lib_guard;*/
 }

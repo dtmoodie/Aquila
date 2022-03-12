@@ -132,7 +132,7 @@ namespace aq
             bool processChildren(mo::IAsyncStream&);
 
             void setModified(bool val = true) override;
-            void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&) override;
+            void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream*) override;
 
           private:
             std::vector<WeakPtr> m_parents;
