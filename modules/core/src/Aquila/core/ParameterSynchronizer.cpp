@@ -313,8 +313,12 @@ namespace aq
 
     mo::FrameNumber ParameterSynchronizer::findEarliestCommonFrameNumber() const
     {
+        mo::FrameNumber output = findDirectFrameNumber();
+        if(output.valid())
+        {
+            return output;
+        }
         // Todo earliest guarantee?
-        mo::FrameNumber output;
         uint32_t valid_count = 0;
         for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
