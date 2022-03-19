@@ -156,22 +156,26 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
         auto fg_info = dynamic_cast<const FrameGrabberInfo*>(valid_constructors[idx[i]]->GetObjectInfo());
         fg->Init(true);
 
-        struct thread_load_object
+        struct ThreadLoader
         {
             std::promise<bool> promise;
             rcc::shared_ptr<IFrameGrabber> fg;
             std::string document;
             void load()
             {
-                promise.set_value(fg->loadData(document));
+                if(fg)
+                {
+                    const bool success = fg->loadData(document);
+                    promise.set_value(success);
+                }
+
             }
         };
 
-        auto obj = std::make_unique<thread_load_object>();
+        auto obj = std::make_shared<ThreadLoader>();
         obj->fg = fg;
         obj->document = uri;
         auto future = obj->promise.get_future();
-        static std::vector<boost::thread*> connection_threads;
         // TODO cleanup the connection threads
         MO_LOG(info,
                "Attempting to load {} with frame_grabber: {} with priority: {}",
@@ -180,7 +184,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
                valid_constructor_priority[idx[static_cast<size_t>(i)]]);
         mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::current();
 
-        boost::thread* connection_thread = new boost::thread([&obj, stream]() -> void {
+        boost::thread connection_thread([obj, stream]() -> void {
             mo::initThread();
             mo::IAsyncStream::setCurrent(stream);
             try
@@ -191,11 +195,9 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
             {
                 MO_LOG(debug, e.what());
             }
-
-            //delete obj;
         });
         const auto timeout = fg_info->loadTimeout();
-        if (connection_thread->timed_join(boost::posix_time::milliseconds(timeout)))
+        if (connection_thread.timed_join(boost::posix_time::milliseconds(timeout)))
         {
             if (future.get())
             {
@@ -204,7 +206,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
                        uri,
                        fg->GetTypeName(),
                        valid_constructor_priority[idx[static_cast<size_t>(i)]]);
-                delete connection_thread;
+
                 fg->loaded_document.push_back(uri);
                 return fg; // successful load
             }
@@ -213,12 +215,12 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
         }
         else // timeout
         {
+            connection_thread.detach();
             MO_LOG(warn,
                    "Timeout while loading {} with {}  after waiting {} ms",
                    uri,
                    fg_info->GetObjectName(),
                    timeout);
-            connection_threads.push_back(connection_thread);
         }
     }
     return rcc::shared_ptr<IFrameGrabber>();
@@ -290,14 +292,15 @@ bool FrameGrabber::loadData(std::string path)
     if (priorities.size())
     {
         IObjectConstructor* ctr = priorities.rbegin()->second;
-        getLogger().info("Attempting to load {} with {}", path, ctr->GetName());
+        const char* name = ctr->GetName();
+        getLogger().info("Attempting to load {} with {}", path, name);
         rcc::shared_ptr<IObject> obj = ctr->Construct();
         if (obj)
         {
             auto typed = obj.DynamicCast<IGrabber>();
-            typed->Init(true);
             if (typed)
             {
+                typed->Init(true);
                 if (typed->loadData(path))
                 {
                     addComponent(typed);
