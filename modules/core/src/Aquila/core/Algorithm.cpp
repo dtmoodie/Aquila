@@ -711,6 +711,7 @@ mo::OptionalTime Algorithm::findDirectTimestamp(bool& buffered, const std::vecto
 
 Algorithm::InputState Algorithm::checkInputs()
 {
+    auto stream = this->getStream();
     auto inputs = this->getInputs();
     if(inputs.empty())
     {
@@ -722,8 +723,24 @@ Algorithm::InputState Algorithm::checkInputs()
     {
         for(auto input : inputs)
         {
-            auto data = input->getData(next_header.get_ptr());
-            MO_ASSERT(data != nullptr);
+            auto data = input->getData(next_header.get_ptr(), stream.get());
+            if(data == nullptr)
+            {
+                mo::IPublisher* pub = input->getPublisher();
+                if(pub)
+                {
+                    const bool buffered = pub->checkFlags(mo::ParamFlags::kBUFFER);
+                    this->getLogger().debug("Input {} unable to retrieve data from {} at header={} this {} a buffered connection",
+                                            input->getTreeName(),
+                                            pub->getTreeName(),
+                                            *next_header, buffered ? "is": "is not");
+                }else
+                {
+                    this->getLogger().debug("Input {} not hooked up to a publisher and thus not able to get data",
+                                            input->getTreeName());
+                }
+                return InputState::kNONE_VALID;
+            }
         }
         return Algorithm::InputState::kALL_VALID;
     }
