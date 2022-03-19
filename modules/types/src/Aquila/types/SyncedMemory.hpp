@@ -158,17 +158,17 @@ namespace aq
         ConstSyncedView syncedView(mo::IDeviceStream* = nullptr) const;
 
       private:
-        mutable SyncState m_state;
+        mutable SyncState m_state = SyncState::SYNCED;
         mutable void* d_ptr = nullptr;
         mutable void* h_ptr = nullptr;
         mutable PointerFlags h_flags;
         mutable PointerFlags d_flags;
         // number of elements
-        size_t m_size;
+        size_t m_size = 0;
         // element size in bytes
         size_t m_elem_size = 0;
         // max number of elements
-        size_t m_capacity;
+        size_t m_capacity = 0;
         std::weak_ptr<mo::IAsyncStream> m_stream;
         std::shared_ptr<const void> m_owning;
     }; // namespace aq

@@ -145,7 +145,7 @@ namespace aq
         }
     }
 
-    SyncedImage::SyncedImage(SyncedImage&& other, std::shared_ptr<mo::IAsyncStream> stream)
+    SyncedImage::SyncedImage(SyncedImage&& other)
         : m_data(std::move(other.m_data))
         , m_pixel_type(std::move(other.m_pixel_type))
         , m_shape(std::move(other.m_shape))
@@ -153,7 +153,7 @@ namespace aq
         setHash(other.hash());
     }
 
-    SyncedImage::SyncedImage(SyncedImage& other, std::shared_ptr<mo::IAsyncStream> stream)
+    SyncedImage::SyncedImage(SyncedImage& other)
         : m_data(other.m_data)
         , m_pixel_type(other.m_pixel_type)
         , m_shape(other.m_shape)
@@ -211,10 +211,9 @@ namespace aq
         return m_data->getStream();
     }
 
-    void SyncedImage::makeData()
+    void SyncedImage::makeData(std::shared_ptr<mo::IAsyncStream> stream)
     {
-        std::shared_ptr<mo::IAsyncStream> stream;
-        if (m_data)
+        if (m_data && ! stream)
         {
             stream = getStream().lock();
         }
@@ -233,7 +232,7 @@ namespace aq
     {
         if (!m_data)
         {
-            makeData();
+            makeData(stream);
         }
         m_data->setStream(std::move(stream));
     }
@@ -277,6 +276,20 @@ namespace aq
     {
         MO_ASSERT(m_data.get() != nullptr);
         m_data->setOwning(std::move(owning));
+    }
+
+    SyncedImage SyncedImage::clone(mo::IAsyncStream::Ptr_t stream) const
+    {
+        SyncedImage output;
+        if(m_data)
+        {
+            ce::shared_ptr<SyncedMemory> data = ce::make_shared<SyncedMemory>();
+            m_data->copyTo(*data, stream);
+            output.m_data = std::move(data);
+        }
+        output.m_pixel_type = this->m_pixel_type;
+        output.m_shape = this->m_shape;
+        return output;
     }
 } // namespace aq
 

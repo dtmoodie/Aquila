@@ -183,6 +183,7 @@ namespace aq
         {
             auto dst = dest.mutableHost();
             auto src = this->host();
+            //memcpy(dst.data(), dst.data(), src.size());
             stream->hostToHost(dst, src);
         }
         else
@@ -634,16 +635,21 @@ namespace aq
         return m_stream;
     }
 
-    void SyncedMemory::setStream(std::shared_ptr<mo::IAsyncStream> stream)
+    void SyncedMemory::setStream(std::shared_ptr<mo::IAsyncStream> new_stream)
     {
-        auto strm = m_stream.lock();
-        if (strm.get() == stream.get())
+        auto current_stream = m_stream.lock();
+        if (current_stream.get() == new_stream.get())
         {
             return;
         }
-        // TODO copy?
-        MO_ASSERT((h_ptr == nullptr) && (d_ptr == nullptr));
-        m_stream = std::move(stream);
+        // Since the new stream doesn't match the old stream, and we have valid data. We synchronize the streams
+        // to ensure operations on the old stream on this data have completed operation before the new stream
+        // tries to work with the data
+        if(current_stream && new_stream && (h_ptr || d_ptr))
+        {
+            new_stream->synchronize(*current_stream);
+        }
+        m_stream = std::move(new_stream);
     }
 
     void SyncedMemory::setOwning(std::shared_ptr<const void> owning)

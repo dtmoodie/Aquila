@@ -84,8 +84,8 @@ namespace aq
         // Copy on write
         SyncedImage(const SyncedImage&, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
 
-        SyncedImage(SyncedImage&, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
-        SyncedImage(SyncedImage&&, std::shared_ptr<mo::IAsyncStream> = mo::IAsyncStream::current());
+        SyncedImage(SyncedImage&);
+        SyncedImage(SyncedImage&&);
         SyncedImage& operator=(const SyncedImage&);
         SyncedImage& operator=(SyncedImage&);
         SyncedImage& operator=(SyncedImage&&);
@@ -166,9 +166,10 @@ namespace aq
         inline void copyTo(cv::cuda::GpuMat& mat, mo::IDeviceStream* stream = nullptr) const;
         inline void copyTo(cv::Mat& mat, mo::IAsyncStream* stream = nullptr) const;
 #endif
+        SyncedImage clone(mo::IAsyncStream::Ptr_t stream) const;
 
       private:
-        void makeData();
+        void makeData(std::shared_ptr<mo::IAsyncStream> stream = {});
         ce::shared_ptr<SyncedMemory> m_data;
         PixelType m_pixel_type;
         Shape<2> m_shape;
