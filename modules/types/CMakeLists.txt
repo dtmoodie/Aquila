@@ -1,6 +1,4 @@
 find_package(Eigen3 REQUIRED)
-find_package(ctext REQUIRED)
-find_package(minitensor REQUIRED)
 
 if(NOT TARGET Eigen3)
 

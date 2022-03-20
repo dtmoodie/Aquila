@@ -11,8 +11,6 @@ include(cmake/utilities.cmake)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 list(REVERSE CMAKE_MODULE_PATH)
 
-option(BUILD_DEPENDENCIES "Build dependencies within the AquilOS family" ON)
-
 IF(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_WIN32)
@@ -31,10 +29,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-if(NOT BUILD_DEPENDENCIES)
-    find_package(MetaObject REQUIRED)
-    include_directories(${MetaObject_INCLUDE_DIRS})
-else()
+find_package(MetaObject QUIET)
+if(NOT TARGET MetaObject_core)
     add_subdirectory("dependencies/MetaObject")
     add_subdirectory("dependencies/cache-engine")
     LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/dependencies/MetaObject/cmake")
@@ -56,6 +52,11 @@ else()
             LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
     )
+endif()
+
+find_package(ctext QUIET)
+if(NOT TARGET ctext)
+    add_subdirectory("dependencies/ctext")
 endif()
 
 set(RCC_PERMODULE_INTERFACE_SOURCE
