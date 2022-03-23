@@ -3,7 +3,9 @@
 using namespace aq;
 
 LinearColorMapper::LinearColorMapper(const ColorScale& red, const ColorScale& green, const ColorScale& blue)
-    : _red(red), _green(green), _blue(blue)
+    : _red(red)
+    , _green(green)
+    , _blue(blue)
 {
 }
 LinearColorMapper::LinearColorMapper()

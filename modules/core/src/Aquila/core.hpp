@@ -15,7 +15,7 @@ namespace aq
     namespace core
     {
         AQUILA_EXPORTS void initModule(mo::MetaObjectFactory* factory, const std::string& log_dir = "");
-    } // namespace aq::core
+    } // namespace core
 } // namespace aq
 
 #endif // AQUILA_CORE_HPP

@@ -5,9 +5,9 @@
 struct IObjectConstructor;
 namespace aq
 {
-namespace python
-{
-AQUILA_EXPORTS void setupGraphInterface();
-AQUILA_EXPORTS void setupGraphObjects(std::vector<IObjectConstructor*>& ctrs);
-}
-}
+    namespace python
+    {
+        AQUILA_EXPORTS void setupGraphInterface();
+        AQUILA_EXPORTS void setupGraphObjects(std::vector<IObjectConstructor*>& ctrs);
+    } // namespace python
+} // namespace aq

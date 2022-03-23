@@ -4,10 +4,10 @@ struct IObjectConstructor;
 
 namespace aq
 {
-namespace python
-{
+    namespace python
+    {
 
-void setupAlgorithmInterface();
-void setupAlgorithmObjects(std::vector<IObjectConstructor*>& ctrs);
-}
-}
+        void setupAlgorithmInterface();
+        void setupAlgorithmObjects(std::vector<IObjectConstructor*>& ctrs);
+    } // namespace python
+} // namespace aq

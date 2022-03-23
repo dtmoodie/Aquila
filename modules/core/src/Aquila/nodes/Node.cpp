@@ -328,7 +328,7 @@ bool Node::process(mo::IAsyncStream& stream)
                 m_disable_due_to_errors = true;
             }
         }
-        if(can_process)
+        if (can_process)
         {
             stream.noLongerCurrent();
         }

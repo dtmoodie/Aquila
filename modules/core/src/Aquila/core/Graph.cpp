@@ -531,7 +531,8 @@ void Graph::removeVariableSink(IVariableSink* sink)
 void graphLoop(rcc::shared_ptr<Graph> graph, IAsyncStreamPtr_t stream, const uint64_t event_id)
 {
     graph->process();
-    stream->pushEvent([graph, stream, event_id](mo::IAsyncStream*) mutable { graphLoop(graph, stream, event_id); }, event_id);
+    stream->pushEvent([graph, stream, event_id](mo::IAsyncStream*) mutable { graphLoop(graph, stream, event_id); },
+                      event_id);
 }
 
 void Graph::start()

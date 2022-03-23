@@ -24,4 +24,4 @@ namespace aq
       private:
         cv::Mat_<float> _LUT;
     };
-}
+} // namespace aq

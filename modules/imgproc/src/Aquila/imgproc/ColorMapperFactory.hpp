@@ -22,4 +22,4 @@ namespace aq
         std::vector<std::string> ListSchemes();
         static ColorMapperFactory* Instance();
     };
-}
+} // namespace aq

@@ -15,7 +15,7 @@ namespace aq
             flipped = false;
             inverted = false;
         }
-        
+
         // Defines where this color starts to take effect, between zero and 1
         float start;
         // Defines the slope of increase / decrease for this color between
@@ -31,7 +31,7 @@ namespace aq
             start = start * alpha - beta;
             slope *= alpha;
         }
-        
+
         inline float operator()(float location)
         {
             return getValue(location);
@@ -42,7 +42,7 @@ namespace aq
             float value = 0;
             if (location_ > start)
             {
-                value = (location_ - start)*slope;
+                value = (location_ - start) * slope;
             }
             else
             {
@@ -50,14 +50,18 @@ namespace aq
             }
             if (value > 1.0f)
             {
-                if (symmetric) value = 2.0f - value;
-                else value = 1.0f;
+                if (symmetric)
+                    value = 2.0f - value;
+                else
+                    value = 1.0f;
             }
-            if (value < 0) value = 0;
-            if (inverted) value = 1.0f - value;
+            if (value < 0)
+                value = 0;
+            if (inverted)
+                value = 1.0f - value;
             return value;
         }
-        
+
         template <class A>
         void serialize(A& ar)
         {
@@ -68,4 +72,4 @@ namespace aq
             ar(flipped);
         }
     };
-}
+} // namespace aq

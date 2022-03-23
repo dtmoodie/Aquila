@@ -146,4 +146,4 @@ namespace cereal
     void load(AR& ar, cv::Mat& mat)
     {
     }
-}
+} // namespace cereal

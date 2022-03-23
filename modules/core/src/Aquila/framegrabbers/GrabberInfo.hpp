@@ -51,7 +51,7 @@ namespace grabbers
     {
         return 1000;
     }
-} // namespace Grabbers
+} // namespace grabbers
 
 namespace mo
 {

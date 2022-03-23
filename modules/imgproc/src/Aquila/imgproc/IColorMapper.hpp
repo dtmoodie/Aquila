@@ -32,4 +32,4 @@ namespace aq
         // resolution is the number of samples to estimate
         virtual cv::Mat_<float> getMat(float min, float max, int resolution) = 0;
     };
-}
+} // namespace aq

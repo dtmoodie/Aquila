@@ -28,4 +28,4 @@ namespace aq
         ColorScale _green;
         ColorScale _blue;
     };
-}
+} // namespace aq

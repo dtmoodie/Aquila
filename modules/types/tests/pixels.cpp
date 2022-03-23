@@ -1,7 +1,7 @@
 #include <Aquila/types/pixels.hpp>
 #include <gtest/gtest.h>
 
-template<class T>
+template <class T>
 void checkSize()
 {
     static_assert(sizeof(aq::RGB<T>) == sizeof(T) * 3, "asdf");
@@ -26,7 +26,6 @@ void checkSize()
     static_assert(std::is_trivially_copyable<aq::ABGR<T>>::value, "asdf");
     static_assert(std::is_trivially_copyable<aq::BGRA<T>>::value, "asdf");
     static_assert(std::is_trivially_copyable<aq::GRAY<T>>::value, "asdf");
-
 }
 
 TEST(pixel, size)
@@ -38,7 +37,7 @@ TEST(pixel, size)
 
 TEST(pixel, conversions)
 {
-    const aq::RGB<uint8_t> rgb(0,1,2);
+    const aq::RGB<uint8_t> rgb(0, 1, 2);
     const auto bgr = rgb.bgr();
     EXPECT_EQ(rgb.b(), bgr.b());
     EXPECT_EQ(rgb.g(), bgr.g());
@@ -67,5 +66,4 @@ TEST(pixel, conversions)
     EXPECT_EQ(rgba.r(), rgb.r());
     EXPECT_EQ(rgba.g(), rgb.g());
     EXPECT_EQ(rgba.b(), rgb.b());
-
 }

@@ -13,10 +13,11 @@ void indexSort(const std::vector<T>& value, std::vector<size_t>& indecies, const
     {
         indecies[i] = i;
     }
-    if(ascending)
+    if (ascending)
     {
         std::sort(indecies.begin(), indecies.end(), [&value](size_t i1, size_t i2) { return value[i1] < value[i2]; });
-    }else
+    }
+    else
     {
         std::sort(indecies.begin(), indecies.end(), [&value](size_t i1, size_t i2) { return value[i1] > value[i2]; });
     }

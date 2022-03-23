@@ -213,7 +213,7 @@ namespace aq
 
     void SyncedImage::makeData(std::shared_ptr<mo::IAsyncStream> stream)
     {
-        if (m_data && ! stream)
+        if (m_data && !stream)
         {
             stream = getStream().lock();
         }
@@ -281,7 +281,7 @@ namespace aq
     SyncedImage SyncedImage::clone(mo::IAsyncStream::Ptr_t stream) const
     {
         SyncedImage output;
-        if(m_data)
+        if (m_data)
         {
             ce::shared_ptr<SyncedMemory> data = ce::make_shared<SyncedMemory>();
             m_data->copyTo(*data, stream);
@@ -303,6 +303,6 @@ namespace ct
     TArrayView<void> makeArrayView(AccessToken<void (aq::SyncedImage::*)(ce::shared_ptr<aq::SyncedMemory>)>&& view,
                                    size_t)
     {
-        return view.operator ce::shared_ptr<aq::SyncedMemory>&()->mutableHost();
+        return view.operator ce::shared_ptr<aq::SyncedMemory> &()->mutableHost();
     }
 } // namespace ct

@@ -160,15 +160,21 @@ namespace ros
             }
         };
 
-    } // namespace ros::serialization
+    } // namespace serialization
     namespace message_traits
     {
 
         template <>
         struct MD5Sum<aq::SyncedMemory>
         {
-            static const char* value() { return MD5Sum<sensor_msgs::Image>::value(); }
-            static const char* value(const aq::SyncedMemory&) { return value(); }
+            static const char* value()
+            {
+                return MD5Sum<sensor_msgs::Image>::value();
+            }
+            static const char* value(const aq::SyncedMemory&)
+            {
+                return value();
+            }
 
             static const uint64_t static_value1 = MD5Sum<sensor_msgs::Image>::static_value1;
             static const uint64_t static_value2 = MD5Sum<sensor_msgs::Image>::static_value2;
@@ -181,8 +187,14 @@ namespace ros
         template <>
         struct MD5Sum<aq::Stamped<aq::SyncedMemory>>
         {
-            static const char* value() { return MD5Sum<sensor_msgs::Image>::value(); }
-            static const char* value(const aq::SyncedMemory&) { return value(); }
+            static const char* value()
+            {
+                return MD5Sum<sensor_msgs::Image>::value();
+            }
+            static const char* value(const aq::SyncedMemory&)
+            {
+                return value();
+            }
 
             static const uint64_t static_value1 = MD5Sum<sensor_msgs::Image>::static_value1;
             static const uint64_t static_value2 = MD5Sum<sensor_msgs::Image>::static_value2;
@@ -195,37 +207,70 @@ namespace ros
         template <>
         struct TimeStamp<aq::Stamped<aq::SyncedMemory>, void>
         {
-            static ros::Time* pointer(aq::Stamped<aq::SyncedMemory>& m) { return &m.header.stamp; }
-            static ros::Time const* pointer(const aq::Stamped<aq::SyncedMemory>& m) { return &m.header.stamp; }
-            static ros::Time value(const aq::Stamped<aq::SyncedMemory>& m) { return m.header.stamp; }
+            static ros::Time* pointer(aq::Stamped<aq::SyncedMemory>& m)
+            {
+                return &m.header.stamp;
+            }
+            static ros::Time const* pointer(const aq::Stamped<aq::SyncedMemory>& m)
+            {
+                return &m.header.stamp;
+            }
+            static ros::Time value(const aq::Stamped<aq::SyncedMemory>& m)
+            {
+                return m.header.stamp;
+            }
         };
 
         template <>
         struct DataType<aq::SyncedMemory>
         {
-            static const char* value() { return DataType<sensor_msgs::Image>::value(); }
-            static const char* value(const aq::SyncedMemory&) { return value(); }
+            static const char* value()
+            {
+                return DataType<sensor_msgs::Image>::value();
+            }
+            static const char* value(const aq::SyncedMemory&)
+            {
+                return value();
+            }
         };
 
         template <>
         struct DataType<aq::Stamped<aq::SyncedMemory>>
         {
-            static const char* value() { return DataType<sensor_msgs::Image>::value(); }
-            static const char* value(const aq::Stamped<aq::SyncedMemory>&) { return value(); }
+            static const char* value()
+            {
+                return DataType<sensor_msgs::Image>::value();
+            }
+            static const char* value(const aq::Stamped<aq::SyncedMemory>&)
+            {
+                return value();
+            }
         };
 
         template <>
         struct Definition<aq::SyncedMemory>
         {
-            static const char* value() { return Definition<sensor_msgs::Image>::value(); }
-            static const char* value(const aq::SyncedMemory&) { return value(); }
+            static const char* value()
+            {
+                return Definition<sensor_msgs::Image>::value();
+            }
+            static const char* value(const aq::SyncedMemory&)
+            {
+                return value();
+            }
         };
 
         template <>
         struct Definition<aq::Stamped<aq::SyncedMemory>>
         {
-            static const char* value() { return Definition<sensor_msgs::Image>::value(); }
-            static const char* value(const aq::Stamped<aq::SyncedMemory>&) { return value(); }
+            static const char* value()
+            {
+                return Definition<sensor_msgs::Image>::value();
+            }
+            static const char* value(const aq::Stamped<aq::SyncedMemory>&)
+            {
+                return value();
+            }
         };
         template <>
         struct HasHeader<aq::SyncedMemory> : TrueType
@@ -236,7 +281,7 @@ namespace ros
         {
         };
 
-    } // namespace ros::message_traits
+    } // namespace message_traits
 
     namespace message_operations
     {
@@ -263,5 +308,5 @@ namespace ros
             }
         };
 
-    } // namespace ros::message_traits
+    } // namespace message_operations
 } // namespace ros

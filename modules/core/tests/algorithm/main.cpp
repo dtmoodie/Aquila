@@ -1,12 +1,12 @@
 #include <Aquila/core/Algorithm.hpp>
 
+#include <MetaObject/core/AsyncStreamFactory.hpp>
 #include <MetaObject/core/detail/Allocator.hpp>
 #include <MetaObject/object/MetaObjectFactory.hpp>
 #include <MetaObject/object/detail/IMetaObjectImpl.hpp>
 #include <MetaObject/object/detail/MetaObjectMacros.hpp>
 #include <MetaObject/params/ParamMacros.hpp>
 #include <MetaObject/params/TSubscriberPtr.hpp>
-#include <MetaObject/core/AsyncStreamFactory.hpp>
 #include <MetaObject/thread/FiberScheduler.hpp>
 
 #include <boost/fiber/operations.hpp>
@@ -92,7 +92,7 @@ class multi_input : public Algorithm
     bool processImpl() override
     {
         EXPECT_EQ(*input1, *input2);
-        //EXPECT_NE(last, *input1);
+        // EXPECT_NE(last, *input1);
         last = *input1;
         first.push_back(*input1);
         second.push_back(*input2);
@@ -126,7 +126,7 @@ TEST(algorithm, no_input)
     size_t success_count = 0;
     for (size_t i = 0; i < 100; ++i)
     {
-        if(obj->process())
+        if (obj->process())
         {
             ++success_count;
         }
@@ -348,7 +348,6 @@ TEST(algorithm, desynced_input)
             }
         }
         MO_LOG(info, "Subscribing thread finished");
-
     });
 
     for (int i = 0; i < iterations; ++i)
@@ -356,7 +355,7 @@ TEST(algorithm, desynced_input)
         fast_output.publish(i, mo::Header(std::chrono::milliseconds(i)));
         boost::this_fiber::sleep_for(std::chrono::milliseconds(1));
     }
-    while(!finished)
+    while (!finished)
     {
         boost::this_fiber::sleep_for(std::chrono::milliseconds(100));
     }

@@ -15,4 +15,4 @@ namespace aq
         , m_size(size)
     {
     }
-}
+} // namespace aq

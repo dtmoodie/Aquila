@@ -87,13 +87,19 @@ namespace aq
         typedef DetectedObject2d DetectionType;
         typedef std::shared_ptr<TrackedObject2d> Ptr;
         typedef std::vector<Ptr> TrackSet;
-        TrackedObject2d() { detection_history.set_capacity(30); }
+        TrackedObject2d()
+        {
+            detection_history.set_capacity(30);
+        }
         /*!
          * \brief calculate a score wrt this track for association
          * \param obj object detection at current frame
          * \return confidence of matched detection
          */
-        virtual float Score(const DetectedObject2d& obj) { return iou(obj.bounding_box, last_bb); }
+        virtual float Score(const DetectedObject2d& obj)
+        {
+            return iou(obj.bounding_box, last_bb);
+        }
 
         virtual void AddDetection(const DetectedObject2d& obj)
         {
@@ -158,7 +164,8 @@ namespace aq
         KalmanTrackedObject(cv::Vec<float, T::Dims> Ep = cv::Vec<float, T::Dims>::all(1e-2),
                             cv::Vec<float, T::Dims> Ev = cv::Vec<float, T::Dims>::all(1),
                             cv::Vec<float, T::Dims> Es = cv::Vec<float, T::Dims>::all(1e-2))
-            : initialized(false), T()
+            : initialized(false)
+            , T()
         {
             // The state of a 2d object is the centroid (x,y), velocity (x,y) and size (x,y) (6)
             // The state of a 3d object is the centroid (x,y, z), velocity (x,y,z) and size (x,y,z) (9)
@@ -399,7 +406,9 @@ namespace aq
             return output;
         }
 
-        void update(TrackedObject3d& obj, const cv::Mat& state) {}
+        void update(TrackedObject3d& obj, const cv::Mat& state)
+        {
+        }
 
         void update(TrackedObject2d& obj, const cv::Mat& state)
         {
@@ -424,4 +433,4 @@ namespace aq
 
     typedef KalmanTrackedObject<TrackedObject2d> KalmanTracked2d;
     typedef KalmanTrackedObject<TrackedObject3d> KalmanTracked3d;
-}
+} // namespace aq

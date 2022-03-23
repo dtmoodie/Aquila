@@ -189,7 +189,6 @@ bool Algorithm::processImpl(mo::IDeviceStream&)
     return this->processImpl();
 }
 
-
 void Algorithm::addParam(std::shared_ptr<mo::IParam> param)
 {
     IAlgorithm::addParam(std::move(param));
@@ -713,28 +712,31 @@ Algorithm::InputState Algorithm::checkInputs()
 {
     auto stream = this->getStream();
     auto inputs = this->getInputs();
-    if(inputs.empty())
+    if (inputs.empty())
     {
         return Algorithm::InputState::kALL_VALID;
     }
     auto next_header = this->m_synchronizer->getNextSample();
 
-    if(next_header)
+    if (next_header)
     {
-        for(auto input : inputs)
+        for (auto input : inputs)
         {
             auto data = input->getData(next_header.get_ptr(), stream.get());
-            if(data == nullptr)
+            if (data == nullptr)
             {
                 mo::IPublisher* pub = input->getPublisher();
-                if(pub)
+                if (pub)
                 {
                     const bool buffered = pub->checkFlags(mo::ParamFlags::kBUFFER);
-                    this->getLogger().debug("Input {} unable to retrieve data from {} at header={} this {} a buffered connection",
-                                            input->getTreeName(),
-                                            pub->getTreeName(),
-                                            *next_header, buffered ? "is": "is not");
-                }else
+                    this->getLogger().debug(
+                        "Input {} unable to retrieve data from {} at header={} this {} a buffered connection",
+                        input->getTreeName(),
+                        pub->getTreeName(),
+                        *next_header,
+                        buffered ? "is" : "is not");
+                }
+                else
                 {
                     this->getLogger().debug("Input {} not hooked up to a publisher and thus not able to get data",
                                             input->getTreeName());

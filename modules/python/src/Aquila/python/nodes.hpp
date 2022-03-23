@@ -27,11 +27,11 @@ namespace aq
                 obj.reset();
                 graph.reset();
             }
-            operator rcc::shared_ptr<T>&()
+            operator rcc::shared_ptr<T> &()
             {
                 return obj;
             }
-            operator const rcc::shared_ptr<T>&() const
+            operator const rcc::shared_ptr<T> &() const
             {
                 return obj;
             }

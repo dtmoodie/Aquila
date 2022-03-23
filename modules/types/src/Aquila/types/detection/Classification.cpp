@@ -2,5 +2,9 @@
 
 namespace aq
 {
-    Classification::Classification(const Category* cat_, double conf_) : cat(cat_), conf(conf_) {}
-}
+    Classification::Classification(const Category* cat_, double conf_)
+        : cat(cat_)
+        , conf(conf_)
+    {
+    }
+} // namespace aq

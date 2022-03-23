@@ -20,8 +20,8 @@
 #include <MetaObject/params/TPublisher.hpp>
 #include <MetaObject/params/TSubscriber.hpp>
 
-#include <ctext/DataTable.hpp>
 #include <ct/static_asserts.hpp>
+#include <ctext/DataTable.hpp>
 
 #include <ce/shared_ptr.hpp>
 #include <memory>
@@ -729,7 +729,7 @@ namespace mo
         bool savePointedToData(ISaveVisitor& visitor, const void* inst, const std::string& name) const
         {
             const auto& ref = this->ref(inst);
-            if(ref)
+            if (ref)
             {
                 visitor(ref.get(), name);
                 return true;
@@ -739,12 +739,12 @@ namespace mo
 
         bool loadPointedToData(ILoadVisitor& visitor, void* inst, const std::string& name) const
         {
-            if(std::is_const<T>::value)
+            if (std::is_const<T>::value)
             {
                 return false;
             }
             auto& ref = this->ref(inst);
-            if(ref)
+            if (ref)
             {
                 visitor(const_cast<typename std::remove_const<T>::type*>(ref.get()), name);
                 return true;

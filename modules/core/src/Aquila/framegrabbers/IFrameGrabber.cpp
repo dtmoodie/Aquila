@@ -163,12 +163,11 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
             std::string document;
             void load()
             {
-                if(fg)
+                if (fg)
                 {
                     const bool success = fg->loadData(document);
                     promise.set_value(success);
                 }
-
             }
         };
 
@@ -216,11 +215,8 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
         else // timeout
         {
             connection_thread.detach();
-            MO_LOG(warn,
-                   "Timeout while loading {} with {}  after waiting {} ms",
-                   uri,
-                   fg_info->GetObjectName(),
-                   timeout);
+            MO_LOG(
+                warn, "Timeout while loading {} with {}  after waiting {} ms", uri, fg_info->GetObjectName(), timeout);
         }
     }
     return rcc::shared_ptr<IFrameGrabber>();

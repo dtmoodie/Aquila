@@ -18,6 +18,6 @@ namespace aq
         virtual void setInputs(std::vector<mo::IPublisher*>) = 0;
         virtual void setCallback(std::function<Callback_s>) = 0;
     };
-}
+} // namespace aq
 
 #endif // AQ_CORE_IPARAMETER_SYNCHRONIZER_HPP

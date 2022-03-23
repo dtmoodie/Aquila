@@ -183,7 +183,7 @@ namespace aq
         {
             auto dst = dest.mutableHost();
             auto src = this->host();
-            //memcpy(dst.data(), dst.data(), src.size());
+            // memcpy(dst.data(), dst.data(), src.size());
             stream->hostToHost(dst, src);
         }
         else
@@ -645,7 +645,7 @@ namespace aq
         // Since the new stream doesn't match the old stream, and we have valid data. We synchronize the streams
         // to ensure operations on the old stream on this data have completed operation before the new stream
         // tries to work with the data
-        if(current_stream && new_stream && (h_ptr || d_ptr))
+        if (current_stream && new_stream && (h_ptr || d_ptr))
         {
             new_stream->synchronize(*current_stream);
         }

@@ -6,8 +6,8 @@
 
 #include <MetaObject/cuda/Allocator.hpp>
 #include <MetaObject/cuda/MemoryBlock.hpp>
-#include <MetaObject/thread/ThreadPool.hpp>
 #include <MetaObject/thread/FiberScheduler.hpp>
+#include <MetaObject/thread/ThreadPool.hpp>
 
 #include <boost/fiber/operations.hpp>
 

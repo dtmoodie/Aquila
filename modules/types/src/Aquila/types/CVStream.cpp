@@ -36,9 +36,8 @@ namespace aq
             Ptr_t
             create(const std::string& name, int32_t, mo::PriorityLevels, mo::PriorityLevels thread_priority) override
             {
-                auto stream = std::make_shared<aq::CVStream>(cv::cuda::Stream(),
-                                                             mo::DeviceAllocator::getDefault(),
-                                                             mo::Allocator::getDefault());
+                auto stream = std::make_shared<aq::CVStream>(
+                    cv::cuda::Stream(), mo::DeviceAllocator::getDefault(), mo::Allocator::getDefault());
                 stream->setName(name);
                 stream->setHostPriority(thread_priority);
                 return stream;

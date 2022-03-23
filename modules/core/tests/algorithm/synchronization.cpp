@@ -11,7 +11,7 @@ int randi(int start, int end)
     return int((std::rand() / float(RAND_MAX)) * (end - start) + start);
 }
 
-struct parameter_synchronizer: ::testing::Test
+struct parameter_synchronizer : ::testing::Test
 {
     std::shared_ptr<spdlog::logger> m_logger;
     aq::ParameterSynchronizer synchronizer;
@@ -25,9 +25,9 @@ struct parameter_synchronizer: ::testing::Test
     bool callback_invoked = false;
     bool callback_used = false;
 
-    parameter_synchronizer():
-        m_logger(mo::getLogger()),
-        synchronizer(*m_logger)
+    parameter_synchronizer()
+        : m_logger(mo::getLogger())
+        , synchronizer(*m_logger)
     {
         stream = mo::IAsyncStream::create();
         header = mo::Header(std::chrono::milliseconds(0));
@@ -39,16 +39,17 @@ struct parameter_synchronizer: ::testing::Test
         subs.resize(N);
         std::vector<mo::ISubscriber*> sub_ptrs;
         sub_ptrs.reserve(N);
-        for(uint32_t i = 0; i < N; ++i)
+        for (uint32_t i = 0; i < N; ++i)
         {
             subs[i] = std::make_unique<mo::TSubscriber<uint32_t>>();
             pubs[i] = std::make_unique<mo::TPublisher<uint32_t>>();
-            if(buffered)
+            if (buffered)
             {
                 auto buffer = mo::buffer::IBuffer::create(mo::BufferFlags::STREAM_BUFFER);
                 buffer->setInput(pubs[i].get());
                 subs[i]->setInput(buffer);
-            }else
+            }
+            else
             {
                 subs[i]->setInput(pubs[i].get());
             }
@@ -56,25 +57,25 @@ struct parameter_synchronizer: ::testing::Test
         }
         synchronizer.setInputs(std::move(sub_ptrs));
         callback_used = use_callback;
-        if(use_callback)
+        if (use_callback)
         {
             synchronizer.setCallback(ct::variadicBind(&parameter_synchronizer::callback, this));
         }
     }
 
-    virtual void callback(const mo::Time* time, const mo::FrameNumber* fn,
-                  const aq::ParameterSynchronizer::SubscriberVec_t& vec) = 0;
+    virtual void callback(const mo::Time* time,
+                          const mo::FrameNumber* fn,
+                          const aq::ParameterSynchronizer::SubscriberVec_t& vec) = 0;
 };
 
-
-struct parameter_synchronizer_timestamp: parameter_synchronizer
+struct parameter_synchronizer_timestamp : parameter_synchronizer
 {
     void iterate(const uint32_t N = 20)
     {
         const size_t sz = pubs.size();
         for (uint32_t i = 1; i < N; ++i)
         {
-            for(uint32_t j = 0; j < sz; ++j)
+            for (uint32_t j = 0; j < sz; ++j)
             {
                 pubs[j]->publish(i + j, header, stream.get());
             }
@@ -85,10 +86,11 @@ struct parameter_synchronizer_timestamp: parameter_synchronizer
 
     void check(uint32_t i)
     {
-        if(callback_used)
+        if (callback_used)
         {
             ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-        }else
+        }
+        else
         {
             auto header = synchronizer.getNextSample();
             ASSERT_TRUE(header) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
@@ -102,11 +104,12 @@ struct parameter_synchronizer_timestamp: parameter_synchronizer
         header = mo::Header(std::chrono::milliseconds(i));
     }
 
-    void callback(const mo::Time* time, const mo::FrameNumber* fn,
+    void callback(const mo::Time* time,
+                  const mo::FrameNumber* fn,
                   const aq::ParameterSynchronizer::SubscriberVec_t& vec) override
     {
         callback_invoked = true;
-        for(const auto& sub : subs)
+        for (const auto& sub : subs)
         {
             ASSERT_TRUE(std::find(vec.begin(), vec.end(), sub.get()) != vec.end());
         }
@@ -116,7 +119,6 @@ struct parameter_synchronizer_timestamp: parameter_synchronizer
         ASSERT_EQ(*header.timestamp, *time);
     }
 };
-
 
 TEST_F(parameter_synchronizer_timestamp, find_direct_timestamp_0)
 {
@@ -152,7 +154,7 @@ TEST_F(parameter_synchronizer_timestamp, find_direct_timestamp_0)
     pubs[1]->publish(0, hdr);
     ts = synchronizer.findDirectTimestamp();
     ASSERT_TRUE(ts);
-    //ASSERT_EQ(*ts, 0 * mo::ms);
+    // ASSERT_EQ(*ts, 0 * mo::ms);
 }
 
 // Do it backwards from above to make sure we don't have any weird ordering issues
@@ -190,15 +192,15 @@ TEST_F(parameter_synchronizer_timestamp, find_direct_timestamp_1)
     pubs[0]->publish(0, hdr);
     ts = synchronizer.findDirectTimestamp();
     ASSERT_TRUE(ts);
-    //ASSERT_EQ(*ts, 0 * mo::ms);
+    // ASSERT_EQ(*ts, 0 * mo::ms);
 }
 
 TEST_F(parameter_synchronizer_timestamp, find_earlist_timestamp)
 {
     this->init(2, false);
     mo::Time earliest(1000 * mo::ms);
-    std::vector<int> times{5,6,7,4, 8,9,10};
-    for(auto i : times)
+    std::vector<int> times{5, 6, 7, 4, 8, 9, 10};
+    for (auto i : times)
     {
         const mo::Time time = i * mo::ms;
         earliest = std::min(time, earliest);
@@ -222,7 +224,6 @@ TEST_F(parameter_synchronizer_timestamp, single_input_dedoup_query)
     iterate();
 }
 
-
 TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct_callback)
 {
     this->init(2, true, false);
@@ -235,10 +236,10 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct_query)
     const size_t sz = pubs.size();
     for (uint32_t i = 1; i < 2; ++i)
     {
-        for(uint32_t j = 0; j < sz; ++j)
+        for (uint32_t j = 0; j < sz; ++j)
         {
             pubs[j]->publish(i + j, header, stream.get());
-            if(j == 0)
+            if (j == 0)
             {
                 auto header = synchronizer.getNextSample();
                 ASSERT_FALSE(header);
@@ -248,7 +249,6 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_direct_query)
         post(i);
     }
 }
-
 
 TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_full_buffered_callback)
 {
@@ -310,11 +310,12 @@ TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs_callback)
     for (uint32_t i = 1; i < 40; ++i)
     {
         pubs[0]->publish(i, header);
-        if(i % 2 == 0)
+        if (i % 2 == 0)
         {
             pubs[1]->publish(i + 1, header);
             ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-        }else
+        }
+        else
         {
             ASSERT_FALSE(callback_invoked);
         }
@@ -329,25 +330,25 @@ TEST_F(parameter_synchronizer_timestamp, desynchronized_inputs_query)
     for (uint32_t i = 1; i < 40; ++i)
     {
         pubs[0]->publish(i, header);
-        if(i % 2 == 0)
+        if (i % 2 == 0)
         {
             pubs[1]->publish(i + 1, header);
-            if(callback_used)
+            if (callback_used)
             {
                 ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-            }else
+            }
+            else
             {
                 ASSERT_TRUE(synchronizer.getNextSample());
             }
-        }else
+        }
+        else
         {
             ASSERT_FALSE(callback_invoked);
         }
         post(i);
     }
 }
-
-
 
 // Jitter added to timestamp
 TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter_callback)
@@ -366,7 +367,7 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter_callbac
 
         check(i);
         post(i);
-        time = mo::Time(std::chrono::milliseconds(i*33));
+        time = mo::Time(std::chrono::milliseconds(i * 33));
     }
 }
 
@@ -382,14 +383,14 @@ TEST_F(parameter_synchronizer_timestamp, synchronized_inputs_with_jitter_query)
         pubs[0]->publish(i, mo::Header(time));
 
         pubs[1]->publish(i + 1, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
-        if(this->callback_used)
+        if (this->callback_used)
         {
             ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
         }
 
         check(i);
         post(i);
-        time = mo::Time(std::chrono::milliseconds(i*33));
+        time = mo::Time(std::chrono::milliseconds(i * 33));
     }
 }
 
@@ -405,14 +406,14 @@ TEST_F(parameter_synchronizer_timestamp, multiple_inputs_callback)
     {
         header = mo::Header(time);
         pubs[0]->publish(i, mo::Header(time));
-        for(int j = 1; j < N; ++j)
+        for (int j = 1; j < N; ++j)
         {
             pubs[j]->publish(i + j, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
         }
 
         check(i);
         post(i);
-        time = mo::Time(std::chrono::milliseconds(i*33));
+        time = mo::Time(std::chrono::milliseconds(i * 33));
     }
 }
 
@@ -428,17 +429,16 @@ TEST_F(parameter_synchronizer_timestamp, multiple_inputs_query)
     {
         header = mo::Header(time);
         pubs[0]->publish(i, mo::Header(time));
-        for(int j = 1; j < N; ++j)
+        for (int j = 1; j < N; ++j)
         {
             pubs[j]->publish(i + j, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
         }
 
         check(i);
         post(i);
-        time = mo::Time(std::chrono::milliseconds(i*33));
+        time = mo::Time(std::chrono::milliseconds(i * 33));
     }
 }
-
 
 TEST_F(parameter_synchronizer_timestamp, typed_query)
 {
@@ -463,7 +463,12 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
 
     synchronizer.setInputs(std::vector<mo::ISubscriber*>{&sub0, &sub1, &sub2, &sub3, &sub4});
 
-    std::tuple<mo::TDataContainerConstPtr_t<int>, mo::TDataContainerConstPtr_t<float>, mo::TDataContainerConstPtr_t<double>, mo::TDataContainerConstPtr_t<std::vector<int>>, mo::TDataContainerConstPtr_t<std::string>> tup0;
+    std::tuple<mo::TDataContainerConstPtr_t<int>,
+               mo::TDataContainerConstPtr_t<float>,
+               mo::TDataContainerConstPtr_t<double>,
+               mo::TDataContainerConstPtr_t<std::vector<int>>,
+               mo::TDataContainerConstPtr_t<std::string>>
+        tup0;
     std::tuple<int, float, double, mo::vector<int>, std::string> tup1;
     mo::IAsyncStreamPtr_t stream = mo::IAsyncStream::create();
     ASSERT_FALSE(synchronizer.getNextSample(tup0, stream.get()));
@@ -472,7 +477,10 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     pub1.publish(15.0F, header, stream.get());
     pub2.publish(25.0, header, stream.get());
     auto vec = pub3.create(4);
-    vec->data[0] = 4; vec->data[1] = 5; vec->data[2] = 6; vec->data[3] = 7;
+    vec->data[0] = 4;
+    vec->data[1] = 5;
+    vec->data[2] = 6;
+    vec->data[3] = 7;
     vec->header = header;
     pub3.publish(std::move(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
@@ -488,7 +496,10 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     pub0.publish(5, header, stream.get());
     pub1.publish(12.0F, header, stream.get());
     pub2.publish(25.0, header, stream.get());
-    vec->data[0] = 4; vec->data[1] = 5; vec->data[2] = 6; vec->data[3] = 7;
+    vec->data[0] = 4;
+    vec->data[1] = 5;
+    vec->data[2] = 6;
+    vec->data[3] = 7;
     vec->header = header;
     pub3.publish(std::move(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
@@ -501,11 +512,11 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     ASSERT_EQ(std::get<4>(tup1), "asdf");
 }
 
-struct parameter_synchronizer_framenumber: parameter_synchronizer
+struct parameter_synchronizer_framenumber : parameter_synchronizer
 {
 
-    parameter_synchronizer_framenumber():
-        parameter_synchronizer()
+    parameter_synchronizer_framenumber()
+        : parameter_synchronizer()
     {
         header = mo::Header(mo::FrameNumber(0));
     }
@@ -514,7 +525,7 @@ struct parameter_synchronizer_framenumber: parameter_synchronizer
         const size_t sz = pubs.size();
         for (uint32_t i = 1; i < N; ++i)
         {
-            for(uint32_t j = 0; j < sz; ++j)
+            for (uint32_t j = 0; j < sz; ++j)
             {
                 pubs[j]->publish(i + j, header, stream.get());
             }
@@ -525,10 +536,11 @@ struct parameter_synchronizer_framenumber: parameter_synchronizer
 
     void check(uint32_t i)
     {
-        if(callback_used)
+        if (callback_used)
         {
             ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-        }else
+        }
+        else
         {
             auto header = synchronizer.getNextSample();
             ASSERT_TRUE(header) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
@@ -542,11 +554,12 @@ struct parameter_synchronizer_framenumber: parameter_synchronizer
         header = mo::Header(mo::FrameNumber(i));
     }
 
-    void callback(const mo::Time* time, const mo::FrameNumber* fn,
+    void callback(const mo::Time* time,
+                  const mo::FrameNumber* fn,
                   const aq::ParameterSynchronizer::SubscriberVec_t& vec) override
     {
         callback_invoked = true;
-        for(const auto& sub : subs)
+        for (const auto& sub : subs)
         {
             ASSERT_TRUE(std::find(vec.begin(), vec.end(), sub.get()) != vec.end());
         }
@@ -628,15 +641,15 @@ TEST_F(parameter_synchronizer_framenumber, find_direct_framenumber_1)
     pubs[0]->publish(0, hdr);
     ts = synchronizer.findDirectFrameNumber();
     ASSERT_TRUE(ts.valid());
-    //ASSERT_EQ(*ts, 0 * mo::ms);
+    // ASSERT_EQ(*ts, 0 * mo::ms);
 }
 
 TEST_F(parameter_synchronizer_framenumber, find_earlist_framenumber)
 {
     this->init(2, false);
     mo::FrameNumber earliest(1000);
-    std::vector<int> times{5,6,7,4,8,9,10};
-    for(auto i : times)
+    std::vector<int> times{5, 6, 7, 4, 8, 9, 10};
+    for (auto i : times)
     {
         const mo::FrameNumber fn(i);
         earliest = std::min(fn, earliest);
@@ -660,7 +673,6 @@ TEST_F(parameter_synchronizer_framenumber, single_input_dedoup_query)
     iterate();
 }
 
-
 TEST_F(parameter_synchronizer_framenumber, synchronized_inputs_direct_callback)
 {
     this->init(2, false, false);
@@ -672,7 +684,6 @@ TEST_F(parameter_synchronizer_framenumber, synchronized_inputs_direct_query)
     this->init(2, false, false);
     this->iterate();
 }
-
 
 TEST_F(parameter_synchronizer_framenumber, synchronized_inputs_full_buffered_callback)
 {
@@ -734,11 +745,12 @@ TEST_F(parameter_synchronizer_framenumber, desynchronized_inputs_callback)
     for (uint32_t i = 1; i < 40; ++i)
     {
         pubs[0]->publish(i, header);
-        if(i % 2 == 0)
+        if (i % 2 == 0)
         {
             pubs[1]->publish(i + 1, header);
             ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-        }else
+        }
+        else
         {
             ASSERT_FALSE(callback_invoked);
         }
@@ -753,24 +765,25 @@ TEST_F(parameter_synchronizer_framenumber, desynchronized_inputs_query)
     for (uint32_t i = 1; i < 40; ++i)
     {
         pubs[0]->publish(i, header);
-        if(i % 2 == 0)
+        if (i % 2 == 0)
         {
             pubs[1]->publish(i + 1, header);
-            if(callback_used)
+            if (callback_used)
             {
                 ASSERT_TRUE(callback_invoked) << "i = " << i << " " << synchronizer.findEarliestCommonTimestamp();
-            }else
+            }
+            else
             {
                 ASSERT_TRUE(synchronizer.getNextSample());
             }
-        }else
+        }
+        else
         {
             ASSERT_FALSE(callback_invoked);
         }
         post(i);
     }
 }
-
 
 TEST_F(parameter_synchronizer_framenumber, multiple_inputs_callback)
 {
@@ -783,7 +796,7 @@ TEST_F(parameter_synchronizer_framenumber, multiple_inputs_callback)
     {
         header = mo::Header(fn);
         pubs[0]->publish(i, mo::Header(fn));
-        for(int j = 1; j < N; ++j)
+        for (int j = 1; j < N; ++j)
         {
             pubs[j]->publish(i + j, mo::Header(fn));
         }
@@ -806,17 +819,16 @@ TEST_F(parameter_synchronizer_framenumber, multiple_inputs_query)
     {
         header = mo::Header(time);
         pubs[0]->publish(i, mo::Header(time));
-        for(int j = 1; j < N; ++j)
+        for (int j = 1; j < N; ++j)
         {
             pubs[j]->publish(i + j, mo::Header(time + std::chrono::milliseconds(randi(0, 6))));
         }
 
         check(i);
         post(i);
-        time = mo::Time(std::chrono::milliseconds(i*33));
+        time = mo::Time(std::chrono::milliseconds(i * 33));
     }
 }
-
 
 TEST_F(parameter_synchronizer_framenumber, typed_query)
 {
@@ -842,7 +854,12 @@ TEST_F(parameter_synchronizer_framenumber, typed_query)
 
     synchronizer.setInputs(std::vector<mo::ISubscriber*>{&sub0, &sub1, &sub2, &sub3, &sub4});
 
-    std::tuple<mo::TDataContainerConstPtr_t<int>, mo::TDataContainerConstPtr_t<float>, mo::TDataContainerConstPtr_t<double>, mo::TDataContainerConstPtr_t<std::vector<int>>, mo::TDataContainerConstPtr_t<std::string>> tup0;
+    std::tuple<mo::TDataContainerConstPtr_t<int>,
+               mo::TDataContainerConstPtr_t<float>,
+               mo::TDataContainerConstPtr_t<double>,
+               mo::TDataContainerConstPtr_t<std::vector<int>>,
+               mo::TDataContainerConstPtr_t<std::string>>
+        tup0;
     std::tuple<int, float, double, mo::vector<int>, std::string> tup1;
     mo::IAsyncStreamPtr_t stream = mo::IAsyncStream::create();
     ASSERT_FALSE(synchronizer.getNextSample(tup0, stream.get()));
@@ -851,7 +868,10 @@ TEST_F(parameter_synchronizer_framenumber, typed_query)
     pub1.publish(15.0F, header, stream.get());
     pub2.publish(25.0, header, stream.get());
     auto vec = pub3.create(4);
-    vec->data[0] = 4; vec->data[1] = 5; vec->data[2] = 6; vec->data[3] = 7;
+    vec->data[0] = 4;
+    vec->data[1] = 5;
+    vec->data[2] = 6;
+    vec->data[3] = 7;
     vec->header = header;
     pub3.publish(std::move(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
@@ -867,7 +887,10 @@ TEST_F(parameter_synchronizer_framenumber, typed_query)
     pub0.publish(5, header, stream.get());
     pub1.publish(12.0F, header, stream.get());
     pub2.publish(25.0, header, stream.get());
-    vec->data[0] = 4; vec->data[1] = 5; vec->data[2] = 6; vec->data[3] = 7;
+    vec->data[0] = 4;
+    vec->data[1] = 5;
+    vec->data[2] = 6;
+    vec->data[3] = 7;
     vec->header = header;
     pub3.publish(std::move(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
@@ -879,4 +902,3 @@ TEST_F(parameter_synchronizer_framenumber, typed_query)
     ASSERT_EQ(std::get<2>(tup1), 25.0);
     ASSERT_EQ(std::get<4>(tup1), "asdf");
 }
-

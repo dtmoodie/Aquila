@@ -16,7 +16,7 @@ namespace aq
         class INode;
         class Node;
         struct NodeInfo;
-    }
+    } // namespace nodes
     class IGraph;
 
     class AQUILA_EXPORTS NodeFactory
@@ -66,4 +66,4 @@ namespace aq
         std::vector<rcc::weak_ptr<nodes::INode>> m_nodes;
         std::map<std::string, std::vector<char const*>> m_nodeInfoMap;
     }; // class NodeManager
-}
+} // namespace aq

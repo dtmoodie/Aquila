@@ -783,7 +783,8 @@ LUTColorMapper::LUTColorMapper()
     }
 }
 
-LUTColorMapper::LUTColorMapper(cv::Mat LUT_) : _LUT(LUT_)
+LUTColorMapper::LUTColorMapper(cv::Mat LUT_)
+    : _LUT(LUT_)
 {
 }
 

@@ -7,8 +7,7 @@
 
 namespace aq
 {
-struct Algorithm::impl
-{
-
-};
-}
+    struct Algorithm::impl
+    {
+    };
+} // namespace aq

@@ -11,11 +11,11 @@ namespace aq
         const Category* cat = nullptr;
         double conf = 0.0;
     };
-}
+} // namespace aq
 namespace ct
 {
     REFLECT_BEGIN(aq::Classification)
         PUBLIC_ACCESS(conf)
         PUBLIC_ACCESS(cat)
     REFLECT_END;
-}
+} // namespace ct

@@ -1,6 +1,5 @@
-#include <Aquila/framegrabbers/IFrameGrabber.hpp>
 #include <Aquila/framegrabbers/GrabberInfo.hpp>
-
+#include <Aquila/framegrabbers/IFrameGrabber.hpp>
 
 int32_t main(int32_t argc, char** argv)
 {
