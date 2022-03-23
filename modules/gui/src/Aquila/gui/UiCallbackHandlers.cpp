@@ -53,7 +53,7 @@ std::shared_ptr<mo::IAsyncStream> WindowCallbackHandler::getUiStream()
     std::shared_ptr<mo::IAsyncStream> ui_stream = m_ui_stream;
     if (ui_stream == nullptr)
     {
-        ui_stream = mo::ThreadRegistry::instance()->getThread(mo::ThreadRegistry::GUI);
+        ui_stream = mo::ThreadRegistry::instance()->getGUIStream();
         MO_ASSERT(ui_stream != nullptr);
         m_ui_stream = ui_stream;
     }
@@ -150,7 +150,9 @@ void WindowCallbackHandler::imshowb(const std::string& window_name, cv::ogl::Buf
     std::shared_ptr<mo::IAsyncStream> ui_stream = getUiStream();
     if (mystream != ui_stream)
     {
-        auto event = [this, window_name, buffer, flags](mo::IAsyncStream*) { this->imshowb(window_name, buffer, flags); };
+        auto event = [this, window_name, buffer, flags](mo::IAsyncStream*) {
+            this->imshowb(window_name, buffer, flags);
+        };
         ui_stream->pushWork(std::move(event));
         return;
     }
@@ -192,16 +194,14 @@ void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int
     // pt.y *= aspect_ratio;
     switch (event)
     {
-    case cv::EVENT_MOUSEMOVE:
-    {
+    case cv::EVENT_MOUSEMOVE: {
         if (flags & cv::EVENT_FLAG_LBUTTON)
             dragged_points.push_back(pt);
         parent->sig_move_mouse(win_name, pt, flags, displayed_image);
         parent->sig_click(win_name, pt, flags, displayed_image);
         break;
     }
-    case cv::EVENT_LBUTTONDOWN:
-    {
+    case cv::EVENT_LBUTTONDOWN: {
         dragging = true;
         drag_start = pt;
         dragged_points.clear();
@@ -210,8 +210,7 @@ void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int
         parent->sig_click(win_name, pt, flags, displayed_image);
         break;
     }
-    case cv::EVENT_RBUTTONDOWN:
-    {
+    case cv::EVENT_RBUTTONDOWN: {
         dragging = true;
         drag_start = cv::Point(x, y);
         parent->sig_click_right(win_name, pt, flags, displayed_image);
@@ -219,16 +218,14 @@ void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int
         parent->sig_mouseDrag(win_name, drag_start, pt, flags, displayed_image);
         break;
     }
-    case cv::EVENT_MBUTTONDOWN:
-    {
+    case cv::EVENT_MBUTTONDOWN: {
         dragging = true;
         drag_start = cv::Point(x, y);
         parent->sig_click_middle(win_name, pt, flags, displayed_image);
         parent->sig_click(win_name, pt, flags, displayed_image);
         break;
     }
-    case cv::EVENT_LBUTTONUP:
-    {
+    case cv::EVENT_LBUTTONUP: {
         dragging = false;
         cv::Rect rect(drag_start, cv::Point(x, y));
         if (rect.width != 0 && rect.height != 0)
@@ -238,47 +235,40 @@ void WindowCallbackHandler::WindowHandler::on_mouse(int event, int x, int y, int
         dragged_points.clear();
         break;
     }
-    case cv::EVENT_RBUTTONUP:
-    {
+    case cv::EVENT_RBUTTONUP: {
         dragging = false;
         cv::Rect rect(drag_start, cv::Point(x, y));
         if (rect.width != 0 && rect.height != 0)
             parent->sig_select_rect(win_name, rect, flags, displayed_image);
         break;
     }
-    case cv::EVENT_MBUTTONUP:
-    {
+    case cv::EVENT_MBUTTONUP: {
         dragging = false;
         cv::Rect rect(drag_start, cv::Point(x, y));
         if (rect.width != 0 && rect.height != 0)
             parent->sig_select_rect(win_name, rect, flags, displayed_image);
         break;
     }
-    case cv::EVENT_LBUTTONDBLCLK:
-    {
+    case cv::EVENT_LBUTTONDBLCLK: {
         flags += 64;
         parent->sig_click_left(win_name, pt, flags, displayed_image);
         break;
     }
-    case cv::EVENT_RBUTTONDBLCLK:
-    {
+    case cv::EVENT_RBUTTONDBLCLK: {
         flags += 64;
         parent->sig_click_right(win_name, pt, flags, displayed_image);
         break;
     }
-    case cv::EVENT_MBUTTONDBLCLK:
-    {
+    case cv::EVENT_MBUTTONDBLCLK: {
         flags += 64;
         parent->sig_click_middle(win_name, pt, flags, displayed_image);
         break;
     }
-    case cv::EVENT_MOUSEWHEEL:
-    {
+    case cv::EVENT_MOUSEWHEEL: {
 
         break;
     }
-    case cv::EVENT_MOUSEHWHEEL:
-    {
+    case cv::EVENT_MOUSEHWHEEL: {
 
         break;
     }

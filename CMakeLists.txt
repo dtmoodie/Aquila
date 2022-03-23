@@ -57,6 +57,9 @@ endif()
 find_package(ctext QUIET)
 if(NOT TARGET ctext)
     add_subdirectory("dependencies/ctext")
+else()
+    # since we found a system install of ctext, we also need to look for a system install of its dependency minitensor
+    find_package(minitensor REQUIRED)
 endif()
 
 set(RCC_PERMODULE_INTERFACE_SOURCE
