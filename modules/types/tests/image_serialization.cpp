@@ -41,6 +41,7 @@ std::shared_ptr<const aq::CompressedImage> loadImage()
 TEST(image_serialization, compressed_json)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
     EXPECT_NE(stream, nullptr) << "Unable to create a cuda stream";
     stream->setCurrent(stream);
     auto compressed = loadImage();
@@ -83,6 +84,7 @@ TEST(image_serialization, compressed_json)
 TEST(image_serialization, compressed_binary)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
     EXPECT_NE(stream, nullptr) << "Unable to create a cuda stream";
     stream->setCurrent(stream);
     auto compressed = loadImage();

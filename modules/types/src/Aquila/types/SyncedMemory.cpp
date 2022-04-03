@@ -474,7 +474,11 @@ namespace aq
         {
             mo::IDeviceStream* src_device_stream = src_stream->getDeviceStream();
             MO_ASSERT(src_device_stream != nullptr);
-            mo::IDeviceStream* dst_device_stream = dst_stream->getDeviceStream();
+            if (dst_stream == nullptr)
+            {
+                dst_stream = src_stream.get();
+            }
+            mo::IDeviceStream* dst_device_stream = dst_stream ? dst_stream->getDeviceStream() : nullptr;
             MO_ASSERT(dst_device_stream != nullptr);
             if (dst_stream && dst_stream != src_stream.get())
             {

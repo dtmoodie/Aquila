@@ -198,6 +198,7 @@ namespace aq
             return output;
         }
         uint32_t valid_count = 0;
+        uint32_t required_count = 0;
 
         const auto check = [this, &output](const boost::circular_buffer<mo::Header>& headers) -> bool {
             for (const mo::Header& hdr : headers)
@@ -215,6 +216,10 @@ namespace aq
         };
         for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
+            if (!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
+            {
+                ++required_count;
+            }
             if (!itr->second.empty())
             {
                 bool found = check(itr->second);
@@ -248,12 +253,12 @@ namespace aq
             }
         }
 
-        if (valid_count != m_headers.size())
+        if (valid_count >= required_count)
         {
-            return {};
+            return output;
         }
 
-        return output;
+        return {};
     }
 
     struct FrameNumberPredicate
@@ -325,8 +330,13 @@ namespace aq
         }
         // Todo earliest guarantee?
         uint32_t valid_count = 0;
+        uint32_t required_count = 0;
         for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
+            if (!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
+            {
+                ++required_count;
+            }
             if (!itr->second.empty())
             {
                 if (!output.valid())
@@ -360,12 +370,12 @@ namespace aq
                 }
             }
         }
-        if (valid_count != m_headers.size())
+        if (valid_count >= required_count)
         {
-            return {};
+            return output;
         }
 
-        return output;
+        return {};
     }
 
     bool ParameterSynchronizer::dedoup(const mo::Time& time)

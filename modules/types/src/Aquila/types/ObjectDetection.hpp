@@ -192,7 +192,7 @@ namespace mo
     };
 
     template <class... T>
-    struct TPublisher<aq::TDetectedObjectSet<T...>> : public TPublisherImpl<aq::DetectedObjectSet>
+    struct TPublisher<aq::TDetectedObjectSet<T...>> : public TPublisher<aq::DetectedObjectSet>
     {
         bool providesOutput(const TypeInfo type) const
         {

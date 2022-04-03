@@ -100,7 +100,10 @@ namespace aq
         }
 
         template <class T>
-        void connectInput(T& obj, mo::ISubscriber* input, const boost::python::object& bpobj)
+        void connectInput(T& obj,
+                          mo::ISubscriber* input,
+                          const boost::python::object& bpobj,
+                          const boost::python::object& queue_size)
         {
             auto input_param = dynamic_cast<mo::ISubscriber*>(input);
             if (!input_param)
@@ -167,6 +170,29 @@ namespace aq
                            output_param->getTreeName(),
                            input_param->getTreeName());
                 }
+                mo::IPublisher* pub = input_param->getPublisher();
+                if (mo::buffer::IBuffer* buffer = dynamic_cast<mo::buffer::IBuffer*>(pub))
+                {
+                    // buffer->setFrameBufferCapacity()
+                    boost::python::extract<float> float_queue_size(queue_size);
+                    const bool is_float = Py_TYPE(queue_size.ptr()) == &PyFloat_Type;
+                    if (is_float)
+                    {
+
+                        const float queue_size = float_queue_size();
+                        mo::Duration queue_time = mo::ms * (queue_size * 1000.0F);
+                        buffer->setTimePaddingCapacity(queue_time);
+                    }
+                    else
+                    {
+                        boost::python::extract<uint64_t> long_queue_size(queue_size);
+                        if (long_queue_size.check())
+                        {
+                            const uint64_t queue_size = long_queue_size();
+                            buffer->setFrameBufferCapacity(queue_size);
+                        }
+                    }
+                }
                 auto graph = node->getGraph();
                 if (graph && !obj.graph)
                 {
@@ -187,12 +213,15 @@ namespace aq
         }
 
         template <class T>
-        void connectNamedInput(T& obj, const std::string& name, const boost::python::object& bpobj)
+        void connectNamedInput(T& obj,
+                               const std::string& name,
+                               const boost::python::object& bpobj,
+                               const boost::python::object& queue_size)
         {
             auto input = obj.obj->getInput(name);
             if (input)
             {
-                connectInput(obj, input, bpobj);
+                connectInput(obj, input, bpobj, queue_size);
             }
         }
 
@@ -200,7 +229,8 @@ namespace aq
         static void initializeParametersAndInputs(ConstructedType& obj,
                                                   const std::vector<std::string>& param_names,
                                                   const std::vector<boost::python::object>& args,
-                                                  IObjectConstructor* ctr)
+                                                  IObjectConstructor* ctr,
+                                                  const boost::python::object& queue_size)
         {
             MO_ASSERT(param_names.size() == args.size());
             for (size_t i = 0; i < param_names.size(); ++i)
@@ -218,7 +248,7 @@ namespace aq
                         mo::ISubscriber* input = obj.obj->getInput(param_names[i]);
                         if (input)
                         {
-                            connectInput(obj, input, args[i]);
+                            connectInput(obj, input, args[i], queue_size);
                             continue;
                         }
                     }
@@ -229,7 +259,7 @@ namespace aq
         template <int N, class T, class Storage, class... Args>
         struct CreateNode<N, T, Storage, ct::VariadicTypedef<Args...>>
         {
-            static const int size = N + 2;
+            static const int size = N + 3;
             using ConstructedType = Storage;
 
             CreateNode(const std::vector<std::string>& param_names_)
@@ -237,9 +267,10 @@ namespace aq
                 MO_ASSERT_EQ(param_names_.size(), N);
                 m_keywords[0] = (boost::python::arg("name") = "");
                 m_keywords[1] = (boost::python::arg("graph") = boost::python::object());
+                m_keywords[2] = (boost::python::arg("queue_size") = 0.1);
                 for (size_t i = 0; i < param_names_.size(); ++i)
                 {
-                    m_keywords[i + 2] = (boost::python::arg(param_names_[i].c_str()) = boost::python::object());
+                    m_keywords[i + 3] = (boost::python::arg(param_names_[i].c_str()) = boost::python::object());
                 }
             }
 
@@ -247,6 +278,7 @@ namespace aq
                                           std::vector<std::string> param_names,
                                           const std::string& name,
                                           const boost::python::object& graph,
+                                          const boost::python::object& queue_size,
                                           Args... args)
             {
                 rcc::shared_ptr<T> ptr = ctr->Construct();
@@ -276,7 +308,7 @@ namespace aq
                     }
                 }
                 output.obj = ptr;
-                initializeParametersAndInputs(output, param_names, {args...}, ctr);
+                initializeParametersAndInputs(output, param_names, {args...}, ctr, queue_size);
                 if (!name.empty())
                 {
                     ptr->setName(name);
@@ -285,7 +317,8 @@ namespace aq
                 return output;
             }
 
-            static std::function<ConstructedType(const std::string&, const boost::python::object&, Args...)>
+            static std::function<ConstructedType(
+                const std::string&, const boost::python::object&, const boost::python::object&, Args...)>
             bind(IObjectConstructor* ctr, std::vector<std::string> param_names)
             {
                 return ctrBind(&CreateNode<N, T, Storage, ct::VariadicTypedef<Args...>>::create,
@@ -306,7 +339,7 @@ namespace aq
         template <int N, class T, class Storage>
         struct CreateNode<N, T, Storage, ct::VariadicTypedef<void>>
         {
-            static const int size = N + 2;
+            static const int size = N + 3;
             using ConstructedType = Storage;
 
             CreateNode(const std::vector<std::string>& param_names_)
@@ -314,16 +347,18 @@ namespace aq
                 MO_ASSERT_EQ(param_names_.size(), N);
                 m_keywords[0] = (boost::python::arg("name") = "");
                 m_keywords[1] = (boost::python::arg("graph") = boost::python::object());
+                m_keywords[2] = (boost::python::arg("queue_size") = 0.1);
                 for (size_t i = 0; i < param_names_.size(); ++i)
                 {
-                    m_keywords[i + 2] = (boost::python::arg(param_names_[i].c_str()) = boost::python::object());
+                    m_keywords[i + 3] = (boost::python::arg(param_names_[i].c_str()) = boost::python::object());
                 }
             }
 
             static ConstructedType create(IObjectConstructor* ctr,
                                           std::vector<std::string> param_names,
                                           const std::string& name,
-                                          const boost::python::object& graph)
+                                          const boost::python::object& graph,
+                                          const boost::python::object& queue_size)
             {
                 rcc::shared_ptr<T> ptr = ctr->Construct();
                 if (ptr == nullptr)
@@ -357,7 +392,7 @@ namespace aq
                     }
                 }
                 output.obj = ptr;
-                initializeParametersAndInputs(output, param_names, {}, ctr);
+                initializeParametersAndInputs(output, param_names, {}, ctr, queue_size);
                 if (!name.empty())
                 {
                     ptr->setName(name);
@@ -366,11 +401,14 @@ namespace aq
                 return output;
             }
 
-            static std::function<ConstructedType(const std::string&, const boost::python::object&)>
+            static std::function<
+                ConstructedType(const std::string&, const boost::python::object&, const boost::python::object&)>
             bind(IObjectConstructor* ctr, std::vector<std::string> param_names)
             {
-                return [ctr, param_names](const std::string& name, const boost::python::object& graph) {
-                    return create(ctr, param_names, name, graph);
+                return [ctr, param_names](const std::string& name,
+                                          const boost::python::object& graph,
+                                          const boost::python::object& queue_size) {
+                    return create(ctr, param_names, name, graph, queue_size);
                 };
             }
 
@@ -431,9 +469,12 @@ namespace aq
                 std::vector<std::string> param_names;
                 for (mo::ParamInfo* pinfo : param_info)
                 {
-                    param_names.push_back(pinfo->getName());
+                    if (!pinfo->getParamFlags().test(mo::ParamFlags::kOUTPUT))
+                    {
+                        param_names.push_back(pinfo->getName());
+                    }
                 }
-                if (param_names.size() > 13)
+                if (param_names.size() > 12)
                 {
                     param_names.clear();
                     for (mo::ParamInfo* pinfo : param_info)

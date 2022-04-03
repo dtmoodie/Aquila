@@ -9,6 +9,7 @@
 TEST(synced_memory, host_allocation)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
 
     aq::SyncedMemory memory(10 * sizeof(float), sizeof(float), stream);
     EXPECT_EQ(memory.size(), 10 * sizeof(float));
@@ -42,6 +43,7 @@ TEST(synced_memory, wrap)
     std::shared_ptr<std::vector<float>> data = std::make_shared<std::vector<float>>(1000);
 
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
     auto wrapped = aq::SyncedMemory::wrapHost(ct::TArrayView<float>(data->data(), data->size()), data, stream);
 
     for (size_t i = 0; i < 1000; ++i)
@@ -63,8 +65,8 @@ TEST(synced_memory, wrap)
 TEST(synced_memory, wrap_const)
 {
     std::shared_ptr<std::vector<float>> data = std::make_shared<std::vector<float>>(1000);
-
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
     auto wrapped = aq::SyncedMemory::template wrapHost<float>(
         ct::TArrayView<const float>(data->data(), data->size()), data, stream);
 
@@ -105,6 +107,7 @@ TEST(synced_memory, device)
     for (auto sz : szs)
     {
         auto stream = std::make_shared<mo::cuda::AsyncStream>();
+        stream->initialize();
         auto allocator = mo::DeviceAllocator::getDefault();
         EXPECT_NE(allocator, nullptr);
 
@@ -136,6 +139,7 @@ TEST(synced_memory, device)
 TEST(synced_memory, typed_device)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
     auto allocator = mo::DeviceAllocator::getDefault();
     EXPECT_NE(allocator, nullptr);
 
@@ -167,6 +171,7 @@ TEST(synced_memory, typed_device)
 TEST(synced_memory, handle)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
     auto handle = ce::shared_ptr<aq::SyncedMemory>::create(100, 4, stream);
     bool sync = false;
     auto view = handle->mutableHost(nullptr, &sync);

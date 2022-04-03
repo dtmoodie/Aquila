@@ -761,8 +761,8 @@ namespace mo
     };
 
     template <>
-    struct TPublisher<aq::EntityComponentSystem> : TPublisherImpl<aq::EntityComponentSystem>,
-                                                   IEntityComponentSystemPublisher
+    struct TPublisher<aq::EntityComponentSystem, 2> : TPublisher<aq::EntityComponentSystem, 1>,
+                                                      IEntityComponentSystemPublisher
     {
         void getComponents(std::vector<TypeInfo>& types) const override;
     };
@@ -780,8 +780,8 @@ namespace mo
         populateTypes(types, ct::VariadicTypedef<Ts...>());
     }
     template <class T>
-    struct TPublisher<aq::TEntityComponentSystem<T>> : TPublisherImpl<aq::EntityComponentSystem>,
-                                                       IEntityComponentSystemPublisher
+    struct TPublisher<aq::TEntityComponentSystem<T>, 2> : TPublisher<aq::EntityComponentSystem>
+
     {
         void getComponents(std::vector<TypeInfo>& types) const override
         {
@@ -793,8 +793,7 @@ namespace mo
     };
 
     template <class... T>
-    struct TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>>
-        : TPublisherImpl<aq::EntityComponentSystem>, IEntityComponentSystemPublisher
+    struct TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>> : TPublisher<aq::EntityComponentSystem>
     {
         void getComponents(std::vector<TypeInfo>& types) const override
         {
@@ -852,7 +851,7 @@ namespace mo
     {
         bool setInput(IPublisher* publisher = nullptr) override
         {
-            if (!acceptsPublisher(*publisher))
+            if (publisher && !acceptsPublisher(*publisher))
             {
                 return false;
             }
@@ -861,13 +860,13 @@ namespace mo
 
         bool acceptsPublisher(const IPublisher& param) const override
         {
-            if (TSubscriberImpl<aq::EntityComponentSystem>::acceptsPublisher(param))
+            const auto* tparam = dynamic_cast<const IEntityComponentSystemPublisher*>(&param);
+            if (tparam)
             {
-                const auto& tparam = dynamic_cast<const IEntityComponentSystemPublisher&>(param);
                 std::vector<TypeInfo> required_components;
                 populateTypes(required_components, ct::VariadicTypedef<T...>());
                 std::vector<TypeInfo> published_components;
-                tparam.getComponents(published_components);
+                tparam->getComponents(published_components);
                 for (const auto& cmp : required_components)
                 {
                     if (std::find(published_components.begin(), published_components.end(), cmp) ==

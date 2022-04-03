@@ -249,11 +249,12 @@ namespace aq
 
     void SyncedImage::setData(ce::shared_ptr<SyncedMemory> data)
     {
-        MO_ASSERT(data.get() != nullptr);
+        // Mutable get has the chance of copying the data, so we do immutable get
+        MO_ASSERT(static_cast<const ce::shared_ptr<SyncedMemory>&>(data).get() != nullptr);
         auto size = m_shape.numel() * pixelSize();
         if (size > 0)
         {
-            MO_ASSERT_EQ(data->size(), size);
+            MO_ASSERT_EQ(static_cast<const ce::shared_ptr<SyncedMemory>&>(data)->size(), size);
         }
         m_data = data;
     }

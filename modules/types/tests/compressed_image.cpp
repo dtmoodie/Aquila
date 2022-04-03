@@ -60,6 +60,7 @@ TEST(compressed_image, png_load)
 {
     auto eng = ce::ICacheEngine::instance();
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
+    stream->initialize();
     EXPECT_NE(stream, nullptr) << "Unable to create a cuda stream";
     stream->setCurrent(stream);
     auto path = boost::filesystem::path("../data.png");

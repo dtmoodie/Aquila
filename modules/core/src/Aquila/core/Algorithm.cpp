@@ -738,8 +738,15 @@ Algorithm::InputState Algorithm::checkInputs()
                 }
                 else
                 {
-                    this->getLogger().debug("Input {} not hooked up to a publisher and thus not able to get data",
-                                            input->getTreeName());
+                    if (!input->checkFlags(mo::ParamFlags::kOPTIONAL))
+                    {
+                        this->getLogger().debug("Input {} not hooked up to a publisher and thus not able to get data",
+                                                input->getTreeName());
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
                 return InputState::kNONE_VALID;
             }
