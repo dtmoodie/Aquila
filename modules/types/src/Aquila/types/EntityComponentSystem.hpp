@@ -3,8 +3,7 @@
 #include "ComponentFactory.hpp"
 
 #include <Aquila/detail/export.hpp>
-
-#include <MetaObject/types/opencv.hpp>
+#include <Aquila/types/TSyncedMemory.hpp>
 
 #include <MetaObject/core/IAsyncStream.hpp>
 #include <MetaObject/detail/TypeInfo.hpp>
@@ -20,14 +19,182 @@
 #include <MetaObject/params/TPublisher.hpp>
 #include <MetaObject/params/TSubscriber.hpp>
 
+#include <ctext/datatable/SelectComponents.hpp>
+
+#include <ct/reflect_traits.hpp>
 #include <ct/static_asserts.hpp>
-#include <ctext/DataTable.hpp>
 
 #include <ce/shared_ptr.hpp>
 #include <memory>
+
+/**
+The use case for the entity component system is that we want to be able to operate on sets of entities with limited
+knowledge of the components.  IE we want to filter all detections by their confidence without knowing what other
+components may exist. Usage examples:
+
+///////////////////////////////////////////////////////////
+// Example 1.  Erasing all entities based on values from a single component
+struct Velocity : ct::ext::Component
+{
+    REFLECT_INTERNAL_BEGIN(Velocity)
+        REFLECT_INTERNAL_MEMBER(float, x)
+        REFLECT_INTERNAL_MEMBER(float, y)
+        REFLECT_INTERNAL_MEMBER(float, z)
+    REFLECT_INTERNAL_END;
+};
+mt::Tensor<const Velocity, 1> velocity = ecs.getComponent<Velocity>();
+ for(size_t i = 0; i < velocity.getShape()[0]; ++i)
+   if(norm(velocity[i].x, velocity[i].y, velocity[i].z) < 1.0F)
+      ecs.erase(i);
+
+///////////////////////////////////////////////////////////
+// Example 2
+struct Detection{
+  REFLECT_INTERNAL_BEGIN(Detection)
+    REFLECT_INTERNAL_MEMBER(Velocity, velocity)
+    REFLECT_INTERNAL_MEMBER(Position, position)
+  REFLECT_INTERNAL_END;
+};
+
+//Here the conversion to Detection is handled by the implicit conversion operator of the EntityReference object so long
+//as Detection is reflected.
+Detection det = ecs[0];
+
+///////////////////////////////////////////////////////////
+// Example 3
+Here the conversion to Velocity is handled by the implicit conversion operator for the EntityReference object
+Velocity vel = ecs[0];
+
+///////////////////////////////////////////////////////////
+// Example 4
+// Here all componetns of object 0 are pushed back from ecs1 to ecs2.
+EntityComponentSystem ecs1;
+EntityComponentSystem ecs2;
+ecs1.pushComponents(...);
+ecs2.push_back(ecs1[0]);
+
+///////////////////////////////////////////////////////////
+// Example 5
+// Working with 1d components as aggregate tensors for dim + 1
+// Here ArrayComponent is a helper that inherits from TensorComponent with dim == 1
+
+struct Descriptor_;
+using Descriptor = ArrayComponent<float, Descriptor_>;
+
+struct Detection{
+  REFLECT_INTERNAL_BEGIN(Detection)
+    REFLECT_INTERNAL_MEMBER(Velocity, velocity)
+    REFLECT_INTERNAL_MEMBER(Descriptor, descriptor)
+  REFLECT_INTERNAL_END;
+};
+
+EntityComponentSystem ecs;
+std::vector<float> data(...);
+Detection det;
+det.descriptor = mt::tensorWrap(data);
+// This will copy the values from data into the ecs's internal storage
+ecs.push_back(det);
+
+// Component tensor dim = dim + 1;
+mt::Tensor<const Descriptor::type, 2> descriptors = ecs.getComponents<Descriptor>();
+
+// Det values will be updated to whatever the ecs has for values and descriptor will now reference the ecs' internal
+storage det = ecs[0];
+
+
+*/
+
 namespace aq
 {
+    struct Component
+    {
+    };
+
+    template <class T>
+    constexpr const bool IsComponent = ct::IsBase<ct::Base<Component>, ct::Derived<T>>::value;
+
+    template <class T, uint8_t DIM = 0>
+    struct TComponent : Component
+    {
+        using DType = T;
+        static constexpr const uint8_t D = DIM;
+    };
+
     struct ComponentFactory;
+    struct EntityReference;
+
+    template <class T, class Tag>
+    struct ScalarComponent : TComponent<T>
+    {
+        template <class... ARGS>
+        ScalarComponent(ARGS&&... args)
+            : m_value(std::forward<ARGS>(args)...)
+        {
+        }
+
+        ScalarComponent(T val = T{})
+            : m_value(std::move(val))
+        {
+        }
+
+        ScalarComponent(const ScalarComponent& val) = default;
+        ScalarComponent(ScalarComponent&& val) = default;
+        ScalarComponent& operator=(const ScalarComponent& val) = default;
+        ScalarComponent& operator=(ScalarComponent&& val) = default;
+
+        operator T&()
+        {
+            return m_value;
+        }
+        operator const T&() const
+        {
+            return m_value;
+        }
+
+        template <class U>
+        operator U() const
+        {
+            return m_value;
+        }
+
+        bool operator==(const ScalarComponent& other) const
+        {
+            return m_value == other.m_value;
+        }
+        bool operator!=(const ScalarComponent& other) const
+        {
+            return m_value != other.m_value;
+        }
+        bool operator>(const ScalarComponent& other) const
+        {
+            return m_value > other.m_value;
+        }
+        bool operator>=(const ScalarComponent& other) const
+        {
+            return m_value >= other.m_value;
+        }
+        bool operator<(const ScalarComponent& other) const
+        {
+            return m_value < other.m_value;
+        }
+        bool operator<=(const ScalarComponent& other) const
+        {
+            return m_value <= other.m_value;
+        }
+
+        T m_value;
+    };
+
+    template <class DTYPE, class TAG>
+    struct ArrayComponent : mt::Tensor<DTYPE, 1>, Component
+    {
+        static constexpr const uint8_t D = 1;
+        template <class... ARGS>
+        ArrayComponent(ARGS&&... args)
+            : mt::Tensor<DTYPE, 1>(std::forward<ARGS>(args)...)
+        {
+        }
+    };
 
     struct AQUILA_EXPORTS IComponentProvider
     {
@@ -38,10 +205,12 @@ namespace aq
 
         virtual size_t getNumEntities() const = 0;
 
-        virtual bool providesComponent(mo::TypeInfo info) const = 0;
+        virtual bool providesComponent(const mo::TypeInfo& info) const = 0;
         virtual mo::TypeInfo getComponentType() const = 0;
 
         virtual std::shared_ptr<IComponentProvider> clone() const = 0;
+
+        virtual void insertEntity(const EntityReference& other, uint32_t dst_idx) = 0;
 
         virtual void save(mo::ISaveVisitor& visitor, const std::string& name) const = 0;
         virtual void load(mo::ILoadVisitor& visitor, const std::string& name) = 0;
@@ -50,17 +219,38 @@ namespace aq
     template <class T>
     struct TComponentProvider : IComponentProvider
     {
+        using DType = std::remove_const_t<typename T::DType>;
+        static constexpr const uint8_t D = T::D + 1;
+        using View_t = mt::Tensor<DType, D>;
+        using ConstView_t = mt::Tensor<const DType, D>;
+
         TComponentProvider();
+
+        /**
+         * @brief resize the outer dim of the component
+         */
         void resize(uint32_t) override;
-        template <uint8_t D>
-        void reshape(mt::Shape<D>);
+
+        /**
+         * @brief reshape the inner dims of the component
+         */
+        template <uint8_t D1>
+        void reshape(const mt::Shape<D1>&);
+
+        /**
+         * @brief erase an element at provided index
+         */
         void erase(uint32_t) override;
+
+        /**
+         * @brief clear all components
+         */
         void clear() override;
 
-        bool providesComponent(mo::TypeInfo info) const override;
+        bool providesComponent(const mo::TypeInfo& info) const override;
 
-        typename ct::ext::DataDimensionality<T>::TensorView getComponentMutable();
-        typename ct::ext::DataDimensionality<T>::ConstTensorView getComponent() const;
+        View_t getComponentMutable();
+        ConstView_t getComponent() const;
 
         mo::TypeInfo getComponentType() const override;
 
@@ -68,22 +258,29 @@ namespace aq
 
         std::shared_ptr<IComponentProvider> clone() const override;
 
+        void insertEntity(const EntityReference& other, uint32_t dst_idx) override;
+
         template <class U>
         void assign(uint32_t idx, U&& val);
+        template <class U>
+        void assign(uint32_t idx, const U& val);
 
         void save(mo::ISaveVisitor& visitor, const std::string& name) const override;
         void load(mo::ILoadVisitor& visitor, const std::string& name) override;
 
       private:
-        ct::ext::DataTableStorage<T> m_data;
+        aq::TSyncedMemory<DType> m_data;
+        mt::Shape<D - 1> m_shape;
+        // size and capacity are in number of elements in outer dim
+        size_t m_size = 0;
+        size_t m_capacity = 0;
     };
 
     template <class T, class E = void>
     struct TEntityComponentSystem;
-    struct ComponentAssigner;
+
     struct AQUILA_EXPORTS EntityComponentSystem
     {
-
         EntityComponentSystem() = default;
         EntityComponentSystem(const EntityComponentSystem& other);
         EntityComponentSystem(EntityComponentSystem&& other) = default;
@@ -95,13 +292,15 @@ namespace aq
         uint32_t getNumComponents() const;
         mo::TypeInfo getComponentType(uint32_t idx) const;
 
-        IComponentProvider* getProviderMutable(mo::TypeInfo type);
-        const IComponentProvider* getProvider(mo::TypeInfo type) const;
+        IComponentProvider* getProviderMutable(const mo::TypeInfo& type);
+        const IComponentProvider* getProvider(const mo::TypeInfo& type) const;
 
         template <class T>
         TComponentProvider<T>* getProviderMutable();
         template <class T>
         const TComponentProvider<T>* getProvider() const;
+
+        bool providesComponent(const mo::TypeInfo& type) const;
 
         void addProvider(ce::shared_ptr<IComponentProvider>);
         template <class T>
@@ -126,11 +325,15 @@ namespace aq
             assignObject(std::forward<T>(obj), new_id);
         }
 
+        uint32_t pushObject(const EntityReference& entity);
+
         template <class T>
         void push_back(const T& obj)
         {
             pushObject(obj);
         }
+
+        uint32_t push_back(const EntityReference& entity);
 
         template <class... Us>
         void pushComponents(const Us&... data)
@@ -140,19 +343,99 @@ namespace aq
         }
 
         template <class T>
-        T at(uint32_t id) const
+        T at(uint32_t id, ct::EnableIfReflected<T>* = nullptr) const
         {
             // Assemble an object by copying component data out
+
             T out;
+            const mo::TypeInfo type = mo::TypeInfo::create<T>();
+            // There was definitely a reason that we checked for a component inside of here
+            // Perhaps we should be checking if it is a component before checking if it is reflected in
+            // case we want to have Reflected components.
+            MO_ASSERT(!this->providesComponent(type));
+            /*if (this->providesComponent(type))
+            {
+                //out = getComponent<T>()[id];
+            }
+            else
+            {
+                const auto idx = ct::Reflect<T>::end();
+                getRecurse(out, id, idx);
+            }*/
             const auto idx = ct::Reflect<T>::end();
             getRecurse(out, id, idx);
+
             return out;
         }
 
         template <class T>
-        typename ct::ext::DataDimensionality<T>::TensorView getComponentMutable()
+        T at(uint32_t id, ct::DisableIfReflected<T>* = nullptr) const
         {
-            typename ct::ext::DataDimensionality<T>::TensorView view;
+            // Assemble an object by copying component data out
+            const mo::TypeInfo type = mo::TypeInfo::create<T>();
+            T out;
+            // First check if we have a component for this datatype
+            if (this->providesComponent(type))
+            {
+                out = getComponent<T>()[id];
+            }
+            else
+            {
+                THROW(warn, "The requested type {} is not reflected and doesn't exist in the ecs", type.name());
+            }
+
+            return out;
+        }
+
+        template <class T>
+        T at(uint32_t id, ct::EnableIfReflected<T>* = nullptr)
+        {
+            // Assemble an object by copying component data out
+
+            T out;
+            const mo::TypeInfo type = mo::TypeInfo::create<T>();
+            // There was definitely a reason that we checked for a component inside of here
+            // Perhaps we should be checking if it is a component before checking if it is reflected in
+            // case we want to have Reflected components.
+            MO_ASSERT(!this->providesComponent(type));
+            /*if (this->providesComponent(type))
+            {
+                //out = getComponent<T>()[id];
+            }
+            else
+            {
+                const auto idx = ct::Reflect<T>::end();
+                getRecurse(out, id, idx);
+            }*/
+            const auto idx = ct::Reflect<T>::end();
+            getRecurse(out, id, idx);
+
+            return out;
+        }
+
+        template <class T>
+        T at(uint32_t id, ct::DisableIfReflected<T>* = nullptr)
+        {
+            // Assemble an object by copying component data out
+            const mo::TypeInfo type = mo::TypeInfo::create<T>();
+            T out;
+            // First check if we have a component for this datatype
+            if (this->providesComponent(type))
+            {
+                out = getComponent<T>()[id];
+            }
+            else
+            {
+                THROW(warn, "The requested type {} is not reflected and doesn't exist in the ecs", type.name());
+            }
+
+            return out;
+        }
+
+        template <class T>
+        typename TComponentProvider<T>::View_t getComponentMutable()
+        {
+            typename TComponentProvider<T>::View_t view;
             auto provider = getProviderMutable<T>();
             if (provider)
             {
@@ -163,9 +446,9 @@ namespace aq
         }
 
         template <class T>
-        typename ct::ext::DataDimensionality<T>::ConstTensorView getComponent() const
+        typename TComponentProvider<T>::ConstView_t getComponent() const
         {
-            typename ct::ext::DataDimensionality<T>::ConstTensorView view;
+            typename TComponentProvider<T>::ConstView_t view;
             auto provider = getProvider<T>();
             if (provider)
             {
@@ -179,9 +462,9 @@ namespace aq
         void resize(uint32_t size);
 
         template <class COMPONENT, uint8_t I>
-        void reshape(mt::Shape<I> shape);
+        void reshape(const mt::Shape<I>& shape);
 
-        ComponentAssigner operator[](uint32_t idx);
+        EntityReference operator[](uint32_t idx);
 
         template <class Component_t>
         void assignComponent(const Component_t& obj, const uint32_t id)
@@ -192,6 +475,8 @@ namespace aq
                 MO_ASSERT_EQ(id, 0);
                 // create a provider
                 auto new_provider = ce::shared_ptr<TComponentProvider<Component_t>>::create();
+                auto wrapped = mt::tensorWrap(obj);
+                new_provider->reshape(wrapped.getShape());
                 new_provider->resize(1);
                 addProvider(ce::shared_ptr<IComponentProvider>(std::move(new_provider)));
                 provider = getProviderMutable<Component_t>();
@@ -288,6 +573,33 @@ namespace aq
             getRecurse(obj, entity_id, next_field);
         }
 
+        template <class T, ct::index_t I>
+        void getImpl(T& obj, const uint32_t entity_id, ct::Indexer<I> field_index)
+        {
+            auto ptr = ct::Reflect<T>::getPtr(field_index);
+            using Component_t = typename decltype(ptr)::Data_t;
+            auto provider = getProviderMutable<Component_t>();
+            MO_ASSERT(provider);
+            auto view = provider->getComponentMutable();
+
+            MO_ASSERT(entity_id < view.getShape()[0]);
+            ptr.set(obj, view[entity_id]);
+        }
+
+        template <class T>
+        void getRecurse(T& obj, const uint32_t entity_id, ct::Indexer<0> field_index)
+        {
+            getImpl(obj, entity_id, field_index);
+        }
+
+        template <class T, ct::index_t I>
+        void getRecurse(T& obj, const uint32_t entity_id, ct::Indexer<I> field_index)
+        {
+            getImpl(obj, entity_id, field_index);
+            const auto next_field = --field_index;
+            getRecurse(obj, entity_id, next_field);
+        }
+
       private:
         std::vector<ce::shared_ptr<IComponentProvider>> m_component_providers;
     };
@@ -314,12 +626,12 @@ namespace aq
         return nullptr;
     }
 
-    struct ComponentAssigner
+    struct EntityReference
     {
-        ComponentAssigner(EntityComponentSystem&, uint32_t);
+        EntityReference(EntityComponentSystem&, uint32_t);
 
         template <class OBJECT>
-        ct::EnableIfReflected<OBJECT, ComponentAssigner&> assignObject(OBJECT&& obj)
+        ct::EnableIfReflected<OBJECT, EntityReference&> assignObject(OBJECT&& obj)
         {
             const uint32_t id = m_idx;
 
@@ -335,7 +647,7 @@ namespace aq
         }
 
         template <class OBJECT>
-        ct::DisableIfReflected<OBJECT, ComponentAssigner&> assignObject(OBJECT&& obj)
+        ct::DisableIfReflected<OBJECT, EntityReference&> assignObject(OBJECT&& obj)
         {
             const uint32_t id = m_idx;
             this->m_ecs.assignComponent(std::forward<OBJECT>(obj), id);
@@ -344,41 +656,71 @@ namespace aq
 
         // By default assignment is for components
         template <class OBJ>
-        ComponentAssigner& operator=(OBJ&& cmp)
+        EntityReference& operator=(OBJ&& cmp)
         {
             return this->assignObject(std::forward<OBJ>(cmp));
         }
 
-        /*template <class OBJECT>
-        ComponentAssigner& assignObject(const OBJECT& obj)
-        {
-            this->m_ecs.pushObject(obj);
-            return *this;
-        }*/
-
         template <class T>
-        ct::EnableIfReflected<T, T> convertTo() const
+        bool canConvertTo() const
         {
-            return m_ecs.at<T>(m_idx);
+            static const mo::TypeInfo type = mo::TypeInfo::create<T>();
+            return m_ecs.providesComponent(type);
         }
 
         template <class T>
-        ct::DisableIfReflected<T, T> convertTo() const
+        T convertTo(T* = nullptr, ct::EnableIf<IsComponent<T>>* = nullptr) const
         {
-            THROW(warn, "This type cannot be extracted");
-            return {};
+            auto component_view = m_ecs.getComponent<T>();
+            MO_ASSERT_GT(component_view.getShape()[0], m_idx);
+            return component_view[m_idx];
         }
 
-        template <class COMPONENT>
-        operator COMPONENT() const
+        template <class T>
+        T convertTo(T* = nullptr, ct::EnableIf<!IsComponent<T> && ct::IsReflected<T>::value>* = nullptr) const
         {
-            const TComponentProvider<COMPONENT>* provider = this->m_ecs.getProvider<COMPONENT>();
-            if (provider)
-            {
-                auto components = provider->getComponent();
-                return components[this->m_idx];
-            }
-            return convertTo<COMPONENT>();
+            return this->m_ecs.at<T>(m_idx);
+        }
+
+        template <class T>
+        T convertTo(T* = nullptr, ct::EnableIf<IsComponent<T>>* = nullptr)
+        {
+            auto component_view = m_ecs.getComponent<T>();
+            MO_ASSERT_GT(component_view.getShape()[0], m_idx);
+            return component_view[m_idx];
+        }
+
+        template <class T>
+        T convertTo(T* = nullptr, ct::EnableIf<!IsComponent<T> && ct::IsReflected<T>::value>* = nullptr)
+        {
+            return this->m_ecs.at<T>(m_idx);
+        }
+
+        template <class TYPE>
+        operator TYPE() const
+        {
+            return convertTo<TYPE>();
+        }
+
+        template <class TYPE>
+        operator TYPE()
+        {
+            return convertTo<TYPE>();
+        }
+
+        EntityComponentSystem& getECS()
+        {
+            return m_ecs;
+        }
+
+        const EntityComponentSystem& getECS() const
+        {
+            return m_ecs;
+        }
+
+        uint32_t getIdx() const
+        {
+            return m_idx;
         }
 
       private:
@@ -526,7 +868,7 @@ namespace aq
     ////////////////////////////////////////////////////////////////////////////////
 
     template <class COMPONENT, uint8_t I>
-    void EntityComponentSystem::reshape(mt::Shape<I> shape)
+    void EntityComponentSystem::reshape(const mt::Shape<I>& shape)
     {
         TComponentProvider<COMPONENT>* provider = this->getProviderMutable<COMPONENT>();
         if (provider)
@@ -555,32 +897,92 @@ namespace aq
     template <class T>
     void TComponentProvider<T>::resize(uint32_t size)
     {
-        m_data.resize(size);
+        m_size = size;
+        if (size > m_capacity)
+        {
+            m_data.resize(m_shape.numElements() * m_size);
+            m_capacity = m_size;
+        }
     }
 
-    template <class T>
-    template <uint8_t D>
-    void TComponentProvider<T>::reshape(mt::Shape<D> shape)
+    template <uint8_t D, uint8_t D1>
+    void reshapeImpl(size_t& size, mt::Shape<D>& shape, const mt::Shape<D1>& other)
     {
-        m_data.resizeSubarray(std::move(shape));
+        static_assert(D1 == (D + 1) || D == D1,
+                      "Shape is expected to be total size of storage tensor or size of subarray");
+        if (D1 == (D + 1))
+        {
+            for (uint8_t i = 1; i < D1; ++i)
+            {
+                shape.setShape(i - 1, other[i]);
+            }
+            shape.calculateStride();
+            size = other[0];
+        }
+        else
+        {
+            for (uint8_t i = 0; i < D1; ++i)
+            {
+                shape.setShape(i, other[i]);
+                shape.calculateStride();
+            }
+        }
+    }
+
+    template <uint8_t D1>
+    void reshapeImpl(size_t& size, mt::Shape<0>& shape, const mt::Shape<D1>& other)
+    {
+        static_assert(D1 == 1 || 0 == D1, "Shape is expected to be total size of storage tensor or size of subarray");
+        if (D1 == 1)
+        {
+            size = other[0];
+        }
     }
 
     template <class T>
-    bool TComponentProvider<T>::providesComponent(mo::TypeInfo info) const
+    template <uint8_t D1>
+    void TComponentProvider<T>::reshape(const mt::Shape<D1>& shape)
+    {
+        reshapeImpl(m_size, m_shape, shape);
+        const size_t N = m_shape.numElements() * m_size;
+        m_data.resize(N);
+        if (!std::is_trivially_constructible<typename T::DType>::value)
+        {
+            ct::TArrayView<typename T::DType> data = m_data.mutableHost();
+            typename T::DType* ptr = data.data();
+            for (size_t i = 0; i < N; ++i)
+            {
+                new (ptr) typename T::DType;
+                ++ptr;
+            }
+        }
+        m_capacity = m_size;
+    }
+
+    template <class T>
+    bool TComponentProvider<T>::providesComponent(const mo::TypeInfo& info) const
     {
         return info.template isType<T>();
     }
 
     template <class T>
-    typename ct::ext::DataDimensionality<T>::TensorView TComponentProvider<T>::getComponentMutable()
+    typename TComponentProvider<T>::View_t TComponentProvider<T>::getComponentMutable()
     {
-        return m_data.data(0);
+        ct::TArrayView<DType> data = m_data.mutableHost();
+        MO_ASSERT_EQ(data.size(), m_shape.numElements() * m_capacity);
+        mt::Shape<D> shape = m_shape;
+        shape.setShape(0, m_size);
+        return View_t(data.data(), shape);
     }
 
     template <class T>
-    typename ct::ext::DataDimensionality<T>::ConstTensorView TComponentProvider<T>::getComponent() const
+    typename TComponentProvider<T>::ConstView_t TComponentProvider<T>::getComponent() const
     {
-        return m_data.data(0);
+        ct::TArrayView<const DType> data = m_data.host();
+        MO_ASSERT_EQ(data.size(), m_shape.numElements() * m_capacity);
+        mt::Shape<D> shape = m_shape;
+        shape.setShape(0, m_size);
+        return ConstView_t(data.data(), shape);
     }
 
     template <class T>
@@ -588,22 +990,28 @@ namespace aq
     {
         return mo::TypeInfo::create<T>();
     }
+
     template <class T>
     size_t TComponentProvider<T>::getNumEntities() const
     {
-        return m_data.size();
+        return m_size;
     }
 
     template <class T>
     void TComponentProvider<T>::erase(uint32_t id)
     {
-        m_data.erase(id);
+        View_t view = getComponentMutable();
+        View_t begin = view.slice(0, id, -2);
+        View_t end = view.slice(0, id + 1, -1);
+        begin = end;
+        --m_size;
     }
 
     template <class T>
     void TComponentProvider<T>::clear()
     {
-        m_data.clear();
+        // TODO
+        // m_data.clear();
     }
 
     template <class T>
@@ -613,11 +1021,30 @@ namespace aq
     }
 
     template <class T>
+    void TComponentProvider<T>::insertEntity(const EntityReference& entity, uint32_t dst_idx)
+    {
+        if (entity.canConvertTo<T>())
+        {
+            const EntityComponentSystem& ecs = entity.getECS();
+            auto component = ecs.getComponent<T>();
+            this->assign(dst_idx, component[entity.getIdx()]);
+        }
+    }
+
+    template <class T>
     template <class U>
     void TComponentProvider<T>::assign(uint32_t idx, U&& val)
     {
+    }
+
+    template <class T>
+    template <class U>
+    void TComponentProvider<T>::assign(uint32_t idx, const U& val)
+    {
         MO_ASSERT_GT(m_data.size(), idx);
-        m_data.assign(idx, std::forward<U>(val));
+        auto wrapping_tensor = mt::tensorWrap(val);
+        auto internal_view = getComponentMutable();
+        internal_view[idx] = wrapping_tensor;
     }
 
     template <class T>
@@ -785,8 +1212,8 @@ namespace mo
     {
         void getComponents(std::vector<TypeInfo>& types) const override
         {
-            using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
-            using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
+            using Components_t = typename ct::GlobMemberObjects<T>::types;
+            // using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
             types.reserve(Components_t::size());
             populateTypes(types, Components_t{});
         }
@@ -805,8 +1232,8 @@ namespace mo
     template <class T>
     struct TSubscriber<aq::TEntityComponentSystem<T>> : TSubscriberImpl<aq::EntityComponentSystem>
     {
-        using MemberObjects_t = typename ct::GlobMemberObjects<T>::types;
-        using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
+        using Components_t = typename ct::GlobMemberObjects<T>::types;
+        // using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
 
         bool setInput(IPublisher* publisher = nullptr) override
         {
@@ -887,6 +1314,24 @@ namespace mo
     };
 
 } // namespace mo
+
+namespace mt
+{
+    template <class T, class TAG>
+    struct TensorWrap<aq::ArrayComponent<T, TAG>, void, 2>
+    {
+
+        static Tensor<const T, 1> wrap(const aq::ArrayComponent<T, TAG>& data)
+        {
+            return data;
+        }
+
+        static Tensor<T, 1> wrap(aq::ArrayComponent<T, TAG>& data)
+        {
+            return data;
+        }
+    };
+} // namespace mt
 
 namespace ct
 {

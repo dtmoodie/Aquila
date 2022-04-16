@@ -24,7 +24,7 @@ namespace aq
             return TSyncedMemory(SyncedMemory::copyDevice(std::move(tensor), std::move(stream)));
         }
 
-        TSyncedMemory(size_t elements = 0, std::shared_ptr<mo::IDeviceStream> stream = mo::IDeviceStream::current())
+        TSyncedMemory(size_t elements = 0, std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::current())
             : SyncedMemory(elements * sizeof(T), sizeof(T), stream)
         {
         }
@@ -94,32 +94,32 @@ namespace aq
             return SyncedMemory::size() / sizeof(T);
         }
 
-        ct::TArrayView<const T> host(mo::IAsyncStream* stream, bool* sync_required = nullptr) const
+        ct::TArrayView<const T> host(mo::IAsyncStream* stream = nullptr, bool* sync_required = nullptr) const
         {
             return SyncedMemory::hostAs<T>(stream, sync_required);
         }
 
-        ct::TArrayView<const T> device(mo::IDeviceStream* stream, bool* sync_required = nullptr) const
+        ct::TArrayView<const T> device(mo::IDeviceStream* stream = nullptr, bool* sync_required = nullptr) const
         {
             return SyncedMemory::deviceAs<T>(stream, sync_required);
         }
 
-        ct::TArrayView<T> mutableHost(mo::IAsyncStream* stream, bool* sync_required = nullptr)
+        ct::TArrayView<T> mutableHost(mo::IAsyncStream* stream = nullptr, bool* sync_required = nullptr)
         {
             return SyncedMemory::mutableHostAs<T>(stream, sync_required);
         }
 
-        ct::TArrayView<T> mutableDevice(mo::IDeviceStream* stream, bool* sync_required = nullptr)
+        ct::TArrayView<T> mutableDevice(mo::IDeviceStream* stream = nullptr, bool* sync_required = nullptr)
         {
             return SyncedMemory::mutableDeviceAs<T>(stream, sync_required);
         }
 
-        TSyncedView<T> syncedView(mo::IDeviceStream* stream)
+        TSyncedView<T> syncedView(mo::IDeviceStream* stream = nullptr)
         {
             return TSyncedView<T>(SyncedMemory::syncedView(stream));
         }
 
-        TSyncedView<const T> syncedView(mo::IDeviceStream* stream) const
+        TSyncedView<const T> syncedView(mo::IDeviceStream* stream = nullptr) const
         {
             return TSyncedView<const T>(SyncedMemory::syncedView(stream));
         }

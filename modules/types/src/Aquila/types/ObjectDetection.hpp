@@ -4,16 +4,15 @@
 #include "detection/Classification.hpp"
 
 #include <MetaObject/types/opencv.hpp>
+#include <MetaObject/types/small_vec.hpp>
 
 #include <Aquila/detail/export.hpp>
 #include <Aquila/types/EntityComponentSystem.hpp>
 
-#include <MetaObject/types/small_vec.hpp>
+#include <ctext/datatable/SelectComponents.hpp>
 
 #include <Eigen/Geometry>
 #include <opencv2/core/types.hpp>
-
-#include <ctext/DataTable.hpp>
 
 #include <map>
 #include <string>
@@ -30,29 +29,26 @@ namespace aq
 
     namespace detection
     {
-        // Various commonly used components
-        struct BoundingBox2d_;
-        using BoundingBox2d = ct::ext::ScalarComponent<cv::Rect2f, BoundingBox2d_>;
-        struct Confidence_;
-        using Confidence = ct::ext::ScalarComponent<float, Confidence_>;
-        using Classifications = mo::SmallVec<aq::Classification, 5>;
 
-        template <class TAG, class DTYPE>
-        struct ArrayComponent : ct::TArrayView<DTYPE>
-        {
-            template <class... ARGS>
-            ArrayComponent(ARGS&&... args)
-                : ct::TArrayView<DTYPE>(std::forward<ARGS>(args)...)
-            {
-            }
-        };
+        // Various commonly used components
+
+        struct Classifications_;
+        using Classifications = aq::ArrayComponent<aq::Classification, Classifications_>;
+
+        struct BoundingBox2d_;
+        using BoundingBox2d = aq::ScalarComponent<cv::Rect2f, BoundingBox2d_>;
+
+        struct Confidence_;
+        using Confidence = aq::ScalarComponent<float, Confidence_>;
 
         struct Id_;
-        using Id = ct::ext::ScalarComponent<uint32_t, Id_>;
+        using Id = aq::ScalarComponent<uint32_t, Id_>;
+
         struct Size3d_;
-        using Size3d = ct::ext::ScalarComponent<Eigen::Vector3f, Size3d_>;
+        using Size3d = aq::ScalarComponent<Eigen::Vector3f, Size3d_>;
+
         struct Pose3d_;
-        using Pose3d = ct::ext::ScalarComponent<Eigen::Affine3f, Pose3d_>;
+        using Pose3d = aq::ScalarComponent<Eigen::Affine3f, Pose3d_>;
 
     } // namespace detection
 

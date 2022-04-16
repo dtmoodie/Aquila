@@ -2,11 +2,17 @@ cmake_minimum_required(VERSION 3.5)
 CMAKE_POLICY(SET CMP0048 NEW)
 project(Aquila
     VERSION 0.1
-    LANGUAGES CXX)
+    LANGUAGES CXX
+)
 CMAKE_POLICY(SET CMP0020 NEW)
 CMAKE_POLICY(SET CMP0048 NEW)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+cmake_policy(SET CMP0012 NEW)
+
 set(CMAKE_DEBUG_POSTFIX d)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
+
 include(cmake/utilities.cmake)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 list(REVERSE CMAKE_MODULE_PATH)
@@ -21,38 +27,15 @@ ELSE(WIN32)
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-reorder -Wno-sign-compare -Wl,--no-as-needed -O0")
   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -g -ftemplate-backtrace-limit=0")
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_STANDARD 11)  
 ENDIF(WIN32)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-find_package(MetaObject QUIET)
-if(NOT TARGET MetaObject_core)
-    add_subdirectory("dependencies/MetaObject")
-    add_subdirectory("dependencies/cache-engine")
-    LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/dependencies/MetaObject/cmake")
-    set_target_properties(RuntimeCompiler
-        PROPERTIES
-            CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-    set_target_properties(RuntimeObjectSystem
-        PROPERTIES
-            CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-endif()
+add_subdirectory("dependencies/MetaObject")
+add_subdirectory("dependencies/cache-engine")
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/dependencies/MetaObject/cmake")
 
 find_package(ctext QUIET)
 if(NOT TARGET ctext)
@@ -62,27 +45,11 @@ else()
     find_package(minitensor REQUIRED)
 endif()
 
-set(RCC_PERMODULE_INTERFACE_SOURCE
-    ${RCC_PERMODULE_INTERFACE_SOURCE}
-    CACHE PATH "" FORCE
-)
-
-include(cmake/configure_bin_dirs.cmake)
 find_package(OpenCV QUIET COMPONENTS
     core
 )
 
-set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 find_package(CUDA QUIET)
-if(CUDA_FOUND)
-  set(CUDA_ARCH_NAME "Manual")
-  set(CUDA_ARCH_BIN "50 60 73")
-  set(CUDA_ARCH_PTX "50 60 73")
-  get_filename_component(_cuda_lib_dir "${CUDA_CUDART_LIBRARY}" DIRECTORY)
-  link_directories(${_cuda_lib_dir})
-endif(CUDA_FOUND)
-
-cmake_policy(SET CMP0012 NEW)
 
 IF(WIN32)
     SET(CUDA_DEVRT ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cudadevrt.lib)
@@ -94,15 +61,6 @@ ENDIF(WIN32)
 
 SET(LINK_LIBS "")
 ADD_DEFINITIONS(-DAquila_EXPORTS)
-
-IF(${NV_TOOLS_EXT_FOUND})
-  ADD_DEFINITIONS(-DUSE_NVTX)
-  list(APPEND LINK_LIBS ${NV_TOOLS_EXT_LIB})
-  include_directories(${NV_TOOLS_EXT_INCLUDE_DIR})
-  SET(NVTX_BIN_DIR_OPT "${NV_TOOLS_EXT_BIN_DIR}" CACHE PATH "")
-  SET(NVTX_BIN_DIR_DBG "${NV_TOOLS_EXT_BIN_DIR}" CACHE PATH "")
-  SET(BIN_DIRS "${BIN_DIRS};NVTX" CACHE STRING "" FORCE)
-endif()
 
 set(BOOST_REQUIRED_MODULES
     system
@@ -133,10 +91,6 @@ IF(NOT WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 ENDIF()
 
-# Link directories
-LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
-LINK_DIRECTORIES(${Boost_LIBRARY_DIR_RELEASE})
-
 # =====================
 # modules
 set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
@@ -154,24 +108,12 @@ foreach( module ${modules})
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/modules/${module})
 endforeach()
 
-# This is needed becaus cuda + cmake does not properly support target_include_directories https://gitlab.kitware.com/cmake/cmake/issues/16571
-# in the version of cmake that is include with ubuntu 16.04.  Thus to make everything happy we also propagate up the needed build include dirs
-# using the same variables that would be set if included from an external package, and we set them here so that cuda can be happy
-set(Aquila_INCLUDE_DIRS "${aquila_module_includes};${CMAKE_CURRENT_LIST_DIR}/include;${MetaObject_INCLUDE_DIRS};${EIGEN_INCLUDE_DIRS}" CACHE PATH "" FORCE)
-set(Aquila_LIBRARIES "${aquila_modules};${MetaObject_LIBRARIES}" CACHE INTERNAL "" FORCE)
-
 # print config
 message("--- Aquila config ---")
 message(" Aquila modules: ${ENABLED_AQUILA_MODULES}")
 
 
 # ----------------- Install
-if(Qt5_FOUND)
-    set(AQ_QT ON)
-else()
-    set(AQ_QT OFF)
-endif()
-
 configure_file(AquilaConfig.cmake.in
     "${PROJECT_BINARY_DIR}/AquilaConfig.cmake" @ONLY
 )

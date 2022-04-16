@@ -8,13 +8,12 @@
 
 #include <ct/reflect/print.hpp>
 #include <ct/static_asserts.hpp>
-#include <ctext/DataTable.hpp>
 
 #include <gtest/gtest.h>
 
 #include <iostream>
 
-TEST(object_detection, detected_object)
+/*TEST(object_detection, detected_object)
 {
     std::vector<std::string> cat_names({"cat0", "cat1", "cat2", "cat3", "cat4", "cat5"});
     aq::CategorySet::ConstPtr cats = std::make_shared<aq::CategorySet>(cat_names);
@@ -31,11 +30,6 @@ TEST(object_detection, detected_object)
 
     aq::DetectedObjectSet dets(cats);
     dets.push_back(aq::DetectedObject(cv::Rect2f(0.0f, 0.0f, 1.0f, 1.0f), classes, 5));
-}
-
-TEST(object_detection, detected_object_data_table)
-{
-    ct::ext::DataTable<aq::DetectedObject> table;
 }
 
 TEST(object_detection, reflect_object)
@@ -180,3 +174,4 @@ TEST(object_detection, copy_components)
     auto component = cat_set.getComponent<aq::detection::Classifications>();
     EXPECT_EQ(component.getShape()[0], 10);
 }
+*/

@@ -8,12 +8,18 @@ namespace aq
     {
         struct Patch
         {
+            using DType = Patch;
+            static const constexpr uint8_t D = 0;
+
             aq::SyncedImage source_image;
             aq::SyncedImage patch;
         };
 
         struct AlignedPatch
         {
+            using DType = AlignedPatch;
+            static const constexpr uint8_t D = 0;
+
             aq::SyncedImage source_image;
             aq::SyncedImage aligned_patch;
         };

@@ -14,17 +14,35 @@
 
 #include <gtest/gtest.h>
 
-struct Velocity : ct::ext::Component
+struct Velocity : aq::TComponent<Velocity>
 {
+    Velocity(float x_ = 0.0F, float y_ = 0.0F, float z_ = 0.0F)
+        : x(x_)
+        , y(y_)
+        , z(z_)
+    {
+    }
+
     REFLECT_INTERNAL_BEGIN(Velocity)
         REFLECT_INTERNAL_MEMBER(float, x)
         REFLECT_INTERNAL_MEMBER(float, y)
         REFLECT_INTERNAL_MEMBER(float, z)
     REFLECT_INTERNAL_END;
+
+    float norm() const
+    {
+        return std::sqrt(x * x + y * y + z * z);
+    }
 };
 
-struct Position : ct::ext::Component
+struct Position : aq::TComponent<Position>
 {
+    Position(float x_ = 0.0F, float y_ = 0.0F, float z_ = 0.0F)
+        : x(x_)
+        , y(y_)
+        , z(z_)
+    {
+    }
     REFLECT_INTERNAL_BEGIN(Position)
         REFLECT_INTERNAL_MEMBER(float, x)
         REFLECT_INTERNAL_MEMBER(float, y)
@@ -32,7 +50,7 @@ struct Position : ct::ext::Component
     REFLECT_INTERNAL_END;
 };
 
-struct Orientation : ct::ext::Component
+struct Orientation : aq::TComponent<Orientation>
 {
     REFLECT_INTERNAL_BEGIN(Orientation)
         REFLECT_INTERNAL_MEMBER(float, x)
@@ -74,7 +92,109 @@ struct Sphere
     REFLECT_INTERNAL_END;
 };
 
-TEST(entity_component_system, initialization)
+TEST(entity_component_system, example_1)
+{
+    mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
+    stream->setCurrent(stream);
+    aq::EntityComponentSystem ecs;
+    for (size_t i = 0; i < 10; ++i)
+        ecs.pushComponents(Velocity());
+    mt::Tensor<const Velocity, 1> velocity = ecs.getComponent<Velocity>();
+    for (ssize_t i = velocity.getShape()[0] - 1; i >= 0; --i)
+        if (velocity[i].norm() < 1.0F)
+            ecs.erase(i);
+    ASSERT_EQ(ecs.getNumEntities(), 0);
+    ASSERT_EQ(ecs.getNumComponents(), 1);
+}
+
+struct Detection
+{
+    REFLECT_INTERNAL_BEGIN(Detection)
+        REFLECT_INTERNAL_MEMBER(Velocity, velocity)
+        REFLECT_INTERNAL_MEMBER(Position, position)
+    REFLECT_INTERNAL_END;
+};
+
+TEST(entity_component_system, example_2_and_3)
+{
+    mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
+    stream->setCurrent(stream);
+    aq::EntityComponentSystem ecs;
+    ecs.pushComponents(Velocity(), Position());
+    mt::Tensor<Velocity, 1> velo = ecs.getComponentMutable<Velocity>();
+    velo[0].x = 5;
+    velo[0].y = 6;
+    velo[0].z = 7;
+    Detection det = ecs[0];
+    ASSERT_EQ(det.velocity.x, 5);
+    ASSERT_EQ(det.velocity.y, 6);
+    ASSERT_EQ(det.velocity.z, 7);
+
+    Velocity vel = ecs[0];
+    ASSERT_EQ(vel.x, 5);
+    ASSERT_EQ(vel.y, 6);
+    ASSERT_EQ(vel.z, 7);
+}
+
+TEST(entity_component_system, example_4)
+{
+    mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
+    stream->setCurrent(stream);
+    aq::EntityComponentSystem ecs1;
+    aq::TEntityComponentSystem<ct::VariadicTypedef<Velocity>> ecs2;
+    ecs1.pushComponents(Velocity(5, 6, 7), Position(0, 1, 2));
+    ecs2.push_back(ecs1[0]);
+    ASSERT_EQ(ecs2.getNumComponents(), 1);
+    ASSERT_EQ(ecs2.getNumEntities(), 1);
+
+    Velocity vel = ecs2[0];
+    ASSERT_EQ(vel.x, 5);
+    ASSERT_EQ(vel.y, 6);
+    ASSERT_EQ(vel.z, 7);
+}
+
+struct Descriptor_;
+using Descriptor = aq::ArrayComponent<float, Descriptor_>;
+
+struct DetectionDescriptor
+{
+    REFLECT_INTERNAL_BEGIN(DetectionDescriptor)
+        REFLECT_INTERNAL_MEMBER(Velocity, velocity)
+        REFLECT_INTERNAL_MEMBER(Descriptor, descriptor)
+    REFLECT_INTERNAL_END;
+};
+
+TEST(entity_component_system, example_5)
+{
+    mo::IAsyncStream::Ptr_t stream = mo::IAsyncStream::create();
+    stream->setCurrent(stream);
+    aq::EntityComponentSystem ecs;
+    std::vector<float> data{0, 1, 2, 3, 4, 5, 6, 7};
+    DetectionDescriptor det;
+    det.descriptor = mt::tensorWrap(data);
+    // This will copy the values from data into the ecs's internal storage
+    ecs.push_back(det);
+
+    // Component tensor dim = dim + 1;
+    mt::Tensor<const typename Descriptor::DType, 2> descriptors = ecs.getComponent<Descriptor>();
+    ASSERT_EQ(descriptors.getShape()[0], 1);
+    ASSERT_EQ(descriptors.getShape()[1], 8);
+
+    ASSERT_EQ(descriptors(0, 0), 0);
+    ASSERT_EQ(descriptors(0, 1), 1);
+    ASSERT_EQ(descriptors(0, 2), 2);
+    ASSERT_EQ(descriptors(0, 3), 3);
+    ASSERT_EQ(descriptors(0, 4), 4);
+    ASSERT_EQ(descriptors(0, 5), 5);
+    ASSERT_EQ(descriptors(0, 6), 6);
+    ASSERT_EQ(descriptors(0, 7), 7);
+
+    // Det values will be updated to whatever the ecs has for values and descriptor will now reference the ecs' internal
+    DetectionDescriptor tmp = ecs[0];
+    ASSERT_EQ(tmp.descriptor.data(), descriptors.data());
+}
+
+/*TEST(entity_component_system, initialization)
 {
     aq::EntityComponentSystem ecs;
     auto obj = GameObject::init();
@@ -95,9 +215,6 @@ TEST(entity_component_system, initialization)
     auto view = ecs.getComponent<Orientation>();
     ASSERT_EQ(view.getShape()[0], 10);
     ASSERT_EQ(view[0], new_obj.orientation);
-
-    auto sphere_view = ecs.getComponent<Sphere>();
-    ASSERT_FALSE(sphere_view.getShape()[0]);
 }
 
 TEST(entity_component_system, assert_bad_assign)
@@ -393,3 +510,4 @@ TEST(entity_component_system, pub_sub_data)
     auto orientation = data->data.getComponent<Orientation>();
     ASSERT_EQ(orientation.getShape()[0], 10);
 }
+*/

@@ -62,7 +62,7 @@ namespace aq
         return mo::TypeInfo::Void();
     }
 
-    IComponentProvider* EntityComponentSystem::getProviderMutable(const mo::TypeInfo type)
+    IComponentProvider* EntityComponentSystem::getProviderMutable(const mo::TypeInfo& type)
     {
         for (auto& provider : m_component_providers)
         {
@@ -74,7 +74,7 @@ namespace aq
         return nullptr;
     }
 
-    const IComponentProvider* EntityComponentSystem::getProvider(mo::TypeInfo type) const
+    const IComponentProvider* EntityComponentSystem::getProvider(const mo::TypeInfo& type) const
     {
         for (auto& provider : m_component_providers)
         {
@@ -84,6 +84,18 @@ namespace aq
             }
         }
         return nullptr;
+    }
+
+    bool EntityComponentSystem::providesComponent(const mo::TypeInfo& type) const
+    {
+        for (const auto& provider : m_component_providers)
+        {
+            if (provider->providesComponent(type))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     void EntityComponentSystem::addProvider(ce::shared_ptr<IComponentProvider> provider)
@@ -118,6 +130,28 @@ namespace aq
         return num_entities;
     }
 
+    uint32_t EntityComponentSystem::pushObject(const EntityReference& entity)
+    {
+        const uint32_t new_id = this->append();
+        std::vector<mo::TypeInfo> pushed_types;
+        for (auto& provider : m_component_providers)
+        {
+            pushed_types.push_back(provider->getComponentType());
+            provider->insertEntity(entity, new_id);
+        }
+
+        //const EntityComponentSystem& ecs = entity.getECS();
+
+
+
+        return new_id;
+    }
+
+    uint32_t EntityComponentSystem::push_back(const EntityReference& entity)
+    {
+        return pushObject(entity);
+    }
+
     void EntityComponentSystem::resize(uint32_t size)
     {
         for (auto& provider : m_component_providers)
@@ -126,9 +160,9 @@ namespace aq
         }
     }
 
-    ComponentAssigner EntityComponentSystem::operator[](uint32_t idx)
+    EntityReference EntityComponentSystem::operator[](uint32_t idx)
     {
-        return ComponentAssigner(*this, idx);
+        return EntityReference(*this, idx);
     }
 
     void EntityComponentSystem::setProviders(std::vector<ce::shared_ptr<IComponentProvider>> providers)
@@ -156,7 +190,7 @@ namespace aq
         }
     }
 
-    ComponentAssigner::ComponentAssigner(EntityComponentSystem& ecs, uint32_t idx)
+    EntityReference::EntityReference(EntityComponentSystem& ecs, uint32_t idx)
         : m_ecs(ecs)
         , m_idx(idx)
     {

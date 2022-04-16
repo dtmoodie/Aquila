@@ -66,7 +66,7 @@ namespace aq
 
     void DetectedObject::classify(const detection::Classifications& cls)
     {
-        const size_t min = std::min(classifications.size(), cls.size());
+        const size_t min = std::min(classifications.getShape()[0], cls.getShape()[0]);
         for (size_t i = 0; i < min; ++i)
         {
             classifications[i] = cls[i];

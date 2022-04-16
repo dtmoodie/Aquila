@@ -1,4 +1,6 @@
 #pragma once
+#include <Aquila/types/EntityComponentSystem.hpp>
+
 #include <Eigen/Core>
 
 #include <ct/reflect.hpp>
@@ -30,6 +32,8 @@ namespace aq
         T radius;
     };
     using Circlef = Circle<float>;
+    struct Circle_;
+    using CircleComponent = aq::ScalarComponent<Circlef, Circle_>;
 
 } // namespace aq
 
