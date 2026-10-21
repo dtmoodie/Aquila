@@ -135,7 +135,7 @@ namespace aq
             MO_END;
         };
 
-        class FrameGrabber : virtual public IFrameGrabber
+        class AQUILA_EXPORTS FrameGrabber : virtual public IFrameGrabber
         {
           public:
             static std::vector<std::string> listLoadablePaths();

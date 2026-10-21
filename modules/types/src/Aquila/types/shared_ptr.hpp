@@ -10,8 +10,27 @@
 
 namespace mo
 {
+    // Hook called from the ce::shared_ptr traits below so custom pointer
+    // types can control how the pointee is created/serialized. The default
+    // creates the concrete type directly; EntityComponentSystem.hpp
+    // specializes it to load polymorphic components by type.
     template <class T>
-    struct TTraits<ce::shared_ptr<T>, 5> : StructBase<ce::shared_ptr<T>>
+    struct PolymorphicSerializationHelper
+    {
+        template <class Ptr_t>
+        static void load(ILoadVisitor&, Ptr_t& ptr)
+        {
+            ptr = ce::shared_ptr<T>::create();
+        }
+
+        template <class Ptr_t>
+        static void save(ISaveVisitor&, const Ptr_t&)
+        {
+        }
+    };
+
+    template <class T>
+    struct TTraits<ce::shared_ptr<T>, 5> : virtual StructBase<ce::shared_ptr<T>>
     {
 
         void load(ILoadVisitor& visitor, void* inst, const std::string&, size_t) const override
@@ -65,7 +84,7 @@ namespace mo
     };
 
     template <class T>
-    struct TTraits<ce::shared_ptr<const T>, 5> : StructBase<ce::shared_ptr<const T>>
+    struct TTraits<ce::shared_ptr<const T>, 5> : virtual StructBase<ce::shared_ptr<const T>>
     {
 
         void load(ILoadVisitor& visitor, void* inst, const std::string&, size_t) const override

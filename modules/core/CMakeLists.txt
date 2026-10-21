@@ -47,7 +47,12 @@ foreach(test ${tests})
     endif()
     TARGET_LINK_LIBRARIES(${test_name} ${MetaObject_LIBRARIES}  aquila_core gtest gtest_main)
     set_target_properties(${test_name} PROPERTIES FOLDER Tests/Aquila)
-    add_test(${test_name} ${test_name})
+    # ctest resolves plain test commands relative to this directory's build
+    # tree, but the executable is redirected to the build root (see the top
+    # level CMakeLists.txt), so reference it by absolute path and run it from
+    # the build root (where test data and plugin .so files live).
+    add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/${test_name})
+    set_tests_properties(${test_name} PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
     if(MSVC)
       CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/Aquila/${test}.vcxproj.user @ONLY)
       CONFIGURE_FILE("tests/Test.vcxproj.user.in" ${CMAKE_BINARY_DIR}/${test}.vcxproj.user @ONLY)

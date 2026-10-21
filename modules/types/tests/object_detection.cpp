@@ -117,8 +117,10 @@ TEST(object_detection, untyped_publish_subscribe)
 
     auto data = sub.getData();
     EXPECT_TRUE(data);
-    auto tdata = sub.getTypedData();
-    EXPECT_TRUE(tdata);
+    // getTypedData is protected in the new TSubscriber; the typed overload of
+    // getData is the public equivalent
+    aq::DetectedObjectSet typed_data;
+    EXPECT_TRUE(sub.getData(typed_data));
 }
 
 TEST(object_detection, typed_publish_subscribe)
@@ -139,8 +141,10 @@ TEST(object_detection, typed_publish_subscribe)
 
     auto data = sub.getData();
     EXPECT_TRUE(data);
-    auto tdata = sub.getTypedData();
-    EXPECT_TRUE(tdata);
+    // getTypedData is protected in the new TSubscriber; the typed overload of
+    // getData is the public equivalent
+    aq::DetectedObjectSet typed_data;
+    EXPECT_TRUE(sub.getData(typed_data));
 }
 
 TEST(object_detection, publish_typed_subscribe)
@@ -161,8 +165,10 @@ TEST(object_detection, publish_typed_subscribe)
 
     auto data = sub.getData();
     EXPECT_TRUE(data);
-    auto tdata = sub.getTypedData();
-    EXPECT_TRUE(tdata);
+    // getTypedData is protected in the new TSubscriber; the typed overload of
+    // getData is the public equivalent
+    aq::DetectedObjectSet typed_data;
+    EXPECT_TRUE(sub.getData(typed_data));
 }
 
 TEST(object_detection, copy_components)

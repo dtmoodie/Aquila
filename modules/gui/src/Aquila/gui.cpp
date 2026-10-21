@@ -24,7 +24,8 @@ namespace aq
         void guiThreadFunc()
         {
             std::shared_ptr<mo::IAsyncStream> stream = mo::IAsyncStream::create();
-            mo::ThreadRegistry::instance()->registerThread(mo::ThreadRegistry::GUI, stream);
+            mo::ThreadRegistry::instance()->registerThread(mo::ThreadRegistry::GUI);
+            setGuiStream(stream);
             MO_LOG(info, "GUI thread {}", mo::getThisThread());
             mo::Mutex dummy_mtx; // needed for cv
             mo::ConditionVariable cv;
@@ -45,7 +46,7 @@ namespace aq
                 }
                 catch (mo::TExceptionWithCallstack<cv::Exception>& e)
                 {
-                    MO_LOG(debug, "Opencv exception with callstack {} {}", e.getException().what(), e.getCallstack());
+                    MO_LOG(debug, "Opencv exception with callstack {}", e.getCallstack());
                 }
                 catch (mo::IExceptionWithCallstack& e)
                 {

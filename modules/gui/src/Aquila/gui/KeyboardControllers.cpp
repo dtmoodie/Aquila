@@ -30,10 +30,7 @@ namespace aq
             }
         }
 
-        void KeyboardSignalController::on_signal_map_modified(const mo::IParam&,
-                                                              mo::Header,
-                                                              mo::UpdateFlags,
-                                                              mo::IAsyncStream* stream)
+        void KeyboardSignalController::on_signal_map_modified(mo::IParam*, mo::Header, mo::UpdateFlags)
         {
             for (const auto& kvp : signal_map)
             {

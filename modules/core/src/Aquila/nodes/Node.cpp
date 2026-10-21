@@ -188,7 +188,7 @@ bool Node::connectInput(mo::ISubscriber* input,
     }
 }
 
-void Node::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags fg, mo::IAsyncStream* stream)
+void Node::onParamUpdate(const mo::IParam& param, mo::Header header, mo::UpdateFlags fg, mo::IAsyncStream& stream)
 {
     Algorithm::onParamUpdate(param, header, fg, stream);
     if (param.checkFlags(mo::ParamFlags::kCONTROL))
@@ -241,7 +241,8 @@ bool Node::process(mo::IAsyncStream& stream)
             {
                 LOG_ALGO(trace, "{} calling processImpl", getName());
                 mo::ScopedProfile profiler(this->getName().c_str());
-                stream.makeCurrent();
+                // The stream is pinned to the running fiber by pushWork/pushEvent, so
+                // no explicit makeCurrent is needed (see IAsyncStream::current)
                 if (!processImpl(stream))
                 {
                     m_iterations_since_execution = 0;
@@ -328,10 +329,6 @@ bool Node::process(mo::IAsyncStream& stream)
                 m_disable_due_to_errors = true;
             }
         }
-        if (can_process)
-        {
-            stream.noLongerCurrent();
-        }
         m_last_execution_failure_reason = nullptr;
         m_iterations_since_execution = 0;
     }
@@ -407,13 +404,18 @@ void Node::addChild(Node::Ptr child)
             ++count;
         }
     }
+    // Register the child before notifying it (setStream/setGraph/addParent can
+    // re-enter addChild for the same child through the graph and addParent);
+    // pushing last would let the re-entrant call slip past the contains guard
+    // above and add the child twice. Copy (not move) so `child` stays valid for
+    // the setStream/setGraph/addParent/setUniqueId calls below.
+    LOG_ALGO(trace, "[{}] Adding child {}", getName(), child->getName());
+    m_children.push_back(child);
     auto stream = getStream();
     child->setStream(stream);
     child->setGraph(getGraph());
     child->addParent(*this);
     child->setUniqueId(count);
-    LOG_ALGO(trace, "[{}] Adding child {}", getName(), child->getName());
-    m_children.push_back(std::move(child));
     return;
 }
 

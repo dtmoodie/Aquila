@@ -114,8 +114,10 @@ MO_REGISTER_OBJECT(multi_input);
 
 TEST(algorithm, reflection)
 {
+    // printStructInfo computes member offsets by instantiating each member's
+    // declaring class, but aq::Algorithm's base aq::IAlgorithm is an
+    // interface, so only the hierarchy is printed here
     ct::Reflect<aq::Algorithm>::printHierarchy(std::cout);
-    ct::printStructInfo<aq::Algorithm>(std::cout);
 }
 
 TEST(algorithm, no_input)
@@ -237,11 +239,11 @@ TEST(algorithm, threaded_input)
     mo::TPublisher<int> output;
     output.setName("test");
     output.setStream(*stream);
-    mo::getDefaultLogger().set_level(spdlog::level::trace);
     auto subscriber = rcc::shared_ptr<int_input>::create();
     subscriber->setStream(stream);
     std::atomic<int> success_count(0);
-    boost::thread thread([&subscriber, &output, &success_count]() -> void {
+    std::atomic<bool> connected(false);
+    boost::thread thread([&subscriber, &output, &success_count, &connected]() -> void {
         boost::fibers::use_scheduling_algorithm<mo::PriorityScheduler>(std::weak_ptr<mo::ThreadPool>());
         auto thread_stream = mo::AsyncStreamFactory::instance()->create();
         subscriber->setStream(thread_stream);
@@ -249,6 +251,7 @@ TEST(algorithm, threaded_input)
         auto pub = subscriber->input_param.getPublisher();
         ASSERT_TRUE(pub);
         ASSERT_TRUE(pub->checkFlags(mo::ParamFlags::kBUFFER)) << "Failed to setup a buffered connection";
+        connected = true;
 
         while (success_count < count && !boost::this_thread::interruption_requested())
         {
@@ -258,6 +261,16 @@ TEST(algorithm, threaded_input)
             }
         }
     });
+
+    // Wait until the subscriber's buffer is connected before publishing;
+    // anything published before that point cannot be buffered. (The
+    // this_fiber::sleep_for below is a no-op on this non-fiber thread, so
+    // without this handshake the publish loop would typically run to
+    // completion before the worker thread has finished connecting.)
+    for (int i = 0; i < 5000 && !connected; ++i)
+    {
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+    }
 
     for (uint32_t i = 0; i < count; ++i)
     {
@@ -273,8 +286,6 @@ TEST(algorithm, threaded_input)
         thread.interrupt();
         thread.join();
     }
-
-    mo::getDefaultLogger().set_level(spdlog::level::info);
 }
 
 TEST(algorithm, desynced_input)
@@ -307,7 +318,7 @@ TEST(algorithm, desynced_input)
 
     boost::this_fiber::sleep_for(std::chrono::milliseconds(10));
     bool finished = false;
-    stream1->pushWork([&slow_output, iterations, &finished](mo::IAsyncStream*) -> void {
+    stream1->pushWork([&slow_output, iterations, &finished] -> void {
         for (int i = 0; i < iterations; ++i)
         {
             slow_output.publish(i, mo::Header(std::chrono::milliseconds(i)));
@@ -332,7 +343,7 @@ TEST(algorithm, desynced_input)
     EXPECT_TRUE(pub1->checkFlags(mo::ParamFlags::kBUFFER)) << "Did not correctly negotiate a buffered connection";
     EXPECT_TRUE(pub2->checkFlags(mo::ParamFlags::kBUFFER)) << "Did not correctly negotiate a buffered connection";
 
-    stream2->pushWork([&obj, &fast_output, &slow_output, iterations](mo::IAsyncStream*) -> void {
+    stream2->pushWork([&obj, &fast_output, &slow_output, iterations] -> void {
         int success_count = 0;
 
         // mo::getDefaultLogger().set_level(spdlog::level::trace);

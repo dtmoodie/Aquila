@@ -8,6 +8,11 @@ CMAKE_POLICY(SET CMP0020 NEW)
 CMAKE_POLICY(SET CMP0048 NEW)
 cmake_policy(SET CMP0012 NEW)
 
+# The subprojects (MetaObject, cache-engine) only call enable_testing() inside
+# their own directories, which does not generate a CTest file at this level.
+# Without this, `ctest` from the build root reports "No tests were found".
+enable_testing()
+
 set(CMAKE_DEBUG_POSTFIX d)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -33,7 +38,39 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
+# CUDA 13+ keeps the CCCL headers (thrust/cub/libcu++) in the per-architecture
+# targets tree instead of <cuda-root>/include, so host code that includes thrust
+# (e.g. nodes/Node.cpp, cache-engine tests) needs the path added explicitly --
+# nvcc finds it on its own. Derive the toolkit root before the subdirectories so
+# every target inherits the include dir, without calling find_package(CUDA): the
+# vendored FindCUDA is only on the module path once MetaObject is added, and
+# finding CUDA earlier would switch the whole build to a different FindCUDA.
+if(DEFINED CUDA_TOOLKIT_ROOT_DIR AND EXISTS "${CUDA_TOOLKIT_ROOT_DIR}")
+    set(_aquila_cuda_root "${CUDA_TOOLKIT_ROOT_DIR}")
+elseif(DEFINED ENV{CUDA_HOME})
+    set(_aquila_cuda_root "$ENV{CUDA_HOME}")
+else()
+    find_program(_aquila_nvcc nvcc)
+    if(_aquila_nvcc)
+        get_filename_component(_aquila_cuda_root "${_aquila_nvcc}" DIRECTORY)
+        get_filename_component(_aquila_cuda_root "${_aquila_cuda_root}" DIRECTORY)
+    endif()
+endif()
+if(_aquila_cuda_root)
+    file(GLOB _aquila_cccl_include "${_aquila_cuda_root}/targets/*/include/cccl")
+    if(_aquila_cccl_include)
+        include_directories(${_aquila_cccl_include})
+    endif()
+endif()
+
 add_subdirectory("dependencies/MetaObject")
+# MetaObject above needs its test executables in the build root: it registers
+# tests with absolute ${CMAKE_BINARY_DIR} paths and sets WORKING_DIRECTORY to
+# the build root. cache-engine and ctext instead register plain-name tests,
+# which ctest resolves relative to each test's own build directory, so their
+# executables must stay next to their CTestTestfile -- lift the runtime-output
+# redirect while they are added.
+unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 add_subdirectory("dependencies/cache-engine")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/dependencies/MetaObject/cmake")
 
@@ -93,6 +130,15 @@ ENDIF()
 
 # =====================
 # modules
+# The vendored dependencies (MetaObject, cache-engine, ct, minitensor) are done
+# being added at this point and set their own C++ standards, so this only raises
+# the standard for Aquila's own modules and tests. Aquila code includes CCCL
+# headers (thrust/cub/libcu++ via cv::cuda and the stream code), which require
+# C++17 on CUDA 13+.
+set(CMAKE_CXX_STANDARD 17)
+# Aquila's own test executables go back to the build root (their add_test
+# entries reference them there by absolute path).
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(aquila_export_targets "Aquila" CACHE INTERNAL "" FORCE)
 set(aquila_modules "" CACHE INTERNAL "" FORCE)
 set(aquila_module_includes "" CACHE INTERNAL "" FORCE)

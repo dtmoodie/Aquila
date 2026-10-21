@@ -29,9 +29,23 @@ RUNTIME_COMPILER_LINKLIBRARY("-laquila_guid")
 #endif
 #endif
 
+namespace mo
+{
+    class IAsyncStream;
+}
+
 namespace aq
 {
     class IGraph;
+
+    namespace gui
+    {
+        // Process-wide GUI stream. Previously held by mo::ThreadRegistry,
+        // which now only tracks thread ids.
+        AQUILA_EXPORTS void setGuiStream(std::shared_ptr<mo::IAsyncStream> stream);
+        AQUILA_EXPORTS std::shared_ptr<mo::IAsyncStream> getGuiStream();
+    } // namespace gui
+
     // Single instance per stream
     class AQUILA_EXPORTS WindowCallbackHandler : public TInterface<WindowCallbackHandler, mo::MetaObject>
     {

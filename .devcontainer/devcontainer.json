@@ -1,0 +1,26 @@
+{
+  "image": "docker.io/library/dtmoodie:dev",
+  "runArgs": ["--network=host", "--gpus=all"],
+  "mounts": [
+    "source=/home/dan/.claude,target=/home/ubuntu/.claude,type=bind",
+    "source=/home/dan/.claude.json,target=/home/ubuntu/.claude.json,type=bind"
+  ]
+  "remoteEnv": {
+    "ANTHROPIC_AUTH_TOKEN": "ollama",
+    "ANTHROPIC_BASE_URL": "http://192.168.1.69:8080",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_MODEL": "qwen3.8-27b",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "true",
+    "API_TIMEOUT_MS": "1800000",
+    "CLAUDE_STREAM_IDLE_TIMEOUT_MS": "1800000"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cpptools",
+        "Anthropic.claude-code"
+      ]
+    }
+  },
+}

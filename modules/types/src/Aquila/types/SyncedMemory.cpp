@@ -184,7 +184,8 @@ namespace aq
             auto dst = dest.mutableHost();
             auto src = this->host();
             // memcpy(dst.data(), dst.data(), src.size());
-            stream->hostToHost(dst, src);
+            MO_ASSERT(dev_stream != nullptr);
+            dev_stream->hostToHost(dst, src);
         }
         else
         {
@@ -280,8 +281,9 @@ namespace aq
                 const size_t copy_size = std::min(old_size, m_size);
                 if (copy_size)
                 {
-                    src_stream->hostToHost({h_ptr, copy_size}, {old_host, copy_size});
-                    src_stream->pushWork([old_host, old_size, alloc](mo::IAsyncStream*) {
+                    MO_ASSERT(src_device_stream != nullptr);
+                    src_device_stream->hostToHost({h_ptr, copy_size}, {old_host, copy_size});
+                    src_stream->pushWork([old_host, old_size, alloc] {
                         alloc->deallocate(ct::ptrCast<uint8_t>(old_host), old_size);
                     });
                 }
@@ -311,7 +313,7 @@ namespace aq
                     if (copy_size)
                     {
                         src_device_stream->deviceToDevice({d_ptr, copy_size}, {old_device, copy_size});
-                        src_device_stream->pushWork([old_device, old_size, alloc](mo::IAsyncStream*) {
+                        src_device_stream->pushWork([old_device, old_size, alloc] {
                             alloc->deallocate(ct::ptrCast<uint8_t>(old_device), old_size);
                         });
                     }
@@ -466,7 +468,9 @@ namespace aq
             {
                 MO_ASSERT(h_ptr != nullptr);
                 MO_ASSERT(old_ptr != nullptr);
-                src_stream->hostToHost({h_ptr, m_size}, {old_ptr, m_size});
+                mo::IDeviceStream* src_device_stream = src_stream->getDeviceStream();
+                MO_ASSERT(src_device_stream != nullptr);
+                src_device_stream->hostToHost({h_ptr, m_size}, {old_ptr, m_size});
             }
         }
 
@@ -651,7 +655,18 @@ namespace aq
         // tries to work with the data
         if (current_stream && new_stream && (h_ptr || d_ptr))
         {
-            new_stream->synchronize(*current_stream);
+            // Cross-stream synchronization only exists on device streams; if
+            // either side is host-only, drain the old stream's work instead
+            auto new_device_stream = new_stream->getDeviceStream();
+            auto current_device_stream = current_stream->getDeviceStream();
+            if (new_device_stream && current_device_stream)
+            {
+                new_device_stream->synchronize(current_device_stream);
+            }
+            else
+            {
+                current_stream->synchronize();
+            }
         }
         m_stream = std::move(new_stream);
     }

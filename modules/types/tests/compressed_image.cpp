@@ -24,7 +24,7 @@
 TEST(compressed_image, initialization)
 {
     auto factory = mo::MetaObjectFactory::instance();
-    aq_cv_compression::initPlugin(0, factory.get());
+    aq_cv_compression::initPlugin(factory.get());
 }
 
 TEST(compressed_image, static_checks)
@@ -60,7 +60,6 @@ TEST(compressed_image, png_load)
 {
     auto eng = ce::ICacheEngine::instance();
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
-    stream->initialize();
     EXPECT_NE(stream, nullptr) << "Unable to create a cuda stream";
     stream->setCurrent(stream);
     auto path = boost::filesystem::path("../data.png");

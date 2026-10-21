@@ -222,7 +222,7 @@ rcc::shared_ptr<IFrameGrabber> IFrameGrabber::create(const std::string& uri, con
     return rcc::shared_ptr<IFrameGrabber>();
 }
 
-void IFrameGrabber::on_loaded_document_modified(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream*)
+void IFrameGrabber::on_loaded_document_modified(mo::IParam*, mo::Header, mo::UpdateFlags)
 {
     loadData(loaded_document);
 }

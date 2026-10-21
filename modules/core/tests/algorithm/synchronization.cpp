@@ -466,7 +466,7 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     std::tuple<mo::TDataContainerConstPtr_t<int>,
                mo::TDataContainerConstPtr_t<float>,
                mo::TDataContainerConstPtr_t<double>,
-               mo::TDataContainerConstPtr_t<std::vector<int>>,
+               mo::TDataContainerConstPtr_t<mo::vector<int>>,
                mo::TDataContainerConstPtr_t<std::string>>
         tup0;
     std::tuple<int, float, double, mo::vector<int>, std::string> tup1;
@@ -482,7 +482,9 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     vec->data[2] = 6;
     vec->data[3] = 7;
     vec->header = header;
-    pub3.publish(std::move(vec), stream.get());
+    // publish the container through the const-pointer overload so `vec`
+    // stays usable for the next sample
+    pub3.publish(mo::TDataContainerConstPtr_t<mo::vector<int>>(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
 
     bool success = synchronizer.getNextSample(tup0, stream.get());
@@ -501,7 +503,9 @@ TEST_F(parameter_synchronizer_timestamp, typed_query)
     vec->data[2] = 6;
     vec->data[3] = 7;
     vec->header = header;
-    pub3.publish(std::move(vec), stream.get());
+    // publish the container through the const-pointer overload so `vec`
+    // stays usable for the next sample
+    pub3.publish(mo::TDataContainerConstPtr_t<mo::vector<int>>(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
 
     success = synchronizer.getNextSample(tup1, stream.get());
@@ -873,7 +877,9 @@ TEST_F(parameter_synchronizer_framenumber, typed_query)
     vec->data[2] = 6;
     vec->data[3] = 7;
     vec->header = header;
-    pub3.publish(std::move(vec), stream.get());
+    // publish the container through the const-pointer overload so `vec`
+    // stays usable for the next sample
+    pub3.publish(mo::TDataContainerConstPtr_t<std::vector<int>>(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
 
     bool success = synchronizer.getNextSample(tup0, stream.get());
@@ -892,7 +898,9 @@ TEST_F(parameter_synchronizer_framenumber, typed_query)
     vec->data[2] = 6;
     vec->data[3] = 7;
     vec->header = header;
-    pub3.publish(std::move(vec), stream.get());
+    // publish the container through the const-pointer overload so `vec`
+    // stays usable for the next sample
+    pub3.publish(mo::TDataContainerConstPtr_t<std::vector<int>>(vec), stream.get());
     pub4.publish("asdf", header, stream.get());
 
     success = synchronizer.getNextSample(tup1, stream.get());

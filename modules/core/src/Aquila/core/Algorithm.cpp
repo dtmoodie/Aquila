@@ -716,13 +716,34 @@ Algorithm::InputState Algorithm::checkInputs()
     {
         return Algorithm::InputState::kALL_VALID;
     }
-    auto next_header = this->m_synchronizer->getNextSample();
-
+    // Peek instead of consuming so that a sample is only removed from the
+    // synchronization state once every input is known to be able to supply
+    // data for it; otherwise the timestamp would be lost and the frame could
+    // never be processed again.
+    auto next_header = this->m_synchronizer->peekNextSample();
     if (next_header)
     {
+        // Note which inputs have new data before the getData calls below clear
+        // the flags
+        bool any_new_data = false;
+        for (auto input : inputs)
+        {
+            if (input->hasNewData())
+            {
+                any_new_data = true;
+                break;
+            }
+        }
+        bool ready = true;
         for (auto input : inputs)
         {
             auto data = input->getData(next_header.get_ptr(), stream.get());
+            if (data == nullptr && input->checkFlags(mo::ParamFlags::kDESYNCED))
+            {
+                // A desynced input is allowed to lag behind the sample being
+                // processed: fall back to its newest data instead of blocking
+                data = input->getData(nullptr, stream.get());
+            }
             if (data == nullptr)
             {
                 mo::IPublisher* pub = input->getPublisher();
@@ -748,9 +769,31 @@ Algorithm::InputState Algorithm::checkInputs()
                         continue;
                     }
                 }
+                ready = false;
+                break;
+            }
+        }
+        if (!ready)
+        {
+            return InputState::kNONE_VALID;
+        }
+        const bool consumed = this->m_synchronizer->consume(*next_header);
+        if (!consumed)
+        {
+            // The sample was already consumed, i.e. some previous trigger
+            // processed this timestamp. It is still worth reprocessing it if
+            // new data has arrived for any input since then (for example a
+            // desynced input catching up); otherwise there is nothing new to
+            // do.
+            if (!any_new_data)
+            {
                 return InputState::kNONE_VALID;
             }
         }
+        // Record the header of the frame about to be processed so processImpl can
+        // query getTimestamp()/getFrameNumber() for it
+        m_ts = next_header->timestamp;
+        m_fn = next_header->frame_number;
         return Algorithm::InputState::kALL_VALID;
     }
     return InputState::kNONE_VALID;
@@ -839,7 +882,7 @@ void Algorithm::setSyncMethod(SyncMethod _method)
     m_sync_method = _method;
 }
 
-void Algorithm::onParamUpdate(const mo::IParam& param, mo::Header hdr, mo::UpdateFlags fg, IAsyncStream* stream)
+void Algorithm::onParamUpdate(const mo::IParam& param, mo::Header hdr, mo::UpdateFlags fg, IAsyncStream& stream)
 {
     mo::MetaObject::onParamUpdate(param, hdr, fg, stream);
     if (param.checkFlags(mo::ParamFlags::kSOURCE))

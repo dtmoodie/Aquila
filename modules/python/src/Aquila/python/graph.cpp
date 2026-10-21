@@ -74,7 +74,10 @@ namespace aq
             if (relay)
             {
                 auto current = graph->getStream();
-                (*relay)(current.get());
+                if (current)
+                {
+                    (*relay)(*current);
+                }
             }
             else
             {

@@ -7,8 +7,10 @@
 #include <thrust/iterator/transform_iterator.h>
 #include <thrust/iterator/zip_iterator.h>
 
+// thrust::unary_function was removed from CCCL (CUDA 13); the base class is not
+// needed -- nothing here uses its nested typedefs
 template <typename T>
-struct step_functor : public thrust::unary_function<int, int>
+struct step_functor
 {
     int columns;
     int step;

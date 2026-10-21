@@ -143,48 +143,11 @@ namespace aq
 
 namespace mo
 {
-    template <>
-    struct TSubscriber<aq::DetectedObjectSet> : public TSubscriberImpl<aq::DetectedObjectSet>
-    {
-        bool setInput(IPublisher* publisher) override
-        {
-            if (!acceptsPublisher(*publisher))
-            {
-                return false;
-            }
-            return TSubscriberImpl<aq::DetectedObjectSet>::setInput(publisher);
-        }
-
-        bool acceptsPublisher(const IPublisher& param) const override
-        {
-            if (TSubscriberImpl<aq::DetectedObjectSet>::acceptsPublisher(param))
-            {
-                return true;
-            }
-            return false;
-        }
-    };
-
+    // All detection set variants carry the base DetectedObjectSet data
+    // type, so the subscriber machinery is the plain base-type one.
     template <class... T>
-    struct TSubscriber<aq::TDetectedObjectSet<T...>> : public TSubscriberImpl<aq::DetectedObjectSet>
+    struct TSubscriber<aq::TDetectedObjectSet<T...>> : TSubscriber<aq::DetectedObjectSet>
     {
-        bool setInput(IPublisher* publisher) override
-        {
-            if (!acceptsPublisher(*publisher))
-            {
-                return false;
-            }
-            return TSubscriberImpl<aq::DetectedObjectSet>::setInput(publisher);
-        }
-
-        bool acceptsPublisher(const IPublisher& param) const override
-        {
-            if (TSubscriberImpl<aq::DetectedObjectSet>::acceptsPublisher(param))
-            {
-                return true;
-            }
-            return false;
-        }
     };
 
     template <class... T>

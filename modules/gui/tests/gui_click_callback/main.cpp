@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 {
 
     auto table = SystemTable::instance();
-    mo::MetaObjectFactory::loadStandardPlugins();
+    mo::MetaObjectFactory::instance()->loadPlugins();
     auto stream = mo::IAsyncStream::create();
     mo::IAsyncStream::setCurrent(stream);
     auto logger = table->getDefaultLogger();

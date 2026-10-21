@@ -27,7 +27,6 @@ TEST(shape, shape)
 TEST(synced_image, constructor)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
-    stream->initialize();
     mo::IDeviceStream::setCurrent(stream);
     auto image = std::make_shared<aq::SyncedImage>();
 
@@ -113,7 +112,6 @@ TEST(synced_image, reflect)
 TEST(synced_image_opencv, global_allocator)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
-    stream->initialize();
     aq::CvMatAllocator alloc(stream);
     aq::ScopedOpenCVAllocator allocator_context_manager(&alloc);
     cv::Mat img;
@@ -133,7 +131,6 @@ TEST(synced_image_opencv, sync_data)
     mo::initProfiling();
     PROFILE_FUNCTION
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
-    stream->initialize();
     aq::SyncedImage image;
     // Count non zero only takes gray images
     image.create(1024, 1024, aq::PixelFormat::kGRAY);
@@ -153,7 +150,6 @@ TEST(synced_image_opencv, sync_data)
 TEST(synced_image_opencv, wrapping_allocator)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
-    stream->initialize();
     auto wrapped = cv::cuda::StreamAccessor::wrapStream(stream->getStream());
     auto img = std::make_shared<aq::SyncedImage>();
     img->setStream(stream);
@@ -182,7 +178,6 @@ TEST(synced_image_opencv, wrapping_allocator)
 TEST(synced_image_opencv, construct_from_mat)
 {
     auto stream = std::make_shared<mo::cuda::AsyncStream>();
-    stream->initialize();
     cv::Mat data(1024, 512, CV_32FC3);
     aq::SyncedImage img(data, aq::PixelFormat::kBGR, stream);
     EXPECT_EQ(img.rows(), 1024);

@@ -29,8 +29,6 @@
 #include <MetaObject/python/PythonSetup.hpp>
 #include <MetaObject/python/rcc_ptr.hpp>
 #include <MetaObject/thread/Thread.hpp>
-#include <MetaObject/thread/ThreadRegistry.hpp>
-
 #include <boost/functional.hpp>
 #include <boost/python.hpp>
 #include <boost/python/return_internal_reference.hpp>
@@ -120,15 +118,17 @@ void readArgs(const boost::python::list& args)
     aq::KeyValueStore::instance()->parseArgs(std::move(argv));
 }
 
+#ifdef HAVE_AQUILA_GUI
 void setGUIStream(const std::shared_ptr<mo::IAsyncStream>& stream)
 {
-    mo::ThreadRegistry::instance()->registerThread(mo::ThreadRegistry::GUI, stream);
+    aq::gui::setGuiStream(stream);
 }
 
 std::shared_ptr<mo::IAsyncStream> getGUIStream()
 {
-    return mo::ThreadRegistry::instance()->getGUIStream();
+    return aq::gui::getGuiStream();
 }
+#endif
 
 #define BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY
 
@@ -156,8 +156,10 @@ BOOST_PYTHON_MODULE(aquila)
     aq::serialization::initModule(table.get());
     boost::python::def("readArgs", &readArgs);
     boost::python::def("recompile", &recompile, (boost::python::arg("async") = false));
+#ifdef HAVE_AQUILA_GUI
     boost::python::def("setGUIStream", &setGUIStream);
     boost::python::def("getGUIStream", &getGUIStream);
+#endif
 
     /*boost::python::class_<AqLibGuard, boost::shared_ptr<AqLibGuard>, boost::noncopyable>("aqLibGuard",
                                                                                          boost::python::no_init);

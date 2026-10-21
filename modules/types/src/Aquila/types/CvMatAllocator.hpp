@@ -35,7 +35,7 @@ namespace aq
         }
 
         cv::UMatData* allocate(
-            int dims, const int* sizes, int type, void*, size_t*, mo::AccessFlag, cv::UMatUsageFlags) const override
+            int dims, const int* sizes, int type, void*, size_t*, cv::AccessFlag, cv::UMatUsageFlags) const override
         {
             int height, width;
             height = sizes[0];
@@ -92,7 +92,7 @@ namespace aq
             return {};
         }
 
-        bool allocate(cv::UMatData*, mo::AccessFlag, cv::UMatUsageFlags) const override
+        bool allocate(cv::UMatData*, cv::AccessFlag, cv::UMatUsageFlags) const override
         {
             return false;
         }

@@ -23,6 +23,7 @@ namespace aq
 
     void ParameterSynchronizer::setInputs(std::vector<mo::ISubscriber*> inputs)
     {
+        std::lock_guard<std::recursive_mutex> lock(m_mtx);
         for (auto input : inputs)
         {
             if (m_headers.find(input) == m_headers.end())
@@ -31,7 +32,16 @@ namespace aq
             }
             input->registerUpdateNotifier(m_slot);
         }
-        m_subscribers = std::move(inputs);
+        // SmallVec's std::vector conversion dereferences begin(), so an empty
+        // input list has to go through resize instead
+        if (inputs.empty())
+        {
+            m_subscribers.resize(0);
+        }
+        else
+        {
+            m_subscribers = inputs;
+        }
     }
 
     void ParameterSynchronizer::setCallback(std::function<Callback_s> cb)
@@ -183,15 +193,69 @@ namespace aq
             [&pred](mo::OptionalTime& output, const mo::Header& hdr) { return pred.checkLessThan(output, hdr); });
     }
 
-    mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
+    bool ParameterSynchronizer::bufferedInputsAvailable(const mo::Time& time) const
     {
-        // Todo earliest guarantee?
-        mo::OptionalTime output = findDirectTimestamp();
-        if (boost::none != output)
+        for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
-            return output;
+            if (itr->first->checkFlags(mo::ParamFlags::kOPTIONAL) || itr->first->checkFlags(mo::ParamFlags::kDESYNCED))
+            {
+                continue;
+            }
+            auto publisher = itr->first->getPublisher();
+            if (!publisher || !publisher->checkFlags(mo::ParamFlags::kBUFFER))
+            {
+                continue;
+            }
+            bool found = false;
+            for (const auto& hdr : itr->second)
+            {
+                if (boost::none != hdr.timestamp && closeEnough(*hdr.timestamp, time))
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                return false;
+            }
         }
-        output = findEarliestTimestamp();
+        return true;
+    }
+
+    bool ParameterSynchronizer::bufferedInputsAvailable(const mo::FrameNumber& fn) const
+    {
+        for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
+        {
+            if (itr->first->checkFlags(mo::ParamFlags::kOPTIONAL) || itr->first->checkFlags(mo::ParamFlags::kDESYNCED))
+            {
+                continue;
+            }
+            auto publisher = itr->first->getPublisher();
+            if (!publisher || !publisher->checkFlags(mo::ParamFlags::kBUFFER))
+            {
+                continue;
+            }
+            bool found = false;
+            for (const auto& hdr : itr->second)
+            {
+                if (hdr.frame_number == fn)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    mo::OptionalTime ParameterSynchronizer::earliestCommonTimestampFromHistory() const
+    {
+        mo::OptionalTime output = findEarliestTimestamp();
         // Can't continue since we don't have any data to start from
         if (boost::none == output)
         {
@@ -216,7 +280,9 @@ namespace aq
         };
         for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
-            if (!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
+            // A desynced input is allowed to lag, so it is not required to
+            // have data at the selected timestamp
+            if (!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL) && !itr->first->checkFlags(mo::ParamFlags::kDESYNCED))
             {
                 ++required_count;
             }
@@ -259,6 +325,24 @@ namespace aq
         }
 
         return {};
+    }
+
+    mo::OptionalTime ParameterSynchronizer::findEarliestCommonTimestamp() const
+    {
+        // Todo earliest guarantee?
+        mo::OptionalTime output = findDirectTimestamp();
+        if (boost::none != output)
+        {
+            // The direct inputs agree on the current time, but if a non-optional
+            // buffered input has no data at that time the frame cannot be assembled.
+            // Fall through to the history search so the timestamp is not returned
+            // (and consumed) for a frame that cannot be processed.
+            if (bufferedInputsAvailable(*output))
+            {
+                return output;
+            }
+        }
+        return earliestCommonTimestampFromHistory();
     }
 
     struct FrameNumberPredicate
@@ -321,19 +405,17 @@ namespace aq
         return findEarliest<mo::FrameNumber>(&FrameNumberPredicate::checkLessThan);
     }
 
-    mo::FrameNumber ParameterSynchronizer::findEarliestCommonFrameNumber() const
+    mo::FrameNumber ParameterSynchronizer::earliestCommonFrameNumberFromHistory() const
     {
-        mo::FrameNumber output = findDirectFrameNumber();
-        if (output.valid())
-        {
-            return output;
-        }
         // Todo earliest guarantee?
+        mo::FrameNumber output;
         uint32_t valid_count = 0;
         uint32_t required_count = 0;
         for (auto itr = m_headers.begin(); itr != m_headers.end(); ++itr)
         {
-            if (!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL))
+            // A desynced input is allowed to lag, so it is not required to
+            // have data at the selected frame number
+            if (!itr->first->checkFlags(mo::ParamFlags::kOPTIONAL) && !itr->first->checkFlags(mo::ParamFlags::kDESYNCED))
             {
                 ++required_count;
             }
@@ -376,6 +458,21 @@ namespace aq
         }
 
         return {};
+    }
+
+    mo::FrameNumber ParameterSynchronizer::findEarliestCommonFrameNumber() const
+    {
+        mo::FrameNumber output = findDirectFrameNumber();
+        if (output.valid())
+        {
+            // See findEarliestCommonTimestamp for why buffered inputs must have
+            // data at the selected frame number before it is returned
+            if (bufferedInputsAvailable(output))
+            {
+                return output;
+            }
+        }
+        return earliestCommonFrameNumberFromHistory();
     }
 
     bool ParameterSynchronizer::dedoup(const mo::Time& time)
@@ -452,22 +549,46 @@ namespace aq
         }
     }
 
-    boost::optional<mo::Header> ParameterSynchronizer::getNextSample()
+    boost::optional<mo::Header> ParameterSynchronizer::peekNextSample()
     {
+        std::lock_guard<std::recursive_mutex> lock(m_mtx);
         mo::OptionalTime time = findEarliestCommonTimestamp();
-
         if (time)
         {
-            const bool dedoup_success = dedoup(*time);
-            removeTimestamp(*time);
-            return dedoup_success ? boost::optional<mo::Header>(mo::Header(*time)) : boost::optional<mo::Header>();
+            return boost::optional<mo::Header>(mo::Header(*time));
         }
         mo::FrameNumber fn = findEarliestCommonFrameNumber();
         if (fn.valid())
         {
-            const bool dedoup_success = dedoup(fn);
-            removeFrameNumber(fn);
-            return dedoup_success ? boost::optional<mo::Header>(mo::Header(fn)) : boost::optional<mo::Header>();
+            return boost::optional<mo::Header>(mo::Header(fn));
+        }
+        return {};
+    }
+
+    bool ParameterSynchronizer::consume(const mo::Header& header)
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_mtx);
+        if (header.timestamp)
+        {
+            const bool dedoup_success = dedoup(*header.timestamp);
+            removeTimestamp(*header.timestamp);
+            return dedoup_success;
+        }
+        if (header.frame_number.valid())
+        {
+            const bool dedoup_success = dedoup(header.frame_number);
+            removeFrameNumber(header.frame_number);
+            return dedoup_success;
+        }
+        return false;
+    }
+
+    boost::optional<mo::Header> ParameterSynchronizer::getNextSample()
+    {
+        boost::optional<mo::Header> header = peekNextSample();
+        if (header && consume(*header))
+        {
+            return header;
         }
         return {};
     }
@@ -510,10 +631,26 @@ namespace aq
     void ParameterSynchronizer::onParamUpdate(const mo::IParam& param,
                                               mo::Header header,
                                               mo::UpdateFlags flags,
-                                              mo::IAsyncStream*)
+                                              mo::IAsyncStream&)
     {
+        std::lock_guard<std::recursive_mutex> lock(m_mtx);
         auto itr = m_headers.find(dynamic_cast<const mo::ISubscriber*>(&param));
         MO_ASSERT(itr != m_headers.end());
+        if (flags == mo::UpdateFlags::kINPUT_SET || flags == mo::UpdateFlags::kINPUT_CLEARED)
+        {
+            // (Re)connecting an input starts a new data session: drop the stale
+            // header history for that input and the consumed-timestamp history so
+            // that repeated timestamps from the new session are not rejected by
+            // the dedoup filters.
+            itr->second.erase(itr->second.begin(), itr->second.end());
+            m_previous_timestamps.erase(m_previous_timestamps.begin(), m_previous_timestamps.end());
+            m_previous_frame_numbers.erase(m_previous_frame_numbers.begin(), m_previous_frame_numbers.end());
+            if (m_callback)
+            {
+                onNewData();
+            }
+            return;
+        }
         if (itr->second.size())
         {
             if (header.timestamp != boost::none && itr->second.back().timestamp != boost::none)

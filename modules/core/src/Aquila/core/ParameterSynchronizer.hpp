@@ -10,6 +10,7 @@
 
 #include <boost/circular_buffer.hpp>
 #include <functional>
+#include <mutex>
 
 namespace mo
 {
@@ -19,7 +20,7 @@ namespace mo
 
 namespace aq
 {
-    class ParameterSynchronizer
+    class AQUILA_EXPORTS ParameterSynchronizer
     {
       public:
         using SubscriberVec_t = mo::SmallVec<mo::ISubscriber*, 20>;
@@ -71,6 +72,21 @@ namespace aq
         void removeFrameNumber(const mo::FrameNumber& fn);
 
         /**
+         * @brief peekNextSample get the header of the next sample of data that should be
+         * processed without consuming it. Use this when the caller may not be able to
+         * fetch data for every input at the returned header; the sample stays available
+         * until consume is called.
+         */
+        boost::optional<mo::Header> peekNextSample();
+
+        /**
+         * @brief consume remove the given sample from the synchronization state (dedoup
+         * history and per-input headers). Returns false if the sample is a duplicate of
+         * one that was already consumed.
+         */
+        bool consume(const mo::Header& header);
+
+        /**
          * @brief getNextSample get the header for the next sample of data that should be processed
          * @return the header of the next sample of data that we should process
          */
@@ -109,8 +125,16 @@ namespace aq
 
       private:
         bool closeEnough(const mo::Time& reference_time, const mo::Time& other_time) const;
+        // True if every non-optional, non-desynced buffered input has data at the given
+        // timestamp / frame number
+        bool bufferedInputsAvailable(const mo::Time& time) const;
+        bool bufferedInputsAvailable(const mo::FrameNumber& fn) const;
+        // The earliest-timestamp / earliest-frame-number search over the buffered
+        // header history (no direct-input shortcut)
+        mo::OptionalTime earliestCommonTimestampFromHistory() const;
+        mo::FrameNumber earliestCommonFrameNumberFromHistory() const;
         void onNewData();
-        void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream*);
+        void onParamUpdate(const mo::IParam&, mo::Header, mo::UpdateFlags, mo::IAsyncStream&);
         bool dedoup(const mo::Time&);
         bool dedoup(const mo::FrameNumber&);
 
@@ -118,13 +142,19 @@ namespace aq
         std::function<Callback_s> m_callback;
         mo::TSlot<mo::Update_s> m_slot;
 
-        std::vector<mo::ISubscriber*> m_subscribers;
+        SubscriberVec_t m_subscribers;
 
         std::unordered_map<const mo::ISubscriber*, boost::circular_buffer<mo::Header>> m_headers;
 
         boost::circular_buffer<mo::Time> m_previous_timestamps;
         boost::circular_buffer<mo::FrameNumber> m_previous_frame_numbers;
         std::chrono::nanoseconds m_slop;
+
+        // Update notifications arrive on the publisher's thread while samples are
+        // consumed on the node's thread, so the header/dedoup state needs locking.
+        // Recursive because onParamUpdate can re-enter getNextSample through the
+        // callback.
+        mutable std::recursive_mutex m_mtx;
 
         template <class... Types, size_t... I>
         bool unpackTuple(std::tuple<Types...>& data, ct::IndexSequence<I...>, mo::IAsyncStream* stream);

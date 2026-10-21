@@ -4,11 +4,34 @@
 #include "MetaObject/core/SystemTable.hpp"
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 
-#include <MetaObject/thread/ThreadRegistry.hpp>
-
 #include <boost/thread/mutex.hpp>
 
 using namespace aq;
+
+namespace
+{
+    std::shared_ptr<mo::IAsyncStream> g_gui_stream;
+    std::mutex g_gui_stream_mtx;
+} // namespace
+
+namespace aq
+{
+    namespace gui
+    {
+        void setGuiStream(std::shared_ptr<mo::IAsyncStream> stream)
+        {
+            std::lock_guard<std::mutex> lock(g_gui_stream_mtx);
+            g_gui_stream = std::move(stream);
+        }
+
+        std::shared_ptr<mo::IAsyncStream> getGuiStream()
+        {
+            std::lock_guard<std::mutex> lock(g_gui_stream_mtx);
+            return g_gui_stream;
+        }
+    } // namespace gui
+} // namespace aq
+
 WindowCallbackHandler::EventLoop::EventLoop()
 {
 }
@@ -53,7 +76,7 @@ std::shared_ptr<mo::IAsyncStream> WindowCallbackHandler::getUiStream()
     std::shared_ptr<mo::IAsyncStream> ui_stream = m_ui_stream;
     if (ui_stream == nullptr)
     {
-        ui_stream = mo::ThreadRegistry::instance()->getGUIStream();
+        ui_stream = aq::gui::getGuiStream();
         MO_ASSERT(ui_stream != nullptr);
         m_ui_stream = ui_stream;
     }
@@ -78,7 +101,7 @@ void WindowCallbackHandler::imshow(const std::string& window_name, cv::Mat img, 
     if (mystream != ui_stream)
     {
         // clang-format off
-        auto event = [this, window_name, img, flags](mo::IAsyncStream* stream)
+        auto event = [this, window_name, img, flags]
         {
             this->imshow(window_name, img, flags);
         };
@@ -116,7 +139,7 @@ void WindowCallbackHandler::imshowd(const std::string& window_name, cv::cuda::Gp
     if (mystream != ui_stream)
     {
         // clang-format off
-        auto event = [this, window_name, img, flags](mo::IAsyncStream*)
+        auto event = [this, window_name, img, flags]
         {
             this->imshowd(window_name, img, flags);
         };
@@ -150,7 +173,7 @@ void WindowCallbackHandler::imshowb(const std::string& window_name, cv::ogl::Buf
     std::shared_ptr<mo::IAsyncStream> ui_stream = getUiStream();
     if (mystream != ui_stream)
     {
-        auto event = [this, window_name, buffer, flags](mo::IAsyncStream*) {
+        auto event = [this, window_name, buffer, flags] {
             this->imshowb(window_name, buffer, flags);
         };
         ui_stream->pushWork(std::move(event));

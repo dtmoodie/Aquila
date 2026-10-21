@@ -1,6 +1,7 @@
 #ifndef AQ_TYPES_ENTITY_COMPONENT_SYSTEM_HPP
 #define AQ_TYPES_ENTITY_COMPONENT_SYSTEM_HPP
 #include "ComponentFactory.hpp"
+#include "shared_ptr.hpp"
 
 #include <Aquila/detail/export.hpp>
 #include <Aquila/types/TSyncedMemory.hpp>
@@ -11,7 +12,6 @@
 
 #include <MetaObject/runtime_reflection.hpp>
 
-#include <MetaObject/runtime_reflection/visitor_traits/TypeInfo.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/array_adapter.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/memory.hpp>
 #include <MetaObject/runtime_reflection/visitor_traits/string.hpp>
@@ -626,7 +626,7 @@ namespace aq
         return nullptr;
     }
 
-    struct EntityReference
+    struct AQUILA_EXPORTS EntityReference
     {
         EntityReference(EntityComponentSystem&, uint32_t);
 
@@ -1084,101 +1084,10 @@ namespace mo
         }
     };
 
-    template <class T>
-    struct TTraits<ce::shared_ptr<T>, 4> : virtual PtrBase<ce::shared_ptr<T>>
-    {
-        void load(ILoadVisitor& visitor, void* inst, const std::string&, size_t cnt) const override
-        {
-            ce::shared_ptr<T>* ptr = ct::ptrCast<ce::shared_ptr<T>>(inst);
-            for (size_t i = 0; i < cnt; ++i)
-            {
-                SharedPointerHelper<T>::load(visitor, ptr[i]);
-            }
-        }
-
-        void save(ISaveVisitor& visitor, const void* inst, const std::string&, size_t cnt) const override
-        {
-            const ce::shared_ptr<T>* ptr = ct::ptrCast<ce::shared_ptr<T>>(inst);
-            for (size_t i = 0; i < cnt; ++i)
-            {
-                SharedPointerHelper<T>::save(visitor, ptr[i]);
-            }
-        }
-
-        void visit(StaticVisitor& visitor, const std::string&) const override
-        {
-            visitor.template visit<T>("ptr");
-        }
-
-        std::shared_ptr<const void> getPointer(const void* inst) const
-        {
-            ce::shared_ptr<T> ptr = this->ref(inst);
-            return std::shared_ptr<const void>(ptr.get(), [ptr](const void*) {});
-        }
-
-        uint32_t getNumMembers() const
-        {
-            return 1;
-        }
-
-        bool loadMember(ILoadVisitor& visitor, void* inst, uint32_t idx, std::string* name = nullptr) const
-        {
-            if (idx != 0)
-            {
-                return false;
-            }
-            ce::shared_ptr<T>& ref = this->ref(inst);
-            // Unsure if we need some checks here
-            PolymorphicSerializationHelper<T>::load(visitor, ref);
-            if (name)
-            {
-                *name = "data";
-            }
-            mo::SharedPointerHelper<T>::loadMember(visitor, ref.get());
-            return true;
-        }
-
-        bool saveMember(ISaveVisitor& visitor, const void* inst, uint32_t idx, std::string* name = nullptr) const
-        {
-            if (idx != 0)
-            {
-                return false;
-            }
-            const ce::shared_ptr<T>& ref = this->ref(inst);
-            if (name)
-            {
-                *name = "data";
-            }
-            visitor(ref.get(), "data");
-            return true;
-        }
-
-        bool savePointedToData(ISaveVisitor& visitor, const void* inst, const std::string& name) const
-        {
-            const auto& ref = this->ref(inst);
-            if (ref)
-            {
-                visitor(ref.get(), name);
-                return true;
-            }
-            return false;
-        }
-
-        bool loadPointedToData(ILoadVisitor& visitor, void* inst, const std::string& name) const
-        {
-            if (std::is_const<T>::value)
-            {
-                return false;
-            }
-            auto& ref = this->ref(inst);
-            if (ref)
-            {
-                visitor(const_cast<typename std::remove_const<T>::type*>(ref.get()), name);
-                return true;
-            }
-            return false;
-        }
-    };
+    // The ce::shared_ptr load/save traits live in Aquila/types/shared_ptr.hpp
+    // (tag 5). Pointee creation for the ECS is handled through the
+    // PolymorphicSerializationHelper specialization above, so no pointer
+    // traits are needed here.
 
     // Overload for publishing and subscribing to an entity component system
     struct IEntityComponentSystemPublisher
@@ -1187,11 +1096,32 @@ namespace mo
         virtual void getComponents(std::vector<TypeInfo>& types) const = 0;
     };
 
-    template <>
-    struct TPublisher<aq::EntityComponentSystem, 2> : TPublisher<aq::EntityComponentSystem, 1>,
-                                                      IEntityComponentSystemPublisher
+    // All ECS variants carry the base ECS data type and differ only in
+    // component metadata, so the publisher machinery is a plain
+    // TPublisher<aq::EntityComponentSystem> and the templated variants only
+    // add component introspection.
+    template <class T>
+    struct TPublisher<aq::TEntityComponentSystem<T>> : TPublisher<aq::EntityComponentSystem>,
+                                                       IEntityComponentSystemPublisher
     {
-        void getComponents(std::vector<TypeInfo>& types) const override;
+        using Components_t = typename ct::GlobMemberObjects<T>::types;
+
+        void getComponents(std::vector<TypeInfo>& types) const override
+        {
+            types.reserve(Components_t::size());
+            populateTypes(types, Components_t{});
+        }
+    };
+
+    template <class... T>
+    struct TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>> : TPublisher<aq::EntityComponentSystem>,
+                                                                               IEntityComponentSystemPublisher
+    {
+        void getComponents(std::vector<TypeInfo>& types) const override
+        {
+            types.reserve(sizeof...(T));
+            populateTypes(types, ct::VariadicTypedef<T...>{});
+        }
     };
 
     template <class T>
@@ -1206,59 +1136,43 @@ namespace mo
         types.push_back(TypeInfo::create<T>());
         populateTypes(types, ct::VariadicTypedef<Ts...>());
     }
-    template <class T>
-    struct TPublisher<aq::TEntityComponentSystem<T>, 2> : TPublisher<aq::EntityComponentSystem>
-
-    {
-        void getComponents(std::vector<TypeInfo>& types) const override
-        {
-            using Components_t = typename ct::GlobMemberObjects<T>::types;
-            // using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
-            types.reserve(Components_t::size());
-            populateTypes(types, Components_t{});
-        }
-    };
-
-    template <class... T>
-    struct TPublisher<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>> : TPublisher<aq::EntityComponentSystem>
-    {
-        void getComponents(std::vector<TypeInfo>& types) const override
-        {
-            types.reserve(sizeof...(T));
-            populateTypes(types, ct::VariadicTypedef<T...>{});
-        }
-    };
 
     template <class T>
-    struct TSubscriber<aq::TEntityComponentSystem<T>> : TSubscriberImpl<aq::EntityComponentSystem>
+    struct TSubscriber<aq::TEntityComponentSystem<T>> : TSubscriber<aq::EntityComponentSystem>
     {
         using Components_t = typename ct::GlobMemberObjects<T>::types;
-        // using Components_t = typename ct::ext::SelectComponents<MemberObjects_t>::type;
+        // getTypedData is protected in TSubscriber, but consumers of the
+        // ECS subscriber need it, so re-expose it
+        using TSubscriber<aq::EntityComponentSystem>::getTypedData;
 
         bool setInput(IPublisher* publisher = nullptr) override
         {
-            if (!acceptsPublisher(*publisher))
+            if (publisher && !acceptsPublisher(*publisher))
             {
                 return false;
             }
-            return TSubscriberImpl<aq::EntityComponentSystem>::setInput(publisher);
+            return TSubscriber<aq::EntityComponentSystem>::setInput(publisher);
         }
 
         bool acceptsPublisher(const IPublisher& param) const override
         {
-            if (TSubscriberImpl<aq::EntityComponentSystem>::acceptsPublisher(param))
+            if (TSubscriber<aq::EntityComponentSystem>::acceptsPublisher(param))
             {
-                const auto& tparam = dynamic_cast<const IEntityComponentSystemPublisher&>(param);
+                const auto* tparam = dynamic_cast<const IEntityComponentSystemPublisher*>(&param);
+                if (!tparam)
+                {
+                    return false;
+                }
                 std::vector<TypeInfo> required_components;
                 populateTypes(required_components, Components_t());
                 std::vector<TypeInfo> published_components;
-                tparam.getComponents(published_components);
+                tparam->getComponents(published_components);
                 for (const auto& cmp : required_components)
                 {
                     if (std::find(published_components.begin(), published_components.end(), cmp) ==
                         published_components.end())
                     {
-                        this->getLogger().info(
+                        const_cast<TSubscriber<aq::EntityComponentSystem>*>(this)->getLogger().info(
                             "Unable to find required component {} provided from {} with the following components {}",
                             cmp,
                             param.getName(),
@@ -1274,15 +1188,17 @@ namespace mo
 
     template <class... T>
     struct TSubscriber<aq::TEntityComponentSystem<ct::VariadicTypedef<T...>>>
-        : TSubscriberImpl<aq::EntityComponentSystem>
+        : TSubscriber<aq::EntityComponentSystem>
     {
+        using TSubscriber<aq::EntityComponentSystem>::getTypedData;
+
         bool setInput(IPublisher* publisher = nullptr) override
         {
             if (publisher && !acceptsPublisher(*publisher))
             {
                 return false;
             }
-            return TSubscriberImpl<aq::EntityComponentSystem>::setInput(publisher);
+            return TSubscriber<aq::EntityComponentSystem>::setInput(publisher);
         }
 
         bool acceptsPublisher(const IPublisher& param) const override
@@ -1299,7 +1215,7 @@ namespace mo
                     if (std::find(published_components.begin(), published_components.end(), cmp) ==
                         published_components.end())
                     {
-                        this->getLogger().info(
+                        const_cast<TSubscriber<aq::EntityComponentSystem>*>(this)->getLogger().info(
                             "Unable to find required component {} provided from {} with the following components {}",
                             cmp,
                             param.getName(),

@@ -32,7 +32,7 @@ aquila_declare_module(NAME types DEPENDS
     ce
     ctext
     minitensor
-    CXX_STANDARD 11
+    CXX_STANDARD 17
 )
 
 target_include_directories(aquila_types
@@ -55,13 +55,19 @@ endif(EIGEN_INCLUDE_DIRS)
 
 
 if(BUILD_TESTS)
-    set(CUDA_NVCC_FLAGS "-std=c++11")
+    # CUDA 13's CCCL headers (thrust/cub/libcu++) require C++17
+    set(CUDA_NVCC_FLAGS "-std=c++17")
     file(GLOB test_src "tests/*.cpp" "tests/*.cu")
 
     cuda_add_executable(test_aq_types ${test_src})
     target_link_libraries(test_aq_types PRIVATE aquila_types metaobject_cuda gtest gtest_main)
     set_target_properties(test_aq_types PROPERTIES FOLDER Tests/Aquila)
-    add_test(test_aq_types test_aq_types)
+    # ctest resolves plain test commands relative to this directory's build
+    # tree, but the executable is redirected to the build root (see the top
+    # level CMakeLists.txt), so reference it by absolute path and run it from
+    # the build root (where test data and plugin .so files live).
+    add_test(NAME test_aq_types COMMAND ${CMAKE_BINARY_DIR}/test_aq_types)
+    set_tests_properties(test_aq_types PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
     if(OpenCV_FOUND)
         find_package(OpenCV REQUIRED COMPONENTS cudaarithm imgcodecs)
@@ -71,7 +77,7 @@ if(BUILD_TESTS)
         file(GLOB plugin_src "tests/cv_compression/*.cpp" "tests/cv_compression/*.hpp")
         add_library(aq_cv_compression SHARED ${plugin_src})
         target_link_libraries(aq_cv_compression aquila_types metaobject_object ce)
-        metaobject_declare_plugin(aq_cv_compression)
+        metaobject_declare_plugin(aq_cv_compression NOINSTALL)
         target_link_libraries(test_aq_types PUBLIC aq_cv_compression RuntimeObjectSystem)
     endif()
     file(COPY "data/data.png" DESTINATION "${CMAKE_BINARY_DIR}")

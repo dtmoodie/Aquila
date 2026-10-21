@@ -7,9 +7,9 @@ namespace aq
     {
         CvMatAllocatorWrapper(std::shared_ptr<aq::SyncedImage> image);
         cv::UMatData* allocate(
-            int dims, const int* sizes, int type, void*, size_t*, mo::AccessFlag, cv::UMatUsageFlags) const override;
+            int dims, const int* sizes, int type, void*, size_t*, cv::AccessFlag, cv::UMatUsageFlags) const override;
 
-        bool allocate(cv::UMatData*, mo::AccessFlag, cv::UMatUsageFlags) const override;
+        bool allocate(cv::UMatData*, cv::AccessFlag, cv::UMatUsageFlags) const override;
 
         void deallocate(cv::UMatData* data) const override;
 
@@ -27,7 +27,7 @@ namespace aq
     }
 
     cv::UMatData* CvMatAllocatorWrapper::allocate(
-        int dims, const int* sizes, int type, void*, size_t*, mo::AccessFlag, cv::UMatUsageFlags) const
+        int dims, const int* sizes, int type, void*, size_t*, cv::AccessFlag, cv::UMatUsageFlags) const
     {
         int height, width;
         height = sizes[0];
@@ -64,7 +64,7 @@ namespace aq
         return udata;
     }
 
-    bool CvMatAllocatorWrapper::allocate(cv::UMatData*, mo::AccessFlag, cv::UMatUsageFlags) const
+    bool CvMatAllocatorWrapper::allocate(cv::UMatData*, cv::AccessFlag, cv::UMatUsageFlags) const
     {
         return false;
     }

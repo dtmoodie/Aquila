@@ -1,5 +1,4 @@
 #include <MetaObject/python/MetaObject.hpp>
-#include <MetaObject/python/PythonConversionVisitation.hpp>
 
 #include "nodes.hpp"
 #include <Aquila/core/IGraph.hpp>
@@ -240,8 +239,11 @@ namespace aq
                     mo::IControlParam* param = obj.obj->getParam(param_names[i]);
                     if (param)
                     {
-                        mo::python::ControlParamSetter setter(args[i]);
-                        param->load(setter);
+                        auto setter = mo::python::DataConverterRegistry::instance()->getSetter(param->getTypeInfo());
+                        if (!setter || !setter(param, args[i]))
+                        {
+                            MO_LOG(warn, "Unable to set parameter {} from python object", param_names[i]);
+                        }
                     }
                     else
                     {
@@ -538,7 +540,6 @@ namespace aq
                                       std::bind(&constructWrappedObject<Node>, *itr))));
                     }
                     mo::addParamAccessors<Node>(bpobj, info);
-                    mo::addOutputAccessors<Node>(bpobj, info);
                     mo::addSlotAccessors<Node, void>(bpobj, info);
                     mo::StaticSlotAccessor<std::vector<std::string>()>::add<Node>(bpobj, info);
                     mo::StaticSlotAccessor<aq::nodes::Node::Ptr(std::string)>::add<Node>(bpobj, info);
